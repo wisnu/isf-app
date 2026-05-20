@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from '@/App.vue'
+import '@/lib/charts'
 import router from '@/router'
 import { useThemeStore } from '@/stores/theme'
 import '@/styles.css'
