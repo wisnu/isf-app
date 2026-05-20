@@ -7,6 +7,7 @@ import {
   ChevronsRight,
   Download,
   FileText,
+  Filter,
   Folder,
   HelpCircle,
   Loader2,
@@ -14,6 +15,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  X,
 } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 
@@ -58,18 +60,80 @@ const search = ref('')
 const page = ref(1)
 const pageSize = ref(50)
 
+// === Filters ===
+type SifatValue = 'all' | 'detail' | 'group'
+
+const TYPE_OPTIONS: { code: string; label: string }[] = [
+  { code: 'A', label: 'Aset' },
+  { code: 'L', label: 'Liabilitas' },
+  { code: 'E', label: 'Saldo Dana' },
+  { code: 'I', label: 'Pendapatan' },
+  { code: 'X', label: 'Penyaluran' },
+]
+const SIFAT_OPTIONS: { value: SifatValue; label: string }[] = [
+  { value: 'all', label: 'Semua' },
+  { value: 'detail', label: 'Detail' },
+  { value: 'group', label: 'Grup' },
+]
+const LEVEL_OPTIONS: { value: number | null; label: string }[] = [
+  { value: null, label: 'Semua' },
+  { value: 0, label: '≤ 0' },
+  { value: 1, label: '≤ 1' },
+  { value: 2, label: '≤ 2' },
+  { value: 3, label: '≤ 3' },
+  { value: 4, label: '≤ 4' },
+]
+
+const typeFilters = ref<Set<string>>(new Set())
+const sifatFilter = ref<SifatValue>('all')
+const levelMax = ref<number | null>(null)
+
+function toggleType(code: string) {
+  const next = new Set(typeFilters.value)
+  if (next.has(code)) next.delete(code)
+  else next.add(code)
+  typeFilters.value = next
+}
+
+const hasFilters = computed(
+  () =>
+    typeFilters.value.size > 0 ||
+    sifatFilter.value !== 'all' ||
+    levelMax.value !== null ||
+    search.value.trim() !== '',
+)
+
+function resetFilters() {
+  typeFilters.value = new Set()
+  sifatFilter.value = 'all'
+  levelMax.value = null
+  search.value = ''
+}
+
 let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+function buildQueryParams(includePaging: boolean): URLSearchParams {
+  const params = new URLSearchParams()
+  if (includePaging) {
+    params.set('page', String(page.value))
+    params.set('page_size', String(pageSize.value))
+  }
+  const q = search.value.trim()
+  if (q) params.set('search', q)
+  if (typeFilters.value.size > 0) {
+    params.set('type', [...typeFilters.value].join(','))
+  }
+  if (sifatFilter.value === 'detail') params.set('is_detail', 'T')
+  else if (sifatFilter.value === 'group') params.set('is_detail', 'F')
+  if (levelMax.value !== null) params.set('max_level', String(levelMax.value))
+  return params
+}
 
 async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const params = new URLSearchParams({
-      page: String(page.value),
-      page_size: String(pageSize.value),
-    })
-    const q = search.value.trim()
-    if (q) params.set('search', q)
+    const params = buildQueryParams(true)
     data.value = await api.get<CoaList>(`/api/coa/accounts?${params.toString()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat COA'
@@ -90,6 +154,12 @@ watch(search, () => {
 
 // page or pageSize → fetch
 watch([page, pageSize], () => load())
+
+// filter changes → reset page to 1 + fetch
+watch([typeFilters, sifatFilter, levelMax], () => {
+  page.value = 1
+  load()
+}, { deep: true })
 
 onMounted(load)
 
@@ -145,9 +215,7 @@ async function exportXlsx() {
   exporting.value = true
   errorMsg.value = null
   try {
-    const params = new URLSearchParams()
-    const q = search.value.trim()
-    if (q) params.set('search', q)
+    const params = buildQueryParams(false)
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const domain = (import.meta.env.VITE_PORTAL_DOMAIN as string | undefined) ?? ''
     const suggested = domain ? `coa-${domain}-${today}.xlsx` : `coa-${today}.xlsx`
@@ -232,6 +300,78 @@ async function exportXlsx() {
 
     <Card>
       <CardContent class="p-0">
+        <!-- Filter section -->
+        <div class="px-4 py-3 border-b border-border space-y-2 bg-background/30">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted font-semibold w-16">
+              <Filter class="w-3 h-3" /> Tipe
+            </span>
+            <button
+              v-for="t in TYPE_OPTIONS"
+              :key="t.code"
+              type="button"
+              :class="
+                [
+                  'text-xs px-2.5 py-1 rounded-md border transition-colors',
+                  typeFilters.has(t.code)
+                    ? 'bg-primary/10 border-primary text-primary font-medium'
+                    : 'border-border text-muted hover:bg-background hover:text-foreground',
+                ]
+              "
+              @click="toggleType(t.code)"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[10px] uppercase tracking-wider text-muted font-semibold w-16">Sifat</span>
+            <button
+              v-for="opt in SIFAT_OPTIONS"
+              :key="opt.value"
+              type="button"
+              :class="
+                [
+                  'text-xs px-2.5 py-1 rounded-md border transition-colors',
+                  sifatFilter === opt.value
+                    ? 'bg-primary/10 border-primary text-primary font-medium'
+                    : 'border-border text-muted hover:bg-background hover:text-foreground',
+                ]
+              "
+              @click="sifatFilter = opt.value"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[10px] uppercase tracking-wider text-muted font-semibold w-16">Level</span>
+            <button
+              v-for="lv in LEVEL_OPTIONS"
+              :key="String(lv.value)"
+              type="button"
+              :class="
+                [
+                  'text-xs px-2.5 py-1 rounded-md border transition-colors tabular-nums',
+                  levelMax === lv.value
+                    ? 'bg-primary/10 border-primary text-primary font-medium'
+                    : 'border-border text-muted hover:bg-background hover:text-foreground',
+                ]
+              "
+              @click="levelMax = lv.value"
+            >
+              {{ lv.label }}
+            </button>
+            <button
+              v-if="hasFilters"
+              type="button"
+              class="ml-auto inline-flex items-center gap-1 text-xs text-muted hover:text-foreground"
+              @click="resetFilters"
+            >
+              <X class="w-3 h-3" /> Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Search -->
         <div class="px-4 py-3 border-b border-border flex items-center gap-2">
           <Search class="w-4 h-4 text-muted shrink-0" />
           <Input

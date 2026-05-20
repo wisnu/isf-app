@@ -15,6 +15,9 @@ router = APIRouter(prefix="/coa", tags=["coa"])
 @router.get("/accounts")
 async def accounts(
     search: str | None = Query(default=None, max_length=100),
+    type: str | None = Query(default=None, description="Comma-separated type codes (A/L/E/I/X)"),
+    is_detail: str | None = Query(default=None, description="T (detail) atau F (grup)"),
+    max_level: int | None = Query(default=None, ge=0, le=10),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=500),
 ):
@@ -23,20 +26,32 @@ async def accounts(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    data = await list_accounts(search=search, page=page, page_size=page_size)
+    data = await list_accounts(
+        search=search,
+        types=type,
+        is_detail=is_detail,
+        max_level=max_level,
+        page=page,
+        page_size=page_size,
+    )
     return ok(data.model_dump())
 
 
 @router.get("/accounts.xlsx")
 async def export_xlsx(
     search: str | None = Query(default=None, max_length=100),
+    type: str | None = Query(default=None),
+    is_detail: str | None = Query(default=None),
+    max_level: int | None = Query(default=None, ge=0, le=10),
 ):
     if not await ping():
         return JSONResponse(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    rows = await list_all_rows(search=search)
+    rows = await list_all_rows(
+        search=search, types=type, is_detail=is_detail, max_level=max_level
+    )
     domain = os.getenv("DOMAIN", "").strip().lower()
     suffix = f"-{domain}" if domain else ""
     filename = f"coa{suffix}-{datetime.utcnow():%Y%m%d}.xlsx"
