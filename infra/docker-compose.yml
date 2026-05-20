@@ -1,0 +1,50 @@
+services:
+  api-python:
+    build:
+      context: ../apps/api-python
+      dockerfile: Dockerfile.dev
+    container_name: isf-api-python
+    environment:
+      APP_ENV: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/api-python:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  bff-api:
+    build:
+      context: ../apps/bff-api
+      dockerfile: Dockerfile.dev
+    container_name: isf-bff-api
+    environment:
+      APP_ENV: development
+      API_PYTHON_BASE_URL: http://api-python:8000
+      SESSION_SECRET: ${SESSION_SECRET:-dev-secret-change-me}
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "7000:7000"
+    volumes:
+      - ../apps/bff-api:/app
+    depends_on:
+      api-python:
+        condition: service_healthy
+
+  web-vue:
+    build:
+      context: ../apps/web-vue
+      dockerfile: Dockerfile.dev
+    container_name: isf-web-vue
+    environment:
+      VITE_API_BASE_URL: http://localhost:7000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps/web-vue:/app
+      - /app/node_modules
+    depends_on:
+      - bff-api

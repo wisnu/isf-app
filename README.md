@@ -55,7 +55,8 @@ isf-app/
     docker-compose.yml
     nginx/
     kong/
-    migrations/
+    db/
+      migrations/
   docs/
     architecture.md
 ```
