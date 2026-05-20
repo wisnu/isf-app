@@ -57,7 +57,7 @@ const exporting = ref(false)
 const errorMsg = ref<string | null>(null)
 const search = ref('')
 const page = ref(1)
-const pageSize = ref(25)
+const pageSize = ref(20)
 const tipsOpen = ref(false)
 const compactMode = ref(false)
 
@@ -229,7 +229,7 @@ async function exportXlsx() {
       <div class="flex items-center gap-3">
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold tracking-tight">Chart of Accounts</h1>
+            <h1 class="text-lg font-bold tracking-tight">Chart of Accounts</h1>
             <span class="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
               <span class="w-1.5 h-1.5 rounded-full bg-positive"></span>
               <code class="font-mono">transaction.account</code>
@@ -379,7 +379,7 @@ async function exportXlsx() {
           <!-- Panel header -->
           <div class="px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 rounded-t-2xl">
             <div class="flex items-center gap-3">
-              <h2 class="font-semibold text-sm">Daftar Akun</h2>
+              <h2 class="font-semibold text-xs">Daftar Akun</h2>
               <p class="text-[11px] text-muted">
                 <template v-if="data">{{ data.rows.length }} dari {{ data.pagination.total }} akun</template>
                 <template v-else>Memuat…</template>
@@ -464,7 +464,7 @@ async function exportXlsx() {
                       <span v-if="!row.is_detail" class="text-[9px] text-muted/50 select-none shrink-0">▸</span>
                       <Folder v-if="!row.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
                       <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
-                      <span :class="['text-xs leading-snug', !row.is_detail ? 'font-semibold' : '']">
+                      <span :class="['text-[11px] leading-snug', !row.is_detail ? 'font-semibold' : '']">
                         {{ row.name ?? '—' }}
                       </span>
                     </div>
@@ -523,6 +523,7 @@ async function exportXlsx() {
               class="text-[11px] border border-border rounded-md px-2 py-0.5 bg-surface text-foreground"
             >
               <option :value="15">15/hal</option>
+              <option :value="20">20/hal</option>
               <option :value="25">25/hal</option>
               <option :value="50">50/hal</option>
             </select>
