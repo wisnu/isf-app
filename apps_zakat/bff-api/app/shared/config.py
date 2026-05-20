@@ -31,5 +31,9 @@ class Settings(BaseSettings):
     def enabled_providers(self) -> set[str]:
         return {p.strip() for p in self.auth_providers.split(",") if p.strip()}
 
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.cors_origin.split(",") if o.strip()]
+
 
 settings = Settings()

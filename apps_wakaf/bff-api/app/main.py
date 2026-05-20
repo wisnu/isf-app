@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.routers.auth import router as auth_router
 from app.routers.auth_google import router as google_router
+from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.tenants import router as tenants_router
 from app.services.audit import AuditWriter
@@ -48,7 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[cfg.cors_origin],
+        allow_origins=cfg.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -62,6 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(google_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
     app.include_router(dashboard_router, prefix="/api")
+    app.include_router(coa_router, prefix="/api")
     return app
 
 

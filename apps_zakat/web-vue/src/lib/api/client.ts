@@ -1,4 +1,14 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:7000'
+function resolveBaseUrl(): string {
+  const explicit = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
+  if (explicit) return explicit
+  if (typeof window !== 'undefined') {
+    const port = (import.meta.env.VITE_BFF_PORT as string | undefined) ?? '7000'
+    return `${window.location.protocol}//${window.location.hostname}:${port}`
+  }
+  return 'http://localhost:7000'
+}
+
+const BASE_URL = resolveBaseUrl()
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public status: number) {

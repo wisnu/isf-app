@@ -25,6 +25,7 @@ services:
     environment:
       APP_ENV: development
       DOMAIN: zakat
+      DATABASE_URL: ${DATABASE_URL_ZAKAT:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_laz}
     ports:
       - "8000:8000"
     volumes:
@@ -51,15 +52,15 @@ services:
       DOMAIN: zakat
       API_PYTHON_BASE_URL: http://api-python:8000
       SESSION_SECRET: ${SESSION_SECRET_ZAKAT:-dev-secret-zakat-change-me}
-      CORS_ORIGIN: http://${HOST_IP:-localhost}:5173
+      CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173,http://${HOST_IP:-localhost}:5173
       AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
       AUTH_DB_PATH: /data/auth.sqlite
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
-      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL_ZAKAT:-http://${HOST_IP:-localhost}:7000/api/auth/google/callback}
+      GOOGLE_OAUTH_REDIRECT_URL: http://${HOST_IP:-localhost}:7000/api/auth/google/callback
       GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-ihsansolusi.co.id}
       GOOGLE_ALLOWED_EMAILS: ${GOOGLE_ALLOWED_EMAILS:-}
-      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL_ZAKAT:-http://${HOST_IP:-localhost}:5173}
+      FRONTEND_BASE_URL: http://${HOST_IP:-localhost}:5173
     ports:
       - "7000:7000"
     volumes:
@@ -83,7 +84,7 @@ services:
     container_name: isf-zakat-web-vue
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://${HOST_IP:-localhost}:7000
+      VITE_BFF_PORT: "7000"
       VITE_PORTAL_DOMAIN: zakat
       CHOKIDAR_USEPOLLING: "true"
     ports:

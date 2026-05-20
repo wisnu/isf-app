@@ -486,3 +486,77 @@ docker compose -f docker-compose.wakaf.yml exec bff-api sqlite3 /data/auth.sqlit
 ```
 
 Tabel tersedia: `users`, `user_credentials`, `user_provider_links`, `tenants`, `tenant_memberships`, `audit_log` (lihat skema di `docs/plan-auth.md` §3).
+
+---
+
+## 16. Akses dari HP / device lain di network sama
+
+### 16.1 Cara kerja singkat
+
+- Frontend (`web-vue`) **auto-detect API base URL** dari `window.location.hostname` + `VITE_BFF_PORT` (di-set per stack di compose). Buka portal dari hostname mana pun → call BFF di hostname yang sama. Tidak ada hardcoded `localhost`.
+- BFF `CORS_ORIGIN` accept **multi-origin (csv)**: `http://localhost:<port>,http://127.0.0.1:<port>,http://${HOST_IP}:<port>`. Browser dari mana pun bisa hit BFF di origin sesuai dengan device.
+- Session cookie `SameSite=lax` bekerja karena frontend & BFF di hostname yang sama dari sudut pandang browser.
+
+### 16.2 Setup
+
+#### A. Set LAN IP host di `infra/.env`
+
+Cari LAN IP host:
+
+```bash
+hostname -I
+# atau
+ip -4 -o addr show scope global | awk '{print $4}'
+```
+
+Edit `infra/.env`:
+
+```env
+HOST_IP=192.168.100.61
+```
+
+(Kalau LAN IP berubah karena DHCP, update di sini lalu restart bff-api.)
+
+#### B. Open firewall (Fedora / firewalld)
+
+```bash
+# Transient (sampai reboot)
+sudo firewall-cmd --add-port=5173/tcp --add-port=5174/tcp \
+                  --add-port=7000/tcp --add-port=7001/tcp
+
+# Permanent
+sudo firewall-cmd --permanent --add-port=5173/tcp --add-port=5174/tcp \
+                              --add-port=7000/tcp --add-port=7001/tcp
+sudo firewall-cmd --reload
+```
+
+Untuk Ubuntu/Debian (ufw):
+
+```bash
+sudo ufw allow 5173,5174,7000,7001/tcp
+```
+
+#### C. Restart bff-api + web-vue di kedua stack
+
+```bash
+cd infra
+docker compose -f docker-compose.zakat.yml up -d --force-recreate bff-api web-vue
+docker compose -f docker-compose.wakaf.yml up -d --force-recreate bff-api web-vue
+```
+
+### 16.3 Akses
+
+| Device | Zakat | Wakaf |
+| --- | --- | --- |
+| Host (laptop ini) | http://localhost:5173 **atau** http://192.168.100.61:5173 | http://localhost:5174 **atau** http://192.168.100.61:5174 |
+| HP / device lain di WiFi sama | http://192.168.100.61:5173 | http://192.168.100.61:5174 |
+
+Ganti `192.168.100.61` dengan LAN IP host Anda.
+
+### 16.4 Catatan
+
+- **Sidebar di mobile**: sidebar `hidden lg:flex` — tidak muncul di layar <1024px. Top bar + halaman dashboard tetap responsive (sudah desktop-first dengan adaptasi mobile).
+- **Google SSO dari HP**: redirect URI di GCP Console juga harus terdaftar untuk LAN IP (`http://<LAN-IP>:7000/api/auth/google/callback`). Untuk dev cepat, lebih mudah pakai password login saja dari HP.
+- **Mode "localhost-only"**: kosongkan `HOST_IP=` di `infra/.env`, restart bff-api. CORS default ke `localhost,127.0.0.1` saja.
+- **LAN IP berubah** (DHCP rotate): update `HOST_IP` di `.env`, restart. Atau set reservation di router.
+- **Firewall ulang setelah reboot**: tanpa `--permanent`, rule firewalld hilang. Gunakan `--permanent` untuk persistent.

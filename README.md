@@ -39,39 +39,68 @@ PostgreSQL
 
 Migration target: per-endpoint move from Python to Go behind the same API Facade — the frontend doesn't change. The future Kong-based topology and full migration phases are detailed in [`docs/architecture.md`](docs/architecture.md).
 
-## Planned monorepo layout
+## Monorepo layout (v0.3 — split portal per domain)
 
 ```text
 isf-app/
-  apps/
-    web-vue/        # Vue.js + Vite SPA
-    bff-api/        # FastAPI API Facade / BFF
-    api-python/     # Python FastAPI backend (initial)
-    api-go/         # Go backend (migration target)
+  apps_zakat/                # Portal LAZ (zakat, infaq, sadaqah) — DB: mziss_laz
+    web-vue/                 # Vue 3 + Vite + TS + Tailwind + shadcn-vue
+    bff-api/                 # FastAPI BFF (auth, session, proxy)
+    api-python/              # FastAPI backend
+    api-go/                  # Go service (per-module migration target)
+  apps_wakaf/                # Portal Wakaf — DB: mzis_wakaf (clone, akan diverge)
+    web-vue/
+    bff-api/
+    api-python/
+    api-go/
   packages/
-    api-contract/   # openapi.yaml — single source of truth
-    api-client-ts/  # Generated TypeScript client
+    api-contract/            # OpenAPI single source of truth
+    api-client-ts/           # generated TypeScript client
   infra/
-    docker-compose.yml
-    nginx/
-    kong/
+    docker-compose.zakat.yml       # zakat stack (default)
+    docker-compose.wakaf.yml # wakaf stack (separate ports, namespace)
+    .env.example
     db/
       migrations/
+    nginx/
+    kong/
   docs/
-    architecture.md
+    prd.md                   # Product Requirements (was BRD)
+    architecture.md          # Technical design
+    runbook-local.md         # Local dev guide
+    plan-*.md                # iteration plans (mvp, quasar, tailwind-shadcn, auth, dashboard-widgets, split-deployment)
 ```
+
+## Running locally
+
+```bash
+cd infra
+
+# Portal Zakat (default)
+podman-compose -f docker-compose.zakat.yml up -d --build
+# → http://localhost:5173
+
+# Portal Wakaf (independent stack)
+podman-compose -f docker-compose.wakaf.yml up -d --build
+# → http://localhost:5174
+```
+
+Demo akun (sama di kedua portal): `admin/admin123`, `finance.a/finance123`, `finance.b/finance123`.
 
 ## Roadmap
 
-High-level milestones (full checklist in [`docs/architecture.md` §28](docs/architecture.md)):
+Detail di [`docs/prd.md`](docs/prd.md) §10. Highlight:
 
-1. **Foundation** — monorepo, Vue app, BFF, Python backend, PostgreSQL, Docker Compose, baseline OpenAPI, standard response/error format.
-2. **First module** — first Python module exposed through the BFF, consumed by Vue via generated TypeScript client.
-3. **Migration readiness** — request ID, structured logging, contract tests, health/ready endpoints, clean module boundaries.
-4. **First Go module** — implement one module in Go against the same OpenAPI, switch BFF routing.
-5. **API gateway readiness** — separate generic vs UI-composition routes, prepare `infra/kong/`.
-6. **Scale** — introduce Kong when demand is real; evaluate per-service separation and event bus.
+1. **Fase 1 — MVP**: login + dashboard skeleton + tenant switcher (selesai untuk portal zakat).
+2. **Fase 2 — Dashboard & Laporan**: koneksi ke existing DB (`mziss_laz`, `mzis_wakaf`); multi-cabang switcher; laporan rich + export.
+3. **Fase 3 — Manajemen User + Production Auth**: cookie httpOnly, role-cabang, audit log viewer.
+4. **Fase 4 — Input Pertama (Penyaluran)** dengan workflow maker–checker (PRD §7.8).
+5. **Fase 5 — Input Lanjutan** (program, wakaf, posting jurnal, master data).
+6. **Fase 6+ — Scale** (API gateway, migrasi Go, mobile/partner).
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) — full technical design: principles, phase-by-phase topology, OpenAPI workflow, response/error format, auth options, migration checklist, anti-patterns, and prompt templates for vibe coding.
+- [`docs/prd.md`](docs/prd.md) — Product Requirements Document.
+- [`docs/architecture.md`](docs/architecture.md) — Technical architecture & design.
+- [`docs/runbook-local.md`](docs/runbook-local.md) — Local development & deployment guide.
+- [`docs/plan-split-deployment.md`](docs/plan-split-deployment.md) — Split deployment plan (zakat vs wakaf).

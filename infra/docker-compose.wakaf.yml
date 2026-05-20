@@ -28,6 +28,7 @@ services:
     environment:
       APP_ENV: development
       DOMAIN: wakaf
+      DATABASE_URL: ${DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mzis_wakaf}
     ports:
       - "8001:8000"
     volumes:
@@ -54,15 +55,15 @@ services:
       DOMAIN: wakaf
       API_PYTHON_BASE_URL: http://api-python:8000
       SESSION_SECRET: ${SESSION_SECRET_WAKAF:-dev-secret-wakaf-change-me}
-      CORS_ORIGIN: http://${HOST_IP:-localhost}:5174
+      CORS_ORIGIN: http://localhost:5174,http://127.0.0.1:5174,http://${HOST_IP:-localhost}:5174
       AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
       AUTH_DB_PATH: /data/auth.sqlite
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
-      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL_WAKAF:-http://${HOST_IP:-localhost}:7001/api/auth/google/callback}
+      GOOGLE_OAUTH_REDIRECT_URL: http://${HOST_IP:-localhost}:7001/api/auth/google/callback
       GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-ihsansolusi.co.id}
       GOOGLE_ALLOWED_EMAILS: ${GOOGLE_ALLOWED_EMAILS:-}
-      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL_WAKAF:-http://${HOST_IP:-localhost}:5174}
+      FRONTEND_BASE_URL: http://${HOST_IP:-localhost}:5174
     ports:
       - "7001:7000"
     volumes:
@@ -86,7 +87,7 @@ services:
     container_name: isf-wakaf-web-vue
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://${HOST_IP:-localhost}:7001
+      VITE_BFF_PORT: "7001"
       VITE_PORTAL_DOMAIN: wakaf
       CHOKIDAR_USEPOLLING: "true"
     ports:
