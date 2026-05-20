@@ -24,7 +24,9 @@ def mock_downstream():
         "meta": {"request_id": "req_test"},
     }
     response = httpx.Response(200, json=payload)
-    with patch("app.routers.dashboard.get_api_python", new=AsyncMock(return_value=response)) as m:
+    with patch(
+        "app.routers.dashboard.get_api_python", new=AsyncMock(return_value=response)
+    ) as m:
         yield m
 
 

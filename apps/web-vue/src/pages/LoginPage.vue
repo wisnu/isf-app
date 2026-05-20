@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Eye, EyeOff, Info } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { Eye, EyeOff, Globe, Info } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -32,6 +32,22 @@ const demoAccounts = [
   { user: 'finance.b', pass: 'finance123', scope: 'Perusahaan B saja' },
 ]
 
+const ssoErrorMessages: Record<string, string> = {
+  invalid_state: 'Sesi SSO tidak valid. Silakan coba lagi.',
+  verification_failed: 'Verifikasi token Google gagal.',
+  email_not_allowed: 'Email Anda tidak diizinkan akses portal.',
+  access_denied: 'Permintaan login Google dibatalkan.',
+}
+const ssoError = computed(() => {
+  const code = (route.query.sso_error as string) || ''
+  if (!code) return null
+  return ssoErrorMessages[code] ?? `Login Google gagal: ${code}`
+})
+
+onMounted(() => {
+  auth.loadProviders()
+})
+
 async function submit() {
   errorMsg.value = null
   submitting.value = true
@@ -45,6 +61,14 @@ async function submit() {
     submitting.value = false
   }
 }
+
+function loginWithGoogle() {
+  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:7000'
+  const redirect = (route.query.redirect as string) ?? '/'
+  window.location.assign(
+    `${base}/api/auth/google/start?redirect=${encodeURIComponent(redirect)}`,
+  )
+}
 </script>
 
 <template>
@@ -52,9 +76,13 @@ async function submit() {
     <Card class="w-full max-w-md">
       <CardHeader>
         <CardTitle>Portal ZISWAF</CardTitle>
-        <CardDescription>Masuk dengan akun demo</CardDescription>
+        <CardDescription>Masuk dengan akun demo atau Google</CardDescription>
       </CardHeader>
       <CardContent>
+        <Alert v-if="ssoError" variant="destructive" class="mb-4">
+          {{ ssoError }}
+        </Alert>
+
         <form class="space-y-4" @submit.prevent="submit">
           <div class="space-y-1.5">
             <Label for="username">Username</Label>
@@ -96,6 +124,33 @@ async function submit() {
           <Button type="submit" class="w-full" :disabled="submitting">
             {{ submitting ? 'Memproses…' : 'Masuk' }}
           </Button>
+
+          <div class="relative py-2">
+            <div class="absolute inset-0 flex items-center">
+              <span class="w-full border-t border-border"></span>
+            </div>
+            <div class="relative flex justify-center text-xs">
+              <span class="bg-surface px-2 text-muted uppercase tracking-wide">atau</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            class="w-full"
+            :disabled="!auth.providers.google"
+            :title="auth.providers.google ? '' : 'Google SSO belum dikonfigurasi'"
+            @click="loginWithGoogle"
+          >
+            <Globe class="w-4 h-4" />
+            Continue with Google
+          </Button>
+          <p
+            v-if="auth.providersLoaded && !auth.providers.google"
+            class="text-xs text-muted text-center"
+          >
+            Google SSO belum dikonfigurasi.
+          </p>
 
           <div class="border border-border rounded-md">
             <button

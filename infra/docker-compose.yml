@@ -26,10 +26,19 @@ services:
       API_PYTHON_BASE_URL: http://api-python:8000
       SESSION_SECRET: ${SESSION_SECRET:-dev-secret-change-me}
       CORS_ORIGIN: http://localhost:5173
+      AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
+      AUTH_DB_PATH: /data/auth.sqlite
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL:-http://localhost:7000/api/auth/google/callback}
+      GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-ihsansolusi.co.id}
+      GOOGLE_ALLOWED_EMAILS: ${GOOGLE_ALLOWED_EMAILS:-}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
     ports:
       - "7000:7000"
     volumes:
       - ../apps/bff-api:/app
+      - bff-data:/data
     depends_on:
       api-python:
         condition: service_healthy
@@ -48,3 +57,6 @@ services:
       - /app/node_modules
     depends_on:
       - bff-api
+
+volumes:
+  bff-data:

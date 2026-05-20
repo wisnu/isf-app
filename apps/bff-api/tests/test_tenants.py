@@ -25,7 +25,9 @@ def test_tenants_list_finance_a_only_sees_a(client):
 
 def test_tenants_switch_to_allowed_tenant(client):
     login(client)
-    response = client.post("/api/tenants/switch", json={"tenant_id": "perusahaan_b"})
+    response = client.post(
+        "/api/tenants/switch", json={"tenant_id": "perusahaan_b"}
+    )
     assert response.status_code == 200
     assert response.json()["data"]["active_tenant_id"] == "perusahaan_b"
     assert client.get("/api/auth/me").json()["data"]["active_tenant_id"] == "perusahaan_b"
@@ -33,6 +35,8 @@ def test_tenants_switch_to_allowed_tenant(client):
 
 def test_tenants_switch_to_disallowed_tenant_rejected(client):
     login(client, "finance.a", "finance123")
-    response = client.post("/api/tenants/switch", json={"tenant_id": "perusahaan_b"})
+    response = client.post(
+        "/api/tenants/switch", json={"tenant_id": "perusahaan_b"}
+    )
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "TENANT_FORBIDDEN"

@@ -1,70 +1,42 @@
-from dataclasses import dataclass
+"""Shared auth helpers (session lookup, public user shape)."""
+
+from __future__ import annotations
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+from app.services.auth_db import AuthDB
+from app.shared.response import err
 
 
-@dataclass(frozen=True)
-class User:
-    username: str
-    name: str
-    password: str
-    tenants: list[str]
-    default_tenant: str
-
-
-@dataclass(frozen=True)
-class Tenant:
-    id: str
-    name: str
-
-
-TENANTS: dict[str, Tenant] = {
-    "perusahaan_a": Tenant(id="perusahaan_a", name="Lembaga ZISWAF A"),
-    "perusahaan_b": Tenant(id="perusahaan_b", name="Lembaga ZISWAF B"),
-}
-
-USERS: dict[str, User] = {
-    "admin": User(
-        username="admin",
-        name="Administrator",
-        password="admin123",
-        tenants=["perusahaan_a", "perusahaan_b"],
-        default_tenant="perusahaan_a",
-    ),
-    "finance.a": User(
-        username="finance.a",
-        name="Finance Perusahaan A",
-        password="finance123",
-        tenants=["perusahaan_a"],
-        default_tenant="perusahaan_a",
-    ),
-    "finance.b": User(
-        username="finance.b",
-        name="Finance Perusahaan B",
-        password="finance123",
-        tenants=["perusahaan_b"],
-        default_tenant="perusahaan_b",
-    ),
-}
-
-
-def authenticate(username: str, password: str) -> User | None:
-    user = USERS.get(username)
-    if user is None or user.password != password:
+async def build_user_public(db: AuthDB, user_id: str) -> dict | None:
+    user = await db.get_user_by_id(user_id)
+    if not user:
         return None
-    return user
-
-
-def get_user(username: str) -> User | None:
-    return USERS.get(username)
-
-
-def tenant_public(t: Tenant) -> dict:
-    return {"id": t.id, "name": t.name}
-
-
-def user_public(user: User) -> dict:
+    tenants = await db.get_user_tenants(user_id)
+    default_tenant = next(
+        (t["id"] for t in tenants if t.get("is_default")),
+        tenants[0]["id"] if tenants else None,
+    )
     return {
-        "username": user.username,
-        "name": user.name,
-        "tenants": [tenant_public(TENANTS[t]) for t in user.tenants],
-        "default_tenant": user.default_tenant,
+        "username": user["username"],
+        "name": user["display_name"],
+        "tenants": [{"id": t["id"], "name": t["name"]} for t in tenants],
+        "default_tenant": default_tenant,
     }
+
+
+async def current_user_id_or_401(request: Request) -> tuple[str | None, JSONResponse | None]:
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None, JSONResponse(
+            status_code=401, content=err("UNAUTHORIZED", "Not authenticated")
+        )
+    db: AuthDB = request.app.state.auth_db
+    user = await db.get_user_by_id(user_id)
+    if not user:
+        request.session.clear()
+        return None, JSONResponse(
+            status_code=401, content=err("UNAUTHORIZED", "Session invalid")
+        )
+    return user_id, None

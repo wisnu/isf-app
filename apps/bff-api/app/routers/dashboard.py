@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from app.services.auth import get_user
+from app.services.auth import current_user_id_or_401
 from app.services.proxy import get_api_python
 from app.shared.response import err
 
@@ -10,14 +12,17 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/summary")
 async def summary(request: Request):
-    username = request.session.get("user_id")
-    if not username:
-        return JSONResponse(status_code=401, content=err("UNAUTHORIZED", "Not authenticated"))
-    user = get_user(username)
-    if user is None:
-        request.session.clear()
-        return JSONResponse(status_code=401, content=err("UNAUTHORIZED", "Session invalid"))
+    _, error_response = await current_user_id_or_401(request)
+    if error_response is not None:
+        return error_response
 
-    active_tenant = request.session.get("active_tenant_id", user.default_tenant)
-    downstream = await get_api_python("/api/v1/dashboard/summary", params={"tenant_id": active_tenant})
+    active_tenant = request.session.get("active_tenant_id")
+    if not active_tenant:
+        return JSONResponse(
+            status_code=403, content=err("NO_TENANT", "No active tenant for this session")
+        )
+
+    downstream = await get_api_python(
+        "/api/v1/dashboard/summary", params={"tenant_id": active_tenant}
+    )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

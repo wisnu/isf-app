@@ -312,3 +312,93 @@ Anonymous volume untuk `node_modules` rusak. Bersihkan:
 docker compose down -v
 docker compose up --build -d
 ```
+
+---
+
+## 13. Mengaktifkan Google SSO
+
+Tombol "Continue with Google" di login page disabled selama `GOOGLE_OAUTH_CLIENT_ID` & `GOOGLE_OAUTH_CLIENT_SECRET` kosong. Cara aktifkan:
+
+### 13.1 Buat OAuth client di Google Cloud Console
+
+1. Buka [GCP Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Pilih (atau buat) project, lalu klik **+ CREATE CREDENTIALS → OAuth client ID**.
+3. Kalau diminta, konfigurasi OAuth consent screen dulu (User Type: Internal kalau Workspace; External untuk test).
+4. Application type: **Web application**.
+5. Name: `isf-app dev` (atau sesuai env).
+6. **Authorized JavaScript origins**: `http://localhost:5173`
+7. **Authorized redirect URIs**: `http://localhost:7000/api/auth/google/callback`
+8. Klik **Create**. Copy `Client ID` dan `Client secret`.
+
+### 13.2 Set env di `infra/.env`
+
+```env
+GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-yyyyy
+GOOGLE_ALLOWED_DOMAINS=ihsansolusi.co.id
+# atau set GOOGLE_ALLOWED_EMAILS=user@gmail.com utk satu-satu
+```
+
+### 13.3 Restart bff-api
+
+```bash
+cd infra
+docker compose restart bff-api
+```
+
+Verifikasi:
+
+```bash
+curl -s http://localhost:7000/api/auth/providers | jq
+# expected: { "data": { "password": true, "google": true }, "meta": {...} }
+```
+
+Buka `http://localhost:5173/login` — tombol Google sekarang enabled.
+
+### 13.4 Production checklist
+
+- Update redirect URI di GCP dengan domain produksi (`https://app.example.com/api/auth/google/callback`).
+- Sesuaikan `GOOGLE_OAUTH_REDIRECT_URL` dan `FRONTEND_BASE_URL` di env.
+- Audit log: cek `SELECT * FROM audit_log WHERE event LIKE 'sso_%' ORDER BY ts DESC LIMIT 20` di `/data/auth.sqlite` saat troubleshoot.
+
+---
+
+## 14. Force logout semua user (rotate `SESSION_SECRET`)
+
+Session pakai signed cookie (Starlette `SessionMiddleware`). Tidak ada server-side session store → tidak bisa revoke per-user. Untuk **force logout semua user sekaligus**:
+
+```bash
+# 1. Generate secret baru
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+
+# 2. Update infra/.env
+#    SESSION_SECRET=<paste hasil step 1>
+
+# 3. Restart bff-api
+cd infra
+docker compose restart bff-api
+```
+
+Semua cookie session lama jadi invalid (signature mismatch), pengguna otomatis diminta login lagi.
+
+> Untuk revocation per-user, perlu pindah ke server-side session store (mis. Redis). Lihat architecture.md §14 / out-of-scope di plan-auth.md.
+
+---
+
+## 15. Inspect audit log
+
+`bff-api` menulis ke SQLite di volume `bff-data` (mount `/data/auth.sqlite`).
+
+```bash
+# Lihat 20 event terakhir
+docker compose exec bff-api sqlite3 /data/auth.sqlite \
+  "SELECT ts, event, user_id, tenant_id, payload_json FROM audit_log ORDER BY ts DESC LIMIT 20"
+
+# Login gagal seminggu terakhir
+docker compose exec bff-api sqlite3 /data/auth.sqlite \
+  "SELECT ts, payload_json FROM audit_log WHERE event='login_failed' AND ts >= datetime('now','-7 days')"
+
+# Aktivitas SSO
+docker compose exec bff-api sqlite3 /data/auth.sqlite \
+  "SELECT ts, event, payload_json FROM audit_log WHERE event LIKE 'sso_%' ORDER BY ts DESC"
+```
