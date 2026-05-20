@@ -1,11 +1,11 @@
-# Business Requirements Document — Portal ZISWAF (`isf-app`)
+# Product Requirements Document — Portal ZISWAF (`isf-app`)
 
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF |
-| Versi Dokumen | 0.1 (Draft awal) |
+| Versi Dokumen | 0.2 (PRD — pivot read-first + multi-cabang) |
 | Tanggal | 2026-05-20 |
-| Status | Draft — menunggu review stakeholder |
+| Status | Aktif |
 | Dokumen Terkait | [`docs/architecture.md`](./architecture.md) |
 
 ## 1. Ringkasan Eksekutif
@@ -13,6 +13,16 @@
 `isf-app` adalah portal internal yang menyatukan data operasional ZISWAF (Zakat, Infaq, Sadaqah, Wakaf) dari empat domain utama — **keuangan, program, penghimpunan, dan back office** — ke dalam satu aplikasi web. Portal ini melayani **dua perusahaan/lembaga ZISWAF** yang dikelola di bawah satu manajemen, sehingga satu akun pengguna dapat mengakses data kedua perusahaan secara terpisah (multi-tenant).
 
 Untuk **MVP**, scope dibatasi pada **dummy login + dashboard skeleton** dengan tenant switcher, sebagai pondasi yang akan dikembangkan bertahap menjadi portal penuh. Portal menggunakan **basis data yang sudah berjalan** (existing DB) — tidak ada perubahan skema pada fase awal.
+
+### 1.1 Strategi rilis (sejak v0.2 — read-first)
+
+Karena **existing database sudah berisi data ZISWAF dari sistem berjalan**, portal ini fokus dulu pada **pengalaman read** (dashboard kaya + laporan baik) sebelum membangun fitur input. Pengguna langsung dapat manfaat dari visualisasi & laporan tanpa migrasi data input.
+
+Fitur input transaksional (penyaluran, posting jurnal, dll) dimulai setelah fondasi read & UX matang, dengan workflow otorisasi maker–checker (§7.8). Reorder roadmap lengkap di §10.
+
+### 1.2 Multi-tenant + multi-cabang
+
+Selain melayani **beberapa perusahaan ZISWAF (multi-tenant)**, **setiap perusahaan punya beberapa cabang operasional** (mis. cabang regional / kantor cabang). Satu user dapat punya akses ke satu/beberapa cabang dalam satu/beberapa perusahaan. Data dan akses di-scope per **perusahaan × cabang**. Detail di §7.2.
 
 ## 2. Konteks & Latar Belakang
 
@@ -42,7 +52,7 @@ Portal ini juga menjadi fondasi modernisasi sistem ZISWAF: stack baru (Vue + Vit
 - Setiap perubahan data tercatat lengkap (siapa, kapan, perusahaan mana).
 - Penambahan modul atau migrasi backend tidak mengubah pengalaman pengguna.
 
-> KPI numerik (mis. jumlah pengguna aktif, frekuensi akses) akan ditetapkan bersama stakeholder pada saat sign-off BRD ini.
+> KPI numerik (mis. jumlah pengguna aktif, frekuensi akses) akan ditetapkan bersama stakeholder pada saat sign-off PRD ini.
 
 ## 4. Stakeholder & Pengguna
 
@@ -69,14 +79,27 @@ Portal ini juga menjadi fondasi modernisasi sistem ZISWAF: stack baru (Vue + Vit
 
 ### 5.1 In-scope (Portal penuh)
 
-- Autentikasi dan manajemen sesi.
-- Multi-tenant dengan switcher untuk 2 perusahaan.
-- Dashboard per peran.
-- Modul Keuangan (laporan & ringkasan).
-- Modul Program (daftar, status, realisasi).
-- Modul Penghimpunan (capaian, donatur, channel).
-- Modul Back Office (user, role, master data, audit log).
-- Role-based access control (RBAC).
+**Tahap awal (Fase 1–3) — Read & visualisasi:**
+
+- Autentikasi & manajemen sesi (Fase 1 dummy → Fase 3 production cookie httpOnly).
+- Multi-tenant + multi-cabang dengan switcher (perusahaan × cabang).
+- Dashboard per peran dengan beragam view (KPI, trend, distribusi, capaian, transaksi terbaru).
+- Modul Keuangan — **read & laporan**: penerimaan, penyaluran, saldo per dana, distribusi asnaf, drill-down per cabang, export.
+- Modul Program — **read**: daftar/status/realisasi program, penerima manfaat.
+- Modul Penghimpunan — **read**: capaian, channel, donatur, target vs realisasi.
+- Manajemen user portal & role-cabang (Fase 3) — write **terbatas pada user portal**, bukan data bisnis.
+- Audit log viewer (Fase 3).
+
+**Tahap berikutnya (Fase 4–5) — Write & operasional:**
+
+- Input penyaluran dengan workflow otorisasi maker–checker (§7.8).
+- Posting jurnal keuangan ke buku besar.
+- Pengajuan/perubahan program.
+- Registrasi wakaf produktif.
+- Perubahan master data (COA, asnaf, channel, cabang) bila lembaga ingin self-manage.
+- Provisioning user & role escalation.
+
+RBAC scoped per (perusahaan × cabang).
 
 ### 5.2 Out-of-scope (eksplisit, untuk versi ini)
 
@@ -96,6 +119,8 @@ Portal ini juga menjadi fondasi modernisasi sistem ZISWAF: stack baru (Vue + Vit
 - Existing DB memiliki struktur data yang cukup lengkap untuk modul-modul yang direncanakan.
 - Pengguna mengakses portal melalui jaringan internal/VPN organisasi (tidak public-facing di fase awal).
 - Stakeholder bersedia menyediakan domain lead untuk validasi setiap modul.
+- Setiap perusahaan ZISWAF memiliki struktur cabang (mis. cabang regional / kantor cabang). Existing DB sudah merepresentasikan cabang (kolom `branch_id` di tabel transaksi); portal mengikuti struktur existing tanpa schema migration.
+- User dapat punya akses ke 1+ cabang dalam 1+ perusahaan; akses & data di-scope per (perusahaan, cabang). Role manajemen perusahaan dapat punya wildcard "semua cabang".
 
 ### 6.2 Constraint
 
@@ -130,16 +155,36 @@ Portal ini juga menjadi fondasi modernisasi sistem ZISWAF: stack baru (Vue + Vit
 - Logout mengakhiri session di sisi server (cookie invalidation).
 - (Opsional, evaluasi terpisah) Integrasi SSO/OIDC jika organisasi sudah memiliki Identity Provider.
 
-### 7.2 Multi-Tenant
+### 7.2 Multi-Tenant & Multi-Cabang
 
-- Setiap user memiliki **satu atau lebih** keanggotaan tenant (Perusahaan A, Perusahaan B, atau keduanya).
-- Setiap user memiliki **satu tenant default** yang dipakai sebagai konteks awal setelah login.
-- **Tenant switcher** ditampilkan di header aplikasi (dropdown), menunjukkan tenant aktif dan daftar tenant lain yang dapat diakses.
-- Memilih tenant lain → konteks aplikasi berubah, data di seluruh halaman me-reload sesuai tenant baru, **tanpa logout**.
-- Indikator tenant aktif harus selalu jelas di UI (badge/label di header, idealnya juga warna aksen).
-- **Isolasi data:** semua query dan endpoint API wajib di-scope ke `tenant_id` aktif. Backend menolak permintaan yang mencoba mengakses tenant yang tidak menjadi keanggotaan user.
-- Setiap perpindahan tenant tercatat di audit log (user, tenant lama, tenant baru, waktu).
-- Tidak ada tampilan agregat lintas-tenant di fase awal. Konsolidasi (jika dibutuhkan) menjadi pertimbangan fase lanjutan.
+Hierarki entitas: **Perusahaan (tenant)** → **Cabang (branch)** → **Data transaksional**.
+
+#### Tenant (Perusahaan)
+- Setiap user memiliki **satu atau lebih** keanggotaan perusahaan.
+- Setiap user memiliki **satu perusahaan default** sebagai konteks awal.
+
+#### Cabang (Branch)
+- Setiap perusahaan memiliki **satu atau lebih cabang**. Salah satu cabang ditandai sebagai **HQ** (kantor pusat).
+- Setiap user memiliki **akses ke satu/beberapa cabang** dalam perusahaan tertentu (atau wildcard "semua cabang" untuk role manajemen perusahaan).
+- Setiap user memiliki **satu cabang default per perusahaan** yang dipakai sebagai konteks awal.
+
+#### Switcher di UI
+- Header menampilkan konteks aktif: contohnya `Perusahaan A · Cabang Jakarta ▾`.
+- Klik switcher → menu 2-level: pilih perusahaan → pilih cabang dalam perusahaan tersebut.
+- Untuk user dengan wildcard "semua cabang", tersedia opsi tambahan **"Konsolidasi (semua cabang)"** — dashboard menampilkan agregat lintas cabang perusahaan tersebut.
+- Perpindahan konteks (perusahaan atau cabang) → data di seluruh halaman me-reload, **tanpa logout**.
+
+#### Isolasi data
+- Semua query dan endpoint wajib di-scope ke `(tenant_id, branch_id)` aktif (atau `tenant_id` saja saat mode konsolidasi).
+- Backend menolak permintaan yang mencoba akses ke perusahaan/cabang di luar keanggotaan user.
+- Tidak ada tampilan agregat lintas-perusahaan di fase awal; konsolidasi hanya **lintas cabang dalam satu perusahaan**.
+
+#### Audit
+- Setiap perpindahan konteks tercatat di audit log (user, dari → ke perusahaan/cabang, waktu).
+
+#### Implementasi awal vs target
+- **Fase 1 (MVP)**: switcher perusahaan saja (cabang belum ada di dummy data).
+- **Fase 2 ke atas**: tambah dimensi cabang saat koneksi ke existing DB; switcher 2-level aktif; mode konsolidasi tersedia untuk role manajemen.
 
 ### 7.3 Dashboard
 
@@ -192,6 +237,72 @@ Modul ini bersifat **read-only di MVP/awal**: hanya menampilkan data dari existi
 - **Master Data Viewer** (read di awal, CRUD bertahap): kategori program, daftar asnaf, daftar channel penghimpunan, kategori muzakki/donatur — tergantung kebutuhan dan ketersediaan di existing DB.
 - **Audit Log Viewer**: log siapa melakukan apa, kapan, di tenant mana. Filter user, tenant, periode, jenis aksi.
 - **Konfigurasi Sistem**: parameter portal (label, timezone, periode fiskal, dll).
+
+### 7.8 Otorisasi & Workflow Approval
+
+#### 7.8.1 Prinsip
+
+Beberapa proses input data di portal melibatkan **otorisasi maker–checker** (2-eyes principle minimum): user pembuat (maker) tidak boleh sekaligus jadi penerima persetujuan. Tujuannya: kontrol risiko, akuntabilitas, audit trail jelas, dan mencegah kesalahan/fraud satu pihak.
+
+#### 7.8.2 Proses yang membutuhkan otorisasi
+
+| Domain | Proses | Fase |
+| --- | --- | --- |
+| Keuangan | Penyaluran dana (disbursement) | 2 |
+| Keuangan | Posting jurnal ke buku besar | 2 |
+| Keuangan / Master | Tambah/ubah master data: COA, asnaf, channel penghimpunan | 2 |
+| Program | Pengajuan program baru, pengakhiran/pembatalan program | 3 |
+| Wakaf | Registrasi wakaf produktif (aset tanah/properti) | 3 |
+| Back Office | Provisioning user baru, role escalation, perubahan tenant membership | 4 |
+
+Daftar di atas dapat diperluas seiring evolusi sistem; mekanisme di §7.8.4 didesain agar mudah menambah jenis record baru.
+
+#### 7.8.3 Pattern dasar: Maker–Checker + threshold opsional
+
+- **Default**: setiap proses di atas minimal 2-eyes (maker + 1 approver).
+- **Threshold opsional** per proses: dapat dikonfigurasi — di bawah nilai/risk tertentu auto-approve, di atas threshold wajib approval (atau butuh approver tier lebih tinggi).
+- **Eskalasi**: untuk nilai sangat besar (mis. penyaluran ≥ Rp 500 juta), approver tier eksekutif (Pimpinan) wajib turut menyetujui.
+- **Self-approval prevention**: user yang menjadi maker tidak boleh menjadi approver record yang sama; di-enforce di backend, bukan hanya UI.
+
+Threshold awal disetel konservatif (semua butuh approval); pelonggaran dilakukan via Back Office.
+
+#### 7.8.4 State machine record
+
+Setiap record yang masuk approval flow memiliki status:
+
+```text
+draft ──submit──► submitted ──approve──► approved ──post──► posted
+                       │                     │
+                       ├──reject──► rejected (maker bisa revisi)
+                       └──recall──► recalled (maker tarik balik)
+```
+
+| Status | Definisi |
+| --- | --- |
+| `draft` | Maker baru membuat, belum submit |
+| `submitted` | Diajukan, menunggu review |
+| `approved` | Disetujui approver, siap diposting |
+| `rejected` | Ditolak approver dengan alasan; maker dapat revisi atau hangus |
+| `recalled` | Maker tarik balik sebelum approver memutuskan |
+| `posted` | Final & efektif (jurnal masuk buku besar, dll) |
+
+Beberapa transisi tambahan dapat dimasukkan saat implementasi (mis. `under_review` untuk locking).
+
+#### 7.8.5 Audit & notifikasi
+
+- **Audit trail wajib**: setiap transisi state dicatat di `audit_log` dengan user, timestamp, alasan (untuk `rejected`), dan tenant.
+- **Notifikasi**: approver menerima notifikasi (in-app bell + email opsional di fase berikutnya) saat ada record dengan status `submitted` menunggu approval.
+- **SLA approval** (opsional): dapat dikonfigurasi (mis. approver harus respon dalam 2 hari kerja; jika tidak, eskalasi ke tier atas).
+
+#### 7.8.6 Dampak ke role matriks
+
+Role di §8 akan diperluas saat Fase 2 dengan permission scoped per modul:
+
+- `<modul>:create` — maker (boleh bikin draft & submit)
+- `<modul>:approve` — checker (boleh approve/reject)
+- `<modul>:post` — final posting (biasanya sama dengan approve untuk non-keuangan; finance dipisah)
+
+Detail mapping permission per role akan dikunci pada saat Fase 2 dimulai, mengacu pada matriks §8 yang sudah ada.
 
 ## 8. Model Akses & Role
 
@@ -261,15 +372,18 @@ Hal yang wajib tercatat di audit log:
 
 ## 10. Fase / Roadmap
 
-| Fase | Lingkup | Output utama |
-| --- | --- | --- |
-| **Fase 1 — MVP** | Dummy login + dashboard skeleton + tenant switcher | Validasi flow login → multi-tenant → dashboard end-to-end |
-| **Fase 2** | Modul Keuangan (read & report) | Laporan penerimaan/penyaluran/saldo, distribusi asnaf |
-| **Fase 3** | Modul Program & Penghimpunan | Daftar/detail program, capaian penghimpunan, daftar donatur |
-| **Fase 4** | Modul Back Office + Production Auth | User/role management, audit log viewer, cookie httpOnly session |
-| **Fase 5+** | Hardening, observability, optimasi, evaluasi API Gateway | Sesuai milestone teknis di [`docs/architecture.md`](./architecture.md) §28 |
+Strategi: **read-first**. Existing DB sudah berisi data — portal memberi value dengan pengalaman read yang baik sebelum membangun input.
 
-Roadmap teknis (deploy, contract test, migrasi Go) berjalan paralel sesuai architecture.md §28; BRD ini berfokus pada urutan fitur dari sudut bisnis.
+| Fase | Lingkup | Sifat | Output utama |
+| --- | --- | --- | --- |
+| **Fase 1 — MVP** | Login dummy + dashboard skeleton + tenant switcher (cabang menyusul di Fase 2) | Read (dummy) | Validasi flow & UX end-to-end |
+| **Fase 2 — Dashboard & Laporan ZISWAF** | Koneksi ke existing DB. Dashboard kaya per modul (Keuangan/Program/Penghimpunan). Multi-cabang switcher aktif + mode konsolidasi. Laporan + export. | Read | User langsung dapat manfaat dari data existing; drill-down per cabang; konsolidasi |
+| **Fase 3 — Manajemen User Portal + Production Auth** | Cookie httpOnly session, manajemen user portal & role-cabang, audit log viewer | Read + Write **terbatas** (user portal saja, bukan data bisnis) | Self-service akses control + foundation security |
+| **Fase 4 — Input Operasional Pertama: Penyaluran** | Form penyaluran + workflow maker–checker (§7.8) + posting ke buku besar via approval | Write transaksional pertama | Fitur write efektif pertama; pattern reusable untuk modul write lain |
+| **Fase 5 — Input Lanjutan** | Pengajuan program, registrasi wakaf produktif, posting jurnal manual, perubahan master data | Write | Bertahap menggantikan input dari sistem lama |
+| **Fase 6+ — Scale** | API gateway (Kong), migrasi Go per modul, evaluasi mobile/partner API | Infra | Skala consumer & performa |
+
+Roadmap teknis (deploy, contract test, migrasi Go) berjalan paralel sesuai [`docs/architecture.md`](./architecture.md) §28; PRD ini berfokus pada urutan fitur dari sudut produk.
 
 ## 11. Kriteria Penerimaan MVP (Fase 1)
 
@@ -295,7 +409,7 @@ MVP dianggap selesai jika seluruh kriteria berikut terpenuhi:
 | R2 | Multi-tenant data leak (user A melihat data tenant B) | Tinggi | Rendah | Tenant scoping di BFF & backend; contract test khusus tenant isolation; review wajib pada setiap PR yang menyentuh query |
 | R3 | Single point of failure ke existing DB (downtime existing DB → portal down) | Tinggi | Rendah | Cache hot data via Redis; circuit breaker di BFF; halaman degraded mode |
 | R4 | Auth dummy ter-bawa ke production | Sangat tinggi (security) | Rendah | Env flag eksplisit (`AUTH_MODE=dummy`); gating release; checklist pre-prod |
-| R5 | Scope creep modul (mis. permintaan akuntansi penuh) | Sedang | Tinggi | BRD ini sebagai baseline; perubahan via change request resmi |
+| R5 | Scope creep modul (mis. permintaan akuntansi penuh) | Sedang | Tinggi | PRD ini sebagai baseline; perubahan via change request resmi |
 | R6 | Ketergantungan pada satu domain lead per modul (bottleneck UAT) | Sedang | Sedang | Penunjukan backup reviewer untuk setiap modul |
 | R7 | Performa lambat pada agregasi keuangan dataset besar | Sedang | Sedang | Indexing review pada existing DB; materialized view jika perlu; pre-aggregation di backend |
 
@@ -319,6 +433,9 @@ MVP dianggap selesai jika seluruh kriteria berikut terpenuhi:
 | **BFF** | Backend-for-Frontend; lapisan API yang melayani kebutuhan spesifik frontend |
 | **MVP** | Minimum Viable Product — versi paling sederhana yang sudah berguna |
 | **UAT** | User Acceptance Testing — pengujian penerimaan oleh pengguna bisnis |
+| **Cabang (Branch)** | Unit operasional di bawah perusahaan ZISWAF (mis. cabang regional / kantor cabang) |
+| **HQ** | Head Quarter — kantor pusat suatu perusahaan; satu cabang ditandai sebagai HQ |
+| **Konsolidasi** | Tampilan agregat lintas cabang dalam satu perusahaan (bukan lintas perusahaan) |
 
 ## 14. Referensi
 
@@ -328,4 +445,5 @@ MVP dianggap selesai jika seluruh kriteria berikut terpenuhi:
 
 | Versi | Tanggal | Penulis | Catatan |
 | --- | --- | --- | --- |
-| 0.1 | 2026-05-20 | Draft awal | Versi draft untuk review stakeholder |
+| 0.1 | 2026-05-20 | Draft awal | Versi draft (BRD) untuk review stakeholder |
+| 0.2 | 2026-05-20 | Pivot ke PRD | Read-first roadmap (Fase 2 dashboard & laporan dari existing DB; fitur input transaksional digeser ke Fase 4+); tambah konsep multi-cabang (Perusahaan × Cabang); tambah §1.1 strategi, §1.2 multi-cabang, §7.8 otorisasi maker–checker; rename `docs/brd.md` → `docs/prd.md` |

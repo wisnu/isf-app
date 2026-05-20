@@ -777,6 +777,102 @@ Jika nanti service sudah terpisah matang, pertimbangkan:
 - komunikasi antar service via API/event
 ```
 
+## 15A. Workflow Approval / Otorisasi
+
+Beberapa proses input (penyaluran, posting jurnal, master data, program, wakaf, user provisioning) wajib lewat workflow approval per PRD §7.8. Bagian ini mendefinisikan tabel pendukung dan pola service.
+
+### 15A.1 Tabel umum
+
+Ditempatkan di portal DB (atau existing DB ketika Fase 2 mulai). Generik agar bisa di-reuse lintas modul.
+
+```sql
+CREATE TABLE approval_requests (
+  id            UUID PRIMARY KEY,
+  tenant_id     TEXT NOT NULL,
+  record_type   TEXT NOT NULL,    -- 'disbursement', 'journal', 'coa_change', 'program', 'wakaf', 'user_provisioning', ...
+  record_id     TEXT NOT NULL,    -- ID record yang di-approve
+  status        TEXT NOT NULL,    -- draft|submitted|approved|rejected|recalled|posted
+  amount        NUMERIC NULL,     -- untuk threshold check; null bila non-finansial
+  maker_id      TEXT NOT NULL,
+  approver_id   TEXT NULL,
+  reason        TEXT NULL,        -- alasan reject
+  submitted_at  TIMESTAMP NULL,
+  decided_at    TIMESTAMP NULL,
+  posted_at     TIMESTAMP NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_approval_status ON approval_requests(tenant_id, status);
+CREATE INDEX idx_approval_record ON approval_requests(record_type, record_id);
+CREATE INDEX idx_approval_maker  ON approval_requests(maker_id, status);
+```
+
+```sql
+CREATE TABLE approval_rules (
+  id                       UUID PRIMARY KEY,
+  tenant_id                TEXT NOT NULL,
+  record_type              TEXT NOT NULL,
+  -- threshold: opsional. NULL berarti tidak diskip (selalu butuh approval).
+  auto_approve_below       NUMERIC NULL,
+  required_approver_role   TEXT NOT NULL,    -- role yang wajib approve
+  escalate_to_role         TEXT NULL,
+  escalate_above           NUMERIC NULL,
+  sla_hours                INTEGER NULL,
+  is_active                BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_by               TEXT NOT NULL,
+  updated_at               TIMESTAMP NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, record_type)
+);
+```
+
+### 15A.2 Service layer (shared)
+
+Setiap modul yang butuh approval memanggil `ApprovalService` dengan kontrak:
+
+- `submit(record_type, record_id, maker_id, tenant_id, amount?)` — cek rules → create `approval_requests` dengan status `submitted`. Kalau `amount < auto_approve_below`, langsung set `approved`.
+- `approve(request_id, approver_id)` — validasi:
+  1. `approver_id != maker_id` (self-approval prevention)
+  2. approver punya role `required_approver_role` (atau eskalasi) untuk tenant
+  3. status saat ini `submitted`
+  4. Jika lulus → update status `approved`, set `approver_id`, `decided_at`. Trigger callback ke modul (posting hook).
+- `reject(request_id, approver_id, reason)` — validasi serupa, set status `rejected`, simpan `reason`.
+- `recall(request_id, maker_id)` — hanya maker bisa recall, hanya bila status masih `submitted`.
+- `list_pending(approver_id, tenant_id)` — daftar request yang user bisa approve.
+
+### 15A.3 Endpoint pattern (BFF + Backend)
+
+```text
+POST /api/<module>/<record>/submit        # maker submit; create approval_request
+POST /api/<module>/<record>/approve       # checker approve; trigger posting hook
+POST /api/<module>/<record>/reject        # checker reject dengan alasan
+POST /api/<module>/<record>/recall        # maker tarik balik
+GET  /api/approvals/pending               # daftar pending untuk user yang request
+GET  /api/approvals/{id}/history          # audit history per request
+```
+
+Endpoint generik `/api/approvals/*` di BFF; tiap modul punya endpoint domain-specific `/api/<module>/<record>/*` yang internally memanggil ApprovalService.
+
+### 15A.4 Frontend pattern
+
+- Form record baru: dua tombol — **"Simpan Draft"** (status `draft`) dan **"Submit untuk Approval"** (status `submitted`).
+- Detail record: badge status (Draft/Submitted/Approved/Rejected/Posted) + action buttons sesuai role + status.
+- Halaman **"Persetujuan Pending"**: list `approval_requests` untuk approver, filter per modul.
+- Notification bell muncul saat ada `submitted` baru yang user-nya berwenang approve.
+- Modal approve butuh konfirmasi; modal reject wajib isi `reason`.
+
+### 15A.5 Anti-pattern
+
+- **Self-approval**: enforce di backend, jangan hanya UI.
+- **Mutate-then-approve**: record yang sudah `submitted` tidak boleh diubah field bisnisnya sampai `rejected` atau `recalled`. Lock di backend.
+- **Skip-state**: tidak boleh langsung `draft → posted`; wajib lewat `submitted` + `approved`.
+- **Hardcode threshold/role per modul**: gunakan `approval_rules` agar Back Office bisa adjust tanpa rilis.
+- **Lupa audit**: tiap transisi state wajib catat di `audit_log` (siapa, kapan, alasan).
+
+### 15A.6 Implementasi awal
+
+Fase 2 dimulai dengan dua flow: **posting jurnal** dan **penyaluran dana**. Pola yang sama di-reuse untuk modul lain saat fase berikutnya. Rule awal disetel "selalu butuh approval" untuk semua tipe, pelonggaran via Back Office (Fase 4) saat workflow stabil.
+
 ## 16. Pola Module Python
 
 Contoh struktur module:

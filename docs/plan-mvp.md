@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver the Fase 1 MVP defined in `docs/brd.md` §11 — dummy login, dashboard skeleton with 2 widgets, and tenant switcher — runnable end-to-end via `docker compose up`.
+**Goal:** Deliver the Fase 1 MVP defined in `docs/prd.md` §11 — dummy login, dashboard skeleton with 2 widgets, and tenant switcher — runnable end-to-end via `docker compose up`.
 
 **Architecture:** Three services per `docs/architecture.md`: Vue + Vite SPA (`web-vue`) → FastAPI BFF (`bff-api`) → FastAPI backend (`api-python`). Dummy auth via in-memory user list + cookie session at the BFF. No database in this fase; dashboard data is hardcoded in `api-python`. All three services run in **development mode** (hot reload) inside docker-compose with bind-mounted source.
 
@@ -1804,7 +1804,7 @@ If no changes: skip. If config tweaks were needed: commit them with a clear mess
 
 ## Self-review
 
-- **Spec coverage vs BRD §11:** Login (Task 5 + 11) ✓ — Tenant default after login (Task 5) ✓ — Switcher in header (Task 11) ✓ — Switch without logout (Tasks 6 + 10 + 11) ✓ — Active tenant indicator (Task 11) ✓ — Dashboard min 2 widgets (Task 11) ✓ — Logout (Tasks 5 + 11) ✓ — Tenant switch logged (`console.log` in auth store, Task 10) ✓ — Standard `{ data, meta }` response (Tasks 2 + 4) ✓ — Modern browser, 1280×800+ (Tasks 9–11 use CSS Grid, responsive) ✓.
+- **Spec coverage vs PRD §11:** Login (Task 5 + 11) ✓ — Tenant default after login (Task 5) ✓ — Switcher in header (Task 11) ✓ — Switch without logout (Tasks 6 + 10 + 11) ✓ — Active tenant indicator (Task 11) ✓ — Dashboard min 2 widgets (Task 11) ✓ — Logout (Tasks 5 + 11) ✓ — Tenant switch logged (`console.log` in auth store, Task 10) ✓ — Standard `{ data, meta }` response (Tasks 2 + 4) ✓ — Modern browser, 1280×800+ (Tasks 9–11 use CSS Grid, responsive) ✓.
 - **Placeholder scan:** none.
 - **Type/name consistency:** `active_tenant_id` consistent across BFF, store, components. `tenants` array shape consistent. `perusahaan_a` / `perusahaan_b` consistent in BFF, api-python, tests.
 - **Out-of-MVP slots untouched:** scaffolded `donors/zakat/waqf` modules, `infra/db/`, `infra/kong/`, `packages/api-contract/`, Go service — all untouched in this plan.

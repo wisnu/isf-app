@@ -551,7 +551,7 @@ app = create_app()
 
 ## Out of scope
 
-- Admin UI user/tenant management (Fase 4 BRD).
+- Admin UI user/tenant management (Fase 4 PRD).
 - Refresh token / silent re-auth.
 - MFA / WebAuthn / TOTP.
 - Password reset / verifikasi email.
