@@ -3,6 +3,8 @@ import { Building2, Check, LogOut, Moon, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+import NotificationBell from '@/components/NotificationBell.vue'
+import SystemDate from '@/components/SystemDate.vue'
 import Button from '@/components/ui/Button.vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
@@ -31,7 +33,7 @@ async function logout() {
 
 <template>
   <header
-    class="bg-primary text-primary-foreground border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4"
+    class="bg-primary text-primary-foreground border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4 shrink-0"
   >
     <div class="flex items-baseline gap-1.5 min-w-0">
       <span class="font-bold text-base sm:text-lg">isf-app</span>
@@ -39,9 +41,15 @@ async function logout() {
     </div>
 
     <div class="flex items-center gap-2 sm:gap-3">
+      <SystemDate />
+
       <DropdownMenu v-if="auth.user">
         <template #trigger>
-          <Button variant="ghost-on-primary" size="sm" class="gap-2 max-w-[180px] sm:max-w-none">
+          <Button
+            variant="ghost-on-primary"
+            size="sm"
+            class="gap-2 max-w-[180px] sm:max-w-none"
+          >
             <Building2 class="w-4 h-4 shrink-0" />
             <span class="truncate">{{ activeTenantName }}</span>
           </Button>
@@ -49,7 +57,7 @@ async function logout() {
         <DropdownMenuItem
           v-for="t in auth.user.tenants"
           :key="t.id"
-          @select="onSwitch(t.id)"
+          @click="onSwitch(t.id)"
         >
           <Check
             v-if="t.id === auth.activeTenantId"
@@ -63,6 +71,8 @@ async function logout() {
       <span v-if="auth.user" class="text-xs opacity-90 max-sm:hidden">
         {{ auth.user.name }}
       </span>
+
+      <NotificationBell v-if="auth.user" />
 
       <Button
         variant="ghost-on-primary"
