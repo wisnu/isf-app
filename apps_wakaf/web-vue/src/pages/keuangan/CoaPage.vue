@@ -57,7 +57,7 @@ const exporting = ref(false)
 const errorMsg = ref<string | null>(null)
 const search = ref('')
 const page = ref(1)
-const pageSize = ref(50)
+const pageSize = ref(25)
 const tipsOpen = ref(false)
 const compactMode = ref(false)
 
@@ -222,102 +222,56 @@ async function exportXlsx() {
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="space-y-3">
 
-    <!-- Status chip -->
-    <div class="flex items-center gap-1.5">
-      <span class="w-2 h-2 rounded-full bg-positive animate-pulse"></span>
-      <span class="text-xs font-medium text-muted">Accounting master data</span>
-    </div>
-
-    <!-- Page header -->
-    <header class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-        <p class="text-sm text-muted mt-0.5">
-          Kelola akun perkiraan dari existing DB ·
-          <code class="text-xs bg-background px-1.5 py-0.5 rounded-lg font-mono">transaction.account</code>
-        </p>
+    <!-- Page header: judul + tombol dalam satu baris -->
+    <header class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight">Chart of Accounts</h1>
+            <span class="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
+              <span class="w-1.5 h-1.5 rounded-full bg-positive"></span>
+              <code class="font-mono">transaction.account</code>
+            </span>
+          </div>
+          <p class="text-xs text-muted">Kelola akun perkiraan dari existing DB</p>
+        </div>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <Button variant="outline" class="gap-1.5 rounded-xl" :disabled="loading" @click="load()">
-          <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+      <div class="flex flex-wrap gap-1.5">
+        <Button variant="outline" size="sm" class="gap-1.5 h-8 rounded-lg text-xs" :disabled="loading" @click="load()">
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
           Reload
         </Button>
         <Button
           variant="outline"
-          class="gap-1.5 rounded-xl"
+          size="sm"
+          class="gap-1.5 h-8 rounded-lg text-xs"
           :disabled="exporting || loading || !data || data.pagination.total === 0"
-          :title="search ? 'Export filter aktif' : 'Export semua akun'"
           @click="exportXlsx"
         >
-          <Download class="w-4 h-4" :class="{ 'animate-pulse': exporting }" />
+          <Download class="w-3.5 h-3.5" :class="{ 'animate-pulse': exporting }" />
           {{ exporting ? 'Mengekspor…' : 'Export Excel' }}
         </Button>
-        <Button
-          class="gap-1.5 rounded-xl"
-          disabled
-          title="Write akan tersedia di Fase 4"
-        >
-          <Plus class="w-4 h-4" />
+        <Button size="sm" class="gap-1.5 h-8 rounded-lg text-xs" disabled>
+          <Plus class="w-3.5 h-3.5" />
           Tambah Akun
         </Button>
       </div>
     </header>
 
-    <Alert v-if="errorMsg" variant="destructive">
+    <Alert v-if="errorMsg" variant="destructive" class="py-2 text-xs">
       <strong>Error:</strong> {{ errorMsg }}
     </Alert>
 
-    <!-- Stats cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <Card>
-        <CardContent class="p-4 flex flex-col gap-2">
-          <p class="text-xs uppercase tracking-wide text-muted font-semibold">Total Akun</p>
-          <div class="flex items-end justify-between">
-            <p class="text-3xl font-bold tabular-nums">{{ stats.total }}</p>
-            <span class="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted mb-0.5">Semua</span>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent class="p-4 flex flex-col gap-2">
-          <p class="text-xs uppercase tracking-wide text-muted font-semibold">Aset</p>
-          <div class="flex items-end justify-between">
-            <p class="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{{ stats.aset }}</p>
-            <span class="text-[10px] px-2 py-0.5 rounded-full border border-emerald-300 text-emerald-600 mb-0.5">Aktif</span>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent class="p-4 flex flex-col gap-2">
-          <p class="text-xs uppercase tracking-wide text-muted font-semibold">Detail</p>
-          <div class="flex items-end justify-between">
-            <p class="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{{ stats.detail }}</p>
-            <span class="text-[10px] px-2 py-0.5 rounded-full border border-emerald-300 text-emerald-600 mb-0.5">Posting</span>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent class="p-4 flex flex-col gap-2">
-          <p class="text-xs uppercase tracking-wide text-muted font-semibold">Grup / Header</p>
-          <div class="flex items-end justify-between">
-            <p class="text-3xl font-bold tabular-nums">{{ stats.group }}</p>
-            <span class="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted mb-0.5">Struktur</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-
     <!-- Two-column: filter sidebar + data panel -->
-    <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[256px_1fr] gap-3 items-start">
 
       <!-- ── Filter Sidebar ── -->
       <Card>
-        <CardContent class="p-5">
+        <CardContent class="p-4">
 
-          <!-- Header -->
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-3">
             <span class="font-semibold text-sm">Filter</span>
             <button
               v-if="hasFilters"
@@ -330,120 +284,88 @@ async function exportXlsx() {
           </div>
 
           <!-- CARI AKUN -->
-          <div class="mb-5">
-            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-2">
-              Cari Akun
-            </label>
+          <div class="mb-3">
+            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-1.5">Cari Akun</label>
             <div class="relative">
-              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+              <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
               <Input
                 v-model="search"
                 placeholder="Kode, nama, atau parent…"
-                class="pl-9 rounded-xl text-sm"
+                class="pl-8 rounded-xl text-xs h-8"
               />
             </div>
           </div>
 
           <!-- TIPE -->
-          <div class="mb-5">
-            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-2">
-              Tipe
-            </label>
-            <div class="flex flex-wrap gap-1.5">
-              <!-- Semua pill -->
+          <div class="mb-3">
+            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-1.5">Tipe</label>
+            <div class="flex flex-wrap gap-1">
               <button
                 type="button"
-                :class="[
-                  'text-xs px-3 py-1 rounded-full border transition-colors',
+                :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
                   typeFilters.size === 0
                     ? 'bg-primary text-primary-foreground border-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
+                    : 'border-border text-muted hover:bg-background hover:text-foreground']"
                 @click="typeFilters = new Set()"
-              >
-                Semua
-              </button>
+              >Semua</button>
               <button
-                v-for="t in TYPE_OPTIONS"
-                :key="t.code"
+                v-for="t in TYPE_OPTIONS" :key="t.code"
                 type="button"
-                :class="[
-                  'text-xs px-3 py-1 rounded-full border transition-colors',
+                :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
                   typeFilters.has(t.code)
                     ? 'bg-primary text-primary-foreground border-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
+                    : 'border-border text-muted hover:bg-background hover:text-foreground']"
                 @click="toggleType(t.code)"
-              >
-                {{ t.label }}
-              </button>
+              >{{ t.label }}</button>
             </div>
           </div>
 
           <!-- SIFAT AKUN -->
-          <div class="mb-5">
-            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-2">
-              Sifat Akun
-            </label>
-            <div class="flex flex-wrap gap-1.5">
+          <div class="mb-3">
+            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-1.5">Sifat Akun</label>
+            <div class="flex flex-wrap gap-1">
               <button
-                v-for="opt in SIFAT_OPTIONS"
-                :key="opt.value"
+                v-for="opt in SIFAT_OPTIONS" :key="opt.value"
                 type="button"
-                :class="[
-                  'text-xs px-3 py-1 rounded-full border transition-colors',
+                :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
                   sifatFilter === opt.value
                     ? 'bg-primary text-primary-foreground border-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
+                    : 'border-border text-muted hover:bg-background hover:text-foreground']"
                 @click="sifatFilter = opt.value"
-              >
-                {{ opt.label }}
-              </button>
+              >{{ opt.label }}</button>
             </div>
           </div>
 
           <!-- LEVEL -->
-          <div class="mb-4">
-            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-2">
-              Level
-            </label>
-            <div class="flex flex-wrap gap-1.5">
+          <div class="mb-3">
+            <label class="text-[10px] uppercase tracking-widest text-muted font-semibold block mb-1.5">Level</label>
+            <div class="flex flex-wrap gap-1">
               <button
-                v-for="lv in LEVEL_OPTIONS"
-                :key="String(lv.value)"
+                v-for="lv in LEVEL_OPTIONS" :key="String(lv.value)"
                 type="button"
-                :class="[
-                  'text-xs px-3 py-1 rounded-full border transition-colors tabular-nums',
+                :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors tabular-nums',
                   levelMax === lv.value
                     ? 'bg-primary text-primary-foreground border-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
+                    : 'border-border text-muted hover:bg-background hover:text-foreground']"
                 @click="levelMax = lv.value"
-              >
-                {{ lv.label }}
-              </button>
+              >{{ lv.label }}</button>
             </div>
           </div>
 
           <!-- Tips penggunaan collapsible -->
-          <div class="border-t border-border pt-3 mt-4">
+          <div class="border-t border-border pt-2.5 mt-3">
             <button
               type="button"
-              class="w-full flex items-center justify-between text-sm font-medium text-foreground hover:text-primary transition-colors"
+              class="w-full flex items-center justify-between text-xs font-medium text-foreground hover:text-primary transition-colors"
               @click="tipsOpen = !tipsOpen"
             >
               <span>Tips penggunaan</span>
-              <ChevronDown
-                class="w-4 h-4 transition-transform duration-200 text-muted"
-                :class="{ 'rotate-180': tipsOpen }"
-              />
+              <ChevronDown class="w-3.5 h-3.5 transition-transform duration-200 text-muted" :class="{ 'rotate-180': tipsOpen }" />
             </button>
-            <div v-if="tipsOpen" class="mt-2 space-y-1.5 text-xs text-muted">
+            <div v-if="tipsOpen" class="mt-1.5 space-y-1 text-[11px] text-muted">
               <p>• Klik beberapa <strong>Tipe</strong> sekaligus untuk multi-filter</p>
-              <p>• Filter <strong>Level ≤ N</strong> membantu melihat struktur hierarki tanpa akun detail</p>
-              <p>• <strong>Export Excel</strong> menerapkan semua filter yang aktif</p>
-              <p>• Kolom <strong>Sifat: Detail</strong> = akun bisa dipakai transaksi</p>
+              <p>• <strong>Level ≤ N</strong> tampilkan struktur tanpa detail</p>
+              <p>• <strong>Export Excel</strong> ikut filter aktif</p>
             </div>
           </div>
 
@@ -455,64 +377,57 @@ async function exportXlsx() {
         <CardContent class="p-0">
 
           <!-- Panel header -->
-          <div class="px-5 py-4 border-b border-border flex flex-wrap items-start justify-between gap-3 rounded-t-2xl bg-surface">
-            <div>
-              <h2 class="font-semibold text-base">Daftar Akun</h2>
-              <p class="text-xs text-muted mt-0.5">
-                <template v-if="data">
-                  Menampilkan {{ data.rows.length }} dari {{ data.pagination.total }} akun
-                </template>
+          <div class="px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 rounded-t-2xl">
+            <div class="flex items-center gap-3">
+              <h2 class="font-semibold text-sm">Daftar Akun</h2>
+              <p class="text-[11px] text-muted">
+                <template v-if="data">{{ data.rows.length }} dari {{ data.pagination.total }} akun</template>
                 <template v-else>Memuat…</template>
               </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <select
-                class="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                title="Urutkan"
+                class="text-[11px] border border-border rounded-lg px-2 py-1 bg-surface text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option>Urut kode</option>
                 <option>Urut nama</option>
               </select>
               <button
                 type="button"
-                :class="[
-                  'text-xs px-3 py-1.5 rounded-lg border transition-colors',
+                :class="['text-[11px] px-2.5 py-1 rounded-lg border transition-colors',
                   compactMode
                     ? 'bg-primary/10 border-primary text-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
+                    : 'border-border text-muted hover:bg-background hover:text-foreground']"
                 @click="compactMode = !compactMode"
-              >
-                Mode compact
-              </button>
+              >Mode compact</button>
             </div>
           </div>
 
           <!-- Loading -->
-          <div v-if="loading && !data" class="flex justify-center p-12">
-            <Loader2 class="w-6 h-6 animate-spin text-primary" />
+          <div v-if="loading && !data" class="flex justify-center py-10">
+            <Loader2 class="w-5 h-5 animate-spin text-primary" />
           </div>
 
           <!-- Empty -->
-          <div v-else-if="data && data.rows.length === 0" class="flex flex-col items-center gap-2 p-12 text-muted">
-            <Search class="w-8 h-8 opacity-30" />
-            <p class="text-sm">Tidak ada akun yang sesuai filter</p>
+          <div v-else-if="data && data.rows.length === 0" class="flex flex-col items-center gap-1.5 py-10 text-muted">
+            <Search class="w-6 h-6 opacity-30" />
+            <p class="text-xs">Tidak ada akun yang sesuai filter</p>
           </div>
 
           <!-- Table -->
           <div v-else-if="data" class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full">
               <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
                 <tr>
-                  <th class="text-left px-4 py-2.5 font-semibold w-28">Kode</th>
-                  <th class="text-left px-4 py-2.5 font-semibold">Nama Akun</th>
-                  <th class="text-left px-4 py-2.5 font-semibold w-28">Tipe</th>
-                  <th class="text-left px-4 py-2.5 font-semibold w-24 max-md:hidden">Parent</th>
-                  <th class="text-center px-4 py-2.5 font-semibold w-28">
+                  <th class="text-left px-3 py-1.5 font-semibold w-24">Kode</th>
+                  <th class="text-left px-3 py-1.5 font-semibold">Nama Akun</th>
+                  <th class="text-left px-3 py-1.5 font-semibold w-24">Tipe</th>
+                  <th class="text-left px-3 py-1.5 font-semibold w-20 max-md:hidden">Parent</th>
+                  <th class="text-center px-3 py-1.5 font-semibold w-24">
                     <Tooltip side="bottom" content-class="max-w-xs">
                       <template #trigger>
                         <span class="inline-flex items-center gap-1 cursor-help select-none" tabindex="0">
-                          Sifat <HelpCircle class="w-3 h-3 opacity-50" />
+                          Sifat <HelpCircle class="w-2.5 h-2.5 opacity-50" />
                         </span>
                       </template>
                       <div class="space-y-1.5 normal-case tracking-normal text-xs">
@@ -520,18 +435,16 @@ async function exportXlsx() {
                           <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-positive/10 text-positive border border-positive/20">
                             <Check class="w-2.5 h-2.5" /> DETAIL
                           </span>
-                          <span>Akun leaf, bisa dipakai transaksi</span>
+                          <span>Akun leaf, bisa transaksi</span>
                         </div>
                         <div class="flex items-center gap-2">
-                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/20 text-muted border border-border">
-                            GRUP
-                          </span>
-                          <span>Akun header/induk, tidak bisa transaksi</span>
+                          <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/20 text-muted border border-border">GRUP</span>
+                          <span>Akun header, tidak bisa transaksi</span>
                         </div>
                       </div>
                     </Tooltip>
                   </th>
-                  <th class="text-center px-4 py-2.5 font-semibold w-16">Aksi</th>
+                  <th class="text-center px-3 py-1.5 font-semibold w-12">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -539,67 +452,41 @@ async function exportXlsx() {
                   v-for="row in data.rows"
                   :key="row.code"
                   :class="[
-                    'border-b border-border/50 transition-colors hover:bg-muted/5',
-                    !row.is_detail ? 'bg-background/40' : '',
-                    compactMode ? '' : '',
+                    'border-b border-border/40 transition-colors hover:bg-muted/5',
+                    !row.is_detail ? 'bg-background/50' : '',
                   ]"
                 >
-                  <!-- Kode -->
-                  <td :class="['px-4 font-mono text-xs text-muted tabular-nums', compactMode ? 'py-1.5' : 'py-2.5']">
+                  <td :class="['px-3 font-mono text-[11px] text-muted tabular-nums', compactMode ? 'py-0.5' : 'py-1']">
                     {{ row.code }}
                   </td>
-
-                  <!-- Nama Akun (with indent + tree indicator) -->
-                  <td :class="['px-4', compactMode ? 'py-1.5' : 'py-2.5']">
-                    <div class="flex items-center gap-1.5" :style="indentStyle(row.level)">
-                      <span
-                        v-if="!row.is_detail"
-                        class="text-[10px] text-muted/60 select-none shrink-0"
-                      >▸</span>
-                      <Folder v-if="!row.is_detail" class="w-3.5 h-3.5 text-muted/50 shrink-0" />
-                      <FileText v-else class="w-3.5 h-3.5 text-muted/30 shrink-0" />
-                      <span :class="['leading-snug', !row.is_detail ? 'font-semibold text-foreground' : 'text-foreground/90']">
+                  <td :class="['px-3', compactMode ? 'py-0.5' : 'py-1']">
+                    <div class="flex items-center gap-1" :style="indentStyle(row.level)">
+                      <span v-if="!row.is_detail" class="text-[9px] text-muted/50 select-none shrink-0">▸</span>
+                      <Folder v-if="!row.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
+                      <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
+                      <span :class="['text-xs leading-snug', !row.is_detail ? 'font-semibold' : '']">
                         {{ row.name ?? '—' }}
                       </span>
                     </div>
                   </td>
-
-                  <!-- Tipe badge -->
-                  <td :class="['px-4', compactMode ? 'py-1.5' : 'py-2.5']">
-                    <span
-                      :class="[
-                        'inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md',
-                        typeBadgeClass(row.type_label),
-                      ]"
-                    >
+                  <td :class="['px-3', compactMode ? 'py-0.5' : 'py-1']">
+                    <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(row.type_label)]">
                       {{ row.type_label }}
                     </span>
                   </td>
-
-                  <!-- Parent -->
-                  <td :class="['px-4 font-mono text-xs text-muted/70 max-md:hidden tabular-nums', compactMode ? 'py-1.5' : 'py-2.5']">
+                  <td :class="['px-3 font-mono text-[11px] text-muted/60 max-md:hidden tabular-nums', compactMode ? 'py-0.5' : 'py-1']">
                     {{ row.parent ?? '—' }}
                   </td>
-
-                  <!-- Sifat -->
-                  <td :class="['px-4 text-center', compactMode ? 'py-1.5' : 'py-2.5']">
-                    <span
-                      v-if="row.is_detail"
-                      class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-positive/10 text-positive border border-positive/20"
-                    >
-                      <Check class="w-2.5 h-2.5" /> DETAIL
+                  <td :class="['px-3 text-center', compactMode ? 'py-0.5' : 'py-1']">
+                    <span v-if="row.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
+                      <Check class="w-2 h-2" /> DETAIL
                     </span>
-                    <span
-                      v-else
-                      class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-muted/10 text-muted border border-border"
-                    >
+                    <span v-else class="inline-block text-[9px] font-medium px-1.5 py-px rounded bg-muted/10 text-muted border border-border">
                       GRUP
                     </span>
                   </td>
-
-                  <!-- Aksi -->
-                  <td :class="['px-4 text-center', compactMode ? 'py-1.5' : 'py-2.5']">
-                    <span class="text-xs text-muted/40">—</span>
+                  <td :class="['px-3 text-center', compactMode ? 'py-0.5' : 'py-1']">
+                    <span class="text-[10px] text-muted/30">—</span>
                   </td>
                 </tr>
               </tbody>
@@ -608,52 +495,36 @@ async function exportXlsx() {
 
           <!-- Pagination footer -->
           <div
-            v-if="data && pageInfo.totalPages > 1"
-            class="px-5 py-3 border-t border-border flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
+            v-if="data && pageInfo.totalPages > 0"
+            class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
           >
-            <p class="text-xs text-muted tabular-nums">
-              {{ pageInfo.from }}–{{ pageInfo.to }} dari {{ pageInfo.total }}
+            <p class="text-[11px] text-muted tabular-nums">
+              {{ pageInfo.from }}–{{ pageInfo.to }} / {{ pageInfo.total }}
             </p>
             <div class="flex items-center gap-1">
-              <button
-                :disabled="page === 1"
-                class="p-1.5 rounded-lg border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors"
-                @click="goto(1)"
-              >
-                <ChevronsLeft class="w-3.5 h-3.5" />
+              <button :disabled="page === 1" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(1)">
+                <ChevronsLeft class="w-3 h-3" />
               </button>
-              <button
-                :disabled="page === 1"
-                class="p-1.5 rounded-lg border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors"
-                @click="goto(page - 1)"
-              >
-                <ChevronLeft class="w-3.5 h-3.5" />
+              <button :disabled="page === 1" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page - 1)">
+                <ChevronLeft class="w-3 h-3" />
               </button>
-              <span class="text-xs px-3 py-1 rounded-lg bg-background border border-border tabular-nums">
+              <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">
                 {{ page }} / {{ pageInfo.totalPages }}
               </span>
-              <button
-                :disabled="page >= pageInfo.totalPages"
-                class="p-1.5 rounded-lg border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors"
-                @click="goto(page + 1)"
-              >
-                <ChevronRight class="w-3.5 h-3.5" />
+              <button :disabled="page >= pageInfo.totalPages" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page + 1)">
+                <ChevronRight class="w-3 h-3" />
               </button>
-              <button
-                :disabled="page >= pageInfo.totalPages"
-                class="p-1.5 rounded-lg border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors"
-                @click="goto(pageInfo.totalPages)"
-              >
-                <ChevronsRight class="w-3.5 h-3.5" />
+              <button :disabled="page >= pageInfo.totalPages" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(pageInfo.totalPages)">
+                <ChevronsRight class="w-3 h-3" />
               </button>
             </div>
             <select
               v-model.number="pageSize"
-              class="text-xs border border-border rounded-lg px-2 py-1.5 bg-surface text-foreground"
+              class="text-[11px] border border-border rounded-md px-2 py-0.5 bg-surface text-foreground"
             >
+              <option :value="15">15/hal</option>
               <option :value="25">25/hal</option>
               <option :value="50">50/hal</option>
-              <option :value="100">100/hal</option>
             </select>
           </div>
 
