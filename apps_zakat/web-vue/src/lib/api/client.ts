@@ -8,7 +8,7 @@ function resolveBaseUrl(): string {
   return 'http://localhost:7000'
 }
 
-const BASE_URL = resolveBaseUrl()
+export const BASE_URL = resolveBaseUrl()
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public status: number) {
@@ -33,7 +33,38 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (payload as { data: T }).data
 }
 
+async function downloadBlob(path: string, suggestedFilename: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}${path}`, { credentials: 'include' })
+  if (!response.ok) {
+    let code = `HTTP_${response.status}`
+    let message = response.statusText
+    try {
+      const j = await response.json()
+      code = j?.error?.code ?? code
+      message = j?.error?.message ?? message
+    } catch {
+      // not JSON
+    }
+    throw new ApiError(code, message, response.status)
+  }
+  // Prefer filename dari Content-Disposition kalau ada
+  const disp = response.headers.get('Content-Disposition') ?? ''
+  const match = /filename\s*=\s*"?([^";]+)"?/i.exec(disp)
+  const filename = match?.[1] ?? suggestedFilename
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
+  downloadBlob,
 }

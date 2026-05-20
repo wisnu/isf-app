@@ -1,5 +1,20 @@
 <script setup lang="ts">
-import { Check, FileText, Folder, Loader2, Lock, Plus, RefreshCw, Search } from 'lucide-vue-next'
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Download,
+  FileText,
+  Folder,
+  HelpCircle,
+  Loader2,
+  Lock,
+  Plus,
+  RefreshCw,
+  Search,
+} from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -7,6 +22,7 @@ import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Input from '@/components/ui/Input.vue'
+import Tooltip from '@/components/ui/Tooltip.vue'
 import { api, ApiError } from '@/lib/api/client'
 
 interface CoaRow {
@@ -21,27 +37,40 @@ interface CoaRow {
   balance: number
 }
 
+interface Pagination {
+  page: number
+  page_size: number
+  total: number
+  total_pages: number
+}
+
 interface CoaList {
   rows: CoaRow[]
   stats: { total: number; by_type: Record<string, number> }
+  pagination: Pagination
 }
 
 const data = ref<CoaList | null>(null)
 const loading = ref(false)
+const exporting = ref(false)
 const errorMsg = ref<string | null>(null)
 const search = ref('')
+const page = ref(1)
+const pageSize = ref(50)
 
-let timer: ReturnType<typeof setTimeout> | undefined
+let searchTimer: ReturnType<typeof setTimeout> | undefined
 
-async function load(query?: string) {
+async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const q = (query ?? '').trim()
-    const path = q
-      ? `/api/coa/accounts?search=${encodeURIComponent(q)}&limit=2000`
-      : `/api/coa/accounts?limit=2000`
-    data.value = await api.get<CoaList>(path)
+    const params = new URLSearchParams({
+      page: String(page.value),
+      page_size: String(pageSize.value),
+    })
+    const q = search.value.trim()
+    if (q) params.set('search', q)
+    data.value = await api.get<CoaList>(`/api/coa/accounts?${params.toString()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat COA'
     data.value = null
@@ -50,12 +79,27 @@ async function load(query?: string) {
   }
 }
 
-watch(search, (q) => {
-  if (timer) clearTimeout(timer)
-  timer = setTimeout(() => load(q), 350)
+// search → debounce 350ms + reset page
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    page.value = 1
+    load()
+  }, 350)
 })
 
-onMounted(() => load())
+// page or pageSize → fetch
+watch([page, pageSize], () => load())
+
+onMounted(load)
+
+const pageInfo = computed(() => {
+  if (!data.value) return { from: 0, to: 0, total: 0, totalPages: 0 }
+  const { page: p, page_size: ps, total, total_pages } = data.value.pagination
+  const from = total === 0 ? 0 : (p - 1) * ps + 1
+  const to = Math.min(p * ps, total)
+  return { from, to, total, totalPages: total_pages }
+})
 
 const stats = computed(() => {
   const rows = data.value?.rows ?? []
@@ -63,7 +107,7 @@ const stats = computed(() => {
   const detail = rows.filter((r) => r.is_detail).length
   const group = rows.length - detail
   return {
-    total: data.value?.stats.total ?? rows.length,
+    total: data.value?.stats.total ?? 0,
     aset: by['Aset'] ?? 0,
     detail,
     group,
@@ -91,6 +135,32 @@ function indentStyle(level: number | null) {
   const px = Math.max(0, (level ?? 0)) * 14
   return { paddingLeft: px + 'px' }
 }
+
+function goto(target: number) {
+  const tp = pageInfo.value.totalPages || 1
+  page.value = Math.min(Math.max(1, target), tp)
+}
+
+async function exportXlsx() {
+  exporting.value = true
+  errorMsg.value = null
+  try {
+    const params = new URLSearchParams()
+    const q = search.value.trim()
+    if (q) params.set('search', q)
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const domain = (import.meta.env.VITE_PORTAL_DOMAIN as string | undefined) ?? ''
+    const suggested = domain ? `coa-${domain}-${today}.xlsx` : `coa-${today}.xlsx`
+    const path =
+      '/api/coa/accounts.xlsx' +
+      (params.toString() ? '?' + params.toString() : '')
+    await api.downloadBlob(path, suggested)
+  } catch (e) {
+    errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -103,10 +173,20 @@ function indentStyle(level: number | null) {
           <code class="text-xs bg-background px-1 rounded">transaction.account</code>
         </p>
       </div>
-      <div class="flex gap-2">
-        <Button variant="outline" class="gap-1.5" :disabled="loading" @click="load(search)">
+      <div class="flex flex-wrap gap-2">
+        <Button variant="outline" class="gap-1.5" :disabled="loading" @click="load()">
           <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
           Reload
+        </Button>
+        <Button
+          variant="outline"
+          class="gap-1.5"
+          :disabled="exporting || loading || !data || data.pagination.total === 0"
+          :title="search ? 'Export filter aktif (semua row yang match)' : 'Export semua akun'"
+          @click="exportXlsx"
+        >
+          <Download class="w-4 h-4" :class="{ 'animate-pulse': exporting }" />
+          {{ exporting ? 'Mengekspor…' : 'Export Excel' }}
         </Button>
         <Button class="gap-1.5" disabled title="Write akan tersedia di Fase 4 dengan workflow approval">
           <Plus class="w-4 h-4" />
@@ -159,9 +239,6 @@ function indentStyle(level: number | null) {
             placeholder="Cari kode atau nama akun…"
             class="h-8 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent p-0"
           />
-          <span class="text-xs text-muted whitespace-nowrap">
-            {{ data ? `${data.rows.length} baris` : '—' }}
-          </span>
         </div>
 
         <div v-if="loading && !data" class="flex justify-center p-12">
@@ -176,7 +253,41 @@ function indentStyle(level: number | null) {
                 <th class="text-left px-4 py-2 font-medium">Nama Akun</th>
                 <th class="text-left px-4 py-2 font-medium w-32">Tipe</th>
                 <th class="text-left px-4 py-2 font-medium w-24 max-md:hidden">Parent</th>
-                <th class="text-center px-4 py-2 font-medium w-32">Sifat</th>
+                <th class="text-center px-4 py-2 font-medium w-32">
+                  <Tooltip side="bottom" content-class="max-w-md">
+                    <template #trigger>
+                      <span
+                        class="inline-flex items-center gap-1 cursor-help select-none"
+                        tabindex="0"
+                      >
+                        Sifat
+                        <HelpCircle class="w-3 h-3 opacity-60" />
+                      </span>
+                    </template>
+                    <div class="space-y-1.5 normal-case tracking-normal">
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-2 py-0.5 rounded font-medium bg-positive/15 text-positive shrink-0"
+                        >
+                          <Check class="w-3 h-3" /> Detail
+                        </span>
+                        <span class="text-foreground">
+                          akun leaf (<code class="bg-background px-1 rounded">is_detail = T</code>) — boleh menerima posting jurnal
+                        </span>
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-2 py-0.5 rounded font-medium bg-background text-muted border border-border shrink-0"
+                        >
+                          <Lock class="w-3 h-3" /> Grup
+                        </span>
+                        <span class="text-foreground">
+                          akun header (<code class="bg-background px-1 rounded">is_detail = F</code>) — hanya agregasi, tidak untuk posting
+                        </span>
+                      </div>
+                    </div>
+                  </Tooltip>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -244,13 +355,66 @@ function indentStyle(level: number | null) {
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination footer -->
+        <div
+          v-if="data && data.pagination.total > 0"
+          class="px-4 py-2.5 border-t border-border flex flex-wrap items-center justify-between gap-3 text-sm"
+        >
+          <span class="text-xs text-muted tabular-nums">
+            {{ pageInfo.from }}–{{ pageInfo.to }} dari {{ pageInfo.total }} akun
+          </span>
+
+          <div class="flex items-center gap-1">
+            <Button
+              variant="outline" size="sm" class="h-8 w-8 p-0"
+              :disabled="page <= 1" title="Halaman pertama"
+              @click="goto(1)"
+            >
+              <ChevronsLeft class="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline" size="sm" class="h-8 w-8 p-0"
+              :disabled="page <= 1" title="Sebelumnya"
+              @click="goto(page - 1)"
+            >
+              <ChevronLeft class="w-4 h-4" />
+            </Button>
+            <span class="px-3 py-1 text-xs tabular-nums whitespace-nowrap">
+              Hal {{ data.pagination.page }} / {{ pageInfo.totalPages }}
+            </span>
+            <Button
+              variant="outline" size="sm" class="h-8 w-8 p-0"
+              :disabled="page >= pageInfo.totalPages" title="Berikutnya"
+              @click="goto(page + 1)"
+            >
+              <ChevronRight class="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline" size="sm" class="h-8 w-8 p-0"
+              :disabled="page >= pageInfo.totalPages" title="Halaman terakhir"
+              @click="goto(pageInfo.totalPages)"
+            >
+              <ChevronsRight class="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-muted">Per hal:</span>
+            <select
+              v-model.number="pageSize"
+              class="h-8 px-2 rounded border border-border bg-surface text-sm"
+              @change="page = 1"
+            >
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+              <option :value="200">200</option>
+            </select>
+          </div>
+        </div>
       </CardContent>
     </Card>
 
-    <p class="text-xs text-muted">
-      <strong class="text-foreground">Detail</strong> = akun leaf (<code class="bg-background px-1 rounded">is_detail = T</code>) yang dapat menerima posting transaksi jurnal.
-      <strong class="text-foreground">Grup</strong> = akun header (<code class="bg-background px-1 rounded">is_detail = F</code>), hanya untuk agregasi laporan, tidak boleh menerima posting.
-      Indentasi nama mengikuti kolom <code class="bg-background px-1 rounded">account_level</code>.
-    </p>
   </div>
 </template>

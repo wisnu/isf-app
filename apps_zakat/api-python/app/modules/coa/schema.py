@@ -28,6 +28,14 @@ class CoaStats(BaseModel):
     by_type: dict[str, int]
 
 
+class Pagination(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+
+
 class CoaList(BaseModel):
     rows: list[CoaRow]
     stats: CoaStats
+    pagination: Pagination

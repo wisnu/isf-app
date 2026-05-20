@@ -8,6 +8,7 @@ dependencies = [
   "pydantic>=2.7",
   "pydantic-settings>=2.4",
   "asyncpg>=0.30",
+  "openpyxl>=3.1",
 ]
 
 [project.optional-dependencies]
