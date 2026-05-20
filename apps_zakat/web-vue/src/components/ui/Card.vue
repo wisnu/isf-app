@@ -6,7 +6,7 @@ const props = defineProps<{ class?: string }>()
 
 <template>
   <div
-    :class="cn('rounded-lg border border-border bg-surface text-foreground shadow-sm', props.class)"
+    :class="cn('rounded-2xl border border-border bg-surface text-foreground shadow-sm', props.class)"
   >
     <slot />
   </div>
