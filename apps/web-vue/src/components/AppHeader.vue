@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from 'lucide-vue-next'
+import { Building2, Check, ChevronDown, Menu } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -7,6 +7,8 @@ import AppLogo from '@/components/AppLogo.vue'
 import NotificationBell from '@/components/NotificationBell.vue'
 import SystemDate from '@/components/SystemDate.vue'
 import UserMenu from '@/components/UserMenu.vue'
+import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -16,6 +18,16 @@ const sidebar = useSidebarStore()
 const route = useRoute()
 
 const pageTitle = computed(() => (route.meta.title as string | undefined) ?? '')
+
+const activeTenantName = computed(
+  () => auth.user?.tenants.find((t) => t.id === auth.activeTenantId)?.name ?? '—',
+)
+
+async function onSwitch(tenantId: string) {
+  if (tenantId !== auth.activeTenantId) {
+    await auth.switchTenant(tenantId)
+  }
+}
 </script>
 
 <template>
@@ -43,7 +55,47 @@ const pageTitle = computed(() => (route.meta.title as string | undefined) ?? '')
         <span class="font-semibold text-sm">isf-app</span>
       </div>
 
-      <span class="text-sm font-medium opacity-95 truncate">{{ pageTitle }}</span>
+      <span class="text-sm font-medium opacity-95 truncate max-sm:hidden">
+        {{ pageTitle }}
+      </span>
+
+      <span v-if="auth.user" class="opacity-30 max-sm:hidden">/</span>
+
+      <DropdownMenu v-if="auth.user">
+        <template #trigger>
+          <button
+            type="button"
+            :class="
+              cn(
+                'h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md bg-white/10',
+                'hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+              )
+            "
+            :title="'Perusahaan aktif: ' + activeTenantName"
+          >
+            <Building2 class="w-3.5 h-3.5 shrink-0" />
+            <span class="text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px]">
+              {{ activeTenantName }}
+            </span>
+            <ChevronDown class="w-3 h-3 opacity-70 shrink-0" />
+          </button>
+        </template>
+        <div class="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted font-semibold">
+          Pilih Perusahaan
+        </div>
+        <DropdownMenuItem
+          v-for="t in auth.user.tenants"
+          :key="t.id"
+          @click="onSwitch(t.id)"
+        >
+          <Check
+            v-if="t.id === auth.activeTenantId"
+            class="w-4 h-4 text-positive shrink-0"
+          />
+          <span v-else class="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>{{ t.name }}</span>
+        </DropdownMenuItem>
+      </DropdownMenu>
     </div>
 
     <div class="flex items-center gap-1.5 sm:gap-2">

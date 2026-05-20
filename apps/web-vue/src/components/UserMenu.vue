@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, LogOut, Moon, Sun, UserCircle2 } from 'lucide-vue-next'
+import { LogOut, Moon, Sun, UserCircle2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -25,12 +25,6 @@ const roles = computed<string[]>(() => {
   if (u.startsWith('finance.')) return ['Finance']
   return ['Member']
 })
-
-async function onSwitch(tenantId: string) {
-  if (tenantId !== auth.activeTenantId) {
-    await auth.switchTenant(tenantId)
-  }
-}
 
 async function logout() {
   await auth.logout()
@@ -74,36 +68,6 @@ async function logout() {
           :key="r"
           class="text-xs bg-background border border-border text-foreground px-2 py-0.5 rounded-full"
         >{{ r }}</span>
-      </div>
-    </div>
-
-    <!-- Tenant aktif & switch -->
-    <div v-if="auth.user && auth.user.tenants.length > 0" class="px-4 py-2.5 border-b border-border">
-      <p class="text-[10px] uppercase tracking-wider text-muted font-semibold mb-1.5">
-        Perusahaan Aktif
-      </p>
-      <div class="flex flex-col gap-0.5">
-        <button
-          v-for="t in auth.user.tenants"
-          :key="t.id"
-          type="button"
-          :class="
-            cn(
-              'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left',
-              t.id === auth.activeTenantId
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-foreground hover:bg-background',
-            )
-          "
-          @click="onSwitch(t.id)"
-        >
-          <Check
-            v-if="t.id === auth.activeTenantId"
-            class="w-3.5 h-3.5 shrink-0"
-          />
-          <span v-else class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span class="truncate">{{ t.name }}</span>
-        </button>
       </div>
     </div>
 
