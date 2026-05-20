@@ -58,9 +58,9 @@ async function onSwitch(tenantId: string) {
       <span class="text-sm font-medium opacity-95 truncate max-sm:hidden">
         {{ pageTitle }}
       </span>
+    </div>
 
-      <span v-if="auth.user" class="opacity-30 max-sm:hidden">/</span>
-
+    <div class="flex items-center gap-1.5 sm:gap-2">
       <DropdownMenu v-if="auth.user">
         <template #trigger>
           <button
@@ -96,9 +96,7 @@ async function onSwitch(tenantId: string) {
           <span>{{ t.name }}</span>
         </DropdownMenuItem>
       </DropdownMenu>
-    </div>
 
-    <div class="flex items-center gap-1.5 sm:gap-2">
       <SystemDate />
       <NotificationBell v-if="auth.user" />
       <UserMenu v-if="auth.user" />
