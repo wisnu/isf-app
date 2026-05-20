@@ -1,7 +1,17 @@
 <script setup lang="ts">
+import { Eye, EyeOff, Info } from 'lucide-vue-next'
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
+import Alert from '@/components/ui/Alert.vue'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import CardContent from '@/components/ui/CardContent.vue'
+import CardDescription from '@/components/ui/CardDescription.vue'
+import CardHeader from '@/components/ui/CardHeader.vue'
+import CardTitle from '@/components/ui/CardTitle.vue'
+import Input from '@/components/ui/Input.vue'
+import Label from '@/components/ui/Label.vue'
 import { ApiError } from '@/lib/api/client'
 import { useAuthStore } from '@/stores/auth'
 
@@ -10,6 +20,7 @@ const password = ref('')
 const showPassword = ref(false)
 const errorMsg = ref<string | null>(null)
 const submitting = ref(false)
+const demoOpen = ref(false)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -37,78 +48,82 @@ async function submit() {
 </script>
 
 <template>
-  <q-page class="flex flex-center login-page">
-    <q-card flat bordered class="login-card">
-      <q-card-section>
-        <div class="text-h6">Portal ZISWAF</div>
-        <div class="text-caption text-grey">Masuk dengan akun demo</div>
-      </q-card-section>
-
-      <q-form class="q-gutter-md q-px-md q-pb-md" @submit.prevent="submit">
-        <q-input
-          v-model="username"
-          outlined
-          dense
-          label="Username"
-          autocomplete="username"
-          :rules="[(v) => !!v || 'Wajib diisi']"
-        />
-
-        <q-input
-          v-model="password"
-          outlined
-          dense
-          label="Password"
-          :type="showPassword ? 'text' : 'password'"
-          autocomplete="current-password"
-          :rules="[(v) => !!v || 'Wajib diisi']"
-        >
-          <template #append>
-            <q-icon
-              :name="showPassword ? 'visibility_off' : 'visibility'"
-              class="cursor-pointer"
-              @click="showPassword = !showPassword"
+  <div class="min-h-[80vh] grid place-items-center p-4 sm:p-6 -mt-6">
+    <Card class="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Portal ZISWAF</CardTitle>
+        <CardDescription>Masuk dengan akun demo</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form class="space-y-4" @submit.prevent="submit">
+          <div class="space-y-1.5">
+            <Label for="username">Username</Label>
+            <Input
+              id="username"
+              v-model="username"
+              autocomplete="username"
+              required
             />
-          </template>
-        </q-input>
+          </div>
 
-        <q-banner v-if="errorMsg" class="bg-negative text-white" dense rounded>
-          {{ errorMsg }}
-        </q-banner>
+          <div class="space-y-1.5">
+            <Label for="password">Password</Label>
+            <div class="relative">
+              <Input
+                id="password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                autocomplete="current-password"
+                required
+                class="pr-10"
+              />
+              <button
+                type="button"
+                class="absolute right-0 top-0 h-10 w-10 grid place-items-center text-muted hover:text-foreground"
+                :title="showPassword ? 'Sembunyikan' : 'Tampilkan'"
+                @click="showPassword = !showPassword"
+              >
+                <EyeOff v-if="showPassword" class="w-4 h-4" />
+                <Eye v-else class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-        <q-btn
-          type="submit"
-          color="primary"
-          class="full-width"
-          :label="submitting ? 'Memproses…' : 'Masuk'"
-          :loading="submitting"
-          unelevated
-        />
+          <Alert v-if="errorMsg" variant="destructive">
+            {{ errorMsg }}
+          </Alert>
 
-        <q-expansion-item icon="info" label="Akun demo" dense-toggle>
-          <q-list dense>
-            <q-item v-for="acc in demoAccounts" :key="acc.user">
-              <q-item-section>
-                <q-item-label>
-                  <code>{{ acc.user }}</code> / <code>{{ acc.pass }}</code>
-                </q-item-label>
-                <q-item-label caption>{{ acc.scope }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-expansion-item>
-      </q-form>
-    </q-card>
-  </q-page>
+          <Button type="submit" class="w-full" :disabled="submitting">
+            {{ submitting ? 'Memproses…' : 'Masuk' }}
+          </Button>
+
+          <div class="border border-border rounded-md">
+            <button
+              type="button"
+              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted hover:text-foreground"
+              @click="demoOpen = !demoOpen"
+            >
+              <Info class="w-4 h-4" />
+              <span>Akun demo</span>
+              <span class="ml-auto text-xs">{{ demoOpen ? '−' : '+' }}</span>
+            </button>
+            <ul v-if="demoOpen" class="border-t border-border divide-y divide-border">
+              <li
+                v-for="acc in demoAccounts"
+                :key="acc.user"
+                class="px-3 py-2 text-sm"
+              >
+                <div>
+                  <code class="text-xs bg-background px-1.5 py-0.5 rounded">{{ acc.user }}</code>
+                  <span class="text-muted mx-1">/</span>
+                  <code class="text-xs bg-background px-1.5 py-0.5 rounded">{{ acc.pass }}</code>
+                </div>
+                <div class="text-xs text-muted mt-0.5">{{ acc.scope }}</div>
+              </li>
+            </ul>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
 </template>
-
-<style scoped>
-.login-page {
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-.login-card {
-  width: 100%;
-  max-width: 420px;
-}
-</style>

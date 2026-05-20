@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { Dark } from 'quasar'
 
 const STORAGE_KEY = 'isf-theme'
 
@@ -7,6 +6,10 @@ type Mode = 'light' | 'dark'
 
 function readStored(): Mode {
   return localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light'
+}
+
+function applyDom(mode: Mode) {
+  document.documentElement.classList.toggle('dark', mode === 'dark')
 }
 
 export const useThemeStore = defineStore('theme', {
@@ -17,11 +20,11 @@ export const useThemeStore = defineStore('theme', {
   actions: {
     init() {
       this.mode = readStored()
-      Dark.set(this.mode === 'dark')
+      applyDom(this.mode)
     },
     setMode(mode: Mode) {
       this.mode = mode
-      Dark.set(mode === 'dark')
+      applyDom(mode)
       localStorage.setItem(STORAGE_KEY, mode)
     },
     toggle() {

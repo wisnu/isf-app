@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import Card from '@/components/ui/Card.vue'
+import CardContent from '@/components/ui/CardContent.vue'
+import CardDescription from '@/components/ui/CardDescription.vue'
+import CardHeader from '@/components/ui/CardHeader.vue'
+
 defineProps<{
   label: string
   amount: number
@@ -16,24 +21,22 @@ function formatIdr(n: number): string {
 </script>
 
 <template>
-  <q-card flat bordered class="summary-widget">
-    <q-card-section>
-      <div class="row items-baseline justify-between">
-        <div class="text-overline text-grey">{{ label }}</div>
-        <div class="text-caption text-grey">{{ period }}</div>
+  <Card>
+    <CardHeader class="pb-2">
+      <div class="flex items-baseline justify-between gap-2">
+        <CardDescription class="uppercase tracking-wide text-xs">
+          {{ label }}
+        </CardDescription>
+        <span class="text-xs text-muted">{{ period }}</span>
       </div>
+    </CardHeader>
+    <CardContent>
       <div
-        class="text-h5 q-mt-sm text-weight-bold"
+        class="text-2xl sm:text-3xl font-bold tabular-nums"
         :class="accent === 'in' ? 'text-positive' : accent === 'out' ? 'text-warning' : ''"
       >
         {{ formatIdr(amount) }}
       </div>
-    </q-card-section>
-  </q-card>
+    </CardContent>
+  </Card>
 </template>
-
-<style scoped>
-.summary-widget {
-  min-height: 120px;
-}
-</style>

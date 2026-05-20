@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { Loader2 } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 
 import SummaryWidget from '@/components/SummaryWidget.vue'
+import Alert from '@/components/ui/Alert.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { useAuthStore } from '@/stores/auth'
 
@@ -39,37 +41,33 @@ watch(
 </script>
 
 <template>
-  <q-page padding>
-    <div class="q-mb-md">
-      <div class="text-h5">Dashboard</div>
-      <div v-if="data" class="text-subtitle2 text-grey">{{ data.tenant_name }}</div>
+  <div class="space-y-6">
+    <header>
+      <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <p v-if="data" class="text-sm text-muted">{{ data.tenant_name }}</p>
+    </header>
+
+    <div v-if="loading" class="flex justify-center p-8">
+      <Loader2 class="w-8 h-8 animate-spin text-primary" />
     </div>
 
-    <div v-if="loading" class="row justify-center q-pa-xl">
-      <q-spinner color="primary" size="32px" />
-    </div>
-
-    <q-banner v-else-if="errorMsg" class="bg-negative text-white" dense rounded>
+    <Alert v-else-if="errorMsg" variant="destructive">
       {{ errorMsg }}
-    </q-banner>
+    </Alert>
 
-    <div v-else-if="data" class="row q-col-gutter-md">
-      <div class="col-12 col-sm-6">
-        <SummaryWidget
-          label="Penerimaan"
-          :amount="data.penerimaan.total"
-          :period="data.penerimaan.period"
-          accent="in"
-        />
-      </div>
-      <div class="col-12 col-sm-6">
-        <SummaryWidget
-          label="Penyaluran"
-          :amount="data.penyaluran.total"
-          :period="data.penyaluran.period"
-          accent="out"
-        />
-      </div>
+    <div v-else-if="data" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <SummaryWidget
+        label="Penerimaan"
+        :amount="data.penerimaan.total"
+        :period="data.penerimaan.period"
+        accent="in"
+      />
+      <SummaryWidget
+        label="Penyaluran"
+        :amount="data.penyaluran.total"
+        :period="data.penyaluran.period"
+        accent="out"
+      />
     </div>
-  </q-page>
+  </div>
 </template>
