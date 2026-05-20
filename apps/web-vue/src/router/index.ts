@@ -23,6 +23,24 @@ const router = createRouter({
       component: () => import('@/pages/DashboardPage.vue'),
       meta: { title: 'Dashboard' },
     },
+    {
+      path: '/keuangan/coa',
+      name: 'keuangan-coa',
+      component: () => import('@/pages/keuangan/CoaPage.vue'),
+      meta: { title: 'Chart of Accounts' },
+    },
+    {
+      path: '/keuangan/kas',
+      name: 'keuangan-kas',
+      component: () => import('@/pages/keuangan/KasPage.vue'),
+      meta: { title: 'Manajemen Kas' },
+    },
+    {
+      path: '/keuangan/bank',
+      name: 'keuangan-bank',
+      component: () => import('@/pages/keuangan/BankPage.vue'),
+      meta: { title: 'Manajemen Bank' },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
