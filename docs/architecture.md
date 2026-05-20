@@ -418,102 +418,88 @@ Jika terjadi breaking change besar, gunakan:
 
 ## 9. Struktur Monorepo
 
-Struktur repo yang direkomendasikan:
+> **v0.3 (split portal per domain):** struktur `apps/` di-clone menjadi `apps_zakat/` dan `apps_wakaf/`. Lihat `docs/plan-split-deployment.md`. Skeleton di bawah berlaku **dalam tiap clone** (`apps_zakat/web-vue/`, `apps_wakaf/web-vue/`, dst). Saat ini wakaf masih identik dengan zakat — akan diverge seiring fitur wakaf bertambah.
 
 ```text
-my-app/
-  apps/
+isf-app/
+  apps_zakat/                  ← portal Zakat (default)
     web-vue/
-      index.html
-      vite.config.ts
-      package.json
-      src/
-        main.ts
-        App.vue
-        router/
-          index.ts
-        pages/
-          DashboardPage.vue
-          CustomerDetailPage.vue
-        components/
-        stores/
-        lib/
-          api/
-            client.ts
-          auth/
-          config/
-
     bff-api/
-      app/
-        main.py
-        routers/
-          customers.py
-          orders.py
-          reports.py
-        services/
-          routing.py
-          proxy.py
-          auth.py
-        shared/
-          config.py
-          errors.py
-          request_id.py
-
     api-python/
-      app/
-        main.py
-        modules/
-          customers/
-            router.py
-            schema.py
-            service.py
-            repository.py
-          orders/
-            router.py
-            schema.py
-            service.py
-            repository.py
-        shared/
-          db.py
-          auth.py
-          errors.py
-          config.py
-
     api-go/
-      cmd/
-        api/
-          main.go
-      internal/
-        modules/
-          reports/
-            handler.go
-            service.go
-            repository.go
-            dto.go
-        shared/
-          db/
-          auth/
-          errors/
-          config/
-
+  apps_wakaf/                  ← portal Wakaf (clone, akan diverge)
+    web-vue/
+    bff-api/
+    api-python/
+    api-go/
   packages/
     api-contract/
-      openapi.yaml
     api-client-ts/
-      generated/
-
   infra/
-    docker-compose.yml
-    nginx/
-    kong/
-    db/
-      migrations/
-
+    docker-compose.zakat.yml         ← zakat (default)
+    docker-compose.wakaf.yml   ← wakaf
+    db/, kong/, nginx/, .env.example
   docs/
+    prd.md
     architecture.md
-    api-guideline.md
-    migration-plan.md
+    runbook-local.md
+    plan-*.md
 ```
+
+Skeleton internal tiap aplikasi (`apps_<domain>/`):
+
+```text
+apps_<domain>/
+  web-vue/
+    index.html
+    vite.config.ts
+    package.json
+    public/favicon.svg
+    src/
+      main.ts
+      App.vue
+      styles.css
+      router/index.ts
+      pages/             # DashboardPage, LoginPage, NoTenantPage, keuangan/{Coa,Kas,Bank}Page
+      components/        # AppHeader, AppSidebar, NotificationBell, UserMenu, SystemDate, AppLogo, widgets/*
+      components/ui/     # Button, Card, Input, Alert, DropdownMenu, Label, ... (shadcn-vue)
+      stores/            # auth, theme, sidebar, notifications
+      lib/               # utils (cn), format, charts (Chart.js register), api/client
+
+  bff-api/
+    pyproject.toml
+    Dockerfile.dev
+    app/
+      main.py
+      routers/           # auth, auth_google, tenants, dashboard
+      services/
+        auth_db.py       # SQLite layer (users, tenants, links, audit_log)
+        audit.py
+        auth_seed.py
+        proxy.py
+        auth_providers/  # base, password (bcrypt), google (OIDC + PKCE)
+      shared/            # config, errors, request_id, response
+    tests/
+
+  api-python/
+    pyproject.toml
+    Dockerfile.dev
+    app/
+      main.py
+      modules/
+        dashboard/       # router, schema, service (dummy data per tenant)
+        donors/, zakat/, waqf/   # scaffold per modul Fase 2+
+      shared/            # config, response
+    tests/
+
+  api-go/
+    cmd/api/main.go
+    internal/
+      modules/<feature>/ # handler, service, repository, dto
+      shared/            # db, auth, errors, config
+```
+
+Module-internal pattern (router/service/repository/dto) tetap berlaku — lihat §16 (Python) & §17 (Go).
 
 ## 10. Struktur API Facade / BFF
 
@@ -748,9 +734,93 @@ Rekomendasi:
 
 ## 15. Database Design
 
-Fase awal boleh menggunakan satu PostgreSQL database.
+> **v0.2 (PRD pivot):** Strategi multi-tenant memakai **database-per-tenant** — setiap perusahaan ZISWAF punya Postgres DB sendiri (existing). Lihat §15.0. Pedoman intra-DB di §15.1+ tetap berlaku untuk struktur dalam masing-masing DB.
 
-Namun ownership data harus jelas per module.
+### 15.0 DB-per-Tenant Pattern
+
+Sejak v0.2, multi-tenant memakai **database-per-tenant**:
+
+- **DB existing per perusahaan**: `mziss_laz` (Perusahaan 1 — LAZ), `mzis_wakaf` (Perusahaan 2 — Wakaf).
+- Tidak ada kolom `tenant_id` di tabel bisnis — isolasi di level DB.
+- Schema antar DB **boleh berbeda** (independen); portal mengakomodasi via adapter/view di backend.
+
+#### Konfigurasi (env / config file)
+
+```env
+# Per-tenant DSN map di api-python
+TENANT_DB__perusahaan_a=postgresql://user:pass@host:5432/mziss_laz
+TENANT_DB__perusahaan_b=postgresql://user:pass@host:5432/mzis_wakaf
+```
+
+Alternatif: YAML/JSON config terbaca saat boot (lebih sesuai bila DSN sensitif disimpan di secret manager).
+
+#### Connection routing di `api-python`
+
+```python
+# app/shared/db_router.py
+import asyncpg
+
+class TenantDbRouter:
+    def __init__(self, dsn_map: dict[str, str]):
+        self._dsn = dsn_map
+        self._pools: dict[str, asyncpg.Pool] = {}
+
+    async def pool_for(self, tenant_id: str) -> asyncpg.Pool:
+        if tenant_id not in self._dsn:
+            raise UnknownTenantError(tenant_id)
+        if tenant_id not in self._pools:
+            self._pools[tenant_id] = await asyncpg.create_pool(self._dsn[tenant_id])
+        return self._pools[tenant_id]
+
+    async def close_all(self):
+        for pool in self._pools.values():
+            await pool.close()
+```
+
+FastAPI dependency injection:
+
+```python
+# app/shared/deps.py
+from fastapi import Header, Depends
+
+async def get_tenant_db(
+    x_tenant_id: str = Header(..., alias="X-Tenant-Id"),
+    router: TenantDbRouter = Depends(get_router),
+):
+    pool = await router.pool_for(x_tenant_id)
+    async with pool.acquire() as conn:
+        yield conn
+```
+
+Tiap endpoint module bergantung pada `get_tenant_db` — koneksi sesuai tenant aktif otomatis.
+
+#### Komunikasi BFF → Backend
+
+`bff-api` meneruskan `tenant_id` ke `api-python` via header `X-Tenant-Id`:
+
+```python
+# bff-api/app/services/proxy.py (Fase 2 onwards)
+headers = {
+    "X-Tenant-Id": request.session["active_tenant_id"],
+    "X-Branch-Id": request.session.get("active_branch_id", ""),
+    "Authorization": request.headers.get("Authorization", ""),
+    "X-Request-ID": request_id,
+}
+```
+
+Backend menolak request tanpa `X-Tenant-Id` (atau dengan tenant yang DSN-nya tidak terdaftar).
+
+#### Konsolidasi lintas perusahaan
+
+Bukan first-class feature. Bila perlu di kemudian hari: query DB per tenant secara paralel di service layer (mis. `asyncio.gather`), normalize, dan merge. Di luar scope fase awal (per PRD §7.2).
+
+#### Migrasi schema
+
+Independen per DB. Portal MVP & Fase 2 **tidak melakukan migration** ke existing DB (read-mostly). Bila kemudian portal perlu menulis (Fase 4 ke atas), buat tabel khusus portal di schema terpisah (atau gunakan portal-owned database) untuk menghindari benturan dengan struktur existing.
+
+### 15.1 Ownership per module dalam tiap DB
+
+Dalam masing-masing DB existing, ownership data harus jelas per module.
 
 Contoh:
 

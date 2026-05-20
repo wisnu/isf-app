@@ -1,0 +1,102 @@
+# Portal ZAKAT (isf-app-zakat) — stack default.
+# Run:
+#   podman-compose up -d --build    (atau)    docker compose up -d --build
+# Untuk Wakaf, gunakan: docker-compose.wakaf.yml
+name: isf-zakat
+
+networks:
+  default:
+    name: isf-zakat-net
+    driver: bridge
+
+volumes:
+  bff-data:
+    name: isf-zakat-bff-data
+
+services:
+
+  api-python:
+    image: isf-zakat-api-python:dev
+    build:
+      context: ../apps_zakat/api-python
+      dockerfile: Dockerfile.dev
+    container_name: isf-zakat-api-python
+    restart: unless-stopped
+    environment:
+      APP_ENV: development
+      DOMAIN: zakat
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps_zakat/api-python:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  bff-api:
+    image: isf-zakat-bff-api:dev
+    build:
+      context: ../apps_zakat/bff-api
+      dockerfile: Dockerfile.dev
+    container_name: isf-zakat-bff-api
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: development
+      DOMAIN: zakat
+      API_PYTHON_BASE_URL: http://api-python:8000
+      SESSION_SECRET: ${SESSION_SECRET_ZAKAT:-dev-secret-zakat-change-me}
+      CORS_ORIGIN: http://${HOST_IP:-localhost}:5173
+      AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
+      AUTH_DB_PATH: /data/auth.sqlite
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL_ZAKAT:-http://${HOST_IP:-localhost}:7000/api/auth/google/callback}
+      GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-ihsansolusi.co.id}
+      GOOGLE_ALLOWED_EMAILS: ${GOOGLE_ALLOWED_EMAILS:-}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL_ZAKAT:-http://${HOST_IP:-localhost}:5173}
+    ports:
+      - "7000:7000"
+    volumes:
+      - ../apps_zakat/bff-api:/app
+      - bff-data:/data
+    depends_on:
+      api-python:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://${HOST_IP:-localhost}:7000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  web-vue:
+    image: isf-zakat-web-vue:dev
+    build:
+      context: ../apps_zakat/web-vue
+      dockerfile: Dockerfile.dev
+    container_name: isf-zakat-web-vue
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://${HOST_IP:-localhost}:7000
+      VITE_PORTAL_DOMAIN: zakat
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps_zakat/web-vue:/app
+      - /app/node_modules
+    depends_on:
+      bff-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5173/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

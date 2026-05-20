@@ -1,0 +1,105 @@
+# Portal WAKAF (isf-app-wakaf) — independen dari zakat stack.
+# Run:
+#   podman-compose -f docker-compose.wakaf.yml up -d --build
+# atau:
+#   docker compose -f docker-compose.wakaf.yml up -d --build
+#
+# Port di host: web-vue 5174, bff-api 7001, api-python 8001 (offset +1 dari zakat).
+name: isf-wakaf
+
+networks:
+  default:
+    name: isf-wakaf-net
+    driver: bridge
+
+volumes:
+  bff-data:
+    name: isf-wakaf-bff-data
+
+services:
+
+  api-python:
+    image: isf-wakaf-api-python:dev
+    build:
+      context: ../apps_wakaf/api-python
+      dockerfile: Dockerfile.dev
+    container_name: isf-wakaf-api-python
+    restart: unless-stopped
+    environment:
+      APP_ENV: development
+      DOMAIN: wakaf
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../apps_wakaf/api-python:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  bff-api:
+    image: isf-wakaf-bff-api:dev
+    build:
+      context: ../apps_wakaf/bff-api
+      dockerfile: Dockerfile.dev
+    container_name: isf-wakaf-bff-api
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: development
+      DOMAIN: wakaf
+      API_PYTHON_BASE_URL: http://api-python:8000
+      SESSION_SECRET: ${SESSION_SECRET_WAKAF:-dev-secret-wakaf-change-me}
+      CORS_ORIGIN: http://${HOST_IP:-localhost}:5174
+      AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
+      AUTH_DB_PATH: /data/auth.sqlite
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL_WAKAF:-http://${HOST_IP:-localhost}:7001/api/auth/google/callback}
+      GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-ihsansolusi.co.id}
+      GOOGLE_ALLOWED_EMAILS: ${GOOGLE_ALLOWED_EMAILS:-}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL_WAKAF:-http://${HOST_IP:-localhost}:5174}
+    ports:
+      - "7001:7000"
+    volumes:
+      - ../apps_wakaf/bff-api:/app
+      - bff-data:/data
+    depends_on:
+      api-python:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:7000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  web-vue:
+    image: isf-wakaf-web-vue:dev
+    build:
+      context: ../apps_wakaf/web-vue
+      dockerfile: Dockerfile.dev
+    container_name: isf-wakaf-web-vue
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://${HOST_IP:-localhost}:7001
+      VITE_PORTAL_DOMAIN: wakaf
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5174:5173"
+    volumes:
+      - ../apps_wakaf/web-vue:/app
+      - /app/node_modules
+    depends_on:
+      bff-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5173/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

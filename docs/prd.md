@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF |
-| Versi Dokumen | 0.2 (PRD — pivot read-first + multi-cabang) |
+| Versi Dokumen | 0.3 (Split portal per domain — zakat + wakaf) |
 | Tanggal | 2026-05-20 |
 | Status | Aktif |
 | Dokumen Terkait | [`docs/architecture.md`](./architecture.md) |
@@ -20,9 +20,16 @@ Karena **existing database sudah berisi data ZISWAF dari sistem berjalan**, port
 
 Fitur input transaksional (penyaluran, posting jurnal, dll) dimulai setelah fondasi read & UX matang, dengan workflow otorisasi maker–checker (§7.8). Reorder roadmap lengkap di §10.
 
-### 1.2 Multi-tenant + multi-cabang
+### 1.2 Portal terpisah per domain + multi-cabang
 
-Selain melayani **beberapa perusahaan ZISWAF (multi-tenant)**, **setiap perusahaan punya beberapa cabang operasional** (mis. cabang regional / kantor cabang). Satu user dapat punya akses ke satu/beberapa cabang dalam satu/beberapa perusahaan. Data dan akses di-scope per **perusahaan × cabang**. Detail di §7.2.
+Mulai v0.3, portal dipecah menjadi **dua aplikasi independen** karena domain bisnis berbeda dan akan bercabang luas seiring waktu:
+
+- **isf-app-zakat** — portal untuk lembaga LAZ (zakat, infaq, sadaqah). DB: `mziss_laz`.
+- **isf-app-wakaf** — portal untuk lembaga wakaf. DB: `mzis_wakaf`.
+
+Tiap portal **single-tenant** (hanya kenal perusahaannya sendiri) tetapi **multi-cabang** (perusahaan tersebut punya beberapa cabang). Lihat §7.2.
+
+Untuk pengalaman "satu login untuk dua portal": gunakan **Google SSO** sebagai shared identity (sudah didesain di [`docs/plan-auth.md`](./plan-auth.md)). Setiap portal verify token Google mandiri, tapi user merasa seamless. Alternatif: login terpisah di tiap portal (lebih sederhana, kurang seamless).
 
 ## 2. Konteks & Latar Belakang
 
@@ -82,7 +89,7 @@ Portal ini juga menjadi fondasi modernisasi sistem ZISWAF: stack baru (Vue + Vit
 **Tahap awal (Fase 1–3) — Read & visualisasi:**
 
 - Autentikasi & manajemen sesi (Fase 1 dummy → Fase 3 production cookie httpOnly).
-- Multi-tenant + multi-cabang dengan switcher (perusahaan × cabang).
+- Single-tenant per portal + multi-cabang dengan switcher cabang dalam portal.
 - Dashboard per peran dengan beragam view (KPI, trend, distribusi, capaian, transaksi terbaru).
 - Modul Keuangan — **read & laporan**: penerimaan, penyaluran, saldo per dana, distribusi asnaf, drill-down per cabang, export.
 - Modul Program — **read**: daftar/status/realisasi program, penerima manfaat.
@@ -124,7 +131,7 @@ RBAC scoped per (perusahaan × cabang).
 
 ### 6.2 Constraint
 
-- **Wajib menggunakan existing database** yang sudah berjalan.
+- **Wajib menggunakan existing database** — Postgres **per perusahaan** (strategi *database-per-tenant*). Saat ini: `mziss_laz` (Perusahaan 1 — LAZ) dan `mzis_wakaf` (Perusahaan 2 — Wakaf). Detail koneksi & routing di [`docs/architecture.md`](./architecture.md) §15.0.
 - **Tidak ada schema migration di MVP**; akses bersifat read-mostly. Penulisan data baru hanya untuk hal yang belum tersedia di existing DB (mis. user_session, audit log portal) dan harus terisolasi dari skema existing.
 - Arsitektur teknis mengikuti [`docs/architecture.md`](./architecture.md) — FrontEnd Vue + Vite, BFF FastAPI, backend Python FastAPI (dengan migrasi bertahap ke Go), OpenAPI-first.
 - Portal harus mengikuti standar respons dan error format yang sudah ditetapkan di architecture.md §12–§13.
@@ -155,36 +162,55 @@ RBAC scoped per (perusahaan × cabang).
 - Logout mengakhiri session di sisi server (cookie invalidation).
 - (Opsional, evaluasi terpisah) Integrasi SSO/OIDC jika organisasi sudah memiliki Identity Provider.
 
-### 7.2 Multi-Tenant & Multi-Cabang
+### 7.2 Portal per Domain + Multi-Cabang
 
-Hierarki entitas: **Perusahaan (tenant)** → **Cabang (branch)** → **Data transaksional**.
+Hierarki entitas (v0.3+): **Portal (domain spesifik)** → **Cabang (branch)** → **Data transaksional**. Setiap portal hanya kenal **satu perusahaan/lembaga** = "single-tenant per portal".
 
-#### Tenant (Perusahaan)
-- Setiap user memiliki **satu atau lebih** keanggotaan perusahaan.
-- Setiap user memiliki **satu perusahaan default** sebagai konteks awal.
+#### Dua portal independen
 
-#### Cabang (Branch)
-- Setiap perusahaan memiliki **satu atau lebih cabang**. Salah satu cabang ditandai sebagai **HQ** (kantor pusat).
-- Setiap user memiliki **akses ke satu/beberapa cabang** dalam perusahaan tertentu (atau wildcard "semua cabang" untuk role manajemen perusahaan).
-- Setiap user memiliki **satu cabang default per perusahaan** yang dipakai sebagai konteks awal.
+- **isf-app-zakat**: domain zakat/infaq/sadaqah. Backend & DB: `mziss_laz`. Tenant: Perusahaan 1 (LAZ).
+- **isf-app-wakaf**: domain wakaf. Backend & DB: `mzis_wakaf`. Tenant: Perusahaan 2 (Wakaf).
+
+Kedua portal di-deploy **independen** (stack masing-masing: web-vue + bff + api-python). Codebase dapat berbagi komponen UI dan auth pattern (lihat `docs/plan-split-deployment.md` — TBD).
+
+#### Cabang (dalam tiap portal)
+
+- Setiap perusahaan memiliki **satu atau lebih cabang**. Salah satu cabang ditandai sebagai **HQ**.
+- Setiap user memiliki **akses ke satu/beberapa cabang** (atau wildcard "semua cabang" untuk role manajemen).
+- Setiap user memiliki **satu cabang default** sebagai konteks awal setelah login.
 
 #### Switcher di UI
-- Header menampilkan konteks aktif: contohnya `Perusahaan A · Cabang Jakarta ▾`.
-- Klik switcher → menu 2-level: pilih perusahaan → pilih cabang dalam perusahaan tersebut.
-- Untuk user dengan wildcard "semua cabang", tersedia opsi tambahan **"Konsolidasi (semua cabang)"** — dashboard menampilkan agregat lintas cabang perusahaan tersebut.
-- Perpindahan konteks (perusahaan atau cabang) → data di seluruh halaman me-reload, **tanpa logout**.
+
+- Header tiap portal menampilkan konteks cabang aktif: contoh `Cabang Jakarta ▾`.
+- Klik switcher → daftar cabang yang user dapat akses.
+- Untuk user dengan wildcard, tersedia **"Konsolidasi (semua cabang)"** — dashboard agregat lintas cabang dalam portal tersebut.
+- **Tidak ada** switcher antar-portal di UI — pindah portal = navigasi ke URL portal lain.
+
+#### Single Sign-On lintas portal
+
+- **Default**: Google SSO (per `docs/plan-auth.md`). User login via Google, tiap portal verify token mandiri. UX: 1 login = akses dua portal.
+- **Fallback**: bila Google SSO belum dikonfigurasi, user login terpisah di tiap portal (password lokal masing-masing).
+- Tidak ada session sharing antar portal di Fase awal — masing-masing portal punya cookie session sendiri.
 
 #### Isolasi data
-- Semua query dan endpoint wajib di-scope ke `(tenant_id, branch_id)` aktif (atau `tenant_id` saja saat mode konsolidasi).
-- Backend menolak permintaan yang mencoba akses ke perusahaan/cabang di luar keanggotaan user.
-- Tidak ada tampilan agregat lintas-perusahaan di fase awal; konsolidasi hanya **lintas cabang dalam satu perusahaan**.
+
+- Backend tiap portal hanya kenal DB-nya sendiri (single DSN config).
+- Query di-scope ke `(branch_id)` aktif (atau wildcard untuk konsolidasi cabang).
+- Tidak ada akses lintas-portal di tingkat data — bila perlu dashboard "konsolidasi lintas-perusahaan", harus dibuat di lapisan agregasi terpisah (di luar scope fase awal).
 
 #### Audit
-- Setiap perpindahan konteks tercatat di audit log (user, dari → ke perusahaan/cabang, waktu).
+
+- Setiap perpindahan cabang tercatat di audit log per portal (user, dari → ke cabang, waktu).
+
+#### Domain field di tenant config
+
+Tiap portal config menyertakan `domain ∈ {zakat, wakaf}` — frontend bisa sesuaikan branding/icon/menu berdasarkan domain. Sidebar dan widget yang khas-domain hanya tampil di portal yang sesuai.
 
 #### Implementasi awal vs target
-- **Fase 1 (MVP)**: switcher perusahaan saja (cabang belum ada di dummy data).
-- **Fase 2 ke atas**: tambah dimensi cabang saat koneksi ke existing DB; switcher 2-level aktif; mode konsolidasi tersedia untuk role manajemen.
+
+- **Fase 1 (MVP)**: 1 portal saja (zakat — yang sudah jalan). Wakaf portal di-stub.
+- **Fase 2**: portal zakat connect ke `mziss_laz`, multi-cabang aktif. Portal wakaf mulai dibangun parallel atau setelah zakat stabil.
+- **Fase 4+**: kedua portal punya fitur input dengan workflow approval (§7.8).
 
 ### 7.3 Dashboard
 
@@ -436,6 +462,8 @@ MVP dianggap selesai jika seluruh kriteria berikut terpenuhi:
 | **Cabang (Branch)** | Unit operasional di bawah perusahaan ZISWAF (mis. cabang regional / kantor cabang) |
 | **HQ** | Head Quarter — kantor pusat suatu perusahaan; satu cabang ditandai sebagai HQ |
 | **Konsolidasi** | Tampilan agregat lintas cabang dalam satu perusahaan (bukan lintas perusahaan) |
+| **Domain** | Lini bisnis ZISWAF yang dilayani satu portal — `zakat` (LAZ) atau `wakaf` |
+| **Portal** | Aplikasi end-to-end (frontend + backend + DB) untuk satu domain. Saat ini: `isf-app-zakat`, `isf-app-wakaf` |
 
 ## 14. Referensi
 
@@ -447,3 +475,4 @@ MVP dianggap selesai jika seluruh kriteria berikut terpenuhi:
 | --- | --- | --- | --- |
 | 0.1 | 2026-05-20 | Draft awal | Versi draft (BRD) untuk review stakeholder |
 | 0.2 | 2026-05-20 | Pivot ke PRD | Read-first roadmap (Fase 2 dashboard & laporan dari existing DB; fitur input transaksional digeser ke Fase 4+); tambah konsep multi-cabang (Perusahaan × Cabang); tambah §1.1 strategi, §1.2 multi-cabang, §7.8 otorisasi maker–checker; rename `docs/brd.md` → `docs/prd.md` |
+| 0.3 | 2026-05-20 | Split portal per domain | Multi-tenant 1 portal → **dua portal independen** (`isf-app-zakat` + `isf-app-wakaf`), masing-masing single-tenant + multi-cabang; tenant config tambah field `domain ∈ {zakat, wakaf}`; SSO lintas portal via Google SSO; restructure folder direncanakan (`docs/plan-split-deployment.md`); update §1.2, §5.1, §7.2, §13 |

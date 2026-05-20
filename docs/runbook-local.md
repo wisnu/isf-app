@@ -1,6 +1,6 @@
 # Runbook — Local Deployment
 
-> Cara membawa stack `isf-app` (MVP Fase 1) sampai jalan di laptop pengembang. Lihat [`docs/plan-mvp.md`](./plan-mvp.md) untuk konteks fitur, [`docs/architecture.md`](./architecture.md) untuk arsitektur.
+> Cara membawa stack `isf-app` (Portal Zakat & Portal Wakaf, split deployment per PRD v0.3) sampai jalan di laptop pengembang. Lihat [`docs/prd.md`](./prd.md) untuk konteks fitur, [`docs/architecture.md`](./architecture.md) untuk arsitektur, [`docs/plan-split-deployment.md`](./plan-split-deployment.md) untuk strategi split.
 
 ## Daftar isi
 
@@ -16,6 +16,9 @@
 10. [Menjalankan unit test](#10-menjalankan-unit-test)
 11. [Alternatif: native dev tanpa container](#11-alternatif-native-dev-tanpa-container)
 12. [Troubleshooting](#12-troubleshooting)
+13. [Mengaktifkan Google SSO](#13-mengaktifkan-google-sso)
+14. [Rotate `SESSION_SECRET` (force logout)](#14-rotate-session_secret-force-logout)
+15. [Inspect audit log](#15-inspect-audit-log)
 
 ---
 
@@ -23,189 +26,236 @@
 
 | Tool | Versi | Catatan |
 | --- | --- | --- |
-| Docker (Engine + Compose v2) | terbaru | atau Podman ≥ 4 + `podman-compose` |
+| Docker (Engine + Compose v2) | terbaru | atau Podman ≥ 4 + `podman-compose` ≥ 1.0.3 |
 | Git | apa saja | |
 | Browser modern | evergreen | Chrome / Edge / Firefox / Safari |
 
 Tidak perlu Python atau Node terinstal di host — semua dijalankan dalam container.
 
+Pada dokumen ini, perintah ditulis dengan `docker compose` (Docker v2). Pengguna Podman tinggal ganti dengan `podman-compose` — argumen-flag identik.
+
 ## 2. Topologi & port
+
+Sejak v0.3, **dua portal independen** berjalan paralel:
+
+| Portal | Web | BFF | Backend | DB target (Fase 2+) | Compose file |
+| --- | --- | --- | --- | --- | --- |
+| **Zakat** | `:5173` | `:7000` | `:8000` | `mziss_laz` | `infra/docker-compose.zakat.yml` |
+| **Wakaf** | `:5174` | `:7001` | `:8001` | `mzis_wakaf` | `infra/docker-compose.wakaf.yml` |
+
+Diagram per portal:
 
 ```
 Browser
-  └─ http://localhost:5173      ── web-vue   (Vite dev server)
-       └─ fetch                ─→ http://localhost:7000  bff-api   (FastAPI + session)
-                                     └─ proxy           ─→ http://api-python:8000  api-python (FastAPI)
+  └─ http://localhost:5173   web-vue   (Vite dev)
+       └─ fetch              bff-api   (FastAPI + SQLite session)
+                                 └─ proxy   api-python  (FastAPI dummy / existing DB Fase 2+)
 ```
 
-Port yang dipakai di host:
+Tiap stack punya **project namespace sendiri** (`isf-zakat`, `isf-wakaf`) → volume + network terisolasi.
 
-| Port | Service | Tujuan |
-| --- | --- | --- |
-| 5173 | web-vue | UI (Vite dev) |
-| 7000 | bff-api | API publik untuk browser |
-| 8000 | api-python | Backend (akses langsung opsional, untuk debugging) |
+Pastikan port-port di atas kosong sebelum start:
 
-Pastikan ketiganya kosong sebelum start (`ss -ltn '( sport = :5173 or sport = :7000 or sport = :8000 )'`).
+```bash
+ss -ltn '( sport = :5173 or sport = :5174 or sport = :7000 or sport = :7001 or sport = :8000 or sport = :8001 )'
+```
 
 ## 3. First-time setup
 
 ```bash
 git clone <repo-url> isf-app
 cd isf-app/infra
-cp .env.example .env          # opsional; default sudah cukup untuk dev
+cp .env.example .env       # opsional; default sudah cukup untuk dev
 ```
 
-Tidak ada langkah `npm install` atau `pip install` di host — container yang mengurusnya.
+`.env` di-load otomatis oleh **kedua** compose file (`env_file:` directive). Isi `.env` berlaku untuk zakat dan wakaf.
+
+Tidak perlu `npm install` atau `pip install` di host — container yang mengurusnya.
 
 ## 4. Menjalankan stack
 
-```bash
-cd infra
-docker compose up --build -d     # build images pertama kali butuh beberapa menit
-```
-
-Jika pakai Podman:
+### 4.1 Zakat (default)
 
 ```bash
 cd infra
-podman-compose up --build -d
+docker compose -f docker-compose.zakat.yml up -d --build              # atau: podman-compose -f docker-compose.zakat.yml up -d --build
 ```
 
-Pertama kali build (tanpa cache) men-download:
+Open: <http://localhost:5173>
 
-- `python:3.12-slim` + `pip install fastapi uvicorn httpx itsdangerous pydantic pydantic-settings pytest`
-- `node:20-alpine` + `npm install vue vue-router pinia vite @vitejs/plugin-vue typescript vue-tsc`
-
-Estimasi 3–8 menit tergantung jaringan. Build kedua dan seterusnya pakai cache (cepat).
-
-Periksa status:
+### 4.2 Wakaf
 
 ```bash
-docker compose ps
+cd infra
+docker compose -f docker-compose.wakaf.yml up -d --build
+# atau: podman-compose -f docker-compose.wakaf.yml up -d --build
 ```
 
-Ketiga service harus `running` / `healthy`.
+Open: <http://localhost:5174>
+
+### 4.3 Kedua stack paralel
+
+Kedua compose file di-namespace lewat `name:` directive (`isf-zakat` / `isf-wakaf`) → tidak ada konflik volume/network. Bisa di-`up` bergiliran atau bersamaan.
+
+```bash
+docker compose -f docker-compose.zakat.yml up -d --build
+docker compose -f docker-compose.wakaf.yml up -d --build
+docker ps --filter "name=isf-"            # → 6 container running (3 per stack)
+```
+
+Build pertama kali per stack men-download:
+
+- `python:3.12-slim` + deps (bff-api, api-python).
+- `node:20-alpine` + deps (web-vue).
+
+Estimasi 3–8 menit per stack tergantung jaringan. Build kedua dst pakai cache (cepat).
 
 ## 5. Verifikasi cepat
 
 ### 5.1 Health checks
 
 ```bash
-curl -s http://localhost:8000/health
-curl -s http://localhost:7000/health
+# Zakat
+curl -s http://localhost:8000/health      # api-python
+curl -s http://localhost:7000/health      # bff-api
+
+# Wakaf
+curl -s http://localhost:8001/health      # api-python
+curl -s http://localhost:7001/health      # bff-api
 ```
 
-Keduanya harus respons `{"data":{"status":"ok"},"meta":{...}}`.
+Semua harus respons `{"data":{"status":"ok"},"meta":{...}}`.
 
-### 5.2 End-to-end via curl (membuktikan multi-tenant)
+### 5.2 End-to-end auth + dashboard (zakat)
 
 ```bash
-COOKIE=/tmp/isf-cookie.txt
-
-# Login
+COOKIE=/tmp/c-zakat.txt
 curl -s -c "$COOKIE" -X POST http://localhost:7000/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"admin123"}' | jq .
 
-# List tenant + current
-curl -s -b "$COOKIE" http://localhost:7000/api/tenants | jq .
-
-# Dashboard untuk tenant default (perusahaan_a)
 curl -s -b "$COOKIE" http://localhost:7000/api/dashboard/summary | jq .
-
-# Switch ke perusahaan_b
-curl -s -b "$COOKIE" -c "$COOKIE" -X POST http://localhost:7000/api/tenants/switch \
-  -H 'Content-Type: application/json' \
-  -d '{"tenant_id":"perusahaan_b"}' | jq .
-
-# Dashboard sekarang harus berubah ke perusahaan_b
-curl -s -b "$COOKIE" http://localhost:7000/api/dashboard/summary | jq .
-
-# Logout
-curl -s -b "$COOKIE" -X POST http://localhost:7000/api/auth/logout | jq .
 ```
+
+Untuk wakaf, ganti `:7000` → `:7001` dan `c-zakat.txt` → `c-wakaf.txt`. **Session terisolasi per stack** — cookie zakat tidak valid di wakaf, dan sebaliknya.
 
 ### 5.3 Via browser
 
-1. Buka `http://localhost:5173` → otomatis redirect ke `/login`.
-2. Login `admin` / `admin123`.
-3. Dashboard tampil dengan 2 widget (Penerimaan & Penyaluran) untuk **Lembaga ZISWAF A**.
-4. Klik dropdown perusahaan di header → pilih **Lembaga ZISWAF B** → widget update.
-5. Klik **Logout** → kembali ke login.
+| Portal | URL | Tampilan |
+| --- | --- | --- |
+| Zakat | <http://localhost:5173> | Login → dashboard "Lembaga ZISWAF A" (data dummy) |
+| Wakaf | <http://localhost:5174> | Sama (data dummy identik untuk sekarang — wakaf akan diverge) |
 
 ## 6. Akun demo
 
-| Username | Password | Tenant |
-| --- | --- | --- |
-| `admin` | `admin123` | perusahaan_a + perusahaan_b |
-| `finance.a` | `finance123` | perusahaan_a saja |
-| `finance.b` | `finance123` | perusahaan_b saja |
+Sama di kedua portal (data seed identik karena wakaf masih clone identik dari zakat).
 
-User `finance.a` mencoba switch ke `perusahaan_b` akan ditolak (HTTP 403 `TENANT_FORBIDDEN`).
+| Username | Password | Akses tenant |
+| --- | --- | --- |
+| `admin` | `admin123` | Perusahaan A + Perusahaan B |
+| `finance.a` | `finance123` | Perusahaan A saja |
+| `finance.b` | `finance123` | Perusahaan B saja |
+
+`finance.a` mencoba switch ke `perusahaan_b` akan ditolak (HTTP 403 `TENANT_FORBIDDEN`).
+
+> Catatan: setelah split deployment, multi-tenant switcher kehilangan relevansi (tiap portal single-tenant). Akun demo masih kelihatan punya akses ke 2 perusahaan karena seed belum disesuaikan — akan dirapikan saat tim wakaf garap. Untuk Fase 2+ tiap portal akan punya seed user spesifik.
 
 ## 7. Hot reload & iterasi kode
 
 Source code di-bind-mount ke container:
 
-| Path host | Path container |
-| --- | --- |
-| `apps/web-vue/` | `/app` (web-vue) |
-| `apps/bff-api/` | `/app` (bff-api) |
-| `apps/api-python/` | `/app` (api-python) |
+| Host | Container | Stack |
+| --- | --- | --- |
+| `apps_zakat/web-vue/` | `/app` (web-vue) | zakat |
+| `apps_zakat/bff-api/` | `/app` (bff-api) | zakat |
+| `apps_zakat/api-python/` | `/app` (api-python) | zakat |
+| `apps_wakaf/web-vue/` | `/app` (web-vue) | wakaf |
+| `apps_wakaf/bff-api/` | `/app` (bff-api) | wakaf |
+| `apps_wakaf/api-python/` | `/app` (api-python) | wakaf |
 
-- Edit file di host → Vite (frontend) dan `uvicorn --reload` (backend & BFF) otomatis pick up perubahan.
-- `apps/web-vue/node_modules/` diisolasi dengan anonymous volume agar tidak bentrok dengan host (kalau host pernah `npm install`).
+Edit file di host → Vite (frontend) dan `uvicorn --reload` (backend) auto pick up.
+
+`apps_*/web-vue/node_modules/` diisolasi via anonymous volume agar tidak bentrok dengan host (mis. setelah `npm install` lokal).
+
+`CHOKIDAR_USEPOLLING=true` sudah di-set untuk web-vue → Vite file-watching reliable di bind mount Linux.
 
 Tambah dependency:
 
 ```bash
-# Frontend
-docker compose exec web-vue npm install <pkg>
+# Frontend (zakat)
+docker compose -f docker-compose.zakat.yml exec web-vue npm install <pkg>
 
-# Python (bff-api atau api-python)
-docker compose exec bff-api pip install <pkg>
-# lalu tambahkan ke pyproject.toml dan rebuild image: docker compose build bff-api
+# Frontend (wakaf)
+docker compose -f docker-compose.wakaf.yml exec web-vue npm install <pkg>
+
+# Backend (Python — zakat)
+docker compose -f docker-compose.zakat.yml exec bff-api pip install <pkg>
+# lalu update pyproject.toml + rebuild image:
+docker compose -f docker-compose.zakat.yml build bff-api
 ```
 
 ## 8. Stop & teardown
 
 ```bash
-cd infra
-docker compose down                 # stop & hapus container
-docker compose down -v              # + hapus volume (termasuk node_modules)
+# Zakat
+docker compose -f docker-compose.zakat.yml down                  # stop & hapus container
+docker compose -f docker-compose.zakat.yml down -v               # + hapus volume isf-zakat (auth.sqlite hilang)
+
+# Wakaf
+docker compose -f docker-compose.wakaf.yml down
+docker compose -f docker-compose.wakaf.yml down -v
+
+# Force rebuild penuh (tanpa cache)
+docker compose -f docker-compose.zakat.yml build --no-cache
 ```
 
-Image cache tetap. Untuk paksa rebuild penuh:
+Image cache tetap. Untuk benar-benar bersih:
 
 ```bash
-docker compose build --no-cache
+docker compose -f docker-compose.zakat.yml down -v --rmi local   # hapus image local-built juga
 ```
 
 ## 9. Logs & inspeksi container
 
 ```bash
-docker compose logs -f                 # semua service
-docker compose logs -f bff-api         # satu service
-docker compose exec bff-api sh         # shell ke dalam container
-docker compose exec api-python python  # REPL Python
+# Logs semua service (zakat)
+docker compose -f docker-compose.zakat.yml logs -f
+
+# Logs satu service spesifik
+docker compose -f docker-compose.zakat.yml logs -f bff-api
+docker compose -f docker-compose.wakaf.yml logs -f web-vue
+
+# Shell ke dalam container
+docker compose -f docker-compose.zakat.yml exec bff-api sh
+docker compose -f docker-compose.wakaf.yml exec api-python python
+```
+
+Status kedua stack:
+
+```bash
+docker ps --filter "name=isf-"
 ```
 
 ## 10. Menjalankan unit test
 
-Test diletakkan di `apps/<service>/tests/` (lihat `docs/plan-mvp.md`).
+Test ada di `apps_<domain>/<service>/tests/` (lihat `docs/plan-mvp.md` & `docs/plan-auth.md`).
 
 Di dalam container:
 
 ```bash
-docker compose exec bff-api python -m pytest tests/ -v
-docker compose exec api-python python -m pytest tests/ -v
+# Zakat
+docker compose -f docker-compose.zakat.yml exec bff-api python -m pytest tests/ -v
+docker compose -f docker-compose.zakat.yml exec api-python python -m pytest tests/ -v
+
+# Wakaf
+docker compose -f docker-compose.wakaf.yml exec bff-api python -m pytest tests/ -v
+docker compose -f docker-compose.wakaf.yml exec api-python python -m pytest tests/ -v
 ```
 
-Atau secara native (jika punya Python 3.12+):
+Native (di host, jika ada Python 3.12+):
 
 ```bash
-cd apps/bff-api
+cd apps_zakat/bff-api
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 python -m pytest tests/ -v
@@ -215,38 +265,42 @@ Frontend belum punya unit test di MVP — verifikasi via browser.
 
 ## 11. Alternatif: native dev tanpa container
 
-Berguna jika Docker tidak tersedia (atau untuk debugging cepat).
+Berguna jika Docker/Podman tidak tersedia atau untuk debugging cepat.
 
-**Terminal 1 — api-python:**
+**Terminal 1 — api-python (zakat):**
 
 ```bash
-cd apps/api-python
+cd apps_zakat/api-python
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8000
 ```
 
-**Terminal 2 — bff-api:**
+**Terminal 2 — bff-api (zakat):**
 
 ```bash
-cd apps/bff-api
+cd apps_zakat/bff-api
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 API_PYTHON_BASE_URL=http://localhost:8000 \
-SESSION_SECRET=dev-secret-change-me \
+SESSION_SECRET=dev-secret-zakat \
 CORS_ORIGIN=http://localhost:5173 \
+AUTH_DB_PATH=/tmp/isf-zakat-auth.sqlite \
+FRONTEND_BASE_URL=http://localhost:5173 \
 uvicorn app.main:app --reload --port 7000
 ```
 
-**Terminal 3 — web-vue:**
+**Terminal 3 — web-vue (zakat):**
 
 ```bash
-cd apps/web-vue
+cd apps_zakat/web-vue
 npm install
-VITE_API_BASE_URL=http://localhost:7000 npm run dev
+VITE_API_BASE_URL=http://localhost:7000 VITE_PORTAL_DOMAIN=zakat npm run dev
 ```
 
-Lalu buka `http://localhost:5173`.
+Buka <http://localhost:5173>.
+
+Untuk wakaf, ganti path `apps_zakat/` → `apps_wakaf/` dan port +1 (5174 / 7001 / 8001).
 
 ## 12. Troubleshooting
 
@@ -256,79 +310,99 @@ Lalu buka `http://localhost:5173`.
 Error: bind: address already in use
 ```
 
-Salah satu port (5173 / 7000 / 8000) ditempati proses lain. Cari & matikan, atau ubah host port mapping di `infra/docker-compose.yml`:
+Salah satu port (5173 / 5174 / 7000 / 7001 / 8000 / 8001) ditempati proses lain. Cari & matikan, atau ubah host port mapping di compose:
 
 ```yaml
 ports:
-  - "15173:5173"   # contoh remap
+  - "15173:5173"   # contoh remap web-vue zakat
 ```
 
 ### SELinux menolak bind mount (Fedora / RHEL / podman)
 
 Gejala: container start tapi gagal baca file atau Vite/uvicorn tidak boot.
 
-Solusi: tambahkan suffix `:z` (shared) atau `:Z` (private) pada bind mount di `docker-compose.yml`:
+Solusi: tambah suffix `:z` (shared) atau `:Z` (private) di bind mount:
 
 ```yaml
 volumes:
-  - ../apps/bff-api:/app:z
+  - ../apps_zakat/bff-api:/app:z
 ```
 
-### Web-vue tidak hot reload di Linux
+### Web-vue tidak hot reload
 
-File watcher Vite kadang butuh polling pada bind mount:
+`CHOKIDAR_USEPOLLING=true` sudah di-set di compose. Jika masih bermasalah (filesystem aneh), naikkan polling interval:
 
 ```yaml
 environment:
   CHOKIDAR_USEPOLLING: "true"
-  VITE_API_BASE_URL: http://localhost:7000
+  CHOKIDAR_INTERVAL: "300"
 ```
 
 ### Cookie tidak nyangkut (login terus diminta)
 
-Pastikan browser hit `http://localhost:5173` (bukan `127.0.0.1:5173`) dan request fetch ke `http://localhost:7000`. SameSite=lax memerlukan origin yang konsisten. Cek juga CORS di BFF (`CORS_ORIGIN` harus persis sama dengan origin browser).
+- Pastikan browser hit `http://localhost:5173` (bukan `127.0.0.1:5173`) — SameSite=lax menuntut origin konsisten.
+- Cek CORS di BFF: `CORS_ORIGIN` harus persis sama dengan origin browser.
+- Untuk wakaf, browser di `:5174` → CORS BFF wakaf `:7001` harus `http://localhost:5174`.
 
 ### `depends_on: condition: service_healthy` ditolak podman-compose lama
 
-podman-compose 1.0.x belum mendukung. Solusi cepat:
+Upgrade ke podman-compose ≥ 1.0.3. Atau sebagai workaround:
 
 ```bash
-podman-compose up -d api-python
+podman-compose -f docker-compose.zakat.yml up -d api-python
 sleep 5
-podman-compose up -d bff-api web-vue
+podman-compose -f docker-compose.zakat.yml up -d bff-api web-vue
 ```
-
-Atau upgrade ke podman-compose ≥ 1.0.3.
 
 ### Build gagal pip install / npm install (offline)
 
-Cek koneksi internet di host. Build memerlukan akses ke PyPI dan npm registry.
+Cek koneksi internet. Build memerlukan akses ke PyPI dan npm registry.
 
-### `web-vue` segera exit dengan "EACCES /app/node_modules"
+### `web-vue` exit dengan "EACCES /app/node_modules"
 
-Anonymous volume untuk `node_modules` rusak. Bersihkan:
+Anonymous volume `node_modules` rusak. Bersihkan:
 
 ```bash
-docker compose down -v
-docker compose up --build -d
+docker compose -f docker-compose.zakat.yml down -v
+docker compose -f docker-compose.zakat.yml up -d --build
 ```
+
+### Wakaf & zakat saling tumpang-tindih volume
+
+Tidak mungkin terjadi karena `name:` directive di compose namespace volume per project (`isf-zakat-*`, `isf-wakaf-*`). Verifikasi:
+
+```bash
+docker volume ls | grep isf-
+# Harus terlihat: isf-zakat-bff-data, isf-wakaf-bff-data (terpisah)
+```
+
+### Healthcheck gagal padahal service jalan
+
+Lihat detail:
+
+```bash
+docker inspect isf-zakat-bff-api --format '{{json .State.Health}}' | jq
+```
+
+Penyebab umum: service masih starting (start_period 15–30s). Tunggu, atau cek logs.
 
 ---
 
 ## 13. Mengaktifkan Google SSO
 
-Tombol "Continue with Google" di login page disabled selama `GOOGLE_OAUTH_CLIENT_ID` & `GOOGLE_OAUTH_CLIENT_SECRET` kosong. Cara aktifkan:
+Tombol "Continue with Google" di login page disabled saat `GOOGLE_OAUTH_CLIENT_ID` & `GOOGLE_OAUTH_CLIENT_SECRET` kosong. Cara aktifkan:
 
 ### 13.1 Buat OAuth client di Google Cloud Console
 
-1. Buka [GCP Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
-2. Pilih (atau buat) project, lalu klik **+ CREATE CREDENTIALS → OAuth client ID**.
-3. Kalau diminta, konfigurasi OAuth consent screen dulu (User Type: Internal kalau Workspace; External untuk test).
-4. Application type: **Web application**.
-5. Name: `isf-app dev` (atau sesuai env).
-6. **Authorized JavaScript origins**: `http://localhost:5173`
-7. **Authorized redirect URIs**: `http://localhost:7000/api/auth/google/callback`
-8. Klik **Create**. Copy `Client ID` dan `Client secret`.
+1. <https://console.cloud.google.com/apis/credentials> → pilih/buat project.
+2. **+ CREATE CREDENTIALS → OAuth client ID**. Konfigurasi consent screen kalau pertama kali.
+3. Application type: **Web application**.
+4. Name: `isf-app dev`.
+5. **Authorized JavaScript origins**: `http://localhost:5173` dan `http://localhost:5174` (tambahkan keduanya kalau pakai dua portal).
+6. **Authorized redirect URIs** — wajib match dengan env `GOOGLE_OAUTH_REDIRECT_URL_*`:
+   - `http://localhost:7000/api/auth/google/callback` (zakat)
+   - `http://localhost:7001/api/auth/google/callback` (wakaf)
+7. Klik **Create**. Copy Client ID & Client Secret.
 
 ### 13.2 Set env di `infra/.env`
 
@@ -336,69 +410,79 @@ Tombol "Continue with Google" di login page disabled selama `GOOGLE_OAUTH_CLIENT
 GOOGLE_OAUTH_CLIENT_ID=xxxxx.apps.googleusercontent.com
 GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-yyyyy
 GOOGLE_ALLOWED_DOMAINS=ihsansolusi.co.id
-# atau set GOOGLE_ALLOWED_EMAILS=user@gmail.com utk satu-satu
+# atau GOOGLE_ALLOWED_EMAILS=user@gmail.com untuk per-email allowlist
 ```
 
-### 13.3 Restart bff-api
+(Optionally override redirect URL atau frontend base URL kalau berbeda dari default.)
+
+### 13.3 Restart stack
 
 ```bash
 cd infra
-docker compose restart bff-api
+docker compose -f docker-compose.zakat.yml restart bff-api                          # zakat
+docker compose -f docker-compose.wakaf.yml restart bff-api  # wakaf
 ```
 
-Verifikasi:
+### 13.4 Verifikasi
 
 ```bash
 curl -s http://localhost:7000/api/auth/providers | jq
 # expected: { "data": { "password": true, "google": true }, "meta": {...} }
+curl -s http://localhost:7001/api/auth/providers | jq
+# expected sama
 ```
 
-Buka `http://localhost:5173/login` — tombol Google sekarang enabled.
+Login di browser → tombol Google sekarang enabled.
 
-### 13.4 Production checklist
+### 13.5 Production checklist
 
-- Update redirect URI di GCP dengan domain produksi (`https://app.example.com/api/auth/google/callback`).
-- Sesuaikan `GOOGLE_OAUTH_REDIRECT_URL` dan `FRONTEND_BASE_URL` di env.
-- Audit log: cek `SELECT * FROM audit_log WHERE event LIKE 'sso_%' ORDER BY ts DESC LIMIT 20` di `/data/auth.sqlite` saat troubleshoot.
+- Update redirect URI di GCP ke domain production (`https://app.example.com/...`).
+- Sesuaikan `GOOGLE_OAUTH_REDIRECT_URL_*` dan `FRONTEND_BASE_URL_*` di env production.
+- Cek audit log: `SELECT * FROM audit_log WHERE event LIKE 'sso_%' ORDER BY ts DESC LIMIT 20` (lihat §15).
 
 ---
 
-## 14. Force logout semua user (rotate `SESSION_SECRET`)
+## 14. Rotate `SESSION_SECRET` (force logout)
 
-Session pakai signed cookie (Starlette `SessionMiddleware`). Tidak ada server-side session store → tidak bisa revoke per-user. Untuk **force logout semua user sekaligus**:
+Session pakai signed cookie (Starlette `SessionMiddleware`) — tidak ada server-side session store. Untuk **force-logout semua user** di stack tertentu:
 
 ```bash
-# 1. Generate secret baru
+# Generate secret baru
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 
-# 2. Update infra/.env
-#    SESSION_SECRET=<paste hasil step 1>
+# Edit infra/.env — pilih variabel sesuai stack
+#   SESSION_SECRET_ZAKAT=<paste hasil step 1>
+#   SESSION_SECRET_WAKAF=<paste hasil step 1>
 
-# 3. Restart bff-api
+# Restart bff-api stack terkait
 cd infra
-docker compose restart bff-api
+docker compose -f docker-compose.zakat.yml restart bff-api                              # zakat saja
+# atau:
+docker compose -f docker-compose.wakaf.yml restart bff-api  # wakaf saja
 ```
 
-Semua cookie session lama jadi invalid (signature mismatch), pengguna otomatis diminta login lagi.
+Semua cookie session lama jadi invalid (signature mismatch) → pengguna diminta login lagi.
 
-> Untuk revocation per-user, perlu pindah ke server-side session store (mis. Redis). Lihat architecture.md §14 / out-of-scope di plan-auth.md.
+> Untuk revocation per-user, perlu pindah ke server-side session store (mis. Redis). Lihat `docs/architecture.md` §14 / out-of-scope di `docs/plan-auth.md`.
 
 ---
 
 ## 15. Inspect audit log
 
-`bff-api` menulis ke SQLite di volume `bff-data` (mount `/data/auth.sqlite`).
+Tiap stack punya `auth.sqlite` sendiri (volume `isf-zakat-bff-data` / `isf-wakaf-bff-data`).
 
 ```bash
-# Lihat 20 event terakhir
-docker compose exec bff-api sqlite3 /data/auth.sqlite \
+# 20 event terakhir — zakat
+docker compose -f docker-compose.zakat.yml exec bff-api sqlite3 /data/auth.sqlite \
   "SELECT ts, event, user_id, tenant_id, payload_json FROM audit_log ORDER BY ts DESC LIMIT 20"
 
-# Login gagal seminggu terakhir
-docker compose exec bff-api sqlite3 /data/auth.sqlite \
+# Login gagal seminggu terakhir — zakat
+docker compose -f docker-compose.zakat.yml exec bff-api sqlite3 /data/auth.sqlite \
   "SELECT ts, payload_json FROM audit_log WHERE event='login_failed' AND ts >= datetime('now','-7 days')"
 
-# Aktivitas SSO
-docker compose exec bff-api sqlite3 /data/auth.sqlite \
+# Aktivitas SSO — wakaf
+docker compose -f docker-compose.wakaf.yml exec bff-api sqlite3 /data/auth.sqlite \
   "SELECT ts, event, payload_json FROM audit_log WHERE event LIKE 'sso_%' ORDER BY ts DESC"
 ```
+
+Tabel tersedia: `users`, `user_credentials`, `user_provider_links`, `tenants`, `tenant_memberships`, `audit_log` (lihat skema di `docs/plan-auth.md` §3).
