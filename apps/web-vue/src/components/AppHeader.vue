@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 
 const auth = useAuthStore()
+const theme = useThemeStore()
 const router = useRouter()
 
-async function onSwitch(event: Event) {
-  const tenantId = (event.target as HTMLSelectElement).value
-  if (tenantId && tenantId !== auth.activeTenantId) {
+const activeTenantName = computed(
+  () => auth.user?.tenants.find((t) => t.id === auth.activeTenantId)?.name ?? '—'
+)
+
+async function onSwitch(tenantId: string) {
+  if (tenantId !== auth.activeTenantId) {
     await auth.switchTenant(tenantId)
   }
 }
@@ -20,38 +26,54 @@ async function logout() {
 </script>
 
 <template>
-  <header class="header">
-    <div class="brand">
-      <strong>isf-app</strong>
-      <span class="muted">· Portal ZISWAF</span>
-    </div>
-    <div class="actions" v-if="auth.user">
-      <label class="tenant-switcher">
-        <span class="muted">Perusahaan</span>
-        <select :value="auth.activeTenantId ?? ''" @change="onSwitch">
-          <option v-for="t in auth.user.tenants" :key="t.id" :value="t.id">{{ t.name }}</option>
-        </select>
-      </label>
-      <span class="user muted">{{ auth.user.name }}</span>
-      <button @click="logout">Logout</button>
-    </div>
-  </header>
-</template>
+  <q-header elevated>
+    <q-toolbar>
+      <q-toolbar-title>
+        <span class="text-weight-bold">isf-app</span>
+        <span class="text-caption q-ml-xs">· Portal ZISWAF</span>
+      </q-toolbar-title>
 
-<style scoped>
-.header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.brand { display: flex; gap: 0.4rem; align-items: baseline; }
-.muted { color: var(--color-text-muted); font-size: 0.85rem; }
-.actions { display: flex; align-items: center; gap: 1rem; }
-.tenant-switcher { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.75rem; }
-.tenant-switcher select { width: auto; min-width: 200px; }
-.user { white-space: nowrap; }
-</style>
+      <q-btn-dropdown
+        v-if="auth.user"
+        flat
+        no-caps
+        icon="apartment"
+        :label="activeTenantName"
+      >
+        <q-list>
+          <q-item
+            v-for="t in auth.user.tenants"
+            :key="t.id"
+            v-close-popup
+            clickable
+            @click="onSwitch(t.id)"
+          >
+            <q-item-section avatar style="min-width: 32px">
+              <q-icon
+                v-if="t.id === auth.activeTenantId"
+                name="check"
+                color="positive"
+              />
+            </q-item-section>
+            <q-item-section>{{ t.name }}</q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
+      <q-space />
+
+      <span v-if="auth.user" class="text-caption q-mr-sm">{{ auth.user.name }}</span>
+
+      <q-btn
+        flat
+        round
+        dense
+        :icon="theme.isDark ? 'light_mode' : 'dark_mode'"
+        :title="theme.isDark ? 'Light mode' : 'Dark mode'"
+        @click="theme.toggle"
+      />
+
+      <q-btn flat dense label="Logout" icon-right="logout" @click="logout" />
+    </q-toolbar>
+  </q-header>
+</template>

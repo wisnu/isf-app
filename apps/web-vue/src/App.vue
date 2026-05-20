@@ -9,16 +9,10 @@ const showHeader = computed(() => Boolean(auth.user))
 </script>
 
 <template>
-  <AppHeader v-if="showHeader" />
-  <main class="main">
-    <router-view />
-  </main>
+  <q-layout view="hHh lpr fFf">
+    <AppHeader v-if="showHeader" />
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+  </q-layout>
 </template>
-
-<style scoped>
-.main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-</style>
