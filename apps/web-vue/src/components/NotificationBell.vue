@@ -2,8 +2,8 @@
 import { AlertTriangle, Bell, CheckCircle2, Info } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-import Button from '@/components/ui/Button.vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import { cn } from '@/lib/utils'
 import { useNotificationsStore, type NotificationKind } from '@/stores/notifications'
 
 const notifications = useNotificationsStore()
@@ -42,18 +42,22 @@ function relativeTime(ts: string): string {
 <template>
   <DropdownMenu content-class="w-[22rem] p-0">
     <template #trigger>
-      <Button
-        variant="ghost-on-primary"
-        size="icon"
+      <button
+        type="button"
+        :class="
+          cn(
+            'relative h-8 w-8 inline-flex items-center justify-center rounded-md text-primary-foreground',
+            'hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+          )
+        "
         title="Notifikasi"
-        class="relative"
       >
         <Bell class="w-4 h-4" />
         <span
           v-if="unread > 0"
-          class="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[10px] font-semibold rounded-full min-w-[18px] h-[18px] px-1 grid place-items-center leading-none"
+          class="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-semibold rounded-full min-w-[16px] h-4 px-1 grid place-items-center leading-none"
         >{{ unread > 9 ? '9+' : unread }}</span>
-      </Button>
+      </button>
     </template>
 
     <div class="px-3 py-2.5 border-b border-border flex items-center justify-between gap-2">

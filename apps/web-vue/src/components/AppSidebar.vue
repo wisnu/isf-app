@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import {
-  ChevronsLeft,
-  ChevronsRight,
   FileText,
   HandCoins,
   LayoutDashboard,
@@ -13,7 +11,7 @@ import {
 import type { FunctionalComponent } from 'vue'
 import { useRoute } from 'vue-router'
 
-import Button from '@/components/ui/Button.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/stores/sidebar'
 
@@ -62,27 +60,29 @@ const isActive = (item: MenuItem) => Boolean(item.to && route.path === item.to)
   <aside
     :class="
       cn(
-        'hidden lg:flex shrink-0 border-r border-border bg-surface flex-col py-4 transition-[width] duration-200',
+        'hidden lg:flex shrink-0 border-r border-border bg-surface flex-col transition-[width] duration-200',
         sidebar.collapsed ? 'w-16' : 'w-60',
       )
     "
   >
+    <!-- Brand header -->
     <div
-      class="px-3 mb-3 flex"
-      :class="sidebar.collapsed ? 'justify-center' : 'justify-end'"
+      :class="
+        cn(
+          'h-12 flex items-center gap-2 border-b border-border bg-primary text-primary-foreground shrink-0',
+          sidebar.collapsed ? 'justify-center px-2' : 'px-4',
+        )
+      "
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        :title="sidebar.collapsed ? 'Perluas sidebar' : 'Kecilkan sidebar'"
-        @click="sidebar.toggle"
-      >
-        <ChevronsRight v-if="sidebar.collapsed" class="w-4 h-4" />
-        <ChevronsLeft v-else class="w-4 h-4" />
-      </Button>
+      <AppLogo class="w-5 h-5 shrink-0" />
+      <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
+        <span class="font-bold text-sm">isf-app</span>
+        <span class="text-[10px] opacity-80 truncate">Portal ZISWAF</span>
+      </div>
     </div>
 
-    <nav class="flex flex-col gap-4 px-3 flex-1">
+    <!-- Menu -->
+    <nav class="flex flex-col gap-4 px-3 py-4 flex-1 overflow-y-auto">
       <div v-for="group in groups" :key="group.label" class="flex flex-col gap-1">
         <div
           v-if="!sidebar.collapsed"
@@ -95,7 +95,9 @@ const isActive = (item: MenuItem) => Boolean(item.to && route.path === item.to)
           v-for="item in group.items"
           :key="item.label"
           :to="item.to"
-          :title="sidebar.collapsed ? item.label + (item.badge ? ' · ' + item.badge : '') : undefined"
+          :title="
+            sidebar.collapsed ? item.label + (item.badge ? ' · ' + item.badge : '') : undefined
+          "
           :class="
             cn(
               'flex items-center gap-3 rounded-md text-sm transition-colors',
@@ -120,14 +122,14 @@ const isActive = (item: MenuItem) => Boolean(item.to && route.path === item.to)
 
     <div
       v-if="!sidebar.collapsed"
-      class="px-6 pt-3 mt-auto text-xs text-muted border-t border-border"
+      class="px-4 py-3 text-xs text-muted border-t border-border"
     >
       v0.2.0 · Fase 1 MVP
     </div>
     <div
       v-else
-      class="px-3 pt-3 mt-auto text-[10px] text-muted text-center border-t border-border"
-      :title="'v0.2.0 · Fase 1 MVP'"
+      class="px-2 py-3 text-[10px] text-muted text-center border-t border-border"
+      title="v0.2.0 · Fase 1 MVP"
     >
       v0.2
     </div>

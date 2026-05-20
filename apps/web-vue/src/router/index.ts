@@ -9,15 +9,20 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
-      meta: { public: true },
+      meta: { public: true, title: 'Masuk' },
     },
     {
       path: '/no-tenant',
       name: 'no-tenant',
       component: () => import('@/pages/NoTenantPage.vue'),
-      meta: { requiresNoTenant: true },
+      meta: { requiresNoTenant: true, title: 'Akun' },
     },
-    { path: '/', name: 'dashboard', component: () => import('@/pages/DashboardPage.vue') },
+    {
+      path: '/',
+      name: 'dashboard',
+      component: () => import('@/pages/DashboardPage.vue'),
+      meta: { title: 'Dashboard' },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
@@ -34,7 +39,12 @@ router.beforeEach(async (to) => {
     return auth.activeTenantId ? { name: 'dashboard' } : { name: 'no-tenant' }
   }
 
-  if (auth.user && !auth.activeTenantId && to.name !== 'no-tenant' && to.name !== 'login') {
+  if (
+    auth.user &&
+    !auth.activeTenantId &&
+    to.name !== 'no-tenant' &&
+    to.name !== 'login'
+  ) {
     return { name: 'no-tenant' }
   }
 
