@@ -12,6 +12,7 @@ import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import { ApiError } from '@/lib/api/client'
 import { useAuthStore } from '@/stores/auth'
 
@@ -75,6 +76,7 @@ function loginWithGoogle() {
   <div class="min-h-[80vh] grid place-items-center p-4 sm:p-6 -mt-6">
     <Card class="w-full max-w-md">
       <CardHeader>
+        <AppLogo class="h-16 w-auto mb-2" />
         <CardTitle>Portal Zakat</CardTitle>
         <CardDescription>Manajemen ZIS · masuk dengan akun demo atau Google</CardDescription>
       </CardHeader>

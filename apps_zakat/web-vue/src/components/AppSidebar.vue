@@ -151,7 +151,7 @@ const parentBaseClass = computed(() =>
         )
       "
     >
-      <AppLogo class="w-5 h-5 shrink-0" />
+      <AppLogo class="w-7 h-7 shrink-0 rounded object-contain" />
       <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
         <span class="font-bold text-sm">isf-app</span>
         <span class="text-[10px] opacity-80 truncate">Portal Zakat</span>
