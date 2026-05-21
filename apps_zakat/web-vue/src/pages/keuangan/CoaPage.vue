@@ -62,7 +62,7 @@ const search = ref('')
 const page = ref(1)
 const pageSize = ref(20)
 const tipsOpen = ref(false)
-const compactMode = ref(false)
+const compactMode = ref(true)
 
 // === Filters ===
 type SifatValue = 'all' | 'detail' | 'group'
