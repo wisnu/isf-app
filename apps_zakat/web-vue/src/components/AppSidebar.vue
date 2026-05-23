@@ -47,6 +47,7 @@ const groups: MenuGroup[] = [
           { label: 'Overview', to: '/', icon: LayoutDashboard },
           { label: 'Keuangan', to: '/dashboard/keuangan', icon: BarChart3 },
           { label: 'Penyaluran', to: '/dashboard/penyaluran', icon: PieChart },
+          { label: 'Penghimpunan', to: '/dashboard/penghimpunan', icon: HandCoins },
         ],
       },
     ],
