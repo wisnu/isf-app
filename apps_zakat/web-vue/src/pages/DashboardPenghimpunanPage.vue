@@ -8,7 +8,6 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
 import TrendChart from '@/components/widgets/TrendChart.vue'
-import AsnafDonut from '@/components/widgets/AsnafDonut.vue'
 
 const bulan = ref(new Date().getMonth() + 1)
 const tahun = ref(new Date().getFullYear())
@@ -28,15 +27,6 @@ const kpis = {
 const trendLabels = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05']
 const trendRealisasi = [980_000_000, 1_050_000_000, 1_100_000_000, 1_180_000_000, 1_200_000_000, 1_250_000_000]
 const trendTarget = [1_200_000_000, 1_200_000_000, 1_200_000_000, 1_500_000_000, 1_500_000_000, 1_500_000_000]
-
-// Komposisi produk ZIS (donut)
-const produkZIS = [
-  { label: 'Zakat Maal', value: 520_000_000 },
-  { label: 'Infaq', value: 310_000_000 },
-  { label: 'Sedekah', value: 185_000_000 },
-  { label: 'Zakat Fitrah', value: 140_000_000 },
-  { label: 'Wakaf', value: 95_000_000 },
-]
 
 // Top donatur
 const topDonatur = [
@@ -91,18 +81,12 @@ function formatIdr(v: number): string {
       />
     </div>
 
-    <!-- Row 2: TrendChart + AsnafDonut side by side -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <TrendChart
-        :labels="trendLabels"
-        :penerimaan="trendRealisasi"
-        :penyaluran="trendTarget"
-      />
-      <AsnafDonut
-        :items="produkZIS"
-        value-format="currency"
-      />
-    </div>
+    <!-- Row 2: Trend realisasi vs target (full width) -->
+    <TrendChart
+      :labels="trendLabels"
+      :penerimaan="trendRealisasi"
+      :penyaluran="trendTarget"
+    />
 
     <!-- Row 3: Top Donatur -->
     <Card>
