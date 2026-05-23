@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from app.modules.dashboard.schema import (
     # Legacy
     AsnafItem, Channel, DashboardSummary, Kpis, KpiPair, Trend, Transaction,
