@@ -44,7 +44,7 @@ async def accounts(
     params = _build_passthrough_params(search, type, is_detail, max_level)
     params["page"] = page
     params["page_size"] = page_size
-    downstream = await get_api_python("/api/v1/coa/accounts", params=params)
+    downstream = await get_api_python("/api/coa/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -62,7 +62,7 @@ async def accounts_xlsx(
 
     params = _build_passthrough_params(search, type, is_detail, max_level)
     downstream = await get_api_python(
-        "/api/v1/coa/accounts.xlsx", params=params or None
+        "/api/coa/accounts.xlsx", params=params or None
     )
     if downstream.status_code != 200:
         try:

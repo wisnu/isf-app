@@ -30,5 +30,5 @@ async def ready() -> dict:
     return ok({"status": "ready", "db": db_ok})
 
 
-app.include_router(dashboard_router, prefix="/api/v1")
-app.include_router(coa_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api")
+app.include_router(coa_router, prefix="/api")

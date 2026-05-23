@@ -23,6 +23,6 @@ async def summary(request: Request):
         )
 
     downstream = await get_api_python(
-        "/api/v1/dashboard/summary", params={"tenant_id": active_tenant}
+        "/api/dashboard/summary", params={"tenant_id": active_tenant}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

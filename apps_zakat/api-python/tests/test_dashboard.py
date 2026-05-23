@@ -6,7 +6,7 @@ client = TestClient(app)
 
 
 def test_summary_returns_full_payload_for_tenant_a():
-    response = client.get("/api/v1/dashboard/summary", params={"tenant_id": "perusahaan_a"})
+    response = client.get("/api/dashboard/summary", params={"tenant_id": "perusahaan_a"})
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["tenant_id"] == "perusahaan_a"
@@ -35,13 +35,13 @@ def test_summary_returns_full_payload_for_tenant_a():
 
 
 def test_summary_for_tenant_b_returns_different_numbers():
-    a = client.get("/api/v1/dashboard/summary", params={"tenant_id": "perusahaan_a"}).json()["data"]
-    b = client.get("/api/v1/dashboard/summary", params={"tenant_id": "perusahaan_b"}).json()["data"]
+    a = client.get("/api/dashboard/summary", params={"tenant_id": "perusahaan_a"}).json()["data"]
+    b = client.get("/api/dashboard/summary", params={"tenant_id": "perusahaan_b"}).json()["data"]
     assert a["kpis"]["penerimaan"]["total"] != b["kpis"]["penerimaan"]["total"]
     assert a["recent_transactions"][0]["id"] != b["recent_transactions"][0]["id"]
 
 
 def test_summary_unknown_tenant_returns_404():
-    response = client.get("/api/v1/dashboard/summary", params={"tenant_id": "nonexistent"})
+    response = client.get("/api/dashboard/summary", params={"tenant_id": "nonexistent"})
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "TENANT_NOT_FOUND"

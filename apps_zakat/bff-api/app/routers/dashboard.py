@@ -23,7 +23,7 @@ async def summary(request: Request):
         )
 
     downstream = await get_api_python(
-        "/api/v1/dashboard/summary", params={"tenant_id": active_tenant}
+        "/api/dashboard/summary", params={"tenant_id": active_tenant}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -40,7 +40,7 @@ async def keuangan(request: Request, bulan: int = None, tahun: int = None):
     if tahun is not None:
         params["tahun"] = tahun
 
-    downstream = await get_api_python("/api/v1/dashboard/keuangan", params=params)
+    downstream = await get_api_python("/api/dashboard/keuangan", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -56,5 +56,5 @@ async def penyaluran(request: Request, bulan: int = None, tahun: int = None):
     if tahun is not None:
         params["tahun"] = tahun
 
-    downstream = await get_api_python("/api/v1/dashboard/penyaluran", params=params)
+    downstream = await get_api_python("/api/dashboard/penyaluran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

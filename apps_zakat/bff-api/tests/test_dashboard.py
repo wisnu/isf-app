@@ -38,5 +38,5 @@ def test_dashboard_summary_proxies_with_active_tenant(client, mock_downstream):
     assert body["data"]["tenant_id"] == "perusahaan_a"
     mock_downstream.assert_called_once()
     args, kwargs = mock_downstream.call_args
-    assert "/api/v1/dashboard/summary" in args[0]
+    assert "/api/dashboard/summary" in args[0]
     assert kwargs.get("params") == {"tenant_id": "perusahaan_a"}
