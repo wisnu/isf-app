@@ -10,10 +10,13 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 
 interface AsnafItem {
   label: string
-  amount: number
+  value: number
 }
 
-const props = defineProps<{ items: AsnafItem[] }>()
+const props = defineProps<{
+  items: AsnafItem[]
+  valueFormat?: 'currency' | 'count'
+}>()
 
 const PALETTE = [
   '#1976d2',
@@ -26,7 +29,10 @@ const PALETTE = [
   '#ca8a04',
 ]
 
-function formatIdr(n: number): string {
+function formatValue(n: number): string {
+  if (props.valueFormat === 'count') {
+    return new Intl.NumberFormat('id-ID').format(n)
+  }
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -38,7 +44,7 @@ const chartData = computed(() => ({
   labels: props.items.map((i) => i.label),
   datasets: [
     {
-      data: props.items.map((i) => i.amount),
+      data: props.items.map((i) => i.value),
       backgroundColor: PALETTE,
       borderWidth: 0,
       hoverOffset: 6,
@@ -65,7 +71,7 @@ const options = computed(() => ({
     tooltip: {
       callbacks: {
         label: (ctx: { label?: string; parsed: number }) =>
-          `${ctx.label}: ${formatIdr(ctx.parsed)}`,
+          `${ctx.label}: ${formatValue(ctx.parsed)}`,
       },
     },
   },
