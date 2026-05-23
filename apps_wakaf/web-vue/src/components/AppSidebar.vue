@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  BarChart3,
   Banknote,
   BookOpen,
   ChevronDown,
@@ -7,6 +8,7 @@ import {
   HandCoins,
   Landmark,
   LayoutDashboard,
+  PieChart,
   Settings,
   TrendingUp,
   Users,
@@ -37,7 +39,17 @@ interface MenuGroup {
 const groups: MenuGroup[] = [
   {
     label: 'Utama',
-    items: [{ label: 'Dashboard', to: '/', icon: LayoutDashboard }],
+    items: [
+      {
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        children: [
+          { label: 'Overview', to: '/', icon: LayoutDashboard },
+          { label: 'Keuangan', to: '/dashboard/keuangan', icon: BarChart3 },
+          { label: 'Penyaluran', to: '/dashboard/penyaluran', icon: PieChart },
+        ],
+      },
+    ],
   },
   {
     label: 'Domain ZISWAF',

@@ -48,3 +48,63 @@ class DashboardSummary(BaseModel):
     asnaf_distribution: list[AsnafItem]
     fundraising_channels: list[Channel]
     recent_transactions: list[Transaction]
+
+
+# ── Schema v2 — real-data endpoints ──────────────────────────────────────────
+
+class KpiCardData(BaseModel):
+    total: float
+    delta_pct: float | None = None   # None = tidak ada data bulan lalu
+    format: str = "currency"         # "currency" | "count"
+
+
+class AsnafItem2(BaseModel):
+    label: str
+    count: int
+
+
+class TrendPoint(BaseModel):
+    label: str        # "2026-01"
+    penerimaan: float
+    penyaluran: float
+
+
+class AnggaranItem(BaseModel):
+    owner_id: int
+    owner_name: str
+    anggaran: float
+    realisasi: float
+    pct: float        # realisasi / anggaran * 100, capped at 999
+
+
+class RekeningItem(BaseModel):
+    account_no: str
+    account_name: str
+    account_type: str        # "Bank" | "Kas Besar" | "Kas Kecil" | "Lainnya"
+    bank_name: str | None
+    balance: float
+
+
+class MemoItem(BaseModel):
+    memo_id: int
+    memo_number: str | None
+    subject: str | None
+    amount: float | None
+    memo_type: str          # "R" = Rutin, "N" = Non Rutin
+    memo_date: str | None   # "YYYY-MM-DD"
+
+
+class DashboardKeuangan(BaseModel):
+    period: str             # "2026-05"
+    kpis: dict[str, KpiCardData]
+    trend: list[TrendPoint]
+    asnaf: list[AsnafItem2]
+    anggaran: list[AnggaranItem]
+    rekening: list[RekeningItem]
+
+
+class DashboardPenyaluran(BaseModel):
+    period: str
+    kpis: dict[str, KpiCardData]
+    anggaran: list[AnggaranItem]
+    memo_terbaru: list[MemoItem]
