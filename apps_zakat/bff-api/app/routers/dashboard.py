@@ -26,3 +26,35 @@ async def summary(request: Request):
         "/api/v1/dashboard/summary", params={"tenant_id": active_tenant}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/keuangan")
+async def keuangan(request: Request, bulan: int = None, tahun: int = None):
+    _, error_response = await current_user_id_or_401(request)
+    if error_response is not None:
+        return error_response
+
+    params = {}
+    if bulan is not None:
+        params["bulan"] = bulan
+    if tahun is not None:
+        params["tahun"] = tahun
+
+    downstream = await get_api_python("/api/v1/dashboard/keuangan", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/penyaluran")
+async def penyaluran(request: Request, bulan: int = None, tahun: int = None):
+    _, error_response = await current_user_id_or_401(request)
+    if error_response is not None:
+        return error_response
+
+    params = {}
+    if bulan is not None:
+        params["bulan"] = bulan
+    if tahun is not None:
+        params["tahun"] = tahun
+
+    downstream = await get_api_python("/api/v1/dashboard/penyaluran", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
