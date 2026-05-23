@@ -53,6 +53,12 @@ const router = createRouter({
       component: () => import('@/pages/DashboardPenyaluranPage.vue'),
       meta: { title: 'Dashboard Penyaluran' },
     },
+    {
+      path: '/dashboard/penghimpunan',
+      name: 'dashboard-penghimpunan',
+      component: () => import('@/pages/DashboardPenghimpunanPage.vue'),
+      meta: { title: 'Dashboard Penghimpunan' },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
