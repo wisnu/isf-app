@@ -41,6 +41,18 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/BankPage.vue'),
       meta: { title: 'Manajemen Bank' },
     },
+    {
+      path: '/dashboard/keuangan',
+      name: 'dashboard-keuangan',
+      component: () => import('@/pages/DashboardKeuanganPage.vue'),
+      meta: { title: 'Dashboard Keuangan' },
+    },
+    {
+      path: '/dashboard/penyaluran',
+      name: 'dashboard-penyaluran',
+      component: () => import('@/pages/DashboardPenyaluranPage.vue'),
+      meta: { title: 'Dashboard Penyaluran' },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
