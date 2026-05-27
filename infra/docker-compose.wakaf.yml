@@ -28,7 +28,7 @@ services:
     environment:
       APP_ENV: development
       DOMAIN: wakaf
-      DATABASE_URL: ${DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mzis_wakaf}
+      DATABASE_URL: ${DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_wakaf}
     ports:
       - "8001:8000"
     volumes:
@@ -57,7 +57,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET_WAKAF:-dev-secret-wakaf-change-me}
       CORS_ORIGIN: http://localhost:5174,http://127.0.0.1:5174,http://${HOST_IP:-localhost}:5174
       AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
-      AUTH_DB_PATH: /data/auth.sqlite
+      ISF_AUTH_DATABASE_URL: ${ISF_AUTH_DATABASE_URL_WAKAF:-postgresql://postgres:solusi@host.containers.internal:5432/isf_auth_wakaf}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
       GOOGLE_OAUTH_REDIRECT_URL: http://${HOST_IP:-localhost}:7001/api/auth/google/callback
