@@ -6,16 +6,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
 from app.routers.auth_google import router as google_router
 from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.tenants import router as tenants_router
 from app.services.audit import AuditWriter
+from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
 from app.services.auth_providers.google import GoogleOAuthProvider
 from app.services.auth_providers.password import PasswordProvider
 from app.services.auth_seed import seed_defaults
+from app.shared import db as auth_pool
 from app.shared.config import Settings, settings as default_settings
 from app.shared.request_id import RequestIDMiddleware
 from app.shared.response import ok
@@ -26,18 +29,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        db = AuthDB(cfg.auth_db_path)
-        await db.init_schema()
+        pool = await auth_pool.init_pool(cfg.isf_auth_database_url or None)
+        if pool is None:
+            raise RuntimeError(
+                "ISF_AUTH_DATABASE_URL belum di-set — BFF butuh koneksi ke isf_auth_<portal> DB"
+            )
+        db = AuthDB()
+        await db.migrate_usernames_to_uppercase()
         if not await db.has_users():
             await seed_defaults(db)
         app.state.auth_db = db
-        app.state.audit = AuditWriter(db)
+        app.state.audit = AuditWriter()
         app.state.settings = cfg
         app.state.password_provider = PasswordProvider(db)
         app.state.google_provider = GoogleOAuthProvider(db, cfg)
-        yield
+        from app.services.identity_client import IdentityClient
+        app.state.identity_client = IdentityClient(
+            cfg.api_python_base_url, timeout=cfg.identity_timeout
+        )
+        try:
+            yield
+        finally:
+            await auth_pool.close_pool()
 
     app = FastAPI(title="isf-app bff-api", version="0.2.0", lifespan=lifespan)
+
+    register_exception_handlers(app)
 
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(
@@ -64,6 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tenants_router, prefix="/api")
     app.include_router(dashboard_router, prefix="/api")
     app.include_router(coa_router, prefix="/api")
+    app.include_router(admin_router, prefix="/api")
     return app
 
 
