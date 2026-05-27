@@ -33,35 +33,46 @@ Karena git objects hilang, **tidak bisa cherry-pick per-commit**. Strategi yang 
 | `missing-files-88.txt` | 88 file working tree yang hilang akibat corruption |
 | `truly-missing-51.txt` | 51 file yang TIDAK ADA di base commit `ac3056` — file baru yang dibuat di 74 commit lokal, harus rebuild manual post-recovery |
 
-## Outstanding work (post-recovery commit)
+## Outstanding work (status per 2026-05-27)
 
-Yang masih harus di-rebuild setelah recovery branch ini (commit terpisah per feature group):
+Update progress rebuild post-recovery:
 
-**Backend Python**:
-- `apps_zakat/api-python/etl/` — 14 file ETL (runner, scheduler, refresh_dim_*, refresh_dm_*, refresh_fact_*, db, utils, __init__)
-- `apps_*/api-python/app/modules/admin/router.py & service.py`
+**Done di commit `[RECOVERY] mirror admin module + UI utils kedua portal`**:
+- ✅ `apps_zakat/api-python/app/modules/admin/{router,service}.py` — mirror dari wakaf (schema identical)
+- ✅ `apps_zakat/api-python/app/main.py` — wire admin & identity router + init_isf_auth_pool
+- ✅ `apps_*/bff-api/app/routers/admin.py` — proxy admin role-menu dengan require_menu gate + audit
+- ✅ `apps_wakaf/bff-api/app/shared/db.py` — mirror dari zakat
+- ✅ `apps_wakaf/bff-api/app/main.py` — bring ke parity post-MIGRATE-AUTHDB pattern
+- ✅ `apps_zakat/web-vue/src/lib/menu/registry.ts` — mirror dari wakaf
+- ✅ `apps_wakaf/web-vue/src/lib/useFetch.ts` — mirror dari zakat
+- ✅ `apps_*/web-vue/src/components/ui/Toast.vue` + `lib/useToast.ts` — baseline minimal sesuai design hint
+
+**Done di commit `[RECOVERY] dwh datadict + ETL rebuild plan`**:
+- ✅ `docs/datadictionary/dwh.md` — generated dari pg_dump (14 tabel)
+- ✅ `docs/etl-rebuild-plan.md` — blueprint full untuk rebuild ETL (file structure, pattern, source mapping, testing strategy)
+
+**Still TODO** (rebuild organic ketika butuh):
+
+Backend:
+- `apps_zakat/api-python/etl/` — 14 file ETL runner. Lihat [`docs/etl-rebuild-plan.md`](../etl-rebuild-plan.md).
 - `apps_*/api-python/tests/test_admin.py`
-- `apps_wakaf/bff-api/app/shared/db.py` (zakat side punya, wakaf hilang)
-- `apps_*/bff-api/app/routers/admin.py`
 - `apps_*/bff-api/tests/test_admin*.py`, `test_change_password.py`, `test_coa_gating.py`, `test_identity*.py`
 
-**Frontend Vue**:
-- `apps_*/web-vue/src/components/ui/Toast.vue`
-- `apps_*/web-vue/src/lib/useFetch.ts`, `useToast.ts`
-- `apps_*/web-vue/src/pages/admin/` (UsersPage, RoleMenuPage), `pages/profile/`
-- `apps_zakat/web-vue/src/lib/menu/registry.ts` (MENU_KEYS — wakaf side punya, zakat hilang)
+Frontend:
+- `apps_*/web-vue/src/pages/admin/UsersPage.vue` (RoleMenuPage zakat sudah ada dari overlay)
+- `apps_*/web-vue/src/pages/profile/` (ChangePasswordPage)
+- Wire `<Toast />` di `App.vue` saat rebuild PasswordPage / UsersPage
 
-**Docs**:
-- `docs/datadictionary/dwh.md`
+Docs:
 - `docs/superpowers/specs/`, `plans/2026-05-24-role-menu-admin-ui.md`, `plans/2026-05-24-role-menu-mapping.md`
-- `docs/legacy-apps/`, `docs/reference/` (mungkin tidak penting untuk dipulihkan)
+- `docs/legacy-apps/`, `docs/reference/` (low priority — kemungkinan tidak penting)
 
-**Testing**:
-- `testing/e2e-admin-users.sh`
-- `testing/e2e-etl-datamart.sh`
+Testing:
+- `testing/e2e-admin-users.sh` (butuh UsersPage + admin users API existed dulu)
+- `testing/e2e-etl-datamart.sh` (butuh ETL runner existed dulu)
 
-**Schema fix**:
-- Rename schema `datamart` → `dwh` di DB `mziss_wakaf` (commit `[DWH] rename schema datamart→dwh` belum di-apply ke wakaf side)
+Schema fix:
+- Rename schema `datamart` → `dwh` di DB `mziss_wakaf` (commit `[DWH] rename schema datamart→dwh` belum di-apply ke wakaf side, lihat `infra/db/migrations/README.md`)
 
 ## Pelajaran
 
