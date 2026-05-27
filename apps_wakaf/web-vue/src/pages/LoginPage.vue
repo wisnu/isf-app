@@ -28,10 +28,17 @@ const router = useRouter()
 const route = useRoute()
 
 const demoAccounts = [
-  { user: 'admin', pass: 'admin123', scope: '2 perusahaan' },
-  { user: 'finance.a', pass: 'finance123', scope: 'Perusahaan A saja' },
-  { user: 'finance.b', pass: 'finance123', scope: 'Perusahaan B saja' },
+  { user: 'ADMIN', pass: 'admin123', scope: '2 perusahaan' },
+  { user: 'FINANCE.A', pass: 'finance123', scope: 'Perusahaan A saja' },
+  { user: 'FINANCE.B', pass: 'finance123', scope: 'Perusahaan B saja' },
 ]
+
+function onUsernameInput(event: Event) {
+  const target = event.target as HTMLInputElement
+  const upper = target.value.toUpperCase()
+  if (target.value !== upper) target.value = upper
+  username.value = upper
+}
 
 const ssoErrorMessages: Record<string, string> = {
   invalid_state: 'Sesi SSO tidak valid. Silakan coba lagi.',
@@ -45,6 +52,8 @@ const ssoError = computed(() => {
   return ssoErrorMessages[code] ?? `Login Google gagal: ${code}`
 })
 
+const passwordChangedNotice = computed(() => route.query.changed === '1')
+
 onMounted(() => {
   auth.loadProviders()
 })
@@ -53,11 +62,25 @@ async function submit() {
   errorMsg.value = null
   submitting.value = true
   try {
-    await auth.login(username.value, password.value)
+    await auth.login(username.value.trim().toUpperCase(), password.value)
     const target = (route.query.redirect as string) ?? '/'
     router.replace(target)
   } catch (e) {
-    errorMsg.value = e instanceof ApiError ? e.message : 'Login gagal'
+    if (e instanceof ApiError) {
+      if (e.code === 'IDENTITY_UNAVAILABLE' || e.code === 'IDENTITY_TIMEOUT') {
+        errorMsg.value = 'Layanan identitas sedang tidak tersedia. Coba beberapa saat lagi.'
+      } else if (e.code === 'UNKNOWN_IDENTITY') {
+        errorMsg.value = 'Akun Anda belum terdaftar di sistem identitas. Hubungi administrator.'
+      } else if (e.code === 'NO_TENANT') {
+        errorMsg.value = 'Akun Anda belum punya akses ke tenant. Hubungi administrator.'
+      } else if (e.code === 'INVALID_CREDENTIALS') {
+        errorMsg.value = 'Username atau password salah.'
+      } else {
+        errorMsg.value = e.message || 'Login gagal.'
+      }
+    } else {
+      errorMsg.value = 'Login gagal. Coba lagi.'
+    }
   } finally {
     submitting.value = false
   }
@@ -77,10 +100,13 @@ function loginWithGoogle() {
     <Card class="w-full max-w-md">
       <CardHeader>
         <AppLogo class="h-16 w-auto mb-2" />
-        <CardTitle>Portal Wakaf</CardTitle>
-        <CardDescription>Manajemen Wakaf · masuk dengan akun demo atau Google</CardDescription>
+        <CardTitle>Portal Zakat</CardTitle>
+        <CardDescription>Manajemen ZIS · masuk dengan akun demo atau Google</CardDescription>
       </CardHeader>
       <CardContent>
+        <Alert v-if="passwordChangedNotice" variant="default" class="mb-4">
+          Password berhasil diganti. Silakan login ulang dengan password baru.
+        </Alert>
         <Alert v-if="ssoError" variant="destructive" class="mb-4">
           {{ ssoError }}
         </Alert>
@@ -90,9 +116,13 @@ function loginWithGoogle() {
             <Label for="username">Username</Label>
             <Input
               id="username"
-              v-model="username"
+              :value="username"
               autocomplete="username"
+              autocapitalize="characters"
+              spellcheck="false"
               required
+              class="uppercase"
+              @input="onUsernameInput"
             />
           </div>
 

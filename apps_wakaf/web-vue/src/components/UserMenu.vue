@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut, Moon, Sun, UserCircle2 } from 'lucide-vue-next'
+import { KeyRound, LogOut, Moon, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -29,6 +29,10 @@ const roles = computed<string[]>(() => {
 async function logout() {
   await auth.logout()
   router.replace({ name: 'login' })
+}
+
+function goChangePassword() {
+  router.push({ name: 'profile-password' })
 }
 </script>
 
@@ -75,13 +79,11 @@ async function logout() {
     <div class="py-1">
       <button
         type="button"
-        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted cursor-not-allowed"
-        disabled
-        title="Tersedia di Fase 4"
+        class="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-background"
+        @click="goChangePassword()"
       >
-        <UserCircle2 class="w-4 h-4" />
-        <span>Profil Saya</span>
-        <span class="ml-auto text-[10px] uppercase tracking-wide">Fase 4</span>
+        <KeyRound class="w-4 h-4" />
+        <span>Ganti Password</span>
       </button>
 
       <button

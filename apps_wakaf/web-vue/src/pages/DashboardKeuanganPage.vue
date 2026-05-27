@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
-import Alert from '@/components/ui/Alert.vue'
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
 import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
 import RekeningList from '@/components/widgets/RekeningList.vue'
 import TrendChart from '@/components/widgets/TrendChart.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api } from '@/lib/api/client'
+import { useFetch } from '@/lib/useFetch'
 
 interface KpiCardData {
   total: number
@@ -15,10 +14,24 @@ interface KpiCardData {
   format: string
 }
 
+interface KpisBundle {
+  period: string
+  kpis: {
+    penerimaan: KpiCardData
+    penyaluran: KpiCardData
+    saldo: KpiCardData
+    otorisasi_pending: KpiCardData
+  }
+}
+
 interface TrendPoint {
   label: string
   penerimaan: number
   penyaluran: number
+}
+
+interface TrendBundle {
+  trend: TrendPoint[]
 }
 
 interface AnggaranItem {
@@ -29,6 +42,10 @@ interface AnggaranItem {
   pct: number
 }
 
+interface AnggaranBundle {
+  anggaran: AnggaranItem[]
+}
+
 interface RekeningItem {
   account_no: string
   account_name: string
@@ -37,48 +54,41 @@ interface RekeningItem {
   balance: number
 }
 
-interface AsnafItem2 {
-  label: string
-  count: number
-}
-
-interface DashboardKeuangan {
-  period: string
-  kpis: {
-    penerimaan: KpiCardData
-    penyaluran: KpiCardData
-    saldo: KpiCardData
-    otorisasi_pending: KpiCardData
-  }
-  trend: TrendPoint[]
-  asnaf: AsnafItem2[]
-  anggaran: AnggaranItem[]
+interface RekeningBundle {
   rekening: RekeningItem[]
 }
 
 const bulan = ref(new Date().getMonth() + 1)
 const tahun = ref(new Date().getFullYear())
-const data = ref<DashboardKeuangan | null>(null)
-const loading = ref(false)
-const errorMsg = ref<string | null>(null)
 
-async function load() {
-  loading.value = true
-  errorMsg.value = null
-  try {
-    data.value = await api.get<DashboardKeuangan>(
-      `/api/dashboard/keuangan?bulan=${bulan.value}&tahun=${tahun.value}`
-    )
-  } catch (e) {
-    errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat data keuangan'
-    data.value = null
-  } finally {
-    loading.value = false
-  }
+// Per-chart fetchers — masing-masing independen.
+const kpisQ = useFetch<KpisBundle>(() =>
+  api.get<KpisBundle>(
+    `/api/dashboard/keuangan/kpis?bulan=${bulan.value}&tahun=${tahun.value}`,
+  ),
+)
+const trendQ = useFetch<TrendBundle>(() =>
+  api.get<TrendBundle>(
+    `/api/dashboard/keuangan/trend?bulan=${bulan.value}&tahun=${tahun.value}`,
+  ),
+)
+const anggaranQ = useFetch<AnggaranBundle>(() =>
+  api.get<AnggaranBundle>(`/api/dashboard/keuangan/anggaran?tahun=${tahun.value}`),
+)
+const rekeningQ = useFetch<RekeningBundle>(() =>
+  api.get<RekeningBundle>('/api/dashboard/keuangan/rekening'),
+)
+
+function loadAll() {
+  // Parallel — kegagalan di satu chart tidak blok chart lain
+  void kpisQ.load()
+  void trendQ.load()
+  void anggaranQ.load()
+  void rekeningQ.load()
 }
 
-onMounted(load)
-watch([bulan, tahun], load)
+onMounted(loadAll)
+watch([bulan, tahun], loadAll)
 </script>
 
 <template>
@@ -87,58 +97,78 @@ watch([bulan, tahun], load)
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Dashboard Keuangan</h1>
-        <p v-if="data" class="text-sm text-muted">Periode {{ data.period }}</p>
+        <p class="text-sm text-muted">
+          {{
+            kpisQ.data.value?.period
+              ? `Periode ${kpisQ.data.value.period}`
+              : `Periode ${tahun}-${String(bulan).padStart(2, '0')}`
+          }}
+        </p>
       </div>
       <PeriodFilter v-model:bulan="bulan" v-model:tahun="tahun" />
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center p-12">
-      <Loader2 class="w-8 h-8 animate-spin text-primary" />
+    <!-- Row 1: 4 KPI cards. Loading/error per group (1 fetch untuk 4 card) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <KpiCard
+        label="Penerimaan"
+        :amount="kpisQ.data.value?.kpis.penerimaan.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis.penerimaan.delta_pct ?? 0"
+        :loading="kpisQ.loading.value"
+        :error="!!kpisQ.error.value"
+        :error-message="kpisQ.error.value ?? undefined"
+      />
+      <KpiCard
+        label="Penyaluran"
+        :amount="kpisQ.data.value?.kpis.penyaluran.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis.penyaluran.delta_pct ?? 0"
+        :loading="kpisQ.loading.value"
+        :error="!!kpisQ.error.value"
+        :error-message="kpisQ.error.value ?? undefined"
+      />
+      <KpiCard
+        label="Saldo Kas/Bank"
+        :amount="kpisQ.data.value?.kpis.saldo.total ?? 0"
+        :delta-pct="0"
+        :loading="kpisQ.loading.value"
+        :error="!!kpisQ.error.value"
+        :error-message="kpisQ.error.value ?? undefined"
+      />
+      <KpiCard
+        label="Pending Otorisasi"
+        :amount="kpisQ.data.value?.kpis.otorisasi_pending.total ?? 0"
+        :delta-pct="0"
+        format="count"
+        :loading="kpisQ.loading.value"
+        :error="!!kpisQ.error.value"
+        :error-message="kpisQ.error.value ?? undefined"
+      />
     </div>
 
-    <!-- Error -->
-    <Alert v-else-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
+    <!-- Row 2: Trend chart -->
+    <TrendChart
+      :labels="trendQ.data.value?.trend.map((t) => t.label) ?? []"
+      :penerimaan="trendQ.data.value?.trend.map((t) => t.penerimaan) ?? []"
+      :penyaluran="trendQ.data.value?.trend.map((t) => t.penyaluran) ?? []"
+      :loading="trendQ.loading.value"
+      :error="!!trendQ.error.value"
+      :error-message="trendQ.error.value ?? undefined"
+    />
 
-    <!-- Content -->
-    <template v-else-if="data">
-      <!-- Row 1: 4 KPI cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Penerimaan"
-          :amount="data.kpis.penerimaan.total"
-          :delta-pct="data.kpis.penerimaan.delta_pct ?? 0"
-        />
-        <KpiCard
-          label="Penyaluran"
-          :amount="data.kpis.penyaluran.total"
-          :delta-pct="data.kpis.penyaluran.delta_pct ?? 0"
-        />
-        <KpiCard
-          label="Saldo Kas/Bank"
-          :amount="data.kpis.saldo.total"
-          :delta-pct="0"
-        />
-        <KpiCard
-          label="Pending Otorisasi"
-          :amount="data.kpis.otorisasi_pending.total"
-          :delta-pct="0"
-          format="count"
-        />
-      </div>
-
-      <!-- Row 2: Trend chart (full width) -->
-      <TrendChart
-        :labels="data.trend.map(t => t.label)"
-        :penerimaan="data.trend.map(t => t.penerimaan)"
-        :penyaluran="data.trend.map(t => t.penyaluran)"
+    <!-- Row 3: Budget + Rekening -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <BudgetProgress
+        :items="anggaranQ.data.value?.anggaran ?? []"
+        :loading="anggaranQ.loading.value"
+        :error="!!anggaranQ.error.value"
+        :error-message="anggaranQ.error.value ?? undefined"
       />
-
-      <!-- Row 3: Budget progress + Rekening list side by side -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <BudgetProgress :items="data.anggaran" />
-        <RekeningList :items="data.rekening" />
-      </div>
-    </template>
+      <RekeningList
+        :items="rekeningQ.data.value?.rekening ?? []"
+        :loading="rekeningQ.loading.value"
+        :error="!!rekeningQ.error.value"
+        :error-message="rekeningQ.error.value ?? undefined"
+      />
+    </div>
   </div>
 </template>

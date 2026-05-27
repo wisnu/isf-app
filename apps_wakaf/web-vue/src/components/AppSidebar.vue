@@ -4,13 +4,11 @@ import {
   Banknote,
   BookOpen,
   ChevronDown,
-  FileText,
   HandCoins,
   Landmark,
   LayoutDashboard,
   PieChart,
-  Settings,
-  TrendingUp,
+  ShieldCheck,
   Users,
   Wallet,
 } from 'lucide-vue-next'
@@ -19,13 +17,16 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AppLogo from '@/components/AppLogo.vue'
+import type { MenuKey } from '@/lib/menu/registry'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth'
 import { useSidebarStore } from '@/stores/sidebar'
 
 interface MenuItem {
   label: string
   to?: string
   icon: FunctionalComponent
+  menu_key?: MenuKey
   disabled?: boolean
   badge?: string
   children?: MenuItem[]
@@ -44,10 +45,10 @@ const groups: MenuGroup[] = [
         label: 'Dashboard',
         icon: LayoutDashboard,
         children: [
-          { label: 'Overview', to: '/', icon: LayoutDashboard },
-          { label: 'Keuangan', to: '/dashboard/keuangan', icon: BarChart3 },
-          { label: 'Penyaluran', to: '/dashboard/penyaluran', icon: PieChart },
-          { label: 'Penghimpunan', to: '/dashboard/penghimpunan', icon: HandCoins },
+          { label: 'Overview',     menu_key: 'dashboard.overview',     to: '/',                       icon: LayoutDashboard },
+          { label: 'Keuangan',     menu_key: 'dashboard.keuangan',     to: '/dashboard/keuangan',     icon: BarChart3 },
+          { label: 'Penyaluran',   menu_key: 'dashboard.penyaluran',   to: '/dashboard/penyaluran',   icon: PieChart },
+          { label: 'Penghimpunan', menu_key: 'dashboard.penghimpunan', to: '/dashboard/penghimpunan', icon: HandCoins },
         ],
       },
     ],
@@ -59,27 +60,44 @@ const groups: MenuGroup[] = [
         label: 'Keuangan',
         icon: Wallet,
         children: [
-          { label: 'Chart of Accounts', to: '/keuangan/coa', icon: BookOpen },
-          { label: 'Kas', to: '/keuangan/kas', icon: Banknote },
-          { label: 'Bank', to: '/keuangan/bank', icon: Landmark },
+          { label: 'Chart of Accounts', menu_key: 'keuangan.coa',  to: '/keuangan/coa',  icon: BookOpen },
+          { label: 'Kas',               menu_key: 'keuangan.kas',  to: '/keuangan/kas',  icon: Banknote },
+          { label: 'Bank',              menu_key: 'keuangan.bank', to: '/keuangan/bank', icon: Landmark },
         ],
       },
-      { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },
-      { label: 'Penghimpunan', icon: TrendingUp, disabled: true, badge: 'Fase 3' },
     ],
   },
   {
     label: 'Administrasi',
     items: [
-      { label: 'Manajemen User', icon: Users, disabled: true, badge: 'Fase 4' },
-      { label: 'Back Office', icon: Settings, disabled: true, badge: 'Fase 4' },
-      { label: 'Audit Log', icon: FileText, disabled: true, badge: 'Fase 4' },
+      { label: 'List User',         menu_key: 'admin.users',     to: '/admin/users',     icon: Users },
+      { label: 'Mapping Role-Menu', menu_key: 'admin.role_menu', to: '/admin/role-menu', icon: ShieldCheck },
     ],
   },
 ]
 
+const auth = useAuthStore()
 const sidebar = useSidebarStore()
 const route = useRoute()
+
+const visibleGroups = computed(() =>
+  groups
+    .map((g) => {
+      const items = g.items
+        .map((it) => {
+          if (!it.children) {
+            // leaf: check menu_key
+            return it.menu_key && auth.hasMenu(it.menu_key) ? it : null
+          }
+          // parent with children: filter children
+          const kids = it.children.filter((c) => c.menu_key && auth.hasMenu(c.menu_key))
+          return kids.length > 0 ? { ...it, children: kids } : null
+        })
+        .filter((it): it is MenuItem => it !== null)
+      return { ...g, items }
+    })
+    .filter((g) => g.items.length > 0),
+)
 
 const EXPANDED_KEY = 'isf-sidebar-expanded-groups'
 const expandedParents = ref<Set<string>>(new Set())
@@ -167,13 +185,13 @@ const parentBaseClass = computed(() =>
       <AppLogo class="w-7 h-7 shrink-0 rounded object-contain" />
       <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
         <span class="font-bold text-sm">isf-app</span>
-        <span class="text-[10px] opacity-80 truncate">Portal Wakaf</span>
+        <span class="text-[10px] opacity-80 truncate">Portal Zakat</span>
       </div>
     </div>
 
     <!-- Menu -->
     <nav class="flex flex-col gap-4 px-3 py-4 flex-1 overflow-y-auto">
-      <div v-for="group in groups" :key="group.label" class="flex flex-col gap-1">
+      <div v-for="group in visibleGroups" :key="group.label" class="flex flex-col gap-1">
         <div
           v-if="!sidebar.collapsed"
           class="px-3 text-[10px] uppercase tracking-wider text-muted font-semibold"

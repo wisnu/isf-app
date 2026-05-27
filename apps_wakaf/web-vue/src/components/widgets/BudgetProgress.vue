@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
+import { AlertTriangle, Loader2 } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
@@ -17,9 +17,12 @@ withDefaults(
   defineProps<{
     items: AnggaranItem[]
     loading?: boolean
+    error?: boolean
+    errorMessage?: string
   }>(),
   {
-    loading: false
+    loading: false,
+    error: false,
   }
 )
 
@@ -41,11 +44,17 @@ function displayPct(pct: number): string {
       <CardTitle>Realisasi Anggaran</CardTitle>
     </CardHeader>
     <CardContent class="p-5 pt-0">
-      <div v-if="loading" class="flex justify-center py-8">
-        <Loader2 class="w-5 h-5 animate-spin text-muted" />
+      <div v-if="loading" class="flex items-center justify-center gap-2 text-muted text-sm py-8">
+        <Loader2 class="w-4 h-4 animate-spin" />
+        Memuat anggaran...
       </div>
-      <div v-else-if="items.length === 0" class="text-sm text-muted text-center py-4">
-        Tidak ada data anggaran
+      <div v-else-if="error" class="flex flex-col items-center gap-1 text-destructive text-sm py-8 text-center px-4">
+        <AlertTriangle class="w-5 h-5 mb-1" />
+        <span class="font-medium">Gagal memuat anggaran</span>
+        <span v-if="errorMessage" class="text-xs text-muted">{{ errorMessage }}</span>
+      </div>
+      <div v-else-if="items.length === 0" class="text-sm text-muted text-center py-8 italic">
+        Tidak ada data anggaran periode ini.
       </div>
       <div v-else class="space-y-3">
         <div v-for="item in items" :key="item.owner_id">

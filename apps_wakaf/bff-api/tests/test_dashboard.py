@@ -40,3 +40,27 @@ def test_dashboard_summary_proxies_with_active_tenant(client, mock_downstream):
     args, kwargs = mock_downstream.call_args
     assert "/api/dashboard/summary" in args[0]
     assert kwargs.get("params") == {"tenant_id": "perusahaan_a"}
+
+
+def test_dashboard_summary_denied_when_menu_not_in_session(client, mock_identity):
+    mock_identity.set_profile("finance.a", menus=[])  # no menus
+    client.post("/api/auth/login", json={"username": "finance.a", "password": "finance123"})
+    response = client.get("/api/dashboard/summary")
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "MENU_FORBIDDEN"
+
+
+def test_dashboard_keuangan_denied_when_menu_not_in_session(client, mock_identity):
+    mock_identity.set_profile("finance.a", menus=["dashboard.overview"])  # no keuangan
+    client.post("/api/auth/login", json={"username": "finance.a", "password": "finance123"})
+    response = client.get("/api/dashboard/keuangan")
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "MENU_FORBIDDEN"
+
+
+def test_dashboard_penyaluran_denied_when_menu_not_in_session(client, mock_identity):
+    mock_identity.set_profile("finance.a", menus=["dashboard.overview"])
+    client.post("/api/auth/login", json={"username": "finance.a", "password": "finance123"})
+    response = client.get("/api/dashboard/penyaluran")
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "MENU_FORBIDDEN"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AlertTriangle, Loader2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 
@@ -8,11 +9,19 @@ import CardDescription from '@/components/ui/CardDescription.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 
-const props = defineProps<{
-  labels: string[]
-  penerimaan: number[]
-  penyaluran: number[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    labels: string[]
+    penerimaan: number[]
+    penyaluran: number[]
+    loading?: boolean
+    error?: boolean
+    errorMessage?: string
+  }>(),
+  { loading: false, error: false },
+)
+
+const hasData = computed(() => props.labels.length > 0)
 
 function formatIdr(n: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -101,7 +110,23 @@ const options = computed(() => ({
       <CardDescription>Penerimaan vs Penyaluran</CardDescription>
     </CardHeader>
     <CardContent>
-      <div class="h-64">
+      <div class="h-64 flex items-center justify-center" v-if="loading">
+        <div class="flex items-center gap-2 text-muted text-sm">
+          <Loader2 class="w-4 h-4 animate-spin" />
+          Memuat tren...
+        </div>
+      </div>
+      <div class="h-64 flex items-center justify-center" v-else-if="error">
+        <div class="flex flex-col items-center gap-1 text-destructive text-sm max-w-md text-center px-4">
+          <AlertTriangle class="w-5 h-5 mb-1" />
+          <span class="font-medium">Gagal memuat data tren</span>
+          <span v-if="errorMessage" class="text-xs text-muted">{{ errorMessage }}</span>
+        </div>
+      </div>
+      <div class="h-64 flex items-center justify-center" v-else-if="!hasData">
+        <div class="text-muted text-sm italic">Tidak ada data periode ini.</div>
+      </div>
+      <div v-else class="h-64">
         <Line :data="chartData" :options="options" />
       </div>
     </CardContent>

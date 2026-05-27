@@ -1,210 +1,158 @@
-"""SQLite access layer for portal authentication data."""
+"""Postgres access layer for portal authentication data (schema `isf_auth`).
+
+Pool dikelola di `app.shared.db`. Method signature + return shape sengaja
+dipertahankan supaya caller (routers/auth, auth_providers/*, audit) tidak perlu
+diubah saat migrasi dari aiosqlite.
+"""
 
 from __future__ import annotations
 
-import os
-from contextlib import asynccontextmanager
-from typing import AsyncIterator
 from uuid import uuid4
 
-import aiosqlite
+from app.shared.db import execute, fetch_all, fetch_one, get_pool
 
 
-SCHEMA_SQL = """
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  display_name TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS user_credentials (
-  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  password_hash TEXT NOT NULL,
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS user_provider_links (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL,
-  external_id TEXT NOT NULL,
-  email TEXT,
-  linked_at TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (user_id, provider),
-  UNIQUE (provider, external_id)
-);
-
-CREATE TABLE IF NOT EXISTS tenants (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS tenant_memberships (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  is_default INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (user_id, tenant_id)
-);
-
-CREATE TABLE IF NOT EXISTS audit_log (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts TEXT NOT NULL DEFAULT (datetime('now')),
-  event TEXT NOT NULL,
-  user_id TEXT,
-  tenant_id TEXT,
-  ip TEXT,
-  ua TEXT,
-  payload_json TEXT
-);
-
-CREATE INDEX IF NOT EXISTS idx_audit_user_ts ON audit_log(user_id, ts);
-CREATE INDEX IF NOT EXISTS idx_audit_event_ts ON audit_log(event, ts);
-"""
+def normalize_username(value: str) -> str:
+    """Login usernames are stored uppercase and trimmed; comparison case-insensitive di boundary."""
+    return (value or "").strip().upper()
 
 
 class AuthDB:
-    def __init__(self, path: str):
-        self.path = path
-
-    @asynccontextmanager
-    async def connect(self) -> AsyncIterator[aiosqlite.Connection]:
-        async with aiosqlite.connect(self.path) as db:
-            db.row_factory = aiosqlite.Row
-            await db.execute("PRAGMA foreign_keys=ON")
-            yield db
-
-    async def init_schema(self) -> None:
-        os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
-        async with self.connect() as db:
-            await db.executescript(SCHEMA_SQL)
-            await db.execute("PRAGMA journal_mode=WAL")
-            await db.commit()
+    """Façade tipis di atas pool isf_auth — agar lifespan + provider tetap pakai
+    `app.state.auth_db` seperti sebelumnya."""
 
     # --- users -----------------------------------------------------------
 
     async def has_users(self) -> bool:
-        async with self.connect() as db:
-            async with db.execute("SELECT COUNT(*) AS c FROM users") as cur:
-                row = await cur.fetchone()
-                return (row["c"] if row else 0) > 0
+        async with get_pool().acquire() as conn:
+            n = await conn.fetchval("SELECT COUNT(*) FROM isf_auth.users")
+            return (n or 0) > 0
 
     async def create_user(self, *, username: str, display_name: str, status: str = "active") -> str:
         user_id = f"usr_{uuid4().hex[:12]}"
-        async with self.connect() as db:
-            await db.execute(
-                "INSERT INTO users (id, username, display_name, status) VALUES (?, ?, ?, ?)",
-                (user_id, username, display_name, status),
-            )
-            await db.commit()
+        await execute(
+            """
+            INSERT INTO isf_auth.users (id, username, display_name, status)
+            VALUES ($1, $2, $3, $4)
+            """,
+            user_id, normalize_username(username), display_name, status,
+        )
         return user_id
 
     async def get_user_by_id(self, user_id: str) -> dict | None:
-        async with self.connect() as db:
-            async with db.execute(
-                "SELECT * FROM users WHERE id = ? AND status = 'active'", (user_id,)
-            ) as cur:
-                row = await cur.fetchone()
-                return dict(row) if row else None
+        return await fetch_one(
+            "SELECT * FROM isf_auth.users WHERE id = $1 AND status = 'active'",
+            user_id,
+        )
 
     async def get_user_by_username(self, username: str) -> dict | None:
-        async with self.connect() as db:
-            async with db.execute(
-                "SELECT * FROM users WHERE username = ? AND status = 'active'", (username,)
-            ) as cur:
-                row = await cur.fetchone()
-                return dict(row) if row else None
+        return await fetch_one(
+            "SELECT * FROM isf_auth.users WHERE username = $1 AND status = 'active'",
+            normalize_username(username),
+        )
+
+    async def migrate_usernames_to_uppercase(self) -> int:
+        """Idempotent: rename legacy lowercase rows ke uppercase. Returns count migrated."""
+        async with get_pool().acquire() as conn:
+            pending = [
+                dict(r) for r in await conn.fetch(
+                    "SELECT id, username FROM isf_auth.users WHERE username <> UPPER(username)"
+                )
+            ]
+            if not pending:
+                return 0
+            taken = {
+                r["username"]
+                for r in await conn.fetch("SELECT username FROM isf_auth.users")
+            }
+            migrated = 0
+            for r in pending:
+                target = normalize_username(r["username"])
+                if target in taken and target != r["username"]:
+                    continue
+                await conn.execute(
+                    "UPDATE isf_auth.users SET username = $1 WHERE id = $2",
+                    target, r["id"],
+                )
+                taken.discard(r["username"])
+                taken.add(target)
+                migrated += 1
+            return migrated
 
     # --- credentials -----------------------------------------------------
 
     async def set_password(self, user_id: str, password_hash: str) -> None:
-        async with self.connect() as db:
-            await db.execute(
-                """
-                INSERT INTO user_credentials (user_id, password_hash) VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET
-                  password_hash = excluded.password_hash,
-                  updated_at = datetime('now')
-                """,
-                (user_id, password_hash),
-            )
-            await db.commit()
+        await execute(
+            """
+            INSERT INTO isf_auth.user_credentials (user_id, password_hash)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id) DO UPDATE SET
+              password_hash = EXCLUDED.password_hash,
+              updated_at    = NOW()
+            """,
+            user_id, password_hash,
+        )
 
     async def get_password_hash(self, user_id: str) -> str | None:
-        async with self.connect() as db:
-            async with db.execute(
-                "SELECT password_hash FROM user_credentials WHERE user_id = ?", (user_id,)
-            ) as cur:
-                row = await cur.fetchone()
-                return row["password_hash"] if row else None
+        async with get_pool().acquire() as conn:
+            return await conn.fetchval(
+                "SELECT password_hash FROM isf_auth.user_credentials WHERE user_id = $1",
+                user_id,
+            )
 
     # --- provider links --------------------------------------------------
 
     async def get_provider_link(self, provider: str, external_id: str) -> dict | None:
-        async with self.connect() as db:
-            async with db.execute(
-                "SELECT * FROM user_provider_links WHERE provider = ? AND external_id = ?",
-                (provider, external_id),
-            ) as cur:
-                row = await cur.fetchone()
-                return dict(row) if row else None
+        return await fetch_one(
+            "SELECT * FROM isf_auth.user_provider_links WHERE provider = $1 AND external_id = $2",
+            provider, external_id,
+        )
 
     async def create_provider_link(
         self, user_id: str, provider: str, external_id: str, email: str | None
     ) -> None:
-        async with self.connect() as db:
-            await db.execute(
-                "INSERT INTO user_provider_links (user_id, provider, external_id, email) VALUES (?, ?, ?, ?)",
-                (user_id, provider, external_id, email),
-            )
-            await db.commit()
+        await execute(
+            """
+            INSERT INTO isf_auth.user_provider_links (user_id, provider, external_id, email)
+            VALUES ($1, $2, $3, $4)
+            """,
+            user_id, provider, external_id, email,
+        )
 
     # --- tenants ---------------------------------------------------------
 
     async def upsert_tenant(self, tenant_id: str, name: str) -> None:
-        async with self.connect() as db:
-            await db.execute(
-                """
-                INSERT INTO tenants (id, name) VALUES (?, ?)
-                ON CONFLICT(id) DO UPDATE SET name = excluded.name
-                """,
-                (tenant_id, name),
-            )
-            await db.commit()
+        await execute(
+            """
+            INSERT INTO isf_auth.tenants (id, name) VALUES ($1, $2)
+            ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
+            """,
+            tenant_id, name,
+        )
 
     async def get_tenant(self, tenant_id: str) -> dict | None:
-        async with self.connect() as db:
-            async with db.execute(
-                "SELECT * FROM tenants WHERE id = ?", (tenant_id,)
-            ) as cur:
-                row = await cur.fetchone()
-                return dict(row) if row else None
+        return await fetch_one("SELECT * FROM isf_auth.tenants WHERE id = $1", tenant_id)
 
     async def add_tenant_membership(
         self, user_id: str, tenant_id: str, *, is_default: bool = False
     ) -> None:
-        async with self.connect() as db:
-            await db.execute(
-                """
-                INSERT INTO tenant_memberships (user_id, tenant_id, is_default) VALUES (?, ?, ?)
-                ON CONFLICT(user_id, tenant_id) DO UPDATE SET is_default = excluded.is_default
-                """,
-                (user_id, tenant_id, 1 if is_default else 0),
-            )
-            await db.commit()
+        await execute(
+            """
+            INSERT INTO isf_auth.tenant_memberships (user_id, tenant_id, is_default)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id, tenant_id) DO UPDATE SET is_default = EXCLUDED.is_default
+            """,
+            user_id, tenant_id, bool(is_default),
+        )
 
     async def get_user_tenants(self, user_id: str) -> list[dict]:
-        async with self.connect() as db:
-            async with db.execute(
-                """
-                SELECT t.id, t.name, tm.is_default
-                FROM tenant_memberships tm
-                JOIN tenants t ON tm.tenant_id = t.id
-                WHERE tm.user_id = ?
-                ORDER BY tm.is_default DESC, t.name
-                """,
-                (user_id,),
-            ) as cur:
-                rows = await cur.fetchall()
-                return [dict(r) for r in rows]
+        return await fetch_all(
+            """
+            SELECT t.id, t.name, tm.is_default
+            FROM isf_auth.tenant_memberships tm
+            JOIN isf_auth.tenants t ON tm.tenant_id = t.id
+            WHERE tm.user_id = $1
+            ORDER BY tm.is_default DESC, t.name
+            """,
+            user_id,
+        )

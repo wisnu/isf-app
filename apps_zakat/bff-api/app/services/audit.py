@@ -1,16 +1,20 @@
-"""Audit log writer."""
+"""Audit log writer — append ke isf_auth.audit_log (JSONB payload)."""
 
 from __future__ import annotations
 
 import json
 from typing import Any
 
-from app.services.auth_db import AuthDB
+from app.shared.db import execute
 
 
 class AuditWriter:
-    def __init__(self, db: AuthDB):
-        self.db = db
+    """Tidak butuh state — semua write via shared pool. Konstruktor menerima
+    AuthDB untuk backward-compat dengan caller (lifespan), tapi diabaikan."""
+
+    def __init__(self, db: Any = None):
+        # signature dipertahankan; tidak ada handle yang disimpan
+        del db
 
     async def log(
         self,
@@ -22,19 +26,11 @@ class AuditWriter:
         ua: str | None = None,
         payload: dict[str, Any] | None = None,
     ) -> None:
-        async with self.db.connect() as conn:
-            await conn.execute(
-                """
-                INSERT INTO audit_log (event, user_id, tenant_id, ip, ua, payload_json)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    event,
-                    user_id,
-                    tenant_id,
-                    ip,
-                    ua,
-                    json.dumps(payload) if payload is not None else None,
-                ),
-            )
-            await conn.commit()
+        payload_text = json.dumps(payload) if payload is not None else None
+        await execute(
+            """
+            INSERT INTO isf_auth.audit_log (event, user_id, tenant_id, ip, ua, payload)
+            VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+            """,
+            event, user_id, tenant_id, ip, ua, payload_text,
+        )

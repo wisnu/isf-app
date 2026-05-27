@@ -202,10 +202,10 @@ Buka **pgAdmin** (terinstall otomatis) atau psql:
 CREATE USER transaction WITH PASSWORD 'solusi';
 
 CREATE DATABASE mziss_laz OWNER transaction;
-CREATE DATABASE mzis_wakaf OWNER transaction;
+CREATE DATABASE mziss_wakaf OWNER transaction;
 
 GRANT ALL PRIVILEGES ON DATABASE mziss_laz TO transaction;
-GRANT ALL PRIVILEGES ON DATABASE mzis_wakaf TO transaction;
+GRANT ALL PRIVILEGES ON DATABASE mziss_wakaf TO transaction;
 ```
 
 ### 8.3 Allow koneksi dari WSL2
@@ -266,7 +266,7 @@ Edit `.env` (gunakan VSCode / Notepad++). Field yang relevan untuk Windows + Pod
 | --- | --- | --- |
 | `HOST_IP` | kosong (untuk akses lokal) atau LAN-IP Windows (mis. `192.168.1.50`) | Untuk akses dari HP/device lain |
 | `DATABASE_URL_ZAKAT` | `postgresql://transaction:solusi@host.containers.internal:5432/mziss_laz` | Default sudah benar |
-| `DATABASE_URL_WAKAF` | `postgresql://transaction:solusi@host.containers.internal:5432/mzis_wakaf` | Default sudah benar |
+| `DATABASE_URL_WAKAF` | `postgresql://transaction:solusi@host.containers.internal:5432/mziss_wakaf` | Default sudah benar |
 | `SESSION_SECRET_ZAKAT` | string random panjang | Ganti dari default untuk production-ish |
 | `SESSION_SECRET_WAKAF` | string random panjang | Ganti dari default untuk production-ish |
 

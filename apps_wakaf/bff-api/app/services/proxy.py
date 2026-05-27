@@ -7,3 +7,16 @@ async def get_api_python(path: str, params: dict | None = None) -> httpx.Respons
     url = f"{settings.api_python_base_url}{path}"
     async with httpx.AsyncClient(timeout=10.0) as client:
         return await client.get(url, params=params)
+
+
+async def post_api_python(
+    path: str,
+    *,
+    json_body: dict,
+    method: str = "POST",
+) -> httpx.Response:
+    """HTTP request dengan body JSON ke api-python. Default POST,
+    override method untuk PUT/PATCH."""
+    url = f"{settings.api_python_base_url}{path}"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        return await client.request(method, url, json=json_body)

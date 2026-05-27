@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, Response
 
-from app.services.auth import current_user_id_or_401
+from app.services.auth import current_user_id_or_401, require_menu
 from app.services.proxy import get_api_python
 
 router = APIRouter(prefix="/coa", tags=["coa"])
@@ -30,6 +30,7 @@ def _build_passthrough_params(
 @router.get("/accounts")
 async def accounts(
     request: Request,
+    _: str = Depends(require_menu("keuangan.coa")),
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     is_detail: str | None = Query(default=None),
@@ -51,6 +52,7 @@ async def accounts(
 @router.get("/accounts.xlsx")
 async def accounts_xlsx(
     request: Request,
+    _: str = Depends(require_menu("keuangan.coa")),
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     is_detail: str | None = Query(default=None),

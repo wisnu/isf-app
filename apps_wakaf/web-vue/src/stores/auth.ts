@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { api, ApiError } from '@/lib/api/client'
+import type { MenuKey } from '@/lib/menu/registry'
 
 export interface Tenant { id: string; name: string }
 export interface User {
@@ -8,6 +9,10 @@ export interface User {
   name: string
   tenants: Tenant[]
   default_tenant: string | null
+  roles: string[]
+  branches: string[]
+  primary_branch: string | null
+  menus: string[]
 }
 
 export interface AuthProviders {
@@ -39,6 +44,13 @@ export const useAuthStore = defineStore('auth', {
     hasTenant(state): boolean {
       return Boolean(state.activeTenantId)
     },
+    menus(state): string[] {
+      return state.user?.menus ?? []
+    },
+    hasMenu(state) {
+      return (key: MenuKey | string): boolean =>
+        Boolean(state.user && state.user.menus.includes(key))
+    },
   },
   actions: {
     async loadProviders() {
@@ -55,9 +67,7 @@ export const useAuthStore = defineStore('auth', {
 
     async bootstrap() {
       try {
-        const me = await api.get<{ user: User; active_tenant_id: string | null }>(
-          '/api/auth/me',
-        )
+        const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
         this.user = me.user
         this.activeTenantId = me.active_tenant_id
       } catch (e) {
@@ -74,8 +84,7 @@ export const useAuthStore = defineStore('auth', {
 
     async login(username: string, password: string) {
       const result = await api.post<{ user: User; active_tenant_id: string }>(
-        '/api/auth/login',
-        { username, password },
+        '/api/auth/login', { username, password },
       )
       this.user = result.user
       this.activeTenantId = result.active_tenant_id
@@ -92,14 +101,21 @@ export const useAuthStore = defineStore('auth', {
 
     async switchTenant(tenantId: string) {
       const result = await api.post<{ active_tenant_id: string }>(
-        '/api/tenants/switch',
-        { tenant_id: tenantId },
+        '/api/tenants/switch', { tenant_id: tenantId },
       )
       this.activeTenantId = result.active_tenant_id
       console.log('[audit] tenant switched', {
         tenant_id: tenantId,
         at: new Date().toISOString(),
       })
+    },
+
+    async refreshProfile() {
+      await api.post('/api/auth/refresh-profile')
+      // Re-bootstrap untuk dapat user shape baru dari /me
+      const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
+      this.user = me.user
+      this.activeTenantId = me.active_tenant_id
     },
   },
 })

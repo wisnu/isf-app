@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.services.auth_providers.google import make_pkce
+from app.services.identity_client import IdentityTimeout, IdentityUnavailable, IdentityUserNotFound
 from app.shared.response import err
 
 router = APIRouter(prefix="/auth/google", tags=["auth"])
@@ -110,7 +111,43 @@ async def google_callback(
         )
 
     memberships = await db.get_user_tenants(user_id)
+
+    # Fetch profile (roles + branches + menus) dari api-python — fail-closed
+    # Gunakan email sebagai identity key (matches enterprise.userapp.id_user untuk SSO users)
+    identity = request.app.state.identity_client
+    try:
+        profile = await identity.fetch_profile(email)
+    except IdentityUserNotFound:
+        await audit.log(
+            "profile_fetch_failed",
+            user_id=user_id,
+            payload={"reason": "unknown_user"},
+            ip=_client_ip(request),
+        )
+        return _redirect_with_error(frontend_base, "identity_user_not_found")
+    except IdentityTimeout:
+        await audit.log(
+            "profile_fetch_failed",
+            user_id=user_id,
+            payload={"reason": "timeout"},
+            ip=_client_ip(request),
+        )
+        return _redirect_with_error(frontend_base, "identity_timeout")
+    except IdentityUnavailable:
+        await audit.log(
+            "profile_fetch_failed",
+            user_id=user_id,
+            payload={"reason": "unreachable"},
+            ip=_client_ip(request),
+        )
+        return _redirect_with_error(frontend_base, "identity_unavailable")
+
     request.session["user_id"] = user_id
+    request.session["roles"] = [r["id_peran"] for r in profile["roles"]]
+    request.session["branches"] = [b["kode_cabang"] for b in profile["branches"]]
+    primary = next((b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None)
+    request.session["primary_branch"] = primary
+    request.session["menus"] = list(profile["menus"])
 
     if memberships:
         default = next((t for t in memberships if t.get("is_default")), memberships[0])
@@ -121,7 +158,12 @@ async def google_callback(
             tenant_id=default["id"],
             ip=_client_ip(request),
             ua=_user_agent(request),
-            payload={"provider": "google"},
+            payload={
+                "provider": "google",
+                "role_count": len(profile["roles"]),
+                "menu_count": len(profile["menus"]),
+                "branch_count": len(profile["branches"]),
+            },
         )
         return RedirectResponse(f"{frontend_base}{post_login}", status_code=302)
 

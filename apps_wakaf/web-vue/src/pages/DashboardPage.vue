@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 import AsnafDonut from '@/components/widgets/AsnafDonut.vue'
 import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
 import TrendChart from '@/components/widgets/TrendChart.vue'
-import Alert from '@/components/ui/Alert.vue'
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api } from '@/lib/api/client'
+import { useFetch } from '@/lib/useFetch'
+import { useAuthStore } from '@/stores/auth'
 
 interface KpiCardData {
   total: number
@@ -30,111 +31,130 @@ interface AnggaranItem {
   pct: number
 }
 
-interface AsnafItem2 {
+interface AsnafItem {
   label: string
   count: number
 }
 
-interface DashboardKeuangan {
-  period: string
-  kpis: {
-    penerimaan: KpiCardData
-    penyaluran: KpiCardData
-    saldo: KpiCardData
-    otorisasi_pending: KpiCardData
-  }
-  trend: TrendPoint[]
-  asnaf: AsnafItem2[]
-  anggaran: AnggaranItem[]
-  rekening: any[]
-}
+const auth = useAuthStore()
+const route = useRoute()
 
 const bulan = ref(new Date().getMonth() + 1)
 const tahun = ref(new Date().getFullYear())
-const data = ref<DashboardKeuangan | null>(null)
-const loading = ref(false)
-const errorMsg = ref<string | null>(null)
 
-async function load() {
-  loading.value = true
-  errorMsg.value = null
-  try {
-    data.value = await api.get<DashboardKeuangan>(
-      `/api/dashboard/keuangan?bulan=${bulan.value}&tahun=${tahun.value}`
-    )
-  } catch (e) {
-    errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat data'
-    data.value = null
-  } finally {
-    loading.value = false
-  }
+const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
+  () => api.get(`/api/dashboard/keuangan/kpis?bulan=${bulan.value}&tahun=${tahun.value}`),
+)
+const trendQ = useFetch<{ trend: TrendPoint[] }>(
+  () => api.get(`/api/dashboard/keuangan/trend?bulan=${bulan.value}&tahun=${tahun.value}`),
+)
+const asnafQ = useFetch<{ asnaf: AsnafItem[] }>(
+  () => api.get(`/api/dashboard/keuangan/asnaf?bulan=${bulan.value}&tahun=${tahun.value}`),
+)
+const anggaranQ = useFetch<{ anggaran: AnggaranItem[] }>(
+  () => api.get(`/api/dashboard/keuangan/anggaran?tahun=${tahun.value}`),
+)
+
+function loadAll() {
+  void kpisQ.load()
+  void trendQ.load()
+  void asnafQ.load()
+  void anggaranQ.load()
 }
 
-onMounted(load)
-watch([bulan, tahun], load)
+onMounted(() => {
+  const denied = route.query.denied
+  if (denied) {
+    console.warn(`[auth] Akses ke '${denied}' tidak diizinkan.`)
+  }
+  loadAll()
+})
+watch([bulan, tahun], loadAll)
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Header + Period Filter -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p v-if="data" class="text-sm text-muted">Periode {{ data.period }}</p>
+  <div v-if="auth.user && auth.menus.length === 0" class="p-6 text-center">
+    <h2 class="text-xl font-semibold mb-2">Akses belum dikonfigurasi</h2>
+    <p class="text-muted">
+      Akun Anda belum punya menu yang aktif. Hubungi administrator untuk request akses.
+    </p>
+  </div>
+  <div v-else>
+    <div class="space-y-6">
+      <!-- Header + Period Filter -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p v-if="kpisQ.data.value" class="text-sm text-muted">
+            Periode {{ kpisQ.data.value.period }}
+          </p>
+        </div>
+        <PeriodFilter v-model:bulan="bulan" v-model:tahun="tahun" />
       </div>
-      <PeriodFilter v-model:bulan="bulan" v-model:tahun="tahun" />
-    </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center p-12">
-      <Loader2 class="w-8 h-8 animate-spin text-primary" />
-    </div>
-
-    <!-- Error -->
-    <Alert v-else-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
-
-    <!-- Content -->
-    <template v-else-if="data">
       <!-- KPI row: 4 cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Penerimaan"
-          :amount="data.kpis.penerimaan.total"
-          :delta-pct="data.kpis.penerimaan.delta_pct ?? 0"
+          :amount="kpisQ.data.value?.kpis?.penerimaan?.total ?? 0"
+          :delta-pct="kpisQ.data.value?.kpis?.penerimaan?.delta_pct ?? 0"
+          :loading="kpisQ.loading.value"
+          :error="!!kpisQ.error.value"
+          :error-message="kpisQ.error.value ?? undefined"
         />
         <KpiCard
           label="Penyaluran"
-          :amount="data.kpis.penyaluran.total"
-          :delta-pct="data.kpis.penyaluran.delta_pct ?? 0"
+          :amount="kpisQ.data.value?.kpis?.penyaluran?.total ?? 0"
+          :delta-pct="kpisQ.data.value?.kpis?.penyaluran?.delta_pct ?? 0"
+          :loading="kpisQ.loading.value"
+          :error="!!kpisQ.error.value"
+          :error-message="kpisQ.error.value ?? undefined"
         />
         <KpiCard
           label="Saldo Kas/Bank"
-          :amount="data.kpis.saldo.total"
+          :amount="kpisQ.data.value?.kpis?.saldo?.total ?? 0"
           :delta-pct="0"
+          :loading="kpisQ.loading.value"
+          :error="!!kpisQ.error.value"
+          :error-message="kpisQ.error.value ?? undefined"
         />
         <KpiCard
           label="Pending Otorisasi"
-          :amount="data.kpis.otorisasi_pending.total"
+          :amount="kpisQ.data.value?.kpis?.otorisasi_pending?.total ?? 0"
           :delta-pct="0"
           format="count"
+          :loading="kpisQ.loading.value"
+          :error="!!kpisQ.error.value"
+          :error-message="kpisQ.error.value ?? undefined"
         />
       </div>
 
       <!-- Trend chart full width -->
       <TrendChart
-        :labels="data.trend.map(t => t.label)"
-        :penerimaan="data.trend.map(t => t.penerimaan)"
-        :penyaluran="data.trend.map(t => t.penyaluran)"
+        :labels="trendQ.data.value?.trend?.map((t) => t.label) ?? []"
+        :penerimaan="trendQ.data.value?.trend?.map((t) => t.penerimaan) ?? []"
+        :penyaluran="trendQ.data.value?.trend?.map((t) => t.penyaluran) ?? []"
+        :loading="trendQ.loading.value"
+        :error="!!trendQ.error.value"
+        :error-message="trendQ.error.value ?? undefined"
       />
 
       <!-- Bottom row: Asnaf donut + Budget progress -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AsnafDonut
-          :items="data.asnaf.map(a => ({ label: a.label, value: a.count }))"
+          :items="(asnafQ.data.value?.asnaf ?? []).map((a) => ({ label: a.label, value: a.count }))"
           value-format="count"
+          :loading="asnafQ.loading.value"
+          :error="!!asnafQ.error.value"
+          :error-message="asnafQ.error.value ?? undefined"
         />
-        <BudgetProgress :items="data.anggaran" />
+        <BudgetProgress
+          :items="anggaranQ.data.value?.anggaran ?? []"
+          :loading="anggaranQ.loading.value"
+          :error="!!anggaranQ.error.value"
+          :error-message="anggaranQ.error.value ?? undefined"
+        />
       </div>
-    </template>
+    </div>
   </div>
 </template>

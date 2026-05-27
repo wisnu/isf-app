@@ -108,3 +108,31 @@ class DashboardPenyaluran(BaseModel):
     kpis: dict[str, KpiCardData]
     anggaran: list[AnggaranItem]
     memo_terbaru: list[MemoItem]
+
+
+class FundBreakdownItem(BaseModel):
+    fund_entity: int
+    fund_name: str
+    total: float
+    pct: float
+
+
+class TrendFundPoint(BaseModel):
+    label: str        # "2026-01"
+    penerimaan: float
+
+
+class TopDonorItem(BaseModel):
+    donor_name: str
+    donor_type: str         # "I" | "C"
+    donor_type_label: str   # "Individu" | "Korporat"
+    productname: str | None
+    total_amount: float
+
+
+class DashboardPenghimpunan(BaseModel):
+    period: str
+    kpis: dict[str, KpiCardData]
+    trend: list[TrendFundPoint]
+    fund_breakdown: list[FundBreakdownItem]
+    top_donor: list[TopDonorItem]

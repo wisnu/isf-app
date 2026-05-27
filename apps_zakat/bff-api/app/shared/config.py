@@ -7,13 +7,16 @@ class Settings(BaseSettings):
     # Downstream
     api_python_base_url: str = "http://localhost:8000"
 
+    # Identity (live lookup ke api-python)
+    identity_timeout: float = 3.0
+
     # Session & CORS
     session_secret: str = "dev-secret-change-me"
     cors_origin: str = "http://localhost:5173"
 
     # Auth
     auth_providers: str = "password,google"
-    auth_db_path: str = "/data/auth.sqlite"
+    isf_auth_database_url: str = ""
 
     # Google OAuth (empty = provider disabled)
     google_oauth_client_id: str = ""
