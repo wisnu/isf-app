@@ -25,6 +25,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-wakaf-api-python
     restart: unless-stopped
+    security_opt:
+      - label=disable
     environment:
       APP_ENV: development
       DOMAIN: wakaf
@@ -47,6 +49,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-wakaf-bff-api
     restart: unless-stopped
+    security_opt:
+      - label=disable
     env_file:
       - path: .env
         required: false
@@ -86,6 +90,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-wakaf-web-vue
     restart: unless-stopped
+    security_opt:
+      - label=disable
     environment:
       VITE_BFF_PORT: "7001"
       VITE_PORTAL_DOMAIN: wakaf

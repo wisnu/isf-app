@@ -22,6 +22,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-zakat-api-python
     restart: unless-stopped
+    security_opt:
+      - label=disable
     environment:
       APP_ENV: development
       DOMAIN: zakat
@@ -44,6 +46,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-zakat-bff-api
     restart: unless-stopped
+    security_opt:
+      - label=disable
     env_file:
       - path: .env
         required: false
@@ -83,6 +87,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: isf-zakat-web-vue
     restart: unless-stopped
+    security_opt:
+      - label=disable
     environment:
       VITE_BFF_PORT: "7000"
       VITE_PORTAL_DOMAIN: zakat
