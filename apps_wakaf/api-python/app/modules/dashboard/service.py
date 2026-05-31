@@ -8,6 +8,8 @@ from app.modules.dashboard.schema import (
     # v2
     AnggaranItem, AsnafItem2, DashboardKeuangan, DashboardPenyaluran,
     KpiCardData, MemoItem, RekeningItem, TrendPoint,
+    # v2 — penghimpunan
+    DashboardPenghimpunan, FundBreakdownItem, TopDonorItem, TrendFundPoint,
 )
 from app.shared.db import fetch_all, fetch_one, ping
 
@@ -271,6 +273,130 @@ async def get_penyaluran(bulan: int, tahun: int) -> DashboardPenyaluran | None:
         },
         anggaran=await _anggaran_list(tahun),
         memo_terbaru=await _memo_terbaru(),
+    )
+
+
+# ── Per-chart API (FE memuat tiap widget independen via useFetch) ────────────
+# Wrapper granular di atas helper yang sama dengan get_keuangan/get_penyaluran.
+# Mengembalikan struktur JSON-ready (model_dump) karena router membungkus dengan
+# ok(data) tanpa model_dump tambahan; None → router balas 503 DB_UNAVAILABLE.
+
+async def get_keuangan_kpis(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    cur_fund   = await _sum_fund(bulan, tahun)
+    prev_fund  = await _sum_fund(prev_m, prev_y)
+    cur_dist   = await _sum_dist(bulan, tahun)
+    prev_dist  = await _sum_dist(prev_m, prev_y)
+    saldo      = await _saldo_total()
+    otorisasi  = await _otorisasi_pending()
+    return {
+        "penerimaan": (await _kpi_card(cur_fund, prev_fund)).model_dump(),
+        "penyaluran": (await _kpi_card(cur_dist, prev_dist)).model_dump(),
+        "saldo": KpiCardData(total=saldo, format="currency").model_dump(),
+        "otorisasi_pending": KpiCardData(total=otorisasi, format="count").model_dump(),
+    }
+
+
+async def get_keuangan_trend(bulan: int, tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return [p.model_dump() for p in await _trend_6bulan(bulan, tahun)]
+
+
+async def get_keuangan_anggaran(tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return [a.model_dump() for a in await _anggaran_list(tahun)]
+
+
+async def get_keuangan_rekening() -> list | None:
+    if not await ping():
+        return None
+    return [r.model_dump() for r in await _rekening_list()]
+
+
+async def get_keuangan_asnaf(bulan: int, tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return [a.model_dump() for a in await _asnaf_dist(bulan, tahun)]
+
+
+async def get_penyaluran_kpis(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    cur_dist  = await _sum_dist(bulan, tahun)
+    prev_dist = await _sum_dist(prev_m, prev_y)
+    mustahiq  = await _mustahiq_count(bulan, tahun)
+    otorisasi = await _otorisasi_pending()
+    return {
+        "penyaluran": (await _kpi_card(cur_dist, prev_dist)).model_dump(),
+        "mustahiq": KpiCardData(total=mustahiq, format="count").model_dump(),
+        "otorisasi_pending": KpiCardData(total=otorisasi, format="count").model_dump(),
+    }
+
+
+async def get_penyaluran_memo() -> list | None:
+    if not await ping():
+        return None
+    return [m.model_dump() for m in await _memo_terbaru()]
+
+
+# ── Penghimpunan (fundraising) ───────────────────────────────────────────────
+# CATATAN: breakdown per fund_entity & top-donor belum punya view di mziss_wakaf
+# (hanya ada dashboard.v_fund_monthyear_bycash). Keduanya dikembalikan kosong
+# sampai view dibangun — FE belum memakai endpoint penghimpunan/*.
+
+async def _fund_trend(bulan: int, tahun: int) -> list[TrendFundPoint]:
+    points: list[TrendFundPoint] = []
+    for m, y in _last_6_months(bulan, tahun):
+        points.append(TrendFundPoint(label=f"{y}-{m:02d}", penerimaan=await _sum_fund(m, y)))
+    return points
+
+
+async def get_penghimpunan_kpis(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    cur_fund  = await _sum_fund(bulan, tahun)
+    prev_fund = await _sum_fund(prev_m, prev_y)
+    return {
+        "penerimaan": (await _kpi_card(cur_fund, prev_fund)).model_dump(),
+    }
+
+
+async def get_penghimpunan_trend(bulan: int, tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return [p.model_dump() for p in await _fund_trend(bulan, tahun)]
+
+
+async def get_penghimpunan_breakdown(bulan: int, tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return []  # belum ada view fund-by-entity di mziss_wakaf
+
+
+async def get_penghimpunan_top_donor(bulan: int, tahun: int) -> list | None:
+    if not await ping():
+        return None
+    return []  # belum ada view top-donor di mziss_wakaf
+
+
+async def get_penghimpunan(bulan: int, tahun: int) -> DashboardPenghimpunan | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    cur_fund  = await _sum_fund(bulan, tahun)
+    prev_fund = await _sum_fund(prev_m, prev_y)
+    return DashboardPenghimpunan(
+        period=f"{tahun}-{bulan:02d}",
+        kpis={"penerimaan": await _kpi_card(cur_fund, prev_fund)},
+        trend=await _fund_trend(bulan, tahun),
+        fund_breakdown=[],
+        top_donor=[],
     )
 
 

@@ -31,6 +31,7 @@ services:
       APP_ENV: development
       DOMAIN: wakaf
       DATABASE_URL: ${DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_wakaf}
+      ISF_AUTH_DATABASE_URL: ${ISF_AUTH_DATABASE_URL_WAKAF:-postgresql://postgres:solusi@host.containers.internal:5432/isf_auth_wakaf}
     ports:
       - "8001:8000"
     volumes:

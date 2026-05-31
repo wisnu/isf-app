@@ -28,6 +28,7 @@ services:
       APP_ENV: development
       DOMAIN: zakat
       DATABASE_URL: ${DATABASE_URL_ZAKAT:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_laz}
+      ISF_AUTH_DATABASE_URL: ${ISF_AUTH_DATABASE_URL_ZAKAT:-postgresql://postgres:solusi@host.containers.internal:5432/isf_auth_zakat}
     ports:
       - "8000:8000"
     volumes:

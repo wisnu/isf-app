@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.services.audit import audit_admin_action
 from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_api_python
 

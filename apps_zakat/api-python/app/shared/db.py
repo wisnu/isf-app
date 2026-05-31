@@ -9,6 +9,7 @@ import asyncpg
 
 
 _pool: asyncpg.Pool | None = None
+_isf_auth_pool: asyncpg.Pool | None = None
 
 
 async def init_pool() -> asyncpg.Pool | None:
@@ -59,3 +60,45 @@ async def ping() -> bool:
         return True
     except Exception:
         return False
+
+
+# ── isf_auth pool ────────────────────────────────────────────────────────────
+# Auth/RBAC (isf_auth.*) lives in a SEPARATE database (isf_auth_<portal>) since the
+# auth-pg migration. Kept as a distinct pool so identity/admin modules can read &
+# write isf_auth.* without crossing into the business (enterprise.*) pool.
+
+
+async def init_isf_auth_pool() -> asyncpg.Pool | None:
+    """Create pool from ISF_AUTH_DATABASE_URL env. Returns None if unset."""
+    global _isf_auth_pool
+    dsn = os.getenv("ISF_AUTH_DATABASE_URL", "").strip()
+    if not dsn:
+        return None
+    _isf_auth_pool = await asyncpg.create_pool(
+        dsn,
+        min_size=1,
+        max_size=10,
+        command_timeout=15,
+    )
+    return _isf_auth_pool
+
+
+async def close_isf_auth_pool() -> None:
+    global _isf_auth_pool
+    if _isf_auth_pool is not None:
+        await _isf_auth_pool.close()
+        _isf_auth_pool = None
+
+
+def get_isf_auth_pool() -> asyncpg.Pool:
+    if _isf_auth_pool is None:
+        raise RuntimeError(
+            "isf_auth pool not initialized — set ISF_AUTH_DATABASE_URL and restart"
+        )
+    return _isf_auth_pool
+
+
+async def fetch_all_isf_auth(query: str, *args: Any) -> list[dict]:
+    async with get_isf_auth_pool().acquire() as conn:
+        rows = await conn.fetch(query, *args)
+        return [dict(r) for r in rows]
