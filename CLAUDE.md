@@ -4,17 +4,9 @@ Konteks tambahan untuk Claude di luar yang ada di [README.md](README.md), [docs/
 
 ## ⚠️ Recovery state (2026-05-27)
 
-File ini di-rebuild setelah NTFS corruption pada partisi workshop tanggal 2026-05-27 menghapus 74 commit lokal yang belum di-push. Lihat audit trail di `~/rescue/git-metadata-snapshot/` dan branch `recovery/2026-05-27-ntfs-corruption`. Working tree dipulihkan dari rescue snapshot + base commit `ac3056` + DB schema dump.
+Repo ini di-rebuild setelah NTFS corruption tanggal 2026-05-27 menghapus 74 commit lokal yang belum di-push. Working tree dipulihkan dari rescue snapshot + base commit `ac3056` + DB schema dump. Audit trail di `~/rescue/git-metadata-snapshot/` dan branch `recovery/2026-05-27-ntfs-corruption`.
 
-File yang masih TODO post-recovery (truly missing, harus rebuild manual):
-- `apps_zakat/api-python/etl/*` (14 file ETL runner — runner, scheduler, refresh_dim_*, refresh_dm_*, refresh_fact_*)
-- `apps_*/api-python/app/modules/admin/router.py & service.py`
-- `apps_*/web-vue/src/components/ui/Toast.vue`, `lib/useFetch.ts`, `lib/useToast.ts`
-- `apps_*/web-vue/src/pages/admin/`, `pages/profile/`
-- `docs/datadictionary/dwh.md`
-- `testing/e2e-admin-users.sh`, `testing/e2e-etl-datamart.sh`
-
-Lihat `~/rescue/git-metadata-snapshot/truly-missing-51.txt` untuk daftar lengkap.
+**Yang masih outstanding** lihat [`docs/recovery/README.md`](docs/recovery/README.md) §"Still TODO" — singkatnya: ETL runners (14 file), admin/profile pages frontend, beberapa test admin, dan rename schema `datamart`→`dwh` di `mziss_wakaf`.
 
 ## Topologi 2 portal × 2 database
 
@@ -36,10 +28,17 @@ User & kredensial DB lokal: `transaction:solusi` (lihat `.env.example`).
 - **Auth DB schema** (`isf_auth.*`): `users`, `user_credentials`, `user_provider_links`, `tenants`, `tenant_memberships`, `menu`, `role_menu`, `audit_log`
 - **Identity service** di `apps_*/api-python/app/modules/identity/`: lookup profile + roles + menus per user
 - **IdentityClient** di `apps_*/bff-api/app/services/identity_client.py`: httpx wrapper untuk panggil identity service dari BFF
-- **Login flow** (BFF): authenticate → fetch profile via IdentityClient → populate session dengan `roles[]`, `branches[]`, `menus[]` (fail-closed kalau identity service down)
+- **Login flow** (BFF): authenticate → fetch profile via IdentityClient → populate session dengan `user_id`, `active_tenant_id`, `roles[]`, `branches[]`, `primary_branch`, `menus[]`. Frontend baca lewat `stores/auth.ts`. Fail-closed kalau identity service down (HTTP 503 `IDENTITY_UNAVAILABLE`).
 - **Gating endpoint backend**: `require_menu("menu.key")` FastAPI dependency, audit di-tulis ke `isf_auth.audit_log` saat deny
 - **Gating sidebar/router frontend**: `auth.menus[]` array, sidebar di-filter, router guard cek `meta.menu_key`
 - **MENU_KEYS** constant di `apps_*/web-vue/src/lib/menu/registry.ts` — single source of truth untuk semua menu key
+- **⚠️ Demo user gotcha**: `auth_seed.py` hanya seed `ADMIN/FINANCE.A/FINANCE.B` ke `isf_auth.users`. Identity lookup ke `enterprise.userapp` (mziss_*) akan 404 untuk username itu → login fail dengan `UNKNOWN_IDENTITY`. Untuk E2E pakai script `testing/setup-e2e-users.sh` yang pilih user nyata dari `enterprise.userapp` — **catatan**: script masih reference SQLite (predates auth-pg migration), perlu port ke asyncpg sebelum bisa dipakai.
+- **isf_auth seed**: `infra/db/migrations/isf_auth/seed-menu-and-rolemenu.sql` populates 9 menu key (match `MENU_KEYS` registry) + 45 row `role_menu` untuk 14 active role di `enterprise.peran`. Permissive-for-dev — refine via admin UI `/admin/role-menu`.
+
+## Independent chart load
+
+- Dashboard pages (`DashboardPage`, `DashboardKeuanganPage`, `DashboardPenyaluranPage`) tidak ada shared loading state — tiap widget load sendiri lewat `useFetch(fetcher)` di `apps_*/web-vue/src/lib/useFetch.ts`. Failed widget tampil error sendiri, widget lain tetap render normal.
+- `Toast.vue` + `useToast.ts` sudah ada baseline (top-right, accent left-border) tapi **belum di-mount** di `App.vue`. Wire `<Toast />` saat rebuild fitur yang butuh, mis. PasswordPage / UsersPage.
 
 ## Username convention
 
@@ -54,19 +53,11 @@ User & kredensial DB lokal: `transaction:solusi` (lihat `.env.example`).
 
 ## Konvensi commit
 
-Commit message diawali `[PREFIX]` per feature group. Contoh dari history:
-- `[MIGRATE-AUTHDB]` — migrasi auth DB
-- `[ADMIN-USERS]` — admin user management
-- `[CHANGE-PASSWORD]` — self-service ganti password
-- `[UX]` — frontend polish/redesign
-- `[ETL-DATAMART]`, `[DATAMART-CABANG]`, `[DWH]` — datamart
-- `[DASHBOARD]`, `[DASHBOARD-KEUANGAN]` — dashboard
-- `[ETL]` — ETL bugfix / migration
-- `[DOCS]` — dokumentasi
-- `[USERNAME-UPPER]` — convention enforcement
-- `[RECOVERY]` — recovery work
+Default: **conventional-commit** dengan scope yang menyebut feature/context, mis. `feat(auth-pg):`, `feat(admin+ui):`, `chore(infra):`, `docs(dwh):`, `fix:`, `refactor:`. Untuk grouped feature/recovery commits, prefix legacy `[TAG]` juga masih dipakai — cari di history dengan `git log --grep='\['`.
 
-Bisa pakai conventional commit prefix juga (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`) untuk commit yang lebih kecil/tidak grouped.
+Scope/tag yang aktif:
+- `auth-pg`, `admin+ui`, `dwh`, `recovery` — recent post-recovery work
+- `MIGRATE-AUTHDB`, `ADMIN-USERS`, `CHANGE-PASSWORD`, `UX`, `ETL-DATAMART`, `DATAMART-CABANG`, `DASHBOARD`, `DASHBOARD-KEUANGAN`, `ETL`, `USERNAME-UPPER`, `DOCS`, `RECOVERY` — legacy from reflog
 
 ## Konvensi testing
 
@@ -80,24 +71,44 @@ Per-service punya `test.sh` wrapper:
 
 Tests Python di `tests/` dengan pytest. TDD untuk service code yang punya logic non-trivial.
 
-## Dev workflow
+## First-time DB setup
+
+Apply schema + seed ke dua DB auth (DBs sudah harus exist di Postgres lokal — buat via `createdb` di bawah):
 
 ```bash
-cd infra
-
-# Pastikan infra/.env sudah ada (copy dari .env.example, isi credentials)
-cp .env.example .env  # edit credentials
-
-# Portal Zakat
-podman-compose -f docker-compose.zakat.yml up -d --build
-# → http://localhost:5173
-
-# Portal Wakaf
-podman-compose -f docker-compose.wakaf.yml up -d --build
-# → http://localhost:5174
+for portal in zakat wakaf; do
+  PGPASSWORD=solusi createdb -h localhost -U postgres "isf_auth_$portal"
+  PGPASSWORD=solusi psql -h localhost -U postgres -d "isf_auth_$portal" \
+    -f infra/db/migrations/isf_auth/recovered-schema-$portal.sql
+  PGPASSWORD=solusi psql -h localhost -U postgres -d "isf_auth_$portal" \
+    -f infra/db/migrations/isf_auth/seed-menu-and-rolemenu.sql
+done
 ```
 
-Demo akun (sama di kedua portal): `admin/admin123`, `finance.a/finance123`, `finance.b/finance123`.
+Business DB (`mziss_laz`, `mziss_wakaf`) diasumsikan sudah ada — repo tidak ship schema-nya (legacy), cuma `docs/datadictionary/ddl_all_schema.sql` referensi.
+
+## Dev workflow
+
+**Host caveat (Fedora 44 / kernel 6.19 / crun 1.27 / SELinux Enforcing)**: `podman build` di dalam `podman-compose up --build` gagal di langkah `RUN pip install` / `RUN npm install` dengan `cannot apply additional memory protection after relocation: Permission denied` — SELinux MCS label block `libc` mprotect. Workaround: pre-build manual dengan `--security-opt label=disable`, baru `up -d` tanpa `--build`. Compose runtime sudah carry `security_opt: [label=disable]` per-service.
+
+```bash
+# 1. Pre-build images (only when pyproject.toml / package.json changes — source di bind-mount auto-reload)
+for portal in zakat wakaf; do
+  for svc in api-python bff-api web-vue; do
+    (cd apps_$portal/$svc && \
+     podman build --security-opt label=disable -t isf-$portal-$svc:dev -f Dockerfile.dev .)
+  done
+done
+
+# 2. Start (no --build)
+cd infra
+podman-compose -f docker-compose.zakat.yml up -d   # → http://localhost:5173
+podman-compose -f docker-compose.wakaf.yml up -d   # → http://localhost:5174
+```
+
+`.env` opsional — compose pakai defaults di `${VAR:-...}` untuk dev. Copy `.env.example → .env` kalau perlu override (HOST_IP, Google OAuth, dst).
+
+Demo akun seeded ke `isf_auth.users`: `ADMIN/admin123`, `FINANCE.A/finance123`, `FINANCE.B/finance123`. **Lihat warning di §Auth & RBAC** — username ini bisa authenticate tapi gagal identity lookup ke `enterprise.userapp`. Untuk login berhasil end-to-end, port `testing/setup-e2e-users.sh` ke asyncpg, atau manual insert: pilih row dari `enterprise.userapp` yang punya role+menu mapping, lalu `INSERT INTO isf_auth.users (id, username, display_name, status) VALUES (...)` + `set_password`.
 
 ## Hindari working repo di NTFS
 
