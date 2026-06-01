@@ -72,7 +72,7 @@ Testing:
 - `testing/e2e-etl-datamart.sh` (butuh ETL runner existed dulu)
 
 Schema fix:
-- Rename schema `datamart` → `dwh` di DB `mziss_wakaf` (commit `[DWH] rename schema datamart→dwh` belum di-apply ke wakaf side, lihat `infra/db/migrations/README.md`)
+- ~~Rename schema `datamart` → `dwh` di DB `mziss_wakaf`~~ **DONE 2026-06-01** via `infra/db/migrations/dwh/rename-wakaf-datamart-to-dwh.sql`. (Sisa dari commit reflog line 114 — standarisasi ETL naming + enrich PSAK 109 — menyusul saat ETL wakaf dibangun.)
 
 ## Pelajaran
 

@@ -6,7 +6,7 @@ Konteks tambahan untuk Claude di luar yang ada di [README.md](README.md), [docs/
 
 Repo ini di-rebuild setelah NTFS corruption tanggal 2026-05-27 menghapus 74 commit lokal yang belum di-push. Working tree dipulihkan dari rescue snapshot + base commit `ac3056` + DB schema dump. Audit trail di `~/rescue/git-metadata-snapshot/` dan branch `recovery/2026-05-27-ntfs-corruption`.
 
-**Yang masih outstanding** lihat [`docs/recovery/README.md`](docs/recovery/README.md) §"Still TODO" — singkatnya: ETL runners (14 file), admin/profile pages frontend, beberapa test admin, dan rename schema `datamart`→`dwh` di `mziss_wakaf`.
+**Yang masih outstanding** lihat [`docs/recovery/README.md`](docs/recovery/README.md) §"Still TODO" — singkatnya: ETL runners (14 file), admin/profile pages frontend, beberapa test admin. (Rename schema `datamart`→`dwh` di `mziss_wakaf` **sudah selesai** 2026-06-01.)
 
 ## Topologi 2 portal × 2 database
 
@@ -15,7 +15,7 @@ Setiap portal (zakat & wakaf) punya **DUA database terpisah**:
 | Portal | Business DB | Auth DB | Schemas |
 |---|---|---|---|
 | Zakat | `mziss_laz` | `isf_auth_zakat` | business: `transaction`/`accounting`/`enterprise`/`fund`/`program`/`personalia`/`school` (legacy) + `dwh` (datamart final). auth: `isf_auth` |
-| Wakaf | `mziss_wakaf` | `isf_auth_wakaf` | sama legacy + schema `datamart` (legacy name, belum di-rename ke `dwh` — lihat outstanding di `infra/db/migrations/README.md`) |
+| Wakaf | `mziss_wakaf` | `isf_auth_wakaf` | sama legacy + schema `dwh` (di-rename dari `datamart` 2026-06-01, konsisten dgn zakat). auth: `isf_auth` |
 
 **Env vars**:
 - `DATABASE_URL_ZAKAT` / `DATABASE_URL_WAKAF` → business DB (di `infra/.env`)
@@ -46,7 +46,7 @@ User & kredensial DB lokal: `transaction:solusi` (lihat `.env.example`).
 
 ## Datamart / DWH
 
-- Schema `dwh.*` di `mziss_laz` (zakat) — schema `datamart.*` di `mziss_wakaf` (legacy, harus rename ke `dwh`)
+- Schema `dwh.*` di kedua DB: `mziss_laz` (zakat) & `mziss_wakaf` (wakaf, di-rename dari `datamart` 2026-06-01)
 - Tabel utama: `dim_branch`, `dim_donor`, `dim_fund_type`, `dm_*_monthly` (aggregates per bulan × cabang × fund_entity), `fact_fundraising_monthly`, `etl_log`, `etl_watermark`
 - ETL runner di `apps_zakat/api-python/etl/` (untuk wakaf belum di-mirror full)
 - Grain agregasi: tahun-bulan × (branch_key, fund_entity, ...) — `fund_entity` part of unique key sejak migration 007

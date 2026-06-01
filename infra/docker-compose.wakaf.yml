@@ -57,7 +57,7 @@ services:
       DOMAIN: wakaf
       # business read (dashboard): dashboard.v_*, transaction.*, program.*
       DATABASE_URL: ${DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_wakaf}
-      # DWH read (report): schema datamart.* di mziss_wakaf (belum di-rename ke dwh) — same server for now
+      # DWH read (report): schema dwh.* di mziss_wakaf (di-rename dari datamart 2026-06-01) — same server for now
       DWH_DATABASE_URL: ${DWH_DATABASE_URL_WAKAF:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_wakaf}
     ports:
       - "8011:8000"

@@ -18,7 +18,8 @@ Migration files asli (numbered SQL sequence) hilang akibat NTFS corruption pada 
 | `isf_auth/recovered-schema-zakat.sql` | `pg_dump isf_auth_zakat -n isf_auth` | Schema auth final state (8 tabel: users, menu, role_menu, tenants, dll) |
 | `isf_auth/recovered-schema-wakaf.sql` | `pg_dump isf_auth_wakaf -n isf_auth` | Identical dengan zakat (kedua portal pakai schema sama) |
 | `dwh/recovered-schema-zakat.sql` | `pg_dump mziss_laz -n dwh` | Datamart schema final (14 tabel dim/dm/fact + etl_log, etl_watermark) — sudah include perubahan migration 007 (drop stale unique indexes) |
-| `dwh/recovered-schema-wakaf-datamart-legacy.sql` | `pg_dump mziss_wakaf -n datamart` | **PERHATIAN**: schema di mziss_wakaf masih bernama `datamart` (legacy), belum di-rename ke `dwh`. Commit `[DWH] rename schema datamart→dwh` (reflog line 114) belum di-apply ke DB wakaf. |
+| `dwh/recovered-schema-wakaf-datamart-legacy.sql` | `pg_dump mziss_wakaf -n datamart` | Snapshot historis schema lama `datamart`. **Sudah di-rename ke `dwh`** (2026-06-01) via `dwh/rename-wakaf-datamart-to-dwh.sql` — file ini disimpan sebagai arsip pra-rename. |
+| `dwh/rename-wakaf-datamart-to-dwh.sql` | migrasi manual | `ALTER SCHEMA datamart RENAME TO dwh` di `mziss_wakaf` (guarded/idempotent). Applied 2026-06-01. |
 
 ## Bagaimana file ini dibuat
 
@@ -42,7 +43,7 @@ psql -U transaction -d isf_auth_<portal> -f infra/db/migrations/isf_auth/recover
 
 ## Outstanding work (post-recovery)
 
-- [ ] Rename schema `datamart` → `dwh` di `mziss_wakaf` agar konsisten dengan `mziss_laz`. Pesan reflog: line 114 `[DWH] rename schema datamart→dwh + standarisasi ETL naming + enrich PSAK 109`.
+- [x] Rename schema `datamart` → `dwh` di `mziss_wakaf` agar konsisten dengan `mziss_laz`. **Selesai 2026-06-01** via `dwh/rename-wakaf-datamart-to-dwh.sql` (13 tabel + 12 sequence pindah; 0 view/function, tanpa cross-schema dep). Sisa reflog line 114 (standarisasi ETL naming + enrich PSAK 109) menyusul saat ETL wakaf dibangun.
 - [ ] Pecah `recovered-schema-*.sql` jadi sequential migrations 001-NNN sesuai grouping reflog kalau diperlukan untuk replay-ability di environment lain. Atau adopt tool seperti Alembic/Sqitch untuk versi ke depan.
 - [ ] Restore `migrate_auth_sqlite_to_pg.py` masih ada di `infra/db/` (tidak hilang) — script untuk migrate auth dari SQLite ke Postgres dipakai di reflog line 87 `[MIGRATE-AUTHDB]`.
 
