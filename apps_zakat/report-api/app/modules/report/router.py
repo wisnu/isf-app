@@ -9,6 +9,9 @@ from app.modules.report.export import (
     build_distribution_xlsx,
     build_collection_xlsx,
     build_ar_summary_xlsx,
+    build_cashadvance_xlsx,
+    build_program_realization_xlsx,
+    build_realization_memo_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
     build_perubahan_dana_xlsx,
@@ -35,6 +38,11 @@ from app.modules.report.service import (
     collection_rows,
     collection_rekap,
     ar_summary,
+    cashadvance_count,
+    cashadvance_page,
+    cashadvance_rows,
+    program_realization,
+    realization_memo,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -769,3 +777,73 @@ async def cash_advance(begin: str = Query(...), end: str = Query(...), branch: s
 @router.get("/cash-advance/export.xlsx")
 async def cash_advance_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
     return await _ar_export("C", begin, end, branch)
+
+
+# ── Grup C: List Uang Muka / Piutang Realisasi / Realisasi Memo ──────────────
+
+
+@router.get("/cashadvance-list")
+async def cashadvance_list(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    employee: str | None = Query(default=None), lpj: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    data = await cashadvance_page(_tb_branch(branch), begin, end, employee or None, lpj or None, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/cashadvance-list/export.xlsx")
+async def cashadvance_list_export(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    employee: str | None = Query(default=None), lpj: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    total = await cashadvance_count(b, begin, end, employee or None, lpj or None)
+    if total > CAP:
+        return JSONResponse(status_code=422, content=err("REPORT_TOO_LARGE", f"Hasil {total:,} baris melebihi {CAP:,}. Persempit filter."))
+    rows = await cashadvance_rows(b, begin, end, employee or None, lpj or None)
+    if rows is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_cashadvance_xlsx(rows, await _branch_label(b), _period_label(begin, end))
+    filename = f"listuangmuka-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/program-realization")
+async def program_realization_ep(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    data = await program_realization(_tb_branch(branch), begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/program-realization/export.xlsx")
+async def program_realization_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    b = _tb_branch(branch)
+    data = await program_realization(b, begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_program_realization_xlsx(data, await _branch_label(b))
+    filename = f"piutangrealisasi-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/realization-memo")
+async def realization_memo_ep(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), q: str | None = Query(default=None)):
+    data = await realization_memo(_tb_branch(branch), begin, end, q or None)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/realization-memo/export.xlsx")
+async def realization_memo_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), q: str | None = Query(default=None)):
+    b = _tb_branch(branch)
+    data = await realization_memo(b, begin, end, q or None)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_realization_memo_xlsx(data, await _branch_label(b))
+    filename = f"realisasimemo-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME, headers={"Content-Disposition": f'attachment; filename="{filename}"'})

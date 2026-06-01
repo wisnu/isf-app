@@ -1711,3 +1711,141 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
         "end": _dmy(end),
         "konsolidasi": branch is None,
     }
+
+
+# ── Grup C: List Uang Muka / Realisasi Project (Memo) / Piutang Realisasi ─────
+
+_CA_COLS = (
+    "to_char(actualdate,'YYYY-MM-DD') AS actualdate, accountno, accountname, transactionno, "
+    "referenceno, description, inputer, amount, ekuiv, currency_name, has_lpj, return_transactionno"
+)
+
+
+def _ca_where(branch, begin, end, employee, lpj):
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "actualdate >= $1::date AND actualdate <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    if employee:
+        args.append(employee)
+        clause += f" AND employeeidnumber = ${len(args)}"
+    if lpj == "S":
+        clause += " AND has_lpj = true"
+    elif lpj == "B":
+        clause += " AND has_lpj = false"
+    return clause, args
+
+
+def _ca_decorate(r: dict) -> dict:
+    d = dict(r)
+    d["lpj_label"] = "Sudah Ada LPJ" if r.get("has_lpj") else "Belum ada LPJ"
+    return d
+
+
+async def cashadvance_count(branch, begin, end, employee, lpj) -> int:
+    if not await ping_dwh():
+        return 0
+    clause, args = _ca_where(branch, begin, end, employee, lpj)
+    row = await fetch_one_dwh(f"SELECT count(*) n FROM dwh.v_cashadvance_trx WHERE {clause}", *args)
+    return int(row["n"]) if row else 0
+
+
+async def cashadvance_page(branch, begin, end, employee, lpj, page, page_size) -> dict | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _ca_where(branch, begin, end, employee, lpj)
+    tot = await fetch_one_dwh(
+        f"SELECT count(*) n, COALESCE(SUM(ekuiv),0)::float8 s FROM dwh.v_cashadvance_trx WHERE {clause}", *args
+    )
+    args_page = args + [page_size, (page - 1) * page_size]
+    rows = await fetch_all_dwh(
+        f"SELECT {_CA_COLS} FROM dwh.v_cashadvance_trx WHERE {clause} "
+        f"ORDER BY actualdate, accountname, transactionitemid LIMIT ${len(args)+1} OFFSET ${len(args)+2}",
+        *args_page,
+    )
+    return {
+        "rows": [_ca_decorate(r) for r in rows],
+        "total": int(tot["n"]) if tot else 0,
+        "total_amount": float(tot["s"]) if tot else 0.0,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+async def cashadvance_rows(branch, begin, end, employee, lpj) -> list[dict] | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _ca_where(branch, begin, end, employee, lpj)
+    rows = await fetch_all_dwh(
+        f"SELECT {_CA_COLS} FROM dwh.v_cashadvance_trx WHERE {clause} "
+        f"ORDER BY actualdate, accountname, transactionitemid LIMIT {CAP}",
+        *args,
+    )
+    return [_ca_decorate(r) for r in rows]
+
+
+_REALTYPE = {"R": "Rutin", "N": "Non Rutin"}
+
+
+async def program_realization(branch, begin, end) -> dict | None:
+    """Piutang Realisasi Penyaluran: outstanding = realisasi − dilaporkan (LPJ)."""
+    if not await ping_dwh():
+        return None
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "realizationdate >= $1::date AND realizationdate <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    rows = await fetch_all_dwh(
+        f"SELECT to_char(realizationdate,'YYYY-MM-DD') AS realizationdate, memo_number, "
+        f"realization_type, description, amount, report_amount, employee_name, input_user, report_user "
+        f"FROM dwh.v_program_realization WHERE {clause} ORDER BY realizationdate, memo_number",
+        *args,
+    )
+    out: list[dict] = []
+    tot = {"amount": 0.0, "report_amount": 0.0, "outstanding": 0.0}
+    for r in rows:
+        rep = r["report_amount"] or 0.0
+        outstanding = r["amount"] - rep
+        d = dict(r)
+        d["report_amount"] = rep
+        d["outstanding"] = outstanding
+        d["type_label"] = _REALTYPE.get(str(r.get("realization_type") or "").strip(), r.get("realization_type") or "")
+        out.append(d)
+        tot["amount"] += r["amount"]
+        tot["report_amount"] += rep
+        tot["outstanding"] += outstanding
+    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "konsolidasi": branch is None}
+
+
+async def realization_memo(branch, begin, end, q) -> dict | None:
+    """Laporan Realisasi Project (Memo): ringkasan per memo + outstanding."""
+    if not await ping_dwh():
+        return None
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "memo_date >= $1::date AND memo_date <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    if q:
+        args.append(f"%{q.upper()}%")
+        clause += f" AND (upper(memo_number) LIKE ${len(args)} OR upper(memo_subject) LIKE ${len(args)})"
+    rows = await fetch_all_dwh(
+        f"SELECT to_char(memo_date,'YYYY-MM-DD') AS memo_date, memo_number, memo_subject, "
+        f"memo_amount, total_realisasi, total_return, realisasi_count "
+        f"FROM dwh.v_realization_memo WHERE {clause} ORDER BY memo_date, memo_number LIMIT {CAP}",
+        *args,
+    )
+    out: list[dict] = []
+    tot = {"memo_amount": 0.0, "total_realisasi": 0.0, "total_return": 0.0, "outstanding": 0.0}
+    for r in rows:
+        outstanding = r["memo_amount"] - r["total_realisasi"]
+        d = dict(r)
+        d["outstanding"] = outstanding
+        out.append(d)
+        tot["memo_amount"] += r["memo_amount"]
+        tot["total_realisasi"] += r["total_realisasi"]
+        tot["total_return"] += r["total_return"]
+        tot["outstanding"] += outstanding
+    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "konsolidasi": branch is None}

@@ -917,3 +917,102 @@ def build_ar_summary_xlsx(payload: dict, branch_label: str) -> bytes:
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Grup C: List Uang Muka / Piutang Realisasi / Realisasi Memo ──────────────
+
+
+def _hdr(ws, cols, hr):
+    for ci, (t, w) in enumerate(cols, 1):
+        c = ws.cell(row=hr, column=ci, value=t)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        ws.column_dimensions[get_column_letter(ci)].width = w
+
+
+def _money_cell(ws, r, col, val, bold=False):
+    c = ws.cell(row=r, column=col, value=float(val or 0))
+    c.number_format = "#,##0.00"
+    if bold:
+        c.font = Font(bold=True)
+
+
+def build_cashadvance_xlsx(rows, branch_label, period_label):
+    wb = Workbook(); ws = wb.active; ws.title = "data"
+    ws.cell(row=1, column=1, value="List Transaksi Uang Muka Kegiatan").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True); ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True); ws.cell(row=3, column=2, value=period_label)
+    cols = [("Tanggal", 12), ("Akun (Karyawan)", 30), ("No. Transaksi", 24), ("Keterangan", 36),
+            ("Nominal", 18), ("Valuta", 10), ("Ekuivalen", 18), ("Status LPJ", 16), ("No. LPJ", 22), ("Inputer", 14)]
+    _hdr(ws, cols, 5); r = 5
+    for row in rows:
+        r += 1
+        ws.cell(row=r, column=1, value=_dmy(row.get("actualdate")))
+        ws.cell(row=r, column=2, value=row.get("accountname") or "")
+        ws.cell(row=r, column=3, value=row.get("transactionno") or "")
+        ws.cell(row=r, column=4, value=row.get("description") or "")
+        _money_cell(ws, r, 5, row.get("amount"))
+        ws.cell(row=r, column=6, value=row.get("currencycode") or "")
+        _money_cell(ws, r, 7, row.get("ekuiv"))
+        ws.cell(row=r, column=8, value=row.get("lpj_label") or "")
+        ws.cell(row=r, column=9, value=row.get("return_transactionno") or "")
+        ws.cell(row=r, column=10, value=row.get("inputer") or "")
+    buf = BytesIO(); wb.save(buf); return buf.getvalue()
+
+
+def build_program_realization_xlsx(payload, branch_label):
+    wb = Workbook(); ws = wb.active; ws.title = "data"
+    ws.cell(row=1, column=1, value="Piutang Realisasi Penyaluran").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True); ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=f"{payload.get('begin')} s/d {payload.get('end')}")
+    cols = [("Tanggal", 12), ("No. Memo", 22), ("Jenis", 12), ("Keterangan", 36), ("Realisasi", 18),
+            ("Dilaporkan", 18), ("Outstanding", 18), ("Karyawan", 24), ("Inputer", 14)]
+    _hdr(ws, cols, 5); r = 5
+    for row in payload.get("rows", []):
+        r += 1
+        ws.cell(row=r, column=1, value=_dmy(row.get("realizationdate")))
+        ws.cell(row=r, column=2, value=row.get("memo_number") or "")
+        ws.cell(row=r, column=3, value=row.get("type_label") or "")
+        ws.cell(row=r, column=4, value=row.get("description") or "")
+        _money_cell(ws, r, 5, row.get("amount"))
+        _money_cell(ws, r, 6, row.get("report_amount"))
+        _money_cell(ws, r, 7, row.get("outstanding"))
+        ws.cell(row=r, column=8, value=row.get("employee_name") or "")
+        ws.cell(row=r, column=9, value=row.get("input_user") or "")
+    r += 1
+    gt = payload.get("grand_total", {})
+    ws.cell(row=r, column=4, value="TOTAL").font = Font(bold=True)
+    _money_cell(ws, r, 5, gt.get("amount"), bold=True)
+    _money_cell(ws, r, 6, gt.get("report_amount"), bold=True)
+    _money_cell(ws, r, 7, gt.get("outstanding"), bold=True)
+    buf = BytesIO(); wb.save(buf); return buf.getvalue()
+
+
+def build_realization_memo_xlsx(payload, branch_label):
+    wb = Workbook(); ws = wb.active; ws.title = "data"
+    ws.cell(row=1, column=1, value="Laporan Realisasi Project (Memo)").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True); ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=f"{payload.get('begin')} s/d {payload.get('end')}")
+    cols = [("Tanggal", 12), ("No. Memo", 22), ("Subjek", 40), ("Nilai Memo", 18),
+            ("Total Realisasi", 18), ("Total Pengembalian", 18), ("Outstanding", 18), ("Jml Realisasi", 12)]
+    _hdr(ws, cols, 5); r = 5
+    for row in payload.get("rows", []):
+        r += 1
+        ws.cell(row=r, column=1, value=_dmy(row.get("memo_date")))
+        ws.cell(row=r, column=2, value=row.get("memo_number") or "")
+        ws.cell(row=r, column=3, value=row.get("memo_subject") or "")
+        _money_cell(ws, r, 4, row.get("memo_amount"))
+        _money_cell(ws, r, 5, row.get("total_realisasi"))
+        _money_cell(ws, r, 6, row.get("total_return"))
+        _money_cell(ws, r, 7, row.get("outstanding"))
+        ws.cell(row=r, column=8, value=row.get("realisasi_count") or 0)
+    r += 1
+    gt = payload.get("grand_total", {})
+    ws.cell(row=r, column=3, value="TOTAL").font = Font(bold=True)
+    _money_cell(ws, r, 4, gt.get("memo_amount"), bold=True)
+    _money_cell(ws, r, 5, gt.get("total_realisasi"), bold=True)
+    _money_cell(ws, r, 6, gt.get("total_return"), bold=True)
+    _money_cell(ws, r, 7, gt.get("outstanding"), bold=True)
+    buf = BytesIO(); wb.save(buf); return buf.getvalue()

@@ -198,6 +198,24 @@ const router = createRouter({
       meta: { title: 'Rekapitulasi Uang Muka Kegiatan', menu_key: 'keuangan.report.ca_employee' as MenuKey, arEndpoint: 'cash-advance', arFile: 'rekapuangmuka' },
     },
     {
+      path: '/keuangan/laporan/list-uang-muka',
+      name: 'keuangan-laporan-list-uang-muka',
+      component: () => import('@/pages/keuangan/LaporanListUangMukaPage.vue'),
+      meta: { title: 'List Transaksi Uang Muka Kegiatan', menu_key: 'keuangan.report.ca_list' as MenuKey },
+    },
+    {
+      path: '/keuangan/laporan/realisasi-memo',
+      name: 'keuangan-laporan-realisasi-memo',
+      component: () => import('@/pages/keuangan/LaporanRealisasiMemoPage.vue'),
+      meta: { title: 'Laporan Realisasi Project (Memo)', menu_key: 'keuangan.report.project_memo' as MenuKey },
+    },
+    {
+      path: '/keuangan/laporan/piutang-realisasi',
+      name: 'keuangan-laporan-piutang-realisasi',
+      component: () => import('@/pages/keuangan/LaporanPiutangRealisasiPage.vue'),
+      meta: { title: 'Piutang Realisasi Penyaluran', menu_key: 'keuangan.report.program_ar' as MenuKey },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

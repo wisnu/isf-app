@@ -27,6 +27,9 @@ _COLL_MENU = "keuangan.report.collection"
 _AR_EMP_MENU = "keuangan.report.ar_employee"
 _AR_EXT_MENU = "keuangan.report.ar_external"
 _CA_EMP_MENU = "keuangan.report.ca_employee"
+_CA_LIST_MENU = "keuangan.report.ca_list"
+_PROG_AR_MENU = "keuangan.report.program_ar"
+_MEMO_MENU = "keuangan.report.project_memo"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -1032,3 +1035,103 @@ async def cash_advance(request: Request, _: str = Depends(require_menu(_CA_EMP_M
 async def cash_advance_export(request: Request, _: str = Depends(require_menu(_CA_EMP_MENU)),
                               begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
     return await _ar_proxy_export(request, "cash-advance", begin, end, branch, "rekapuangmuka.xlsx")
+
+
+# ── Grup C: List Uang Muka / Piutang Realisasi / Realisasi Memo ──────────────
+
+
+@router.get("/cashadvance-list/branches")
+async def cashadvance_list_branches(request: Request, _: str = Depends(require_menu(_CA_LIST_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cashadvance-list")
+async def cashadvance_list(request: Request, _: str = Depends(require_menu(_CA_LIST_MENU)),
+                           begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+                           lpj: str | None = Query(default=None), page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200)):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    if lpj:
+        params["lpj"] = lpj
+    downstream = await get_report_api("/api/report/cashadvance-list", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cashadvance-list/export.xlsx")
+async def cashadvance_list_export(request: Request, _: str = Depends(require_menu(_CA_LIST_MENU)),
+                                  begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), lpj: str | None = Query(default=None)):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if lpj:
+        params["lpj"] = lpj
+    downstream = await stream_report_api("/api/report/cashadvance-list/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="listuangmuka.xlsx"')})
+
+
+@router.get("/program-realization/branches")
+async def program_realization_branches(request: Request, _: str = Depends(require_menu(_PROG_AR_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/program-realization")
+async def program_realization(request: Request, _: str = Depends(require_menu(_PROG_AR_MENU)),
+                              begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy(request, _PROG_AR_MENU, "program-realization", begin, end, branch)
+
+
+@router.get("/program-realization/export.xlsx")
+async def program_realization_export(request: Request, _: str = Depends(require_menu(_PROG_AR_MENU)),
+                                     begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy_export(request, "program-realization", begin, end, branch, "piutangrealisasi.xlsx")
+
+
+@router.get("/realization-memo/branches")
+async def realization_memo_branches(request: Request, _: str = Depends(require_menu(_MEMO_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/realization-memo")
+async def realization_memo(request: Request, _: str = Depends(require_menu(_MEMO_MENU)),
+                           begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), q: str | None = Query(default=None)):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if q:
+        params["q"] = q
+    downstream = await get_report_api("/api/report/realization-memo", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/realization-memo/export.xlsx")
+async def realization_memo_export(request: Request, _: str = Depends(require_menu(_MEMO_MENU)),
+                                  begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), q: str | None = Query(default=None)):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if q:
+        params["q"] = q
+    downstream = await stream_report_api("/api/report/realization-memo/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="realisasimemo.xlsx"')})
