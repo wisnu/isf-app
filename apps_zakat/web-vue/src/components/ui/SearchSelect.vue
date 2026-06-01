@@ -1,0 +1,116 @@
+<script setup lang="ts">
+import { ChevronDown, X } from 'lucide-vue-next'
+import { computed, nextTick, ref } from 'vue'
+
+// Combobox dropdown yang bisa diketik untuk search. Bind value via v-model.
+interface Option { value: string; label: string }
+const props = defineProps<{
+  modelValue: string
+  options: Option[]
+  allLabel?: string // teks opsi "semua" (value '')
+  placeholder?: string
+}>()
+const emit = defineEmits<{ 'update:modelValue': [string] }>()
+
+const open = ref(false)
+const query = ref('')
+const inputEl = ref<HTMLInputElement | null>(null)
+const activeIdx = ref(0)
+
+const selectedLabel = computed(() => {
+  if (!props.modelValue) return props.allLabel ?? ''
+  return props.options.find((o) => o.value === props.modelValue)?.label ?? props.modelValue
+})
+
+// daftar opsi terfilter (+ opsi "semua" di atas bila ada)
+const items = computed<Option[]>(() => {
+  const q = query.value.trim().toLowerCase()
+  const base = props.options.filter(
+    (o) => !q || o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
+  )
+  return props.allLabel !== undefined ? [{ value: '', label: props.allLabel }, ...base] : base
+})
+
+function openList() {
+  open.value = true
+  query.value = ''
+  activeIdx.value = 0
+}
+function pick(v: string) {
+  emit('update:modelValue', v)
+  open.value = false
+  query.value = ''
+}
+function onInput(e: Event) {
+  query.value = (e.target as HTMLInputElement).value
+  open.value = true
+  activeIdx.value = 0
+}
+function onBlur() {
+  // tunda agar mousedown opsi sempat ter-handle
+  setTimeout(() => { open.value = false }, 150)
+}
+function move(d: number) {
+  if (!open.value) { open.value = true; return }
+  const n = items.value.length
+  if (!n) return
+  activeIdx.value = (activeIdx.value + d + n) % n
+}
+function enter() {
+  if (open.value && items.value[activeIdx.value]) pick(items.value[activeIdx.value].value)
+}
+async function clearSel() {
+  emit('update:modelValue', '')
+  query.value = ''
+  await nextTick()
+  inputEl.value?.focus()
+}
+</script>
+
+<template>
+  <div class="relative">
+    <input
+      ref="inputEl"
+      :value="open ? query : selectedLabel"
+      :placeholder="placeholder ?? 'Cari…'"
+      type="text"
+      autocomplete="off"
+      class="h-9 w-full rounded-lg border border-border bg-surface pl-2 pr-14 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+      @focus="openList"
+      @input="onInput"
+      @blur="onBlur"
+      @keydown.down.prevent="move(1)"
+      @keydown.up.prevent="move(-1)"
+      @keydown.enter.prevent="enter"
+      @keydown.esc="open = false"
+    />
+    <button
+      v-if="modelValue"
+      type="button"
+      class="absolute right-7 top-0 h-9 w-6 grid place-items-center text-muted hover:text-foreground"
+      title="Hapus pilihan"
+      @mousedown.prevent="clearSel"
+    >
+      <X class="w-3.5 h-3.5" />
+    </button>
+    <ChevronDown class="absolute right-2 top-2.5 w-4 h-4 text-muted pointer-events-none" />
+
+    <ul
+      v-if="open"
+      class="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-border bg-surface shadow-lg text-sm"
+    >
+      <li
+        v-for="(o, i) in items"
+        :key="o.value || '__all__'"
+        class="px-3 py-1.5 cursor-pointer"
+        :class="[
+          i === activeIdx ? 'bg-primary/10 text-primary' : 'hover:bg-background',
+          o.value === modelValue && i !== activeIdx ? 'font-medium' : '',
+        ]"
+        @mousedown.prevent="pick(o.value)"
+        @mousemove="activeIdx = i"
+      >{{ o.label }}</li>
+      <li v-if="!items.length" class="px-3 py-1.5 text-muted italic">Tidak ada hasil</li>
+    </ul>
+  </div>
+</template>
