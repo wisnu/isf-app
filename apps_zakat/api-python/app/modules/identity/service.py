@@ -8,7 +8,8 @@ from app.shared.db import fetch_all, fetch_all_isf_auth, fetch_one
 
 async def get_profile(user_id: str) -> ProfileResponse | None:
     user = await fetch_one(
-        "SELECT id_user, status_profil, kode_cabang FROM enterprise.userapp WHERE id_user = $1",
+        "SELECT id_user, status_profil, kode_cabang, tipe_akses_cabang "
+        "FROM enterprise.userapp WHERE id_user = $1",
         user_id,
     )
     if not user:
@@ -55,4 +56,6 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
         ],
         branches=branches,
         menus=sorted({m["menu_key"] for m in menu_rows}),
+        primary_branch=primary_branch,
+        branch_access="all" if user.get("tipe_akses_cabang") == "S" else "single",
     )

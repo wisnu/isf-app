@@ -43,6 +43,15 @@ const router = createRouter({
       meta: { title: 'Manajemen Bank', menu_key: 'keuangan.bank' as MenuKey },
     },
     {
+      path: '/keuangan/laporan/jurnal-harian',
+      name: 'keuangan-laporan-jurnal-harian',
+      component: () => import('@/pages/keuangan/LaporanJurnalHarianPage.vue'),
+      meta: {
+        title: 'Laporan Jurnal Harian',
+        menu_key: 'keuangan.report.journal_daily' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

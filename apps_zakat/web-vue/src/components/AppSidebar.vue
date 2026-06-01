@@ -64,6 +64,17 @@ const groups: MenuGroup[] = [
           { label: 'Bank', to: '/keuangan/bank', icon: Landmark },
         ],
       },
+      {
+        label: 'Laporan',
+        icon: FileText,
+        children: [
+          {
+            label: 'Jurnal Harian',
+            to: '/keuangan/laporan/jurnal-harian',
+            icon: BookOpen,
+          },
+        ],
+      },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },
       { label: 'Penghimpunan', icon: TrendingUp, disabled: true, badge: 'Fase 3' },
     ],

@@ -13,6 +13,7 @@ export interface User {
   branches: string[]
   primary_branch: string | null
   menus: string[]
+  branch_access?: 'all' | 'single'
 }
 
 export interface AuthProviders {

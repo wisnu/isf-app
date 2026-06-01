@@ -26,6 +26,7 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.coa',           'Chart of Accounts',       'Keuangan',  '/keuangan/coa',          110, 'A'),
   ('keuangan.kas',           'Manajemen Kas',           'Keuangan',  '/keuangan/kas',          120, 'A'),
   ('keuangan.bank',          'Manajemen Bank',          'Keuangan',  '/keuangan/bank',         130, 'A'),
+  ('keuangan.report.journal_daily', 'Laporan Jurnal Harian', 'Keuangan', '/keuangan/laporan/jurnal-harian', 140, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -79,6 +80,16 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVACC',  'dashboard.overview',     'seed'),
   ('SPVACC',  'dashboard.keuangan',     'seed'),
   ('SPVACC',  'keuangan.coa',           'seed'),
+  -- Laporan Jurnal Harian (keuangan report). Finance roles + DIST/SPVDIST
+  -- (DIST/SPVDIST diikutkan untuk E2E dev — user uji HADI; seed ini permissive-dev).
+  ('ADM',     'keuangan.report.journal_daily', 'seed'),
+  ('SPVADM',  'keuangan.report.journal_daily', 'seed'),
+  ('KEU',     'keuangan.report.journal_daily', 'seed'),
+  ('SPVKEU',  'keuangan.report.journal_daily', 'seed'),
+  ('ACC',     'keuangan.report.journal_daily', 'seed'),
+  ('SPVACC',  'keuangan.report.journal_daily', 'seed'),
+  ('DIST',    'keuangan.report.journal_daily', 'seed'),
+  ('SPVDIST', 'keuangan.report.journal_daily', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

@@ -40,6 +40,7 @@ async def build_user_public(
     branches: list[str] | None = None,
     primary_branch: str | None = None,
     menus: list[str] | None = None,
+    branch_access: str = "single",
 ) -> dict | None:
     user = await db.get_user_by_id(user_id)
     if not user:
@@ -58,6 +59,7 @@ async def build_user_public(
         "branches": branches or [],
         "primary_branch": primary_branch,
         "menus": menus or [],
+        "branch_access": branch_access,
     }
 
 

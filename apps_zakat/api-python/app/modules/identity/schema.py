@@ -18,3 +18,8 @@ class ProfileResponse(BaseModel):
     roles: list[RoleInfo]
     branches: list[BranchInfo]
     menus: list[str]
+    # Cabang default user (userapp.kode_cabang) — independen dari daftar branches.
+    primary_branch: str | None = None
+    # Scope akses cabang: 'all' (tipe_akses_cabang='S' / Seluruh) atau
+    # 'single' (='T' / Tunggal — hanya cabang default).
+    branch_access: str = "single"
