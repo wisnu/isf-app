@@ -20,6 +20,7 @@ import { useRoute } from 'vue-router'
 
 import AppLogo from '@/components/AppLogo.vue'
 import { cn } from '@/lib/utils'
+import { portalLabel } from '@/lib/portal'
 import { useSidebarStore } from '@/stores/sidebar'
 
 interface MenuItem {
@@ -198,7 +199,7 @@ const parentBaseClass = computed(() =>
       <AppLogo class="w-7 h-7 shrink-0 rounded object-contain" />
       <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
         <span class="font-bold text-sm">isf-app</span>
-        <span class="text-[10px] opacity-80 truncate">Portal Zakat</span>
+        <span class="text-[10px] opacity-80 truncate">{{ portalLabel }}</span>
       </div>
     </div>
 

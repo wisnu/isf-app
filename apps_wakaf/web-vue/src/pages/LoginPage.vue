@@ -14,6 +14,7 @@ import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import { ApiError } from '@/lib/api/client'
+import { portalLabel } from '@/lib/portal'
 import { useAuthStore } from '@/stores/auth'
 
 const username = ref('')
@@ -100,7 +101,7 @@ function loginWithGoogle() {
     <Card class="w-full max-w-md">
       <CardHeader>
         <AppLogo class="h-16 w-auto mb-2" />
-        <CardTitle>Portal Zakat</CardTitle>
+        <CardTitle>{{ portalLabel }}</CardTitle>
         <CardDescription>Manajemen ZIS · masuk dengan akun demo atau Google</CardDescription>
       </CardHeader>
       <CardContent>
