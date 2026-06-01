@@ -98,7 +98,7 @@ const groups: MenuGroup[] = [
           { label: 'Laporan Realisasi Project (Memo)', to: '/keuangan/laporan/realisasi-memo', icon: FileText },
           { label: 'Piutang Realisasi Penyaluran', to: '/keuangan/laporan/piutang-realisasi', icon: FileText },
           { section: 'UPZ' },
-          { label: 'List Transaksi UPZ', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'List Transaksi UPZ', to: '/keuangan/laporan/upz', icon: FileText },
         ],
       },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },

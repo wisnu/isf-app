@@ -1016,3 +1016,42 @@ def build_realization_memo_xlsx(payload, branch_label):
     _money_cell(ws, r, 6, gt.get("total_return"), bold=True)
     _money_cell(ws, r, 7, gt.get("outstanding"), bold=True)
     buf = BytesIO(); wb.save(buf); return buf.getvalue()
+
+
+# ── List Transaksi UPZ ───────────────────────────────────────────────────────
+
+_UPZ_COLS = [
+    ("Tanggal", 12), ("No. Transaksi", 24), ("Jenis", 18), ("Keterangan", 40),
+    ("Sub Account", 26), ("Debet", 18), ("Kredit", 18),
+]
+
+
+def build_upz_xlsx(payload: dict, branch_label: str) -> bytes:
+    wb = Workbook(); ws = wb.active; ws.title = "data"
+    ws.cell(row=1, column=1, value="List Transaksi UPZ").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True); ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=f"{payload.get('begin')} s/d {payload.get('end')}")
+    for ci, (_t, w) in enumerate(_UPZ_COLS, 1):
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    r = 5
+    for acc in payload.get("accounts", []):
+        ws.cell(row=r, column=1, value=f"{acc['account_code']} - {acc.get('account_name') or ''}").font = Font(bold=True)
+        r += 1
+        for ci, (t, _w) in enumerate(_UPZ_COLS, 1):
+            c = ws.cell(row=r, column=ci, value=t)
+            c.font = Font(bold=True, color="FFFF00")
+            c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        r += 1
+        for ln in acc["rows"]:
+            ws.cell(row=r, column=1, value=_dmy(ln["journal_date"]))
+            ws.cell(row=r, column=2, value=ln["transactionno"])
+            ws.cell(row=r, column=3, value=ln["trxtype"])
+            ws.cell(row=r, column=4, value=ln["description"])
+            ws.cell(row=r, column=5, value=ln["subaccount"])
+            _money_cell(ws, r, 6, ln["debit"]); _money_cell(ws, r, 7, ln["credit"])
+            r += 1
+        ws.cell(row=r, column=3, value="Total").font = Font(bold=True)
+        _money_cell(ws, r, 6, acc["total_debit"], bold=True); _money_cell(ws, r, 7, acc["total_credit"], bold=True)
+        r += 2
+    buf = BytesIO(); wb.save(buf); return buf.getvalue()

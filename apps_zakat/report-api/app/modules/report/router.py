@@ -12,6 +12,7 @@ from app.modules.report.export import (
     build_cashadvance_xlsx,
     build_program_realization_xlsx,
     build_realization_memo_xlsx,
+    build_upz_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
     build_perubahan_dana_xlsx,
@@ -43,6 +44,7 @@ from app.modules.report.service import (
     cashadvance_rows,
     program_realization,
     realization_memo,
+    upz_trx,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -846,4 +848,26 @@ async def realization_memo_export(begin: str = Query(...), end: str = Query(...)
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     xlsx = build_realization_memo_xlsx(data, await _branch_label(b))
     filename = f"realisasimemo-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ── Grup D: List Transaksi UPZ ───────────────────────────────────────────────
+
+
+@router.get("/upz")
+async def upz(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    data = await upz_trx(_tb_branch(branch), begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/upz/export.xlsx")
+async def upz_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    b = _tb_branch(branch)
+    data = await upz_trx(b, begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_upz_xlsx(data, await _branch_label(b))
+    filename = f"listupz-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(content=xlsx, media_type=_XLSX_MIME, headers={"Content-Disposition": f'attachment; filename="{filename}"'})

@@ -30,6 +30,7 @@ _CA_EMP_MENU = "keuangan.report.ca_employee"
 _CA_LIST_MENU = "keuangan.report.ca_list"
 _PROG_AR_MENU = "keuangan.report.program_ar"
 _MEMO_MENU = "keuangan.report.project_memo"
+_UPZ_MENU = "keuangan.report.upz"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -1135,3 +1136,24 @@ async def realization_memo_export(request: Request, _: str = Depends(require_men
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
                     headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="realisasimemo.xlsx"')})
+
+
+# ── Grup D: List Transaksi UPZ ───────────────────────────────────────────────
+
+
+@router.get("/upz/branches")
+async def upz_branches(request: Request, _: str = Depends(require_menu(_UPZ_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/upz")
+async def upz(request: Request, _: str = Depends(require_menu(_UPZ_MENU)),
+              begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy(request, _UPZ_MENU, "upz", begin, end, branch)
+
+
+@router.get("/upz/export.xlsx")
+async def upz_export(request: Request, _: str = Depends(require_menu(_UPZ_MENU)),
+                     begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy_export(request, "upz", begin, end, branch, "listupz.xlsx")

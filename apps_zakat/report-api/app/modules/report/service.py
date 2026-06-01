@@ -1849,3 +1849,77 @@ async def realization_memo(branch, begin, end, q) -> dict | None:
         tot["total_return"] += r["total_return"]
         tot["outstanding"] += outstanding
     return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "konsolidasi": branch is None}
+
+
+# ── Grup D: List Transaksi UPZ (fLaporanUPZ) ─────────────────────────────────
+
+_UPZ_FILTER = (
+    "((has_210302 AND amount_credit <> 0 AND account_code <> '210302') "
+    "OR (has_110109 AND amount_debit <> 0 AND transactioncode = 'TI'))"
+)
+
+
+async def upz_trx(branch: str | None, begin: str, end: str) -> dict | None:
+    if not await ping_dwh():
+        return None
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "journal_date >= $1::date AND journal_date <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    sql = f"""
+        SELECT account_code, account_name,
+               to_char(journal_date,'YYYY-MM-DD') AS journal_date,
+               transactionno, transactioncode, trxtypedesc,
+               additionaldescription, description, subaccountcode, subaccountname,
+               amount_debit, amount_credit
+        FROM dwh.v_upz_trx
+        WHERE {clause} AND {_UPZ_FILTER}
+        ORDER BY account_code, journal_date, transactionno
+        LIMIT {CAP + 1}
+    """
+    rows = await fetch_all_dwh(sql, *args)
+    capped = len(rows) > CAP
+    rows = rows[:CAP]
+
+    accounts: list[dict] = []
+    cur: dict | None = None
+    grand = {"debit": 0.0, "credit": 0.0}
+    for r in rows:
+        if cur is None or cur["account_code"] != r["account_code"]:
+            cur = {
+                "account_code": r["account_code"],
+                "account_name": r["account_name"],
+                "total_debit": 0.0,
+                "total_credit": 0.0,
+                "rows": [],
+            }
+            accounts.append(cur)
+        desc = r["description"] or ""
+        if r["additionaldescription"]:
+            desc = f"{desc} ({r['additionaldescription']})"
+        sub = " - ".join(p for p in [r["subaccountcode"], r["subaccountname"]] if p)
+        cur["rows"].append({
+            "journal_date": r["journal_date"],
+            "transactionno": r["transactionno"],
+            "trxtype": r["trxtypedesc"] or r["transactioncode"],
+            "description": desc,
+            "subaccount": sub,
+            "debit": r["amount_debit"],
+            "credit": r["amount_credit"],
+        })
+        cur["total_debit"] += r["amount_debit"]
+        cur["total_credit"] += r["amount_credit"]
+        grand["debit"] += r["amount_debit"]
+        grand["credit"] += r["amount_credit"]
+    for a in accounts:
+        a["net"] = a["total_debit"] - a["total_credit"]
+
+    return {
+        "accounts": accounts,
+        "grand_total": grand,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
+        "konsolidasi": branch is None,
+        "capped": capped,
+    }

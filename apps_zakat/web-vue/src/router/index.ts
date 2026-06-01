@@ -216,6 +216,12 @@ const router = createRouter({
       meta: { title: 'Piutang Realisasi Penyaluran', menu_key: 'keuangan.report.program_ar' as MenuKey },
     },
     {
+      path: '/keuangan/laporan/upz',
+      name: 'keuangan-laporan-upz',
+      component: () => import('@/pages/keuangan/LaporanUpzPage.vue'),
+      meta: { title: 'List Transaksi UPZ', menu_key: 'keuangan.report.upz' as MenuKey },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),
