@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from app.modules.dashboard.schema import (
     # Legacy
     AsnafItem, Channel, DashboardSummary, Kpis, KpiPair, Trend, Transaction,
@@ -102,14 +104,16 @@ async def _kpi_card(current: float, prev: float, fmt: str = "currency") -> KpiCa
     return KpiCardData(total=current, delta_pct=delta, format=fmt)
 
 
+async def _trend_point(m: int, y: int) -> TrendPoint:
+    fund, dist = await asyncio.gather(_sum_fund(m, y), _sum_dist(m, y))
+    return TrendPoint(label=f"{y}-{m:02d}", penerimaan=fund, penyaluran=dist)
+
+
 async def _trend_6bulan(bulan: int, tahun: int) -> list[TrendPoint]:
+    # Run all months concurrently — sequential awaits exceeded the BFF's 10s
+    # read timeout (12 queries × ~1.6s). Pool max_size=10 absorbs the fan-out.
     months = _last_6_months(bulan, tahun)
-    points: list[TrendPoint] = []
-    for m, y in months:
-        fund = await _sum_fund(m, y)
-        dist = await _sum_dist(m, y)
-        points.append(TrendPoint(label=f"{y}-{m:02d}", penerimaan=fund, penyaluran=dist))
-    return points
+    return list(await asyncio.gather(*(_trend_point(m, y) for m, y in months)))
 
 
 async def _asnaf_dist(bulan: int, tahun: int) -> list[AsnafItem2]:
@@ -272,6 +276,92 @@ async def get_penyaluran(bulan: int, tahun: int) -> DashboardPenyaluran | None:
         anggaran=await _anggaran_list(tahun),
         memo_terbaru=await _memo_terbaru(),
     )
+
+
+# ── Per-chart functions (FE fetches each widget independently) ───────────────
+# Reuse the same helpers as the bundle composers above. Each returns the
+# wrapped shape the frontend `useFetch` queries expect (period+kpis, trend,
+# asnaf, anggaran, ...), or None when the DB is down (→ 503 in the router).
+
+async def get_keuangan_kpis(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    # Run the independent aggregates concurrently — sequential awaits pushed this
+    # past the BFF's 10s read timeout under parallel widget load (pool contention).
+    cur_fund, prev_fund, cur_dist, prev_dist, saldo, otorisasi = await asyncio.gather(
+        _sum_fund(bulan, tahun),
+        _sum_fund(prev_m, prev_y),
+        _sum_dist(bulan, tahun),
+        _sum_dist(prev_m, prev_y),
+        _saldo_total(),
+        _otorisasi_pending(),
+    )
+    return {
+        "period": f"{tahun}-{bulan:02d}",
+        "kpis": {
+            "penerimaan": (await _kpi_card(cur_fund, prev_fund)).model_dump(),
+            "penyaluran": (await _kpi_card(cur_dist, prev_dist)).model_dump(),
+            "saldo": KpiCardData(total=saldo, format="currency").model_dump(),
+            "otorisasi_pending": KpiCardData(total=otorisasi, format="count").model_dump(),
+        },
+    }
+
+
+async def get_keuangan_trend(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    return {"trend": [p.model_dump() for p in await _trend_6bulan(bulan, tahun)]}
+
+
+async def get_keuangan_asnaf(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    return {"asnaf": [a.model_dump() for a in await _asnaf_dist(bulan, tahun)]}
+
+
+async def get_keuangan_anggaran(tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    return {"anggaran": [a.model_dump() for a in await _anggaran_list(tahun)]}
+
+
+async def get_keuangan_rekening() -> dict | None:
+    if not await ping():
+        return None
+    return {"rekening": [r.model_dump() for r in await _rekening_list()]}
+
+
+async def get_penyaluran_kpis(bulan: int, tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    prev_m, prev_y = _prev_month(bulan, tahun)
+    cur_dist, prev_dist, mustahiq, otorisasi = await asyncio.gather(
+        _sum_dist(bulan, tahun),
+        _sum_dist(prev_m, prev_y),
+        _mustahiq_count(bulan, tahun),
+        _otorisasi_pending(),
+    )
+    return {
+        "period": f"{tahun}-{bulan:02d}",
+        "kpis": {
+            "penyaluran": (await _kpi_card(cur_dist, prev_dist)).model_dump(),
+            "mustahiq": KpiCardData(total=mustahiq, format="count").model_dump(),
+            "otorisasi_pending": KpiCardData(total=otorisasi, format="count").model_dump(),
+        },
+    }
+
+
+async def get_penyaluran_anggaran(tahun: int) -> dict | None:
+    if not await ping():
+        return None
+    return {"anggaran": [a.model_dump() for a in await _anggaran_list(tahun)]}
+
+
+async def get_penyaluran_memo() -> dict | None:
+    if not await ping():
+        return None
+    return {"memo_terbaru": [m.model_dump() for m in await _memo_terbaru()]}
 
 
 # ── Legacy dummy (kept for existing /summary endpoint) ───────────────────────

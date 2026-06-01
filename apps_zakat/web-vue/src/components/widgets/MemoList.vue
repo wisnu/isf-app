@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
+import { AlertTriangle, Loader2 } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -18,9 +18,12 @@ withDefaults(
   defineProps<{
     items: MemoItem[]
     loading?: boolean
+    error?: boolean
+    errorMessage?: string
   }>(),
   {
     loading: false,
+    error: false,
   }
 )
 
@@ -46,6 +49,11 @@ function formatIdr(v: number): string {
     <CardContent>
       <div v-if="loading" class="flex justify-center py-8">
         <Loader2 class="w-5 h-5 animate-spin text-muted" />
+      </div>
+      <div v-else-if="error" class="flex flex-col items-center gap-1 text-destructive text-sm py-4 text-center">
+        <AlertTriangle class="w-5 h-5 mb-1" />
+        <span class="font-medium">Gagal memuat memo</span>
+        <span v-if="errorMessage" class="text-xs text-muted">{{ errorMessage }}</span>
       </div>
       <div v-else-if="items.length === 0" class="text-sm text-muted text-center py-4">
         Tidak ada memo terbaru

@@ -53,10 +53,18 @@ User & kredensial DB lokal: `transaction:solusi` (lihat `.env.example`).
 
 ## Konvensi commit
 
-Default: **conventional-commit** dengan scope yang menyebut feature/context, mis. `feat(auth-pg):`, `feat(admin+ui):`, `chore(infra):`, `docs(dwh):`, `fix:`, `refactor:`. Untuk grouped feature/recovery commits, prefix legacy `[TAG]` juga masih dipakai — cari di history dengan `git log --grep='\['`.
+**Format wajib**: setiap commit diawali prefix `[TAG]` lalu conventional-commit:
+
+```
+[TAG] type(scope): subject
+```
+
+- `[TAG]` = tag singkat (UPPER-KEBAB) yang **relevan dengan enhancement/perubahan** yang dilakukan, mis. `[INDEPENDENT-LOAD]`, `[AUTH-PG]`, `[DASHBOARD]`. Pilih yang deskriptif tapi ringkas; reuse tag aktif di bawah kalau cocok, atau buat baru kalau perlu.
+- Lanjutkan dengan conventional-commit (`feat`, `fix`, `chore`, `docs`, `refactor`) + scope yang menyebut feature/context, mis. `feat(dashboard):`, `chore(infra):`.
+- Cari contoh di history: `git log --grep='\['`.
 
 Scope/tag yang aktif:
-- `auth-pg`, `admin+ui`, `dwh`, `recovery` — recent post-recovery work
+- `INDEPENDENT-LOAD`, `auth-pg`, `admin+ui`, `dwh`, `recovery` — recent post-recovery work
 - `MIGRATE-AUTHDB`, `ADMIN-USERS`, `CHANGE-PASSWORD`, `UX`, `ETL-DATAMART`, `DATAMART-CABANG`, `DASHBOARD`, `DASHBOARD-KEUANGAN`, `ETL`, `USERNAME-UPPER`, `DOCS`, `RECOVERY` — legacy from reflog
 
 ## Konvensi testing
