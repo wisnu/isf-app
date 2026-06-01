@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { useAuthStore } from '@/stores/auth'
 
@@ -125,7 +126,7 @@ onMounted(async () => {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Per Tanggal</label>
-        <input v-model="tanggal" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="tanggal" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Periode Pembanding</label>

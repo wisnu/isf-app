@@ -5,7 +5,9 @@ import { useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
+import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface AmilRow {
@@ -110,11 +112,11 @@ onMounted(async () => { await loadBranches() })
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Tanggal Awal</label>
-        <input v-model="begin" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="begin" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Tanggal Akhir</label>
-        <input v-model="end" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="end" />
       </div>
       <Button size="sm" class="gap-1.5 h-9" :disabled="loading" @click="goPage(1)">
         <Search class="w-4 h-4" :class="{ 'animate-pulse': loading }" /> Tampilkan
@@ -150,7 +152,7 @@ onMounted(async () => { await loadBranches() })
           </thead>
           <tbody>
             <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap">{{ r.actualdate }}</td>
+              <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.actualdate) }}</td>
               <td class="px-3 py-1"><span class="font-mono text-[10px] text-muted">{{ r.account_code }}</span> {{ r.account_name }}</td>
               <td class="px-3 py-1 whitespace-pre-line">{{ r.description }}</td>
               <td class="px-3 py-1">{{ r.channel }}</td>

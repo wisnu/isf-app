@@ -8,6 +8,14 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+
+def _dmy(iso) -> str:
+    """ISO 'YYYY-MM-DD' → 'DD-MM-YYYY' untuk tampilan tanggal di Excel."""
+    if not iso:
+        return ""
+    parts = str(iso).split("-")
+    return f"{parts[2]}-{parts[1]}-{parts[0]}" if len(parts) == 3 else str(iso)
+
 # (judul kolom, lebar, format angka opsional)
 _COLS: list[tuple[str, int, str | None]] = [
     ("Nomor Transaksi", 24, None),
@@ -45,7 +53,7 @@ def build_journal_daily_xlsx(rows: list[dict], branch_label: str, period_label: 
         sub = " - ".join(p for p in [r.get("subaccountcode"), r.get("subaccountname")] if p)
         values = [
             r.get("transactionno"),
-            r.get("journal_date"),
+            _dmy(r.get("journal_date")),
             float(r.get("debit_ekuiv") or 0),
             float(r.get("credit_ekuiv") or 0),
             r.get("account_branch_code"),
@@ -122,8 +130,8 @@ def build_general_transaction_xlsx(rows: list[dict], branch_label: str, period_l
             # baris header transaksi: kolom 1-6
             ws.cell(row=r, column=1, value=idx).font = Font(bold=True)
             ws.cell(row=r, column=2, value=txno).font = Font(bold=True)
-            ws.cell(row=r, column=3, value=row.get("transactiondate"))
-            ws.cell(row=r, column=4, value=row.get("actualdate"))
+            ws.cell(row=r, column=3, value=_dmy(row.get("transactiondate")))
+            ws.cell(row=r, column=4, value=_dmy(row.get("actualdate")))
             ws.cell(row=r, column=5, value=row.get("header_description"))
             ws.cell(row=r, column=6, value=row.get("inputer"))
             prev_tx = txno
@@ -194,7 +202,7 @@ def build_cash_mutation_xlsx(summary: dict, account_label: str, period_label: st
 
     for i, r in enumerate(summary.get("rows", []), start=header_row + 1):
         values = [
-            r.get("actualdate"),
+            _dmy(r.get("actualdate")),
             r.get("transactionno"),
             r.get("mutationtype"),
             float(r.get("amount") or 0),
@@ -574,7 +582,7 @@ def build_general_ledger_xlsx(payload: dict, branch_label: str) -> bytes:
             c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
         r += 1
         for ln in acc["rows"]:
-            ws.cell(row=r, column=1, value=ln["journal_date"])
+            ws.cell(row=r, column=1, value=_dmy(ln["journal_date"]))
             ws.cell(row=r, column=2, value=ln["transactionno"])
             ws.cell(row=r, column=3, value=ln["description"])
             ws.cell(row=r, column=4, value=ln["subaccount"])
@@ -725,7 +733,7 @@ def build_amil_cash_xlsx(rows: list[dict], branch_label: str, period_label: str,
     r = hr
     for row in rows:
         r += 1
-        ws.cell(row=r, column=1, value=row["actualdate"])
+        ws.cell(row=r, column=1, value=_dmy(row["actualdate"]))
         ws.cell(row=r, column=2, value=row["account_code"])
         ws.cell(row=r, column=3, value=row.get("account_name") or "")
         ws.cell(row=r, column=4, value=row.get("description") or "")
@@ -778,7 +786,7 @@ def build_distribution_xlsx(rows: list[dict], branch_label: str, period_label: s
     r = hr
     for row in rows:
         r += 1
-        vals = [row["actualdate"], row.get("branch_name") or "", row.get("product_name") or "",
+        vals = [_dmy(row["actualdate"]), row.get("branch_name") or "", row.get("product_name") or "",
                 row.get("account_name") or "", row.get("description") or "", row.get("ashnaf_label") or "",
                 row.get("category_label") or "", row.get("fund_label") or "", row.get("channel") or "",
                 row.get("donorname") or "", row.get("budget") or "", row.get("transactionno") or "",
@@ -841,7 +849,7 @@ def build_collection_xlsx(rows: list[dict], rekap: dict, branch_label: str, peri
     total = 0.0
     for row in rows:
         r += 1
-        vals = [row["actualdate"], row.get("branch_name") or "", row.get("account_name") or "",
+        vals = [_dmy(row["actualdate"]), row.get("branch_name") or "", row.get("account_name") or "",
                 row.get("description") or "", row.get("fund_label") or "", row.get("channel") or "",
                 row.get("donorname") or "", row.get("transactionno") or "", row.get("inputer") or ""]
         for ci, v in enumerate(vals, 1):

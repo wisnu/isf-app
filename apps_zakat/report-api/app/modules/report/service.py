@@ -16,6 +16,14 @@ from app.shared.db import fetch_all_dwh, fetch_one_dwh, ping_dwh
 CAP = 50_000
 
 
+def _dmy(iso: str | None) -> str:
+    """ISO 'YYYY-MM-DD' → tampil 'DD-MM-YYYY' (untuk header laporan)."""
+    if not iso:
+        return ""
+    parts = str(iso).split("-")
+    return f"{parts[2]}-{parts[1]}-{parts[0]}" if len(parts) == 3 else str(iso)
+
+
 async def dwh_health() -> bool:
     return await ping_dwh()
 
@@ -649,8 +657,8 @@ async def trial_balance(
     return {
         "groups": groups,
         "grand_total": grand,
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": konsolidasi,
         "with_journal": with_journal,
     }
@@ -762,8 +770,8 @@ async def neraca(
         "total_pasiva_prev": tot_p_prev,
         "selisih": selisih,
         "status_balance": "BALANCE" if abs(selisih) < 0.01 else "TIDAK BALANCE",
-        "tanggal": tanggal,
-        "tanggal_prev": prev.isoformat(),
+        "tanggal": _dmy(tanggal),
+        "tanggal_prev": _dmy(prev.isoformat()),
         "jenisperiode": "Tahunan" if jp == "T" else "Bulanan",
         "konsolidasi": branch is None,
     }
@@ -909,8 +917,8 @@ async def aruskas(branch: str | None, begin: str, end: str, today: date) -> dict
         "kenaikan_bersih": kenaikan,
         "saldo_awal": opening,
         "saldo_akhir": opening + kenaikan,
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": branch is None,
     }
 
@@ -1047,8 +1055,8 @@ async def general_ledger(
 
     return {
         "accounts": accounts,
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": branch is None,
         "capped": capped,
     }
@@ -1187,8 +1195,8 @@ async def perubahan_dana(branch: str | None, begin: str, end: str) -> dict | Non
     return {
         "funds": funds,
         "total_saldo_akhir": sum(f["saldo_akhir"] for f in funds),
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": branch is None,
     }
 
@@ -1349,8 +1357,8 @@ async def perubahan_dana_detail(branch: str | None, begin: str, end: str) -> dic
     ]
     return {
         "funds": funds,
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": branch is None,
     }
 
@@ -1699,7 +1707,7 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
         "ar_type": ar_type,
         "title": _AR_TITLE.get(ar_type, "Ringkasan Piutang"),
         "with_debtor": ar_type == "D",
-        "begin": begin,
-        "end": end,
+        "begin": _dmy(begin),
+        "end": _dmy(end),
         "konsolidasi": branch is None,
     }

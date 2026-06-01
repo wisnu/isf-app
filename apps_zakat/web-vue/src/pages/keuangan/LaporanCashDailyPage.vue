@@ -4,7 +4,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
+import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface CashRow {
@@ -167,11 +169,11 @@ onMounted(async () => {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Dari Tanggal</label>
-        <input v-model="begin" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="begin" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Sampai Tanggal</label>
-        <input v-model="end" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="end" />
       </div>
       <Button size="sm" class="gap-1.5 h-9" :disabled="loading || !account" @click="search">
         <Search class="w-4 h-4" :class="{ 'animate-pulse': loading }" />
@@ -231,7 +233,7 @@ onMounted(async () => {
           </thead>
           <tbody>
             <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ r.actualdate }}</td>
+              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</td>
               <td class="px-3 py-1.5 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</td>
               <td class="px-2 py-1.5 text-center">
                 <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', r.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">{{ r.mutationtype }}</span>

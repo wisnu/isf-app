@@ -78,8 +78,13 @@ async def branches(scope: str = Query(default="all")):
     return ok(data)
 
 
+def _dmy(iso: str) -> str:
+    p = (iso or "").split("-")
+    return f"{p[2]}-{p[1]}-{p[0]}" if len(p) == 3 else (iso or "")
+
+
 def _period_label(begin: str, end: str) -> str:
-    return begin if begin == end else f"{begin} s/d {end}"
+    return _dmy(begin) if begin == end else f"{_dmy(begin)} s/d {_dmy(end)}"
 
 
 @router.get("/journal-daily")

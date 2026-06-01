@@ -11,7 +11,9 @@ import { computed, onMounted, ref } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
+import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface GtItem {
@@ -161,11 +163,11 @@ onMounted(async () => {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Dari Tanggal</label>
-        <input v-model="begin" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="begin" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Sampai Tanggal</label>
-        <input v-model="end" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="end" />
       </div>
       <Button size="sm" class="gap-1.5 h-9" :disabled="loading" @click="search">
         <Search class="w-4 h-4" :class="{ 'animate-pulse': loading }" />
@@ -204,7 +206,7 @@ onMounted(async () => {
         <!-- Transaction header -->
         <div class="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 bg-background/60 border-b border-border">
           <span class="font-mono text-sm font-semibold">{{ tx.transactionno }}</span>
-          <span class="text-xs text-muted">Tgl: <span class="tabular-nums text-foreground">{{ tx.actualdate }}</span></span>
+          <span class="text-xs text-muted">Tgl: <span class="tabular-nums text-foreground">{{ dmy(tx.actualdate) }}</span></span>
           <span class="text-xs text-muted">Inputer: <span class="text-foreground">{{ tx.inputer || '—' }}</span></span>
           <span class="text-xs text-muted truncate flex-1 min-w-[12rem]" :title="tx.description ?? ''">{{ tx.description }}</span>
         </div>

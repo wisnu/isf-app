@@ -11,7 +11,9 @@ import { computed, onMounted, ref } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
+import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface JournalRow {
@@ -161,11 +163,11 @@ onMounted(async () => {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Dari Tanggal</label>
-        <input v-model="begin" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="begin" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Sampai Tanggal</label>
-        <input v-model="end" type="date" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <DateField v-model="end" />
       </div>
       <Button size="sm" class="gap-1.5 h-9" :disabled="loading" @click="search">
         <Search class="w-4 h-4" :class="{ 'animate-pulse': loading }" />
@@ -212,7 +214,7 @@ onMounted(async () => {
           </thead>
           <tbody>
             <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ r.journal_date }}</td>
+              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</td>
               <td class="px-3 py-1.5 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno || '—' }}</td>
               <td class="px-3 py-1.5">
                 <span class="font-mono text-[11px] text-muted">{{ r.account_code }}</span>
