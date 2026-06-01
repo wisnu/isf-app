@@ -8,6 +8,7 @@ export const MENU_KEYS = [
   'keuangan.bank',
   'keuangan.report.journal_daily',
   'keuangan.report.general_transaction',
+  'keuangan.report.cash_daily',
   'admin.role_menu',
   'admin.users',
 ] as const

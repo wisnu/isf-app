@@ -145,3 +145,72 @@ def build_general_transaction_xlsx(rows: list[dict], branch_label: str, period_l
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Transaksi Kas/Bank Harian (summary + mutasi + running balance) ───────────
+
+_AUTHSTATUS = {"T": "SUDAH OTORISASI", "F": "BELUM OTORISASI"}
+
+_CASH_COLS: list[tuple[str, int, str | None]] = [
+    ("Tanggal", 13, None),
+    ("No Transaksi", 24, None),
+    ("D/K", 6, None),
+    ("Nominal", 18, "#,##0.00"),
+    ("Saldo", 18, "#,##0.00"),
+    ("Keterangan", 36, None),
+    ("Referensi", 18, None),
+    ("Inputer", 14, None),
+    ("Status", 18, None),
+]
+
+
+def build_cash_mutation_xlsx(summary: dict, account_label: str, period_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data"
+
+    ws.cell(row=1, column=1, value="Transaksi Kas/Bank Harian").font = Font(bold=True, size=14)
+    meta = [
+        ("Rekening", account_label),
+        ("Periode", period_label),
+        ("Saldo Awal", summary.get("begin_balance", 0)),
+        ("Total Debet", summary.get("total_debit", 0)),
+        ("Total Kredit", summary.get("total_credit", 0)),
+        ("Saldo Akhir", summary.get("end_balance", 0)),
+    ]
+    for i, (label, val) in enumerate(meta, start=2):
+        ws.cell(row=i, column=1, value=label).font = Font(bold=True)
+        c = ws.cell(row=i, column=2, value=val)
+        if isinstance(val, (int, float)):
+            c.number_format = "#,##0.00"
+
+    header_row = 9
+    for col_idx, (title, width, _f) in enumerate(_CASH_COLS, 1):
+        c = ws.cell(row=header_row, column=col_idx, value=title)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        c.alignment = Alignment(horizontal="center", vertical="center")
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    for i, r in enumerate(summary.get("rows", []), start=header_row + 1):
+        values = [
+            r.get("actualdate"),
+            r.get("transactionno"),
+            r.get("mutationtype"),
+            float(r.get("amount") or 0),
+            float(r.get("balance") or 0),
+            r.get("description"),
+            r.get("reference_no"),
+            r.get("inputer"),
+            _AUTHSTATUS.get(r.get("auth_status"), r.get("auth_status") or ""),
+        ]
+        for col_idx, val in enumerate(values, 1):
+            cell = ws.cell(row=i, column=col_idx, value=val)
+            fmt = _CASH_COLS[col_idx - 1][2]
+            if fmt:
+                cell.number_format = fmt
+
+    ws.freeze_panes = f"A{header_row + 1}"
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

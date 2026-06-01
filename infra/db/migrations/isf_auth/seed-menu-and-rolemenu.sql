@@ -28,6 +28,7 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.bank',          'Manajemen Bank',          'Keuangan',  '/keuangan/bank',         130, 'A'),
   ('keuangan.report.journal_daily', 'Laporan Jurnal Harian', 'Keuangan', '/keuangan/laporan/jurnal-harian', 140, 'A'),
   ('keuangan.report.general_transaction', 'List Transaksi Umum', 'Keuangan', '/keuangan/laporan/transaksi-umum', 141, 'A'),
+  ('keuangan.report.cash_daily', 'Transaksi Kas/Bank Harian', 'Keuangan', '/keuangan/laporan/kas-harian', 142, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -99,6 +100,13 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVACC',  'keuangan.report.general_transaction', 'seed'),
   ('DIST',    'keuangan.report.general_transaction', 'seed'),
   ('SPVDIST', 'keuangan.report.general_transaction', 'seed'),
+  -- Transaksi Kas/Bank Harian — AllowedGroups legacy TR0027: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.cash_daily', 'seed'),
+  ('KEU',     'keuangan.report.cash_daily', 'seed'),
+  ('ACC',     'keuangan.report.cash_daily', 'seed'),
+  ('SPVKEU',  'keuangan.report.cash_daily', 'seed'),
+  ('QAC',     'keuangan.report.cash_daily', 'seed'),
+  ('SPVACC',  'keuangan.report.cash_daily', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

@@ -4,11 +4,16 @@ from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
+    build_cash_mutation_xlsx,
     build_general_transaction_xlsx,
     build_journal_daily_xlsx,
 )
 from app.modules.report.service import (
     CAP,
+    cash_account_label,
+    cash_mutation_export,
+    cash_mutation_item_count,
+    cash_mutation_page,
     dwh_health,
     general_transaction_item_count,
     general_transaction_page,
@@ -17,6 +22,7 @@ from app.modules.report.service import (
     journal_daily_page,
     journal_daily_rows,
     list_branches,
+    list_cash_accounts,
 )
 from app.shared.response import err, ok
 
@@ -136,6 +142,58 @@ async def general_transaction_export(
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     xlsx = build_general_transaction_xlsx(rows, await _branch_label(branch), _period_label(begin, end))
     filename = f"generaltransaction-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Transaksi Kas/Bank Harian (fDailyCash) ───────────────────────────────────
+
+@router.get("/cash-accounts")
+async def cash_accounts(branch: str = Query(...)):
+    data = await list_cash_accounts(branch)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/cash-mutation")
+async def cash_mutation(
+    account: str = Query(...),
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    data = await cash_mutation_page(account, begin, end, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/cash-mutation/export.xlsx")
+async def cash_mutation_xlsx(
+    account: str = Query(...),
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+):
+    total = await cash_mutation_item_count(account, begin, end)
+    if total > CAP:
+        return JSONResponse(
+            status_code=422,
+            content=err(
+                "REPORT_TOO_LARGE",
+                f"Hasil {total:,} baris melebihi batas {CAP:,}. Persempit rentang tanggal.",
+            ),
+        )
+    summary = await cash_mutation_export(account, begin, end)
+    if summary is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    label = await cash_account_label(account)
+    xlsx = build_cash_mutation_xlsx(summary, label, _period_label(begin, end))
+    filename = f"cashdaily-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

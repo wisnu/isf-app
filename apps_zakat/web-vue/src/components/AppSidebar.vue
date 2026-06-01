@@ -78,6 +78,11 @@ const groups: MenuGroup[] = [
             to: '/keuangan/laporan/transaksi-umum',
             icon: BookOpen,
           },
+          {
+            label: 'Transaksi Kas/Bank Harian',
+            to: '/keuangan/laporan/kas-harian',
+            icon: Banknote,
+          },
         ],
       },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },

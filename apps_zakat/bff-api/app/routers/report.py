@@ -11,6 +11,7 @@ router = APIRouter(prefix="/report", tags=["report"])
 
 _JOURNAL_MENU = "keuangan.report.journal_daily"
 _GT_MENU = "keuangan.report.general_transaction"
+_CASH_MENU = "keuangan.report.cash_daily"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -169,6 +170,73 @@ async def general_transaction_export(
         headers={
             "Content-Disposition": downstream.headers.get(
                 "content-disposition", 'attachment; filename="generaltransaction.xlsx"'
+            )
+        },
+    )
+
+
+# ── Transaksi Kas/Bank Harian (fDailyCash) ───────────────────────────────────
+
+@router.get("/cash-mutation/branches")
+async def cash_branches(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-accounts")
+async def cash_accounts(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_MENU)),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    if not resolved:
+        # Laporan kas butuh cabang konkret (bukan "semua").
+        return JSONResponse(
+            status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu")
+        )
+    downstream = await get_report_api("/api/report/cash-accounts", params={"branch": resolved})
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-mutation")
+async def cash_mutation(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_MENU)),
+    account: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    params = {"account": account, "begin": begin, "end": end, "page": page, "page_size": page_size}
+    downstream = await get_report_api("/api/report/cash-mutation", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-mutation/export.xlsx")
+async def cash_mutation_export(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_MENU)),
+    account: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+):
+    params = {"account": account, "begin": begin, "end": end}
+    downstream = await stream_report_api("/api/report/cash-mutation/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="cashdaily.xlsx"'
             )
         },
     )

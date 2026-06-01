@@ -61,6 +61,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/kas-harian',
+      name: 'keuangan-laporan-kas-harian',
+      component: () => import('@/pages/keuangan/LaporanCashDailyPage.vue'),
+      meta: {
+        title: 'Transaksi Kas/Bank Harian',
+        menu_key: 'keuangan.report.cash_daily' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

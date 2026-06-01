@@ -212,3 +212,142 @@ async def general_transaction_item_count(branch: str | None, begin: str, end: st
         f"SELECT count(*) AS n FROM dwh.v_general_transaction WHERE {clause}", *args
     )
     return int(row["n"]) if row else 0
+
+
+# ── Transaksi Kas/Bank Harian (fDailyCash) — per rekening + running balance ──
+
+async def list_cash_accounts(branch: str) -> list[dict] | None:
+    if not await ping_dwh():
+        return None
+    return await fetch_all_dwh(
+        "SELECT accountno AS account_no, accountname AS account_name, "
+        "cashaccounttype AS account_type FROM transaction.cashaccountall "
+        "WHERE branchcode = $1 AND status = 'A' ORDER BY accountname",
+        branch,
+    )
+
+
+def _cash_where(account: str, begin: str, end: str) -> tuple[str, list]:
+    args: list = [account, date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = (
+        "account_no = $1 AND actualdate >= $2::date "
+        "AND actualdate < ($3::date + INTERVAL '1 day')"
+    )
+    return clause, args
+
+_NET = "CASE WHEN mutationtype = 'D' THEN amount ELSE -amount END"
+
+
+async def _cash_begin_balance(account: str, begin: str) -> float:
+    row = await fetch_one_dwh(
+        f"SELECT COALESCE(SUM({_NET}), 0)::float8 AS bal FROM dwh.v_cash_mutation "
+        "WHERE account_no = $1 AND actualdate < $2::date",
+        account, date.fromisoformat(begin),
+    )
+    return float(row["bal"]) if row else 0.0
+
+
+_CASH_ITEM_COLS = """
+    to_char(actualdate, 'YYYY-MM-DD') AS actualdate, transactionno, mutationtype,
+    COALESCE(amount, 0)::float8 AS amount, reference_no, description, auth_status, inputer
+"""
+_CASH_ORDER = "ORDER BY actualdate, transactionitemid"
+
+
+async def _cash_sums(clause: str, args: list) -> tuple[float, float, int]:
+    row = await fetch_one_dwh(
+        f"""SELECT
+              COALESCE(SUM(CASE WHEN mutationtype='D' THEN amount ELSE 0 END), 0)::float8 AS d,
+              COALESCE(SUM(CASE WHEN mutationtype='C' THEN amount ELSE 0 END), 0)::float8 AS c,
+              count(*) AS n
+            FROM dwh.v_cash_mutation WHERE {clause}""",
+        *args,
+    )
+    return (float(row["d"]), float(row["c"]), int(row["n"])) if row else (0.0, 0.0, 0)
+
+
+def _attach_running_balance(rows: list[dict], start_balance: float) -> None:
+    bal = start_balance
+    for r in rows:
+        bal += r["amount"] if r["mutationtype"] == "D" else -r["amount"]
+        r["balance"] = bal
+
+
+async def cash_mutation_page(
+    account: str, begin: str, end: str, page: int, page_size: int
+) -> dict | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _cash_where(account, begin, end)
+    begin_balance = await _cash_begin_balance(account, begin)
+    total_debit, total_credit, total = await _cash_sums(clause, args)
+
+    offset = (page - 1) * page_size
+    # Saldo pada awal page = saldo awal + net dari baris-baris sebelum offset.
+    prefix_row = await fetch_one_dwh(
+        f"""SELECT COALESCE(SUM(net), 0)::float8 AS s FROM (
+              SELECT {_NET} AS net FROM dwh.v_cash_mutation WHERE {clause}
+              {_CASH_ORDER} LIMIT ${len(args) + 1}
+            ) q""",
+        *args, offset,
+    )
+    start_balance = begin_balance + (float(prefix_row["s"]) if prefix_row else 0.0)
+
+    rows = await fetch_all_dwh(
+        f"SELECT {_CASH_ITEM_COLS} FROM dwh.v_cash_mutation WHERE {clause} "
+        f"{_CASH_ORDER} LIMIT ${len(args) + 1} OFFSET ${len(args) + 2}",
+        *args, page_size, offset,
+    )
+    _attach_running_balance(rows, start_balance)
+
+    return {
+        "account_no": account,
+        "begin_balance": begin_balance,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "end_balance": begin_balance + total_debit - total_credit,
+        "rows": rows,
+        "total": total,
+        "capped": total > CAP,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+async def cash_mutation_export(account: str, begin: str, end: str) -> dict | None:
+    """Semua rows (sampai CAP) + running balance penuh + ringkasan, utk export."""
+    if not await ping_dwh():
+        return None
+    clause, args = _cash_where(account, begin, end)
+    begin_balance = await _cash_begin_balance(account, begin)
+    total_debit, total_credit, _total = await _cash_sums(clause, args)
+    rows = await fetch_all_dwh(
+        f"SELECT {_CASH_ITEM_COLS} FROM dwh.v_cash_mutation WHERE {clause} "
+        f"{_CASH_ORDER} LIMIT {CAP}",
+        *args,
+    )
+    _attach_running_balance(rows, begin_balance)
+    return {
+        "account_no": account,
+        "begin_balance": begin_balance,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "end_balance": begin_balance + total_debit - total_credit,
+        "rows": rows,
+    }
+
+
+async def cash_mutation_item_count(account: str, begin: str, end: str) -> int:
+    clause, args = _cash_where(account, begin, end)
+    row = await fetch_one_dwh(
+        f"SELECT count(*) AS n FROM dwh.v_cash_mutation WHERE {clause}", *args
+    )
+    return int(row["n"]) if row else 0
+
+
+async def cash_account_label(account: str) -> str:
+    row = await fetch_one_dwh(
+        "SELECT accountname FROM transaction.cashaccountall WHERE accountno = $1", account
+    )
+    name = row["accountname"] if row else None
+    return f"{account} - {name}" if name else account
