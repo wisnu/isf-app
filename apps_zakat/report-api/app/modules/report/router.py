@@ -8,6 +8,7 @@ from app.modules.report.export import (
     build_amil_cash_xlsx,
     build_distribution_xlsx,
     build_collection_xlsx,
+    build_ar_summary_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
     build_perubahan_dana_xlsx,
@@ -33,6 +34,7 @@ from app.modules.report.service import (
     collection_page,
     collection_rows,
     collection_rekap,
+    ar_summary,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -708,3 +710,57 @@ async def collection_export(
     filename = f"penghimpunandana-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(content=xlsx, media_type=_XLSX_MIME,
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ── Ringkasan Piutang / Uang Muka (AR Summary) ───────────────────────────────
+
+_AR_PATH = {"E": "employee-ar", "D": "external-ar", "C": "cash-advance"}
+_AR_FILE = {"E": "piutangkaryawan", "D": "piutangnonkaryawan", "C": "rekapuangmuka"}
+
+
+async def _ar_data(ar_type, begin, end, branch):
+    data = await ar_summary(ar_type, _tb_branch(branch), begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+async def _ar_export(ar_type, begin, end, branch):
+    b = _tb_branch(branch)
+    data = await ar_summary(ar_type, b, begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_ar_summary_xlsx(data, await _branch_label(b))
+    filename = f"{_AR_FILE[ar_type]}-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/employee-ar")
+async def employee_ar(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_data("E", begin, end, branch)
+
+
+@router.get("/employee-ar/export.xlsx")
+async def employee_ar_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_export("E", begin, end, branch)
+
+
+@router.get("/external-ar")
+async def external_ar(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_data("D", begin, end, branch)
+
+
+@router.get("/external-ar/export.xlsx")
+async def external_ar_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_export("D", begin, end, branch)
+
+
+@router.get("/cash-advance")
+async def cash_advance(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_data("C", begin, end, branch)
+
+
+@router.get("/cash-advance/export.xlsx")
+async def cash_advance_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_export("C", begin, end, branch)

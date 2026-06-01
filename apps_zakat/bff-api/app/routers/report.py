@@ -24,6 +24,9 @@ _AMIL_IN_MENU = "keuangan.report.amil_in"
 _AMIL_OUT_MENU = "keuangan.report.amil_out"
 _DIST_MENU = "keuangan.report.distribution"
 _COLL_MENU = "keuangan.report.collection"
+_AR_EMP_MENU = "keuangan.report.ar_employee"
+_AR_EXT_MENU = "keuangan.report.ar_external"
+_CA_EMP_MENU = "keuangan.report.ca_employee"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -946,3 +949,86 @@ async def collection_export(
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
                     headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="penghimpunandana.xlsx"')})
+
+
+# ── Ringkasan Piutang / Uang Muka ────────────────────────────────────────────
+
+
+async def _ar_proxy(request, menu, ep, begin, end, branch):
+    _ = menu  # gating already applied via Depends
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await get_report_api(f"/api/report/{ep}", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+async def _ar_proxy_export(request, ep, begin, end, branch, fallback):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await stream_report_api(f"/api/report/{ep}/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", f'attachment; filename="{fallback}"')})
+
+
+@router.get("/employee-ar/branches")
+async def employee_ar_branches(request: Request, _: str = Depends(require_menu(_AR_EMP_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/employee-ar")
+async def employee_ar(request: Request, _: str = Depends(require_menu(_AR_EMP_MENU)),
+                      begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy(request, _AR_EMP_MENU, "employee-ar", begin, end, branch)
+
+
+@router.get("/employee-ar/export.xlsx")
+async def employee_ar_export(request: Request, _: str = Depends(require_menu(_AR_EMP_MENU)),
+                             begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy_export(request, "employee-ar", begin, end, branch, "piutangkaryawan.xlsx")
+
+
+@router.get("/external-ar/branches")
+async def external_ar_branches(request: Request, _: str = Depends(require_menu(_AR_EXT_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/external-ar")
+async def external_ar(request: Request, _: str = Depends(require_menu(_AR_EXT_MENU)),
+                      begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy(request, _AR_EXT_MENU, "external-ar", begin, end, branch)
+
+
+@router.get("/external-ar/export.xlsx")
+async def external_ar_export(request: Request, _: str = Depends(require_menu(_AR_EXT_MENU)),
+                             begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy_export(request, "external-ar", begin, end, branch, "piutangnonkaryawan.xlsx")
+
+
+@router.get("/cash-advance/branches")
+async def cash_advance_branches(request: Request, _: str = Depends(require_menu(_CA_EMP_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-advance")
+async def cash_advance(request: Request, _: str = Depends(require_menu(_CA_EMP_MENU)),
+                       begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy(request, _CA_EMP_MENU, "cash-advance", begin, end, branch)
+
+
+@router.get("/cash-advance/export.xlsx")
+async def cash_advance_export(request: Request, _: str = Depends(require_menu(_CA_EMP_MENU)),
+                              begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _ar_proxy_export(request, "cash-advance", begin, end, branch, "rekapuangmuka.xlsx")

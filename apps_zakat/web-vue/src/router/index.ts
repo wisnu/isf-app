@@ -180,6 +180,24 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/piutang-karyawan',
+      name: 'keuangan-laporan-piutang-karyawan',
+      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      meta: { title: 'Piutang pada Karyawan', menu_key: 'keuangan.report.ar_employee' as MenuKey, arEndpoint: 'employee-ar', arFile: 'piutangkaryawan' },
+    },
+    {
+      path: '/keuangan/laporan/piutang-non-karyawan',
+      name: 'keuangan-laporan-piutang-non-karyawan',
+      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      meta: { title: 'Piutang pada Non-Karyawan', menu_key: 'keuangan.report.ar_external' as MenuKey, arEndpoint: 'external-ar', arFile: 'piutangnonkaryawan' },
+    },
+    {
+      path: '/keuangan/laporan/uang-muka-kegiatan',
+      name: 'keuangan-laporan-uang-muka-kegiatan',
+      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      meta: { title: 'Rekapitulasi Uang Muka Kegiatan', menu_key: 'keuangan.report.ca_employee' as MenuKey, arEndpoint: 'cash-advance', arFile: 'rekapuangmuka' },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

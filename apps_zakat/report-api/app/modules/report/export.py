@@ -854,3 +854,58 @@ def build_collection_xlsx(rows: list[dict], rekap: dict, branch_label: str, peri
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Ringkasan Piutang / Uang Muka ────────────────────────────────────────────
+
+
+def build_ar_summary_xlsx(payload: dict, branch_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    with_debtor = payload.get("with_debtor")
+    ws.cell(row=1, column=1, value=payload.get("title") or "Ringkasan Piutang").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=f"{payload.get('begin')} s/d {payload.get('end')}")
+
+    cols = [("No. Akun", 22), ("Nama", 30)]
+    if with_debtor:
+        cols += [("Keterangan", 28)]
+    cols += [("Saldo Awal", 18), ("Debet", 18), ("Kredit", 18), ("Saldo Akhir", 18)]
+    hr = 5
+    for ci, (t, w) in enumerate(cols, 1):
+        c = ws.cell(row=hr, column=ci, value=t)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    base = 3 if with_debtor else 2
+
+    def _money(r, col, val, bold=False):
+        c = ws.cell(row=r, column=col, value=float(val or 0))
+        c.number_format = "#,##0.00"
+        if bold:
+            c.font = Font(bold=True)
+
+    r = hr
+    for row in payload.get("rows", []):
+        r += 1
+        ws.cell(row=r, column=1, value=row["accountno"])
+        ws.cell(row=r, column=2, value=row.get("accountname") or "")
+        if with_debtor:
+            ws.cell(row=r, column=3, value=row.get("debtor_description") or "")
+        _money(r, base + 1, row["saldo_awal"])
+        _money(r, base + 2, row["debet"])
+        _money(r, base + 3, row["kredit"])
+        _money(r, base + 4, row["saldo_akhir"])
+    r += 1
+    gt = payload.get("grand_total", {})
+    ws.cell(row=r, column=base, value="TOTAL").font = Font(bold=True)
+    _money(r, base + 1, gt.get("saldo_awal"), bold=True)
+    _money(r, base + 2, gt.get("debet"), bold=True)
+    _money(r, base + 3, gt.get("kredit"), bold=True)
+    _money(r, base + 4, gt.get("saldo_akhir"), bold=True)
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

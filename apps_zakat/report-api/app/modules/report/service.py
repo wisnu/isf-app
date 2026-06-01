@@ -1622,3 +1622,84 @@ async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dic
         grand["donors"] += int(r["donors"])
     out.sort(key=lambda x: x["fund_entity"])
     return {"funds": out, "grand_total": grand}
+
+
+# ── Piutang Karyawan / Non-Karyawan / Rekap Uang Muka (Summary AR) ────────────
+#
+# fSummaryEmpAR (type E), fSummaryExtAR (type D + debtor), fSummaryEmpCA (type C).
+# Per akun AR: saldo awal (Σ mutasi bertanda < begin) + debet/kredit periode +
+# saldo akhir (= awal + debet − kredit).
+
+_AR_TITLE = {
+    "E": "Piutang pada Karyawan",
+    "D": "Piutang pada Non-Karyawan",
+    "C": "Rekapitulasi Uang Muka Kegiatan",
+}
+
+
+async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> dict | None:
+    if not await ping_dwh():
+        return None
+    b = date.fromisoformat(begin)
+    e = date.fromisoformat(end)
+    args: list = [ar_type, b, e]
+    branch_clause = ""
+    if branch:
+        args.append(branch)
+        branch_clause = f"AND v.branch_code = ${len(args)}"
+    sql = f"""
+        WITH ar AS (
+            SELECT accountno, accountname, debtor_description
+            FROM dwh.v_ar_account v
+            WHERE v.ar_type = $1 {branch_clause}
+        ),
+        mut AS (
+            SELECT e.accountno,
+                SUM(CASE WHEN c.actualdate < $2::date
+                         THEN (CASE WHEN d.mutationtype='D' THEN d.amount ELSE -d.amount END)
+                         ELSE 0 END) AS saldo_awal,
+                SUM(CASE WHEN c.actualdate >= $2::date AND c.actualdate <= $3::date AND d.mutationtype='D'
+                         THEN d.amount ELSE 0 END) AS debet,
+                SUM(CASE WHEN c.actualdate >= $2::date AND c.actualdate <= $3::date AND d.mutationtype='C'
+                         THEN d.amount ELSE 0 END) AS kredit
+            FROM transaction.accounttransactionitem e
+            JOIN transaction.transactionitem d ON d.transactionitemid = e.transactionitemid
+            JOIN transaction.transaction c     ON c.transactionid = d.transactionid
+            WHERE e.accountno IN (SELECT accountno FROM ar) AND c.actualdate <= $3::date
+            GROUP BY e.accountno
+        )
+        SELECT ar.accountno, ar.accountname, ar.debtor_description,
+               COALESCE(m.saldo_awal, 0)::float8 AS saldo_awal,
+               COALESCE(m.debet, 0)::float8 AS debet,
+               COALESCE(m.kredit, 0)::float8 AS kredit
+        FROM ar LEFT JOIN mut m ON m.accountno = ar.accountno
+        ORDER BY ar.accountname
+    """
+    rows = await fetch_all_dwh(sql, *args)
+    out: list[dict] = []
+    tot = {"saldo_awal": 0.0, "debet": 0.0, "kredit": 0.0, "saldo_akhir": 0.0}
+    for r in rows:
+        akhir = r["saldo_awal"] + r["debet"] - r["kredit"]
+        out.append({
+            "accountno": r["accountno"],
+            "accountname": r["accountname"],
+            "debtor_description": r["debtor_description"],
+            "saldo_awal": r["saldo_awal"],
+            "debet": r["debet"],
+            "kredit": r["kredit"],
+            "saldo_akhir": akhir,
+        })
+        tot["saldo_awal"] += r["saldo_awal"]
+        tot["debet"] += r["debet"]
+        tot["kredit"] += r["kredit"]
+        tot["saldo_akhir"] += akhir
+    return {
+        "rows": out,
+        "grand_total": tot,
+        "ar_type": ar_type,
+        "title": _AR_TITLE.get(ar_type, "Ringkasan Piutang"),
+        "with_debtor": ar_type == "D",
+        "begin": begin,
+        "end": end,
+        "konsolidasi": branch is None,
+    }

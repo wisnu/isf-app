@@ -21,6 +21,9 @@ export const MENU_KEYS = [
   'keuangan.report.amil_out',
   'keuangan.report.distribution',
   'keuangan.report.collection',
+  'keuangan.report.ar_employee',
+  'keuangan.report.ar_external',
+  'keuangan.report.ca_employee',
   'admin.role_menu',
   'admin.users',
 ] as const
