@@ -31,6 +31,9 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.report.cash_monthly', 'Monitoring Saldo Kas/Bank Bulanan', 'Keuangan', '/keuangan/laporan/saldo-bulanan', 142, 'A'),
   ('keuangan.report.journal_daily', 'Laporan Jurnal Harian', 'Keuangan', '/keuangan/laporan/jurnal-harian', 143, 'A'),
   ('keuangan.report.general_transaction', 'List Transaksi Umum', 'Keuangan', '/keuangan/laporan/transaksi-umum', 144, 'A'),
+  ('keuangan.report.trial_balance', 'Trial Balance', 'Keuangan', '/keuangan/laporan/trial-balance', 150, 'A'),
+  ('keuangan.report.neraca', 'Neraca', 'Keuangan', '/keuangan/laporan/neraca', 151, 'A'),
+  ('keuangan.report.cash_flow', 'Arus Kas', 'Keuangan', '/keuangan/laporan/arus-kas', 152, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -123,6 +126,27 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU',  'keuangan.report.cash_monthly', 'seed'),
   ('QAC',     'keuangan.report.cash_monthly', 'seed'),
   ('SPVACC',  'keuangan.report.cash_monthly', 'seed'),
+  -- Trial Balance — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.trial_balance', 'seed'),
+  ('KEU',     'keuangan.report.trial_balance', 'seed'),
+  ('ACC',     'keuangan.report.trial_balance', 'seed'),
+  ('SPVKEU',  'keuangan.report.trial_balance', 'seed'),
+  ('QAC',     'keuangan.report.trial_balance', 'seed'),
+  ('SPVACC',  'keuangan.report.trial_balance', 'seed'),
+  -- Neraca — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.neraca', 'seed'),
+  ('KEU',     'keuangan.report.neraca', 'seed'),
+  ('ACC',     'keuangan.report.neraca', 'seed'),
+  ('SPVKEU',  'keuangan.report.neraca', 'seed'),
+  ('QAC',     'keuangan.report.neraca', 'seed'),
+  ('SPVACC',  'keuangan.report.neraca', 'seed'),
+  -- Arus Kas — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.cash_flow', 'seed'),
+  ('KEU',     'keuangan.report.cash_flow', 'seed'),
+  ('ACC',     'keuangan.report.cash_flow', 'seed'),
+  ('SPVKEU',  'keuangan.report.cash_flow', 'seed'),
+  ('QAC',     'keuangan.report.cash_flow', 'seed'),
+  ('SPVACC',  'keuangan.report.cash_flow', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

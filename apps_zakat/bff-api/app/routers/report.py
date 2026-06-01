@@ -14,6 +14,9 @@ _GT_MENU = "keuangan.report.general_transaction"
 _CASH_MENU = "keuangan.report.cash_daily"
 _CASH_SUMMARY_MENU = "keuangan.report.cash_summary"
 _CASH_MONTHLY_MENU = "keuangan.report.cash_monthly"
+_TRIAL_BALANCE_MENU = "keuangan.report.trial_balance"
+_NERACA_MENU = "keuangan.report.neraca"
+_ARUSKAS_MENU = "keuangan.report.cash_flow"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -355,6 +358,198 @@ async def cash_monthly_export(
         headers={
             "Content-Disposition": downstream.headers.get(
                 "content-disposition", 'attachment; filename="cashmonthly.xlsx"'
+            )
+        },
+    )
+
+
+# ── Trial Balance ────────────────────────────────────────────────────────────
+# branch None (resolved) → konsolidasi (hanya user branch_access='all').
+
+
+def _tb_params(resolved: str | None, begin: str, end: str) -> dict:
+    params: dict = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    return params
+
+
+@router.get("/trial-balance/branches")
+async def trial_balance_branches(
+    request: Request,
+    _: str = Depends(require_menu(_TRIAL_BALANCE_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/trial-balance")
+async def trial_balance(
+    request: Request,
+    _: str = Depends(require_menu(_TRIAL_BALANCE_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api(
+        "/api/report/trial-balance", params=_tb_params(resolved, begin, end)
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/trial-balance/export.xlsx")
+async def trial_balance_export(
+    request: Request,
+    _: str = Depends(require_menu(_TRIAL_BALANCE_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/trial-balance/export.xlsx", params=_tb_params(resolved, begin, end)
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="trialbalance.xlsx"'
+            )
+        },
+    )
+
+
+# ── Neraca ───────────────────────────────────────────────────────────────────
+# branch None (resolved) → konsolidasi (hanya user branch_access='all').
+
+
+def _neraca_params(resolved: str | None, tanggal: str, jenisperiode: str, level: int) -> dict:
+    params: dict = {"tanggal": tanggal, "jenisperiode": jenisperiode, "level": level}
+    if resolved:
+        params["branch"] = resolved
+    return params
+
+
+@router.get("/neraca/branches")
+async def neraca_branches(
+    request: Request,
+    _: str = Depends(require_menu(_NERACA_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/neraca")
+async def neraca(
+    request: Request,
+    _: str = Depends(require_menu(_NERACA_MENU)),
+    tanggal: str = Query(...),
+    jenisperiode: str = Query(default="T"),
+    level: int = Query(default=0),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api(
+        "/api/report/neraca", params=_neraca_params(resolved, tanggal, jenisperiode, level)
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/neraca/export.xlsx")
+async def neraca_export(
+    request: Request,
+    _: str = Depends(require_menu(_NERACA_MENU)),
+    tanggal: str = Query(...),
+    jenisperiode: str = Query(default="T"),
+    level: int = Query(default=0),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/neraca/export.xlsx",
+        params=_neraca_params(resolved, tanggal, jenisperiode, level),
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="neraca.xlsx"'
+            )
+        },
+    )
+
+
+# ── Arus Kas ─────────────────────────────────────────────────────────────────
+
+
+def _ak_params(resolved: str | None, begin: str, end: str) -> dict:
+    params: dict = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    return params
+
+
+@router.get("/aruskas/branches")
+async def aruskas_branches(
+    request: Request,
+    _: str = Depends(require_menu(_ARUSKAS_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/aruskas")
+async def aruskas(
+    request: Request,
+    _: str = Depends(require_menu(_ARUSKAS_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api("/api/report/aruskas", params=_ak_params(resolved, begin, end))
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/aruskas/export.xlsx")
+async def aruskas_export(
+    request: Request,
+    _: str = Depends(require_menu(_ARUSKAS_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/aruskas/export.xlsx", params=_ak_params(resolved, begin, end)
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="aruskas.xlsx"'
             )
         },
     )

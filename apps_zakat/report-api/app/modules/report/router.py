@@ -4,14 +4,19 @@ from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
+    build_aruskas_xlsx,
     build_cash_monthly_xlsx,
     build_cash_mutation_xlsx,
     build_cash_summary_xlsx,
     build_general_transaction_xlsx,
     build_journal_daily_xlsx,
+    build_neraca_xlsx,
+    build_trial_balance_xlsx,
 )
 from app.modules.report.service import (
     CAP,
+    ReportValidationError,
+    aruskas,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -27,6 +32,8 @@ from app.modules.report.service import (
     journal_daily_rows,
     list_branches,
     list_cash_accounts,
+    neraca,
+    trial_balance,
 )
 from app.shared.response import err, ok
 
@@ -264,6 +271,148 @@ async def cash_monthly_xlsx(
     label = f"{branch} - {binfo[0]['name']}" if binfo else branch
     xlsx = build_cash_monthly_xlsx(data, label, year)
     filename = f"cashmonthly-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Trial Balance ────────────────────────────────────────────────────────────
+# branch kosong / 'ALL' → konsolidasi (semua cabang).
+
+
+def _tb_branch(branch: str | None) -> str | None:
+    return None if not branch or branch == "ALL" else branch
+
+
+@router.get("/trial-balance")
+async def trial_balance_ep(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    try:
+        data = await trial_balance(_tb_branch(branch), begin, end, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/trial-balance/export.xlsx")
+async def trial_balance_xlsx(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await trial_balance(b, begin, end, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_trial_balance_xlsx(data, label)
+    filename = f"trialbalance-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Neraca ───────────────────────────────────────────────────────────────────
+
+
+@router.get("/neraca")
+async def neraca_ep(
+    tanggal: str = Query(...),
+    jenisperiode: str = Query(default="T"),
+    level: int = Query(default=0),
+    branch: str | None = Query(default=None),
+):
+    try:
+        data = await neraca(_tb_branch(branch), tanggal, jenisperiode, level, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/neraca/export.xlsx")
+async def neraca_xlsx(
+    tanggal: str = Query(...),
+    jenisperiode: str = Query(default="T"),
+    level: int = Query(default=0),
+    branch: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await neraca(b, tanggal, jenisperiode, level, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_neraca_xlsx(data, label)
+    filename = f"neraca-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Arus Kas ─────────────────────────────────────────────────────────────────
+
+
+@router.get("/aruskas")
+async def aruskas_ep(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    try:
+        data = await aruskas(_tb_branch(branch), begin, end, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/aruskas/export.xlsx")
+async def aruskas_xlsx(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await aruskas(b, begin, end, _date.today())
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_aruskas_xlsx(data, label)
+    filename = f"aruskas-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

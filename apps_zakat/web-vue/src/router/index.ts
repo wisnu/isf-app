@@ -88,6 +88,33 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/trial-balance',
+      name: 'keuangan-laporan-trial-balance',
+      component: () => import('@/pages/keuangan/LaporanTrialBalancePage.vue'),
+      meta: {
+        title: 'Trial Balance',
+        menu_key: 'keuangan.report.trial_balance' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/neraca',
+      name: 'keuangan-laporan-neraca',
+      component: () => import('@/pages/keuangan/LaporanNeracaPage.vue'),
+      meta: {
+        title: 'Neraca',
+        menu_key: 'keuangan.report.neraca' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/arus-kas',
+      name: 'keuangan-laporan-arus-kas',
+      component: () => import('@/pages/keuangan/LaporanArusKasPage.vue'),
+      meta: {
+        title: 'Arus Kas',
+        menu_key: 'keuangan.report.cash_flow' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

@@ -468,3 +468,440 @@ async def cash_monthly(branch: str, year: int) -> dict | None:
             g["totals"][m] += balances[m]
 
     return {"groups": groups, "year": year, "months": MONTHS_ID}
+
+
+# ── Trial Balance (fTrialBalance) — neraca saldo per detail account ───────────
+#
+# Legacy-faithful (GetTrialBalancePerCabang.py, cabang `onlydetail`):
+#   saldo_awal  = balancecumulative max(datevalue <= begin-1)  per accountinstance
+#   saldo_akhir = balancecumulative max(datevalue <= end)
+#   debit/kredit= SUM dailybalance.debit/credit dalam [begin, end]
+# Bila end >= today, tambah mutasi journalitem [begin, end] (langsung + lawan
+# fl_cpa_accountinstance) karena dailybalance belum dihitung utk tanggal itu.
+
+_ACCTYPE_LABEL = {
+    "A": "AKTIVA",
+    "L": "KEWAJIBAN",
+    "E": "DANA / EKUITAS",
+    "I": "PENDAPATAN",
+    "X": "BEBAN",
+}
+_ACCTYPE_ORDER = {"A": 0, "L": 1, "E": 2, "I": 3, "X": 4}
+
+
+class ReportValidationError(ValueError):
+    """Param tidak valid (mis. begin > end) → 422 di router."""
+
+
+def _tb_per_instance_sql(branch: str | None, with_journal: bool) -> str:
+    """Query agregat per (account_code, branch_code).
+    Positional args: $1=begin-1, $2=end, $3=begin(mutation), [$4=branch]."""
+    branch_clause = "AND ai.branch_code = $4" if branch else ""
+
+    if with_journal:
+        journ_cte = """,
+        journ AS (
+            SELECT accountinstance_id,
+                   SUM(amount_debit)  AS debit,
+                   SUM(amount_credit) AS credit,
+                   SUM(bal)           AS balance
+            FROM (
+                SELECT ji.accountinstance_id AS accountinstance_id,
+                       ji.amount_debit, ji.amount_credit,
+                       (ji.amount_credit - ji.amount_debit) * COALESCE(ai.balance_sign, 1) AS bal
+                FROM transaction.journal j
+                JOIN transaction.journalitem ji ON j.journal_no = ji.fl_journal
+                JOIN transaction.accountinstance ai ON ai.accountinstance_id = ji.accountinstance_id
+                WHERE j.journal_date >= $3::date AND j.journal_date <= $2::date
+                UNION ALL
+                SELECT ai2.accountinstance_id,
+                       ji.amount_debit, ji.amount_credit,
+                       (ji.amount_credit - ji.amount_debit) AS bal
+                FROM transaction.journal j
+                JOIN transaction.journalitem ji ON j.journal_no = ji.fl_journal
+                JOIN transaction.accountinstance ai1 ON ai1.accountinstance_id = ji.accountinstance_id
+                JOIN transaction.accountinstance ai2 ON ai2.accountinstance_id = ai1.fl_cpa_accountinstance
+                WHERE j.journal_date >= $3::date AND j.journal_date <= $2::date
+            ) u
+            GROUP BY accountinstance_id
+        )"""
+        journ_join = "LEFT JOIN journ jn ON jn.accountinstance_id = i.accountinstance_id"
+        j_debit = "SUM(COALESCE(jn.debit, 0))::float8   AS j_debit"
+        j_credit = "SUM(COALESCE(jn.credit, 0))::float8  AS j_credit"
+        j_balance = "SUM(COALESCE(jn.balance, 0))::float8 AS j_balance"
+    else:
+        journ_cte = ""
+        journ_join = ""
+        j_debit = "0::float8 AS j_debit"
+        j_credit = "0::float8 AS j_credit"
+        j_balance = "0::float8 AS j_balance"
+
+    return f"""
+        WITH inst AS (
+            SELECT ai.accountinstance_id, ai.account_code, ai.branch_code
+            FROM transaction.accountinstance ai
+            WHERE 1=1 {branch_clause}
+        ),
+        bal_begin AS (
+            SELECT DISTINCT ON (d.accountinstance_id) d.accountinstance_id, d.balancecumulative
+            FROM transaction.dailybalance d
+            WHERE d.datevalue <= $1::date
+            ORDER BY d.accountinstance_id, d.datevalue DESC
+        ),
+        bal_end AS (
+            SELECT DISTINCT ON (d.accountinstance_id) d.accountinstance_id, d.balancecumulative
+            FROM transaction.dailybalance d
+            WHERE d.datevalue <= $2::date
+            ORDER BY d.accountinstance_id, d.datevalue DESC
+        ),
+        mut AS (
+            SELECT accountinstance_id, SUM(debit) AS debit, SUM(credit) AS credit
+            FROM transaction.dailybalance
+            WHERE datevalue >= $3::date AND datevalue <= $2::date
+            GROUP BY accountinstance_id
+        ){journ_cte}
+        SELECT a.account_code, a.account_name, a.account_type, i.branch_code,
+               SUM(COALESCE(bb.balancecumulative, 0))::float8 AS saldo_awal,
+               SUM(COALESCE(be.balancecumulative, 0))::float8 AS saldo_akhir,
+               SUM(COALESCE(m.debit, 0))::float8  AS debit,
+               SUM(COALESCE(m.credit, 0))::float8 AS credit,
+               {j_debit}, {j_credit}, {j_balance}
+        FROM inst i
+        JOIN transaction.account a ON a.account_code = i.account_code
+        LEFT JOIN bal_begin bb ON bb.accountinstance_id = i.accountinstance_id
+        LEFT JOIN bal_end be   ON be.accountinstance_id = i.accountinstance_id
+        LEFT JOIN mut m        ON m.accountinstance_id = i.accountinstance_id
+        {journ_join}
+        WHERE a.is_detail = 'T' AND a.account_type IN ('A','L','E','I','X')
+        GROUP BY a.account_code, a.account_name, a.account_type, i.branch_code
+        ORDER BY i.branch_code, a.account_code
+    """
+
+
+async def trial_balance(
+    branch: str | None, begin: str, end: str, today: date
+) -> dict | None:
+    b = date.fromisoformat(begin)
+    e = date.fromisoformat(end)
+    if b > e:
+        raise ReportValidationError("Rentang tanggal filter salah (awal > akhir).")
+    if not await ping_dwh():
+        return None
+
+    begin_minus_1 = date.fromordinal(b.toordinal() - 1)
+    with_journal = e >= today
+    sql = _tb_per_instance_sql(branch, with_journal)
+    args: list = [begin_minus_1, e, b]
+    if branch:
+        args.append(branch)
+    rows = await fetch_all_dwh(sql, *args)
+
+    konsolidasi = branch is None
+    by_acct: dict = {}
+    order: list = []
+    for r in rows:
+        key = r["account_code"] if konsolidasi else (r["account_code"], r["branch_code"])
+        agg = by_acct.get(key)
+        debit = r["debit"] + (r["j_debit"] if with_journal else 0.0)
+        credit = r["credit"] + (r["j_credit"] if with_journal else 0.0)
+        saldo_akhir = r["saldo_akhir"] + (r["j_balance"] if with_journal else 0.0)
+        if agg is None:
+            agg = {
+                "account_code": r["account_code"],
+                "account_name": r["account_name"],
+                "account_type": r["account_type"],
+                "branch_code": None if konsolidasi else r["branch_code"],
+                "saldo_awal": 0.0,
+                "debit": 0.0,
+                "credit": 0.0,
+                "saldo_akhir": 0.0,
+            }
+            by_acct[key] = agg
+            order.append(key)
+        agg["saldo_awal"] += r["saldo_awal"]
+        agg["debit"] += debit
+        agg["credit"] += credit
+        agg["saldo_akhir"] += saldo_akhir
+
+    # group per account_type
+    groups: list[dict] = []
+    by_type: dict[str, dict] = {}
+    grand = {"saldo_awal": 0.0, "debit": 0.0, "credit": 0.0, "saldo_akhir": 0.0}
+    for key in order:
+        a = by_acct[key]
+        atype = a["account_type"]
+        g = by_type.get(atype)
+        if g is None:
+            g = {
+                "type": atype,
+                "type_label": _ACCTYPE_LABEL.get(atype, atype),
+                "rows": [],
+                "subtotal": {"saldo_awal": 0.0, "debit": 0.0, "credit": 0.0, "saldo_akhir": 0.0},
+            }
+            by_type[atype] = g
+            groups.append(g)
+        g["rows"].append(a)
+        for k in ("saldo_awal", "debit", "credit", "saldo_akhir"):
+            g["subtotal"][k] += a[k]
+            grand[k] += a[k]
+
+    groups.sort(key=lambda g: _ACCTYPE_ORDER.get(g["type"], 99))
+    return {
+        "groups": groups,
+        "grand_total": grand,
+        "begin": begin,
+        "end": end,
+        "konsolidasi": konsolidasi,
+        "with_journal": with_journal,
+    }
+
+
+# ── Neraca (fNeraca / neraca5.py) — hierarkis via accounthierarchy ────────────
+#
+# Saldo per account = rollup balancecumulative semua child (accounthierarchy)
+# pada max(datevalue <= tanggal). Tipe A/L/E, level < maxlevel, indent per level.
+# Dua kolom: posisi tanggal + pembanding akhir periode sebelumnya.
+
+_NERACA_MAXLEVEL = 99  # level "semua"
+
+
+def _prev_period_end(t: date, jenisperiode: str) -> date:
+    """Akhir periode sebelumnya. Tahunan → 31 Des thn lalu; Bulanan → akhir bln lalu."""
+    if jenisperiode == "T":
+        first = date(t.year, 1, 1)
+    else:
+        first = date(t.year, t.month, 1)
+    return date.fromordinal(first.toordinal() - 1)
+
+
+def _neraca_balance_cte(label: str, date_param: int, branch_param: int | None) -> str:
+    """CTE rollup saldo per parent account pada tanggal $date_param.
+    branch_param None → semua cabang (konsolidasi)."""
+    branch_clause = f"AND ai.branch_code = ${branch_param}" if branch_param else ""
+    return f"""
+        maxd_{label} AS (
+            SELECT accountinstance_id, MAX(datevalue) AS maxdate
+            FROM transaction.dailybalance
+            WHERE datevalue <= ${date_param}::date
+            GROUP BY accountinstance_id
+        ),
+        bal_{label} AS (
+            SELECT h.fl_parentaccountcode AS account_code,
+                   SUM(d1.balancecumulative) AS balance
+            FROM transaction.accounthierarchy h
+            JOIN transaction.accountinstance ai ON h.fl_childaccountcode = ai.account_code
+            JOIN transaction.dailybalance d1 ON d1.accountinstance_id = ai.accountinstance_id
+            JOIN maxd_{label} d2 ON d2.accountinstance_id = d1.accountinstance_id
+                                AND d1.datevalue = d2.maxdate
+            WHERE 1=1 {branch_clause}
+            GROUP BY h.fl_parentaccountcode
+        )"""
+
+
+async def neraca(
+    branch: str | None, tanggal: str, jenisperiode: str, level: int, today: date
+) -> dict | None:
+    t = date.fromisoformat(tanggal)
+    if t > today:
+        raise ReportValidationError("Tanggal tidak boleh lebih besar dari hari ini.")
+    jp = "T" if (jenisperiode or "T").upper().startswith("T") else "B"
+    prev = _prev_period_end(t, jp)
+    maxlevel = level if level and level > 0 else _NERACA_MAXLEVEL
+    if not await ping_dwh():
+        return None
+
+    # args: $1=tanggal, $2=prev, $3=maxlevel, [$4=branch]
+    branch_param = 4 if branch else None
+    sql = f"""
+        WITH {_neraca_balance_cte('now', 1, branch_param)},
+        {_neraca_balance_cte('prev', 2, branch_param)}
+        SELECT ac.account_code, ac.account_name, ac.account_level, ac.account_type,
+               COALESCE(b.balance, 0)::float8  AS balance,
+               COALESCE(bp.balance, 0)::float8 AS balance_prev
+        FROM transaction.account ac
+        LEFT JOIN bal_now b   ON b.account_code = ac.account_code
+        LEFT JOIN bal_prev bp ON bp.account_code = ac.account_code
+        WHERE ac.account_type IN ('A','L','E') AND ac.account_level < $3
+        ORDER BY ac.account_code
+    """
+    args: list = [t, prev, maxlevel]
+    if branch:
+        args.append(branch)
+    rows = await fetch_all_dwh(sql, *args)
+
+    aktiva: list[dict] = []
+    pasiva: list[dict] = []
+    tot_a = tot_a_prev = tot_p = tot_p_prev = 0.0
+    for r in rows:
+        item = {
+            "account_code": r["account_code"],
+            "account_name": r["account_name"],
+            "account_level": r["account_level"],
+            "account_type": r["account_type"],
+            "balance": r["balance"],
+            "balance_prev": r["balance_prev"],
+        }
+        if r["account_type"] == "A":
+            aktiva.append(item)
+            if r["account_level"] == 0:
+                tot_a += r["balance"]
+                tot_a_prev += r["balance_prev"]
+        else:  # L, E
+            pasiva.append(item)
+            if r["account_level"] == 0:
+                tot_p += r["balance"]
+                tot_p_prev += r["balance_prev"]
+
+    selisih = tot_a - tot_p
+    return {
+        "aktiva": aktiva,
+        "pasiva": pasiva,
+        "total_aktiva": tot_a,
+        "total_aktiva_prev": tot_a_prev,
+        "total_pasiva": tot_p,
+        "total_pasiva_prev": tot_p_prev,
+        "selisih": selisih,
+        "status_balance": "BALANCE" if abs(selisih) < 0.01 else "TIDAK BALANCE",
+        "tanggal": tanggal,
+        "tanggal_prev": prev.isoformat(),
+        "jenisperiode": "Tahunan" if jp == "T" else "Bulanan",
+        "konsolidasi": branch is None,
+    }
+
+
+# ── Arus Kas (fArusKas / S_ArusKas.py) — config-driven via BalanceSumItem ─────
+#
+# Mutasi per item (group AK_MUT) = net signed (A/X → debit-credit, else
+# credit-debit) × nilai_kurs atas journalitem dalam [begin, end]. Saldo kas awal
+# (group AK_BAL 'kasbalance') = rolled-up balancecumulative_ekuiv pada begin-1.
+# Layout 3 seksi (Operasi/Investasi/Pendanaan) di-port faithful dari S_ArusKas.
+
+
+async def _aruskas_mutations(branch: str | None, begin: date, end: date) -> dict:
+    """item_code(lower) → {net, debit, credit} untuk group AK_MUT."""
+    args: list = [begin, end]
+    branch_clause = ""
+    if branch:
+        args.append(branch)
+        branch_clause = f"AND ai.branch_code = ${len(args)}"
+    sql = f"""
+        SELECT v.item_code,
+            SUM(CASE WHEN v.account_type IN ('A','X')
+                     THEN (ji.amount_debit - ji.amount_credit) * ji.nilai_kurs
+                     ELSE (ji.amount_credit - ji.amount_debit) * ji.nilai_kurs END)::float8 AS net,
+            SUM(ji.amount_debit  * ji.nilai_kurs)::float8 AS debit,
+            SUM(ji.amount_credit * ji.nilai_kurs)::float8 AS credit
+        FROM dwh.v_aruskas_item_account v
+        JOIN transaction.accountinstance ai ON ai.account_code = v.account_code
+        JOIN transaction.journalitem ji     ON ji.accountinstance_id = ai.accountinstance_id
+        JOIN transaction.journal j           ON j.journal_no = ji.fl_journal
+        WHERE v.group_code = 'AK_MUT'
+          AND j.journal_date >= $1::date
+          AND j.journal_date < ($2::date + INTERVAL '1 day')
+          {branch_clause}
+        GROUP BY v.item_code
+    """
+    rows = await fetch_all_dwh(sql, *args)
+    return {r["item_code"]: {"net": r["net"], "debit": r["debit"], "credit": r["credit"]} for r in rows}
+
+
+async def _aruskas_opening_cash(branch: str | None, at: date) -> float:
+    """Saldo kas (group AK_BAL) = balancecumulative_ekuiv pada max(datevalue<=at)."""
+    args: list = [at]
+    branch_clause = ""
+    if branch:
+        args.append(branch)
+        branch_clause = f"AND ai.branch_code = ${len(args)}"
+    sql = f"""
+        SELECT COALESCE(SUM(d1.balancecumulative_ekuiv), 0)::float8 AS bal
+        FROM dwh.v_aruskas_item_account v
+        JOIN transaction.accountinstance ai ON ai.account_code = v.account_code
+        JOIN transaction.dailybalance d1    ON d1.accountinstance_id = ai.accountinstance_id
+        JOIN (
+            SELECT accountinstance_id, MAX(datevalue) AS t
+            FROM transaction.dailybalance WHERE datevalue <= $1::date
+            GROUP BY accountinstance_id
+        ) d2 ON d1.accountinstance_id = d2.accountinstance_id AND d1.datevalue = d2.t
+        WHERE v.group_code = 'AK_BAL' {branch_clause}
+    """
+    row = await fetch_one_dwh(sql, *args)
+    return float(row["bal"]) if row else 0.0
+
+
+async def aruskas(branch: str | None, begin: str, end: str, today: date) -> dict | None:
+    b = date.fromisoformat(begin)
+    e = date.fromisoformat(end)
+    if b > e:
+        raise ReportValidationError("Rentang tanggal filter salah (awal > akhir).")
+    if not await ping_dwh():
+        return None
+
+    mut = await _aruskas_mutations(branch, b, e)
+    opening = await _aruskas_opening_cash(branch, date.fromordinal(b.toordinal() - 1))
+
+    def mb(item: str) -> float:
+        return (mut.get(item) or {}).get("net", 0.0) or 0.0
+
+    def td(item: str) -> float:
+        return (mut.get(item) or {}).get("debit", 0.0) or 0.0
+
+    def tc(item: str) -> float:
+        return (mut.get(item) or {}).get("credit", 0.0) or 0.0
+
+    operasi = [
+        {"label": "Penerimaan Zakat", "value": mb("opspenerimaanzakat")},
+        {"label": "Penerimaan Infaq/Shadaqah", "value": mb("opspenerimaaninfaq")},
+        {"label": "Penerimaan Bagian Amil", "value": mb("opspenerimaanamil")},
+        {"label": "Penyaluran Zakat", "value": -mb("opspenyaluranzakat")},
+        {"label": "Penyaluran Infaq/Shadaqah",
+         "value": -(mb("opspenyaluraninfaq") - mb("opsdepresiasikelolaaninfaq"))},
+        {"label": "Penggunaan Dana Amil",
+         "value": -(mb("opspenyaluranamil") - mb("opsdepresiasiassetamil"))},
+    ]
+    investasi = [
+        {"label": "Pembelian Aset Tetap", "value": -td("invassettetap")},
+        {"label": "Pembelian Aset Kelolaan", "value": -td("invassetkelolaan")},
+        {"label": "Pelepasan Aset Tetap", "value": tc("invassettetap")},
+        {"label": "Pelepasan Aset Kelolaan", "value": tc("invassetkelolaan")},
+    ]
+    pendanaan = [
+        {"label": "Piutang Bergulir (Qardh)", "value": -mb("piutangbergulir")},
+        {"label": "Piutang Penyaluran", "value": -mb("piutangpenyaluran")},
+        {"label": "Persediaan", "value": -mb("persediaan")},
+        {"label": "Barang Berharga", "value": -mb("barangberharga")},
+        {"label": "Uang Muka", "value": -mb("uangmuka")},
+        {"label": "Biaya Dibayar Dimuka", "value": -mb("biayadibayardimuka")},
+        {"label": "Piutang Talangan Dana Zakat", "value": -mb("piutangtalangandanazakat")},
+        {"label": "Piutang Talangan Dana Infaq", "value": -mb("piutangtalangandanainfaq")},
+        {"label": "Piutang Talangan Dana Amil", "value": -mb("piutangtalangandanaamil")},
+        {"label": "Hutang Pihak Ketiga", "value": mb("hutangpihakketiga")},
+        {"label": "Biaya Yang Masih Harus Dibayar", "value": mb("biayayangmasihharusdibayar")},
+        {"label": "Titipan Dana", "value": mb("titipandana")},
+        {"label": "Dana Non Halal", "value": mb("dananonhalal")},
+        {"label": "Hutang Pajak", "value": mb("hutangpajak")},
+        {"label": "Hutang Talangan Dana Zakat", "value": mb("hutangtalangandanazakat")},
+        {"label": "Hutang Talangan Dana Infaq", "value": mb("hutangtalangandanainfaq")},
+        {"label": "Hutang Talangan Dana Amil", "value": mb("hutangtalangandanaamil")},
+        {"label": "Kewajiban Imbalan Pasca Kerja", "value": mb("kewajibanimbalanpascakerja")},
+        {"label": "Liabilitas Lainnya",
+         "value": mb("liabilitasjangkapendeklainnya") + mb("liabilitasjangkapanjanglainnya")},
+    ]
+
+    def _sec(title: str, lines: list[dict]) -> dict:
+        return {"title": title, "lines": lines, "subtotal": sum(x["value"] for x in lines)}
+
+    sections = [
+        _sec("Arus Kas dari Aktivitas Operasi", operasi),
+        _sec("Arus Kas dari Aktivitas Investasi", investasi),
+        _sec("Arus Kas dari Aktivitas Pendanaan", pendanaan),
+    ]
+    kenaikan = sum(s["subtotal"] for s in sections)
+    return {
+        "sections": sections,
+        "kenaikan_bersih": kenaikan,
+        "saldo_awal": opening,
+        "saldo_akhir": opening + kenaikan,
+        "begin": begin,
+        "end": end,
+        "konsolidasi": branch is None,
+    }
