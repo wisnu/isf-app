@@ -6,6 +6,8 @@ class Settings(BaseSettings):
 
     # Downstream
     api_python_base_url: str = "http://localhost:8000"
+    # Reporting service (dashboard + report read/aggregation) — service terpisah
+    report_api_base_url: str = "http://localhost:8011"
 
     # Identity (live lookup ke api-python)
     identity_timeout: float = 3.0

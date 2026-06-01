@@ -67,8 +67,10 @@ build-zakat: ## Pre-build zakat images (incl. report-api)
 	   podman build --security-opt label=disable -t isf-zakat-$$svc:dev -f Dockerfile.dev .) || exit 1; \
 	done
 
-build-wakaf: ## Pre-build 3 wakaf images
-	@for svc in $(SERVICES); do \
+WAKAF_SERVICES := api-python report-api bff-api web-vue
+
+build-wakaf: ## Pre-build wakaf images (incl. report-api)
+	@for svc in $(WAKAF_SERVICES); do \
 	  echo ">>> building isf-wakaf-$$svc:dev"; \
 	  (cd apps_wakaf/$$svc && \
 	   podman build --security-opt label=disable -t isf-wakaf-$$svc:dev -f Dockerfile.dev .) || exit 1; \
@@ -135,6 +137,7 @@ health: ## Curl /health on all BFFs + api-pythons
 	@printf "  zakat report-api :8010  "; curl -fsS http://localhost:8010/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  zakat bff-api    :7000  "; curl -fsS http://localhost:7000/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  wakaf api-python :8001  "; curl -fsS http://localhost:8001/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
+	@printf "  wakaf report-api :8011  "; curl -fsS http://localhost:8011/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  wakaf bff-api    :7001  "; curl -fsS http://localhost:7001/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  zakat web-vue    :5173  "; curl -fsS -o /dev/null -w "HTTP %{http_code}" http://localhost:5173/ 2>/dev/null || echo "DOWN"; echo
 	@printf "  wakaf web-vue    :5174  "; curl -fsS -o /dev/null -w "HTTP %{http_code}" http://localhost:5174/ 2>/dev/null || echo "DOWN"; echo

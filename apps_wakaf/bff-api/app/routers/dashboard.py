@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from app.services.auth import current_user_id_or_401, require_menu
-from app.services.proxy import get_api_python
+from app.services.proxy import get_report_api
 from app.shared.response import err
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -25,7 +25,7 @@ async def summary(
             status_code=403, content=err("NO_TENANT", "No active tenant for this session")
         )
 
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/summary", params={"tenant_id": active_tenant}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -51,7 +51,7 @@ async def keuangan(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/keuangan", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -67,7 +67,7 @@ async def keuangan_kpis(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/keuangan/kpis", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -83,7 +83,7 @@ async def keuangan_trend(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/keuangan/trend", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -101,7 +101,7 @@ async def keuangan_anggaran(
     params: dict = {}
     if tahun is not None:
         params["tahun"] = tahun
-    downstream = await get_api_python("/api/dashboard/keuangan/anggaran", params=params)
+    downstream = await get_report_api("/api/dashboard/keuangan/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -113,7 +113,7 @@ async def keuangan_rekening(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python("/api/dashboard/keuangan/rekening")
+    downstream = await get_report_api("/api/dashboard/keuangan/rekening")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -127,7 +127,7 @@ async def penyaluran(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python("/api/dashboard/penyaluran", params=_period_params(bulan, tahun))
+    downstream = await get_report_api("/api/dashboard/penyaluran", params=_period_params(bulan, tahun))
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -141,7 +141,7 @@ async def keuangan_asnaf(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/keuangan/asnaf", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -157,7 +157,7 @@ async def penyaluran_kpis(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/penyaluran/kpis", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -175,7 +175,7 @@ async def penyaluran_anggaran(
     params: dict = {}
     if tahun is not None:
         params["tahun"] = tahun
-    downstream = await get_api_python("/api/dashboard/penyaluran/anggaran", params=params)
+    downstream = await get_report_api("/api/dashboard/penyaluran/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -187,7 +187,7 @@ async def penyaluran_memo(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python("/api/dashboard/penyaluran/memo")
+    downstream = await get_report_api("/api/dashboard/penyaluran/memo")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -201,7 +201,7 @@ async def penghimpunan_kpis(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/penghimpunan/kpis", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -217,7 +217,7 @@ async def penghimpunan_trend(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/penghimpunan/trend", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -233,7 +233,7 @@ async def penghimpunan_breakdown(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/penghimpunan/breakdown", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -249,7 +249,7 @@ async def penghimpunan_top_donor(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python(
+    downstream = await get_report_api(
         "/api/dashboard/penghimpunan/top-donor", params=_period_params(bulan, tahun)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -265,5 +265,5 @@ async def penghimpunan(
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_api_python("/api/dashboard/penghimpunan", params=_period_params(bulan, tahun))
+    downstream = await get_report_api("/api/dashboard/penghimpunan", params=_period_params(bulan, tahun))
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

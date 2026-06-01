@@ -9,6 +9,14 @@ async def get_api_python(path: str, params: dict | None = None) -> httpx.Respons
         return await client.get(url, params=params)
 
 
+async def get_report_api(path: str, params: dict | None = None) -> httpx.Response:
+    """GET ke report-api (dashboard + report). Timeout sedikit lebih longgar
+    karena query agregasi/reporting lebih berat dari CRUD."""
+    url = f"{settings.report_api_base_url}{path}"
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        return await client.get(url, params=params)
+
+
 async def post_api_python(
     path: str,
     *,

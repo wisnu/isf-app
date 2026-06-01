@@ -428,10 +428,11 @@ isf-app/
     api-python/                 ← CRUD/management (coa, admin, identity, donors, zakat, waqf)
     report-api/                 ← read/agregasi (dashboard + report); pool read-only business + DWH
     api-go/
-  apps_wakaf/                  ← portal Wakaf (clone, akan diverge; report-api menyusul)
+  apps_wakaf/                  ← portal Wakaf (clone, akan diverge)
     web-vue/
     bff-api/
-    api-python/
+    api-python/                 ← CRUD/management
+    report-api/                 ← read/agregasi (dashboard + report); DWH = schema datamart di mziss_wakaf
     api-go/
   packages/
     api-contract/

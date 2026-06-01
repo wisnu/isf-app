@@ -4,7 +4,6 @@ from fastapi import FastAPI
 
 from app.modules.admin.router import router as admin_router
 from app.modules.coa.router import router as coa_router
-from app.modules.dashboard.router import router as dashboard_router
 from app.modules.identity.router import router as identity_router
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
 from app.shared.response import ok
@@ -35,6 +34,5 @@ async def ready() -> dict:
 
 
 app.include_router(admin_router, prefix="/api")
-app.include_router(dashboard_router, prefix="/api")
 app.include_router(coa_router, prefix="/api")
 app.include_router(identity_router, prefix="/api")
