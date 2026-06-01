@@ -69,16 +69,6 @@ const groups: MenuGroup[] = [
         icon: FileText,
         children: [
           {
-            label: 'Jurnal Harian',
-            to: '/keuangan/laporan/jurnal-harian',
-            icon: BookOpen,
-          },
-          {
-            label: 'List Transaksi Umum',
-            to: '/keuangan/laporan/transaksi-umum',
-            icon: BookOpen,
-          },
-          {
             label: 'Transaksi Kas/Bank Harian',
             to: '/keuangan/laporan/kas-harian',
             icon: Banknote,
@@ -89,9 +79,19 @@ const groups: MenuGroup[] = [
             icon: Banknote,
           },
           {
-            label: 'Monitoring Saldo Bulanan',
+            label: 'Monitoring Saldo Kas Bulanan',
             to: '/keuangan/laporan/saldo-bulanan',
             icon: Banknote,
+          },
+          {
+            label: 'Jurnal Harian',
+            to: '/keuangan/laporan/jurnal-harian',
+            icon: BookOpen,
+          },
+          {
+            label: 'List Transaksi Umum',
+            to: '/keuangan/laporan/transaksi-umum',
+            icon: BookOpen,
           },
         ],
       },
