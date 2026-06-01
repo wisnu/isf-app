@@ -1418,3 +1418,207 @@ async def amil_cash_count(kind: str, branch: str | None, begin: str, end: str) -
     clause, args = _amil_where(branch, begin, end)
     row = await fetch_one_dwh(f"SELECT count(*) n FROM {_AMIL_VIEW[kind]} WHERE {clause}", *args)
     return int(row["n"]) if row else 0
+
+
+# ── Penyaluran Dana (fDistributionReport) ────────────────────────────────────
+
+_FUND_LABEL = {"1": "Zakat", "2": "Infaq", "3": "Wakaf", "4": "Amil", "5": "Non Halal"}
+_ASHNAF_LABEL = {
+    "F": "Fakir", "M": "Miskin", "A": "Amil", "R": "Riqab", "G": "Gharimin",
+    "S": "Fisabilillah", "I": "Ibnu Sabil", "U": "Muallaf",
+}
+_DISTCAT_LABEL = {"E": "Ekonomi", "S": "Sosial", "K": "Kesehatan", "P": "Pendidikan", "D": "Dakwah"}
+
+
+def _dist_where(branch: str | None, begin: str, end: str, fund: str | None) -> tuple[str, list]:
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "actualdate >= $1::date AND actualdate <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    if fund:
+        args.append(fund)
+        clause += f" AND fund_entity::text = ${len(args)}"
+    return clause, args
+
+
+_DIST_COLS = (
+    "to_char(actualdate,'YYYY-MM-DD') AS actualdate, branch_code, branch_name, product_name, "
+    "account_name, description, ashnaf, distribution_category, fund_entity, channel, amount, "
+    "donorname, referenceno, inputer, transactionno, bank_account_no, bank_account_name, "
+    "budgetcode, budgetitemdescription"
+)
+
+
+def _dist_decorate(r: dict) -> dict:
+    d = dict(r)
+    fund = str(r.get("fund_entity") or "").strip()
+    ashnaf = str(r.get("ashnaf") or "").strip()
+    cat = str(r.get("distribution_category") or "").strip()
+    d["fund_label"] = _FUND_LABEL.get(fund, fund)
+    d["ashnaf_label"] = _ASHNAF_LABEL.get(ashnaf, ashnaf)
+    d["category_label"] = _DISTCAT_LABEL.get(cat, cat)
+    d["budget"] = " - ".join(p for p in [r.get("budgetcode"), r.get("budgetitemdescription")] if p)
+    return d
+
+
+async def distribution_count(branch: str | None, begin: str, end: str, fund: str | None) -> int:
+    if not await ping_dwh():
+        return 0
+    clause, args = _dist_where(branch, begin, end, fund)
+    row = await fetch_one_dwh(f"SELECT count(*) n FROM dwh.v_distribution WHERE {clause}", *args)
+    return int(row["n"]) if row else 0
+
+
+async def distribution_page(
+    branch: str | None, begin: str, end: str, fund: str | None, page: int, page_size: int
+) -> dict | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _dist_where(branch, begin, end, fund)
+    tot = await fetch_one_dwh(
+        f"SELECT count(*) n, COALESCE(SUM(amount),0)::float8 s FROM dwh.v_distribution WHERE {clause}",
+        *args,
+    )
+    args_page = args + [page_size, (page - 1) * page_size]
+    rows = await fetch_all_dwh(
+        f"SELECT {_DIST_COLS} FROM dwh.v_distribution WHERE {clause} "
+        f"ORDER BY actualdate, branch_name, transactionno LIMIT ${len(args)+1} OFFSET ${len(args)+2}",
+        *args_page,
+    )
+    return {
+        "rows": [_dist_decorate(r) for r in rows],
+        "total": int(tot["n"]) if tot else 0,
+        "total_amount": float(tot["s"]) if tot else 0.0,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+async def distribution_rows(branch: str | None, begin: str, end: str, fund: str | None) -> list[dict] | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _dist_where(branch, begin, end, fund)
+    rows = await fetch_all_dwh(
+        f"SELECT {_DIST_COLS} FROM dwh.v_distribution WHERE {clause} "
+        f"ORDER BY actualdate, branch_name, transactionno LIMIT {CAP}",
+        *args,
+    )
+    return [_dist_decorate(r) for r in rows]
+
+
+# ── Penghimpunan Dana (fCollectionReport) ────────────────────────────────────
+
+_COLL_COLS = (
+    "to_char(actualdate,'YYYY-MM-DD') AS actualdate, branch_name, account_name, description, "
+    "fund_entity, channel, amount, donorname, marketerid, referenceno, inputer, transactionno, "
+    "bank_account_no, bank_account_name"
+)
+
+
+def _coll_where(branch: str | None, begin: str, end: str, fund: str | None) -> tuple[str, list]:
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "actualdate >= $1::date AND actualdate <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    if fund:
+        args.append(fund)
+        clause += f" AND fund_entity::text = ${len(args)}"
+    return clause, args
+
+
+def _coll_decorate(r: dict) -> dict:
+    d = dict(r)
+    d["fund_label"] = _FUND_LABEL.get(str(r.get("fund_entity") or "").strip(), r.get("fund_entity") or "")
+    return d
+
+
+async def collection_count(branch: str | None, begin: str, end: str, fund: str | None) -> int:
+    if not await ping_dwh():
+        return 0
+    clause, args = _coll_where(branch, begin, end, fund)
+    row = await fetch_one_dwh(f"SELECT count(*) n FROM dwh.v_collection WHERE {clause}", *args)
+    return int(row["n"]) if row else 0
+
+
+async def collection_page(
+    branch: str | None, begin: str, end: str, fund: str | None, page: int, page_size: int
+) -> dict | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _coll_where(branch, begin, end, fund)
+    tot = await fetch_one_dwh(
+        f"SELECT count(*) n, COALESCE(SUM(amount),0)::float8 s FROM dwh.v_collection WHERE {clause}", *args
+    )
+    args_page = args + [page_size, (page - 1) * page_size]
+    rows = await fetch_all_dwh(
+        f"SELECT {_COLL_COLS} FROM dwh.v_collection WHERE {clause} "
+        f"ORDER BY actualdate, branch_name, transactionno LIMIT ${len(args)+1} OFFSET ${len(args)+2}",
+        *args_page,
+    )
+    return {
+        "rows": [_coll_decorate(r) for r in rows],
+        "total": int(tot["n"]) if tot else 0,
+        "total_amount": float(tot["s"]) if tot else 0.0,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+async def collection_rows(branch: str | None, begin: str, end: str, fund: str | None) -> list[dict] | None:
+    if not await ping_dwh():
+        return None
+    clause, args = _coll_where(branch, begin, end, fund)
+    rows = await fetch_all_dwh(
+        f"SELECT {_COLL_COLS} FROM dwh.v_collection WHERE {clause} "
+        f"ORDER BY actualdate, branch_name, transactionno LIMIT {CAP}",
+        *args,
+    )
+    return [_coll_decorate(r) for r in rows]
+
+
+async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dict] | None:
+    """Per dana: saldo awal (actualdate<begin) + mutasi [begin,end] + akhir + jumlah donor."""
+    if not await ping_dwh():
+        return None
+    b = date.fromisoformat(begin)
+    e = date.fromisoformat(end)
+    bargs: list = [b]
+    bclause = "actualdate < $1::date"
+    margs: list = [b, e]
+    mclause = "actualdate >= $1::date AND actualdate <= $2::date"
+    if branch:
+        bargs.append(branch)
+        bclause += f" AND branch_code = ${len(bargs)}"
+        margs.append(branch)
+        mclause += f" AND branch_code = ${len(margs)}"
+    begin_rows = await fetch_all_dwh(
+        f"SELECT fund_entity, COALESCE(SUM(amount),0)::float8 bal FROM dwh.v_collection "
+        f"WHERE {bclause} GROUP BY fund_entity", *bargs
+    )
+    mut_rows = await fetch_all_dwh(
+        f"SELECT fund_entity, COALESCE(SUM(amount),0)::float8 mut, count(DISTINCT donorid) donors "
+        f"FROM dwh.v_collection WHERE {mclause} GROUP BY fund_entity", *margs
+    )
+    begin_map = {str(r["fund_entity"]).strip(): r["bal"] for r in begin_rows}
+    out: list[dict] = []
+    grand = {"saldo_awal": 0.0, "mutasi": 0.0, "saldo_akhir": 0.0, "donors": 0}
+    for r in mut_rows:
+        key = str(r["fund_entity"]).strip()
+        awal = begin_map.get(key, 0.0)
+        mut = r["mut"]
+        out.append({
+            "fund_entity": key,
+            "fund_label": _FUND_LABEL.get(key, key),
+            "saldo_awal": awal,
+            "mutasi": mut,
+            "saldo_akhir": awal + mut,
+            "donors": int(r["donors"]),
+        })
+        grand["saldo_awal"] += awal
+        grand["mutasi"] += mut
+        grand["saldo_akhir"] += awal + mut
+        grand["donors"] += int(r["donors"])
+    out.sort(key=lambda x: x["fund_entity"])
+    return {"funds": out, "grand_total": grand}

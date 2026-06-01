@@ -162,6 +162,24 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/penyaluran-dana',
+      name: 'keuangan-laporan-penyaluran-dana',
+      component: () => import('@/pages/keuangan/LaporanPenyaluranDanaPage.vue'),
+      meta: {
+        title: 'Penyaluran Dana',
+        menu_key: 'keuangan.report.distribution' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/penghimpunan-dana',
+      name: 'keuangan-laporan-penghimpunan-dana',
+      component: () => import('@/pages/keuangan/LaporanPenghimpunanDanaPage.vue'),
+      meta: {
+        title: 'Penghimpunan Dana',
+        menu_key: 'keuangan.report.collection' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

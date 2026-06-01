@@ -6,6 +6,8 @@ from fastapi.responses import JSONResponse
 from app.modules.report.export import (
     build_aruskas_xlsx,
     build_amil_cash_xlsx,
+    build_distribution_xlsx,
+    build_collection_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
     build_perubahan_dana_xlsx,
@@ -24,6 +26,13 @@ from app.modules.report.service import (
     amil_cash,
     amil_cash_count,
     amil_cash_rows,
+    distribution_count,
+    distribution_page,
+    distribution_rows,
+    collection_count,
+    collection_page,
+    collection_rows,
+    collection_rekap,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -626,3 +635,76 @@ async def amil_cashout(begin: str = Query(...), end: str = Query(...), branch: s
 @router.get("/amil-cashout/export.xlsx")
 async def amil_cashout_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
     return await _amil_export("out", begin, end, branch)
+
+
+# ── Penyaluran Dana ──────────────────────────────────────────────────────────
+
+
+@router.get("/distribution")
+async def distribution(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    fund: str | None = Query(default=None), page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    data = await distribution_page(_tb_branch(branch), begin, end, fund or None, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/distribution/export.xlsx")
+async def distribution_export(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    fund: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    total = await distribution_count(b, begin, end, fund or None)
+    if total > CAP:
+        return JSONResponse(status_code=422, content=err("REPORT_TOO_LARGE", f"Hasil {total:,} baris melebihi batas {CAP:,}. Persempit filter."))
+    rows = await distribution_rows(b, begin, end, fund or None)
+    if rows is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_distribution_xlsx(rows, await _branch_label(b), _period_label(begin, end))
+    filename = f"penyalurandana-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ── Penghimpunan Dana ────────────────────────────────────────────────────────
+
+
+@router.get("/collection")
+async def collection(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    fund: str | None = Query(default=None), page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    data = await collection_page(_tb_branch(branch), begin, end, fund or None, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/collection/rekap")
+async def collection_rekap_ep(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    data = await collection_rekap(_tb_branch(branch), begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/collection/export.xlsx")
+async def collection_export(
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), fund: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    total = await collection_count(b, begin, end, fund or None)
+    if total > CAP:
+        return JSONResponse(status_code=422, content=err("REPORT_TOO_LARGE", f"Hasil {total:,} baris melebihi batas {CAP:,}. Persempit filter."))
+    rows = await collection_rows(b, begin, end, fund or None)
+    if rows is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    rekap = await collection_rekap(b, begin, end)
+    xlsx = build_collection_xlsx(rows, rekap or {}, await _branch_label(b), _period_label(begin, end))
+    filename = f"penghimpunandana-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})

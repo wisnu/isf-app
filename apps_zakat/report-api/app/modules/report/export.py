@@ -748,3 +748,109 @@ def build_amil_cash_xlsx(rows: list[dict], branch_label: str, period_label: str,
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Penyaluran Dana ──────────────────────────────────────────────────────────
+
+_DIST_COLS_X = [
+    ("Tanggal", 12), ("Cabang", 16), ("Produk", 26), ("Akun", 28), ("Keterangan", 36),
+    ("Ashnaf", 14), ("Kategori", 12), ("Dana", 10), ("Channel", 12), ("Penerima", 22),
+    ("Anggaran", 24), ("No. Transaksi", 24), ("Inputer", 14), ("Nominal", 18),
+]
+
+
+def build_distribution_xlsx(rows: list[dict], branch_label: str, period_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.cell(row=1, column=1, value="Laporan Penyaluran Dana").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=period_label)
+    hr = 5
+    for ci, (t, w) in enumerate(_DIST_COLS_X, 1):
+        c = ws.cell(row=hr, column=ci, value=t)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    total = 0.0
+    r = hr
+    for row in rows:
+        r += 1
+        vals = [row["actualdate"], row.get("branch_name") or "", row.get("product_name") or "",
+                row.get("account_name") or "", row.get("description") or "", row.get("ashnaf_label") or "",
+                row.get("category_label") or "", row.get("fund_label") or "", row.get("channel") or "",
+                row.get("donorname") or "", row.get("budget") or "", row.get("transactionno") or "",
+                row.get("inputer") or ""]
+        for ci, v in enumerate(vals, 1):
+            ws.cell(row=r, column=ci, value=v)
+        c = ws.cell(row=r, column=14, value=float(row.get("amount") or 0))
+        c.number_format = "#,##0.00"
+        total += float(row.get("amount") or 0)
+    r += 1
+    ws.cell(row=r, column=13, value="TOTAL").font = Font(bold=True)
+    tc = ws.cell(row=r, column=14, value=total)
+    tc.number_format = "#,##0.00"
+    tc.font = Font(bold=True)
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+# ── Penghimpunan Dana ────────────────────────────────────────────────────────
+
+_COLL_COLS_X = [
+    ("Tanggal", 12), ("Cabang", 16), ("Akun", 28), ("Keterangan", 36), ("Dana", 10),
+    ("Channel", 12), ("Donatur", 24), ("No. Transaksi", 24), ("Inputer", 14), ("Nominal", 18),
+]
+
+
+def build_collection_xlsx(rows: list[dict], rekap: dict, branch_label: str, period_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.cell(row=1, column=1, value="Laporan Penghimpunan Dana").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=period_label)
+
+    # Rekap per dana
+    r = 5
+    ws.cell(row=r, column=1, value="Rekapitulasi per Dana").font = Font(bold=True)
+    r += 1
+    for ci, t in enumerate(["Dana", "Saldo Awal", "Mutasi", "Saldo Akhir", "Jml Donatur"], 1):
+        ws.cell(row=r, column=ci, value=t).font = Font(bold=True)
+    r += 1
+    for f in (rekap or {}).get("funds", []):
+        ws.cell(row=r, column=1, value=f["fund_label"])
+        for ci, k in ((2, "saldo_awal"), (3, "mutasi"), (4, "saldo_akhir")):
+            c = ws.cell(row=r, column=ci, value=float(f.get(k) or 0)); c.number_format = "#,##0.00"
+        ws.cell(row=r, column=5, value=f.get("donors") or 0)
+        r += 1
+    r += 1
+
+    # Detail
+    hr = r
+    for ci, (t, w) in enumerate(_COLL_COLS_X, 1):
+        c = ws.cell(row=hr, column=ci, value=t)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    total = 0.0
+    for row in rows:
+        r += 1
+        vals = [row["actualdate"], row.get("branch_name") or "", row.get("account_name") or "",
+                row.get("description") or "", row.get("fund_label") or "", row.get("channel") or "",
+                row.get("donorname") or "", row.get("transactionno") or "", row.get("inputer") or ""]
+        for ci, v in enumerate(vals, 1):
+            ws.cell(row=r, column=ci, value=v)
+        c = ws.cell(row=r, column=10, value=float(row.get("amount") or 0)); c.number_format = "#,##0.00"
+        total += float(row.get("amount") or 0)
+    r += 1
+    ws.cell(row=r, column=9, value="TOTAL").font = Font(bold=True)
+    tc = ws.cell(row=r, column=10, value=total); tc.number_format = "#,##0.00"; tc.font = Font(bold=True)
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

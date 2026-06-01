@@ -39,6 +39,8 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.report.fund_changes_detail', 'Perubahan Dana Detail', 'Keuangan', '/keuangan/laporan/perubahan-dana-detail', 155, 'A'),
   ('keuangan.report.amil_in', 'Penerimaan Amil', 'Keuangan', '/keuangan/laporan/penerimaan-amil', 160, 'A'),
   ('keuangan.report.amil_out', 'Pengeluaran Amil', 'Keuangan', '/keuangan/laporan/pengeluaran-amil', 161, 'A'),
+  ('keuangan.report.distribution', 'Penyaluran Dana', 'Keuangan', '/keuangan/laporan/penyaluran-dana', 131, 'A'),
+  ('keuangan.report.collection', 'Penghimpunan Dana', 'Keuangan', '/keuangan/laporan/penghimpunan-dana', 130, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -186,6 +188,20 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU',  'keuangan.report.amil_out', 'seed'),
   ('QAC',     'keuangan.report.amil_out', 'seed'),
   ('SPVACC',  'keuangan.report.amil_out', 'seed'),
+  -- Penyaluran Dana — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.distribution', 'seed'),
+  ('KEU',     'keuangan.report.distribution', 'seed'),
+  ('ACC',     'keuangan.report.distribution', 'seed'),
+  ('SPVKEU',  'keuangan.report.distribution', 'seed'),
+  ('QAC',     'keuangan.report.distribution', 'seed'),
+  ('SPVACC',  'keuangan.report.distribution', 'seed'),
+  -- Penghimpunan Dana — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.collection', 'seed'),
+  ('KEU',     'keuangan.report.collection', 'seed'),
+  ('ACC',     'keuangan.report.collection', 'seed'),
+  ('SPVKEU',  'keuangan.report.collection', 'seed'),
+  ('QAC',     'keuangan.report.collection', 'seed'),
+  ('SPVACC',  'keuangan.report.collection', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

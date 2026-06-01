@@ -22,6 +22,8 @@ _PD_MENU = "keuangan.report.fund_changes"
 _PDD_MENU = "keuangan.report.fund_changes_detail"
 _AMIL_IN_MENU = "keuangan.report.amil_in"
 _AMIL_OUT_MENU = "keuangan.report.amil_out"
+_DIST_MENU = "keuangan.report.distribution"
+_COLL_MENU = "keuangan.report.collection"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -835,3 +837,112 @@ async def amil_cashout_export(
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
                     headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="pengeluaranamil.xlsx"')})
+
+
+# ── Penyaluran Dana ──────────────────────────────────────────────────────────
+
+
+@router.get("/distribution/branches")
+async def distribution_branches(request: Request, _: str = Depends(require_menu(_DIST_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/distribution")
+async def distribution(
+    request: Request, _: str = Depends(require_menu(_DIST_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    fund: str | None = Query(default=None), page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    if fund:
+        params["fund"] = fund
+    downstream = await get_report_api("/api/report/distribution", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/distribution/export.xlsx")
+async def distribution_export(
+    request: Request, _: str = Depends(require_menu(_DIST_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), fund: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if fund:
+        params["fund"] = fund
+    downstream = await stream_report_api("/api/report/distribution/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="penyalurandana.xlsx"')})
+
+
+# ── Penghimpunan Dana ────────────────────────────────────────────────────────
+
+
+@router.get("/collection/branches")
+async def collection_branches(request: Request, _: str = Depends(require_menu(_COLL_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/collection")
+async def collection(
+    request: Request, _: str = Depends(require_menu(_COLL_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    fund: str | None = Query(default=None), page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    if fund:
+        params["fund"] = fund
+    downstream = await get_report_api("/api/report/collection", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/collection/rekap")
+async def collection_rekap(
+    request: Request, _: str = Depends(require_menu(_COLL_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await get_report_api("/api/report/collection/rekap", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/collection/export.xlsx")
+async def collection_export(
+    request: Request, _: str = Depends(require_menu(_COLL_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None), fund: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if fund:
+        params["fund"] = fund
+    downstream = await stream_report_api("/api/report/collection/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="penghimpunandana.xlsx"')})
