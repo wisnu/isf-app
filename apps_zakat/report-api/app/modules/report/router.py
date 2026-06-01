@@ -6,6 +6,9 @@ from fastapi.responses import JSONResponse
 from app.modules.report.export import (
     build_aruskas_xlsx,
     build_cash_monthly_xlsx,
+    build_general_ledger_xlsx,
+    build_perubahan_dana_xlsx,
+    build_perubahan_dana_detail_xlsx,
     build_cash_mutation_xlsx,
     build_cash_summary_xlsx,
     build_general_transaction_xlsx,
@@ -30,9 +33,13 @@ from app.modules.report.service import (
     journal_daily_count,
     journal_daily_page,
     journal_daily_rows,
+    general_ledger,
     list_branches,
     list_cash_accounts,
+    list_detail_accounts,
     neraca,
+    perubahan_dana,
+    perubahan_dana_detail,
     trial_balance,
 )
 from app.shared.response import err, ok
@@ -413,6 +420,151 @@ async def aruskas_xlsx(
         label = "KONSOLIDASI"
     xlsx = build_aruskas_xlsx(data, label)
     filename = f"aruskas-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Buku Besar (General Ledger) ──────────────────────────────────────────────
+
+
+@router.get("/general-ledger/accounts")
+async def general_ledger_accounts(branch: str | None = Query(default=None)):
+    data = await list_detail_accounts(_tb_branch(branch))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/general-ledger")
+async def general_ledger_ep(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+    account: str | None = Query(default=None),
+):
+    try:
+        data = await general_ledger(_tb_branch(branch), begin, end, account or None)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/general-ledger/export.xlsx")
+async def general_ledger_xlsx(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+    account: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await general_ledger(b, begin, end, account or None)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_general_ledger_xlsx(data, label)
+    filename = f"bukubesar-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Perubahan Dana ───────────────────────────────────────────────────────────
+
+
+@router.get("/perubahan-dana")
+async def perubahan_dana_ep(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    try:
+        data = await perubahan_dana(_tb_branch(branch), begin, end)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/perubahan-dana/export.xlsx")
+async def perubahan_dana_xlsx(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await perubahan_dana(b, begin, end)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_perubahan_dana_xlsx(data, label)
+    filename = f"perubahandana-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Perubahan Dana Detail ────────────────────────────────────────────────────
+
+
+@router.get("/perubahan-dana-detail")
+async def perubahan_dana_detail_ep(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    try:
+        data = await perubahan_dana_detail(_tb_branch(branch), begin, end)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/perubahan-dana-detail/export.xlsx")
+async def perubahan_dana_detail_xlsx(
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    b = _tb_branch(branch)
+    try:
+        data = await perubahan_dana_detail(b, begin, end)
+    except ReportValidationError as ex:
+        return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    if b:
+        binfo = await list_branches(b)
+        label = f"{b} - {binfo[0]['name']}" if binfo else b
+    else:
+        label = "KONSOLIDASI"
+    xlsx = build_perubahan_dana_detail_xlsx(data, label)
+    filename = f"perubahandanadetail-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

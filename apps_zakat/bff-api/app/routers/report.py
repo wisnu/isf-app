@@ -17,6 +17,9 @@ _CASH_MONTHLY_MENU = "keuangan.report.cash_monthly"
 _TRIAL_BALANCE_MENU = "keuangan.report.trial_balance"
 _NERACA_MENU = "keuangan.report.neraca"
 _ARUSKAS_MENU = "keuangan.report.cash_flow"
+_GL_MENU = "keuangan.report.general_ledger"
+_PD_MENU = "keuangan.report.fund_changes"
+_PDD_MENU = "keuangan.report.fund_changes_detail"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -550,6 +553,200 @@ async def aruskas_export(
         headers={
             "Content-Disposition": downstream.headers.get(
                 "content-disposition", 'attachment; filename="aruskas.xlsx"'
+            )
+        },
+    )
+
+
+# ── Buku Besar (General Ledger) ──────────────────────────────────────────────
+
+
+def _gl_params(resolved: str | None, begin: str, end: str, account: str | None) -> dict:
+    params: dict = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    if account:
+        params["account"] = account
+    return params
+
+
+@router.get("/general-ledger/branches")
+async def general_ledger_branches(
+    request: Request,
+    _: str = Depends(require_menu(_GL_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/general-ledger/accounts")
+async def general_ledger_accounts(
+    request: Request,
+    _: str = Depends(require_menu(_GL_MENU)),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"branch": resolved} if resolved else {}
+    downstream = await get_report_api("/api/report/general-ledger/accounts", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/general-ledger")
+async def general_ledger(
+    request: Request,
+    _: str = Depends(require_menu(_GL_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+    account: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api(
+        "/api/report/general-ledger", params=_gl_params(resolved, begin, end, account)
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/general-ledger/export.xlsx")
+async def general_ledger_export(
+    request: Request,
+    _: str = Depends(require_menu(_GL_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+    account: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/general-ledger/export.xlsx",
+        params=_gl_params(resolved, begin, end, account),
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="bukubesar.xlsx"'
+            )
+        },
+    )
+
+
+# ── Perubahan Dana ───────────────────────────────────────────────────────────
+
+
+@router.get("/perubahan-dana/branches")
+async def perubahan_dana_branches(
+    request: Request,
+    _: str = Depends(require_menu(_PD_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/perubahan-dana")
+async def perubahan_dana(
+    request: Request,
+    _: str = Depends(require_menu(_PD_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api(
+        "/api/report/perubahan-dana", params=_tb_params(resolved, begin, end)
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/perubahan-dana/export.xlsx")
+async def perubahan_dana_export(
+    request: Request,
+    _: str = Depends(require_menu(_PD_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/perubahan-dana/export.xlsx", params=_tb_params(resolved, begin, end)
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="perubahandana.xlsx"'
+            )
+        },
+    )
+
+
+# ── Perubahan Dana Detail ────────────────────────────────────────────────────
+
+
+@router.get("/perubahan-dana-detail/branches")
+async def perubahan_dana_detail_branches(
+    request: Request,
+    _: str = Depends(require_menu(_PDD_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/perubahan-dana-detail")
+async def perubahan_dana_detail(
+    request: Request,
+    _: str = Depends(require_menu(_PDD_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await get_report_api(
+        "/api/report/perubahan-dana-detail", params=_tb_params(resolved, begin, end)
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/perubahan-dana-detail/export.xlsx")
+async def perubahan_dana_detail_export(
+    request: Request,
+    _: str = Depends(require_menu(_PDD_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    downstream = await stream_report_api(
+        "/api/report/perubahan-dana-detail/export.xlsx", params=_tb_params(resolved, begin, end)
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="perubahandanadetail.xlsx"'
             )
         },
     )

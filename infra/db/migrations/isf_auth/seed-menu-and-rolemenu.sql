@@ -34,6 +34,9 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.report.trial_balance', 'Trial Balance', 'Keuangan', '/keuangan/laporan/trial-balance', 150, 'A'),
   ('keuangan.report.neraca', 'Neraca', 'Keuangan', '/keuangan/laporan/neraca', 151, 'A'),
   ('keuangan.report.cash_flow', 'Arus Kas', 'Keuangan', '/keuangan/laporan/arus-kas', 152, 'A'),
+  ('keuangan.report.general_ledger', 'Buku Besar', 'Keuangan', '/keuangan/laporan/buku-besar', 153, 'A'),
+  ('keuangan.report.fund_changes', 'Perubahan Dana', 'Keuangan', '/keuangan/laporan/perubahan-dana', 154, 'A'),
+  ('keuangan.report.fund_changes_detail', 'Perubahan Dana Detail', 'Keuangan', '/keuangan/laporan/perubahan-dana-detail', 155, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -147,6 +150,27 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU',  'keuangan.report.cash_flow', 'seed'),
   ('QAC',     'keuangan.report.cash_flow', 'seed'),
   ('SPVACC',  'keuangan.report.cash_flow', 'seed'),
+  -- Buku Besar — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.general_ledger', 'seed'),
+  ('KEU',     'keuangan.report.general_ledger', 'seed'),
+  ('ACC',     'keuangan.report.general_ledger', 'seed'),
+  ('SPVKEU',  'keuangan.report.general_ledger', 'seed'),
+  ('QAC',     'keuangan.report.general_ledger', 'seed'),
+  ('SPVACC',  'keuangan.report.general_ledger', 'seed'),
+  -- Perubahan Dana — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.fund_changes', 'seed'),
+  ('KEU',     'keuangan.report.fund_changes', 'seed'),
+  ('ACC',     'keuangan.report.fund_changes', 'seed'),
+  ('SPVKEU',  'keuangan.report.fund_changes', 'seed'),
+  ('QAC',     'keuangan.report.fund_changes', 'seed'),
+  ('SPVACC',  'keuangan.report.fund_changes', 'seed'),
+  -- Perubahan Dana Detail — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.fund_changes_detail', 'seed'),
+  ('KEU',     'keuangan.report.fund_changes_detail', 'seed'),
+  ('ACC',     'keuangan.report.fund_changes_detail', 'seed'),
+  ('SPVKEU',  'keuangan.report.fund_changes_detail', 'seed'),
+  ('QAC',     'keuangan.report.fund_changes_detail', 'seed'),
+  ('SPVACC',  'keuangan.report.fund_changes_detail', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

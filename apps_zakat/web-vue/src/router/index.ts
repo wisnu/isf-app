@@ -115,6 +115,33 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/buku-besar',
+      name: 'keuangan-laporan-buku-besar',
+      component: () => import('@/pages/keuangan/LaporanBukuBesarPage.vue'),
+      meta: {
+        title: 'Buku Besar',
+        menu_key: 'keuangan.report.general_ledger' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/perubahan-dana',
+      name: 'keuangan-laporan-perubahan-dana',
+      component: () => import('@/pages/keuangan/LaporanPerubahanDanaPage.vue'),
+      meta: {
+        title: 'Perubahan Dana',
+        menu_key: 'keuangan.report.fund_changes' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/perubahan-dana-detail',
+      name: 'keuangan-laporan-perubahan-dana-detail',
+      component: () => import('@/pages/keuangan/LaporanPerubahanDanaDetailPage.vue'),
+      meta: {
+        title: 'Perubahan Dana Detail',
+        menu_key: 'keuangan.report.fund_changes_detail' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

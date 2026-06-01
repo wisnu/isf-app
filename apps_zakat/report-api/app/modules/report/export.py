@@ -526,3 +526,172 @@ def build_aruskas_xlsx(payload: dict, branch_label: str) -> bytes:
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Buku Besar (General Ledger) ──────────────────────────────────────────────
+
+_GL_COLS: list[tuple[str, int]] = [
+    ("Tanggal", 12),
+    ("No. Transaksi", 22),
+    ("Keterangan", 40),
+    ("Sub Account", 26),
+    ("Lawan Akun", 26),
+    ("Debet", 18),
+    ("Kredit", 18),
+]
+
+
+def build_general_ledger_xlsx(payload: dict, branch_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+
+    ws.cell(row=1, column=1, value="Buku Besar").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=f"{payload.get('begin')} s/d {payload.get('end')}")
+    for col_idx, (_t, width) in enumerate(_GL_COLS, 1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    def _money(r, col, val, bold=False):
+        c = ws.cell(row=r, column=col, value=float(val or 0))
+        c.number_format = "#,##0.00"
+        if bold:
+            c.font = Font(bold=True)
+
+    r = 5
+    for acc in payload.get("accounts", []):
+        ws.cell(row=r, column=1, value=f"{acc['account_code']} - {acc.get('account_name') or ''}").font = Font(bold=True)
+        r += 1
+        ws.cell(row=r, column=1, value="Saldo Awal").font = Font(italic=True)
+        _money(r, 7, acc["saldo_awal"])
+        r += 1
+        # header kolom
+        for col_idx, (title, _w) in enumerate(_GL_COLS, 1):
+            c = ws.cell(row=r, column=col_idx, value=title)
+            c.font = Font(bold=True, color="FFFF00")
+            c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        r += 1
+        for ln in acc["rows"]:
+            ws.cell(row=r, column=1, value=ln["journal_date"])
+            ws.cell(row=r, column=2, value=ln["transactionno"])
+            ws.cell(row=r, column=3, value=ln["description"])
+            ws.cell(row=r, column=4, value=ln["subaccount"])
+            ws.cell(row=r, column=5, value=ln["lawan"])
+            _money(r, 6, ln["debit"])
+            _money(r, 7, ln["credit"])
+            r += 1
+        ws.cell(row=r, column=3, value="Total / Mutasi Bersih").font = Font(bold=True)
+        _money(r, 6, acc["total_debit"], bold=True)
+        _money(r, 7, acc["total_credit"], bold=True)
+        r += 1
+        ws.cell(row=r, column=3, value="Saldo Akhir").font = Font(bold=True)
+        _money(r, 7, acc["saldo_akhir"], bold=True)
+        r += 2
+
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+# ── Perubahan Dana ───────────────────────────────────────────────────────────
+
+
+def build_perubahan_dana_xlsx(payload: dict, branch_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.cell(row=1, column=1, value="LAPORAN PERUBAHAN DANA").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value=f"Periode {payload.get('begin')} s/d {payload.get('end')}")
+    ws.cell(row=3, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=branch_label)
+    ws.column_dimensions["A"].width = 52
+    ws.column_dimensions["B"].width = 22
+
+    def _money(r, val, bold=False):
+        c = ws.cell(row=r, column=2, value=float(val or 0))
+        c.number_format = "#,##0.00"
+        if bold:
+            c.font = Font(bold=True)
+
+    r = 5
+    for f in payload.get("funds", []):
+        ws.cell(row=r, column=1, value=f["fund"]).font = Font(bold=True, size=12)
+        r += 1
+        ws.cell(row=r, column=1, value="Penerimaan").font = Font(bold=True, italic=True)
+        r += 1
+        for ln in f["penerimaan"]:
+            ws.cell(row=r, column=1, value=f"   {ln['label']}")
+            _money(r, ln["value"])
+            r += 1
+        ws.cell(row=r, column=1, value="Jumlah Penerimaan").font = Font(bold=True)
+        _money(r, f["total_penerimaan"], bold=True)
+        r += 1
+        ws.cell(row=r, column=1, value="Penyaluran/Penggunaan").font = Font(bold=True, italic=True)
+        r += 1
+        for ln in f["penyaluran"]:
+            ws.cell(row=r, column=1, value=f"   {ln['label']}")
+            _money(r, ln["value"])
+            r += 1
+        ws.cell(row=r, column=1, value="Jumlah Penyaluran/Penggunaan").font = Font(bold=True)
+        _money(r, f["total_penyaluran"], bold=True)
+        r += 1
+        ws.cell(row=r, column=1, value="Surplus (Defisit)").font = Font(bold=True)
+        _money(r, f["surplus"], bold=True)
+        r += 1
+        ws.cell(row=r, column=1, value="Saldo Awal Dana")
+        _money(r, f["saldo_awal"])
+        r += 1
+        ws.cell(row=r, column=1, value="Saldo Akhir Dana").font = Font(bold=True)
+        _money(r, f["saldo_akhir"], bold=True)
+        r += 2
+
+    ws.cell(row=r, column=1, value="TOTAL SALDO AKHIR SELURUH DANA").font = Font(bold=True)
+    _money(r, payload.get("total_saldo_akhir"), bold=True)
+
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+# ── Perubahan Dana Detail ────────────────────────────────────────────────────
+
+
+def build_perubahan_dana_detail_xlsx(payload: dict, branch_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.cell(row=1, column=1, value="LAPORAN PERUBAHAN DANA (RINCIAN PER AKUN)").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value=f"Periode {payload.get('begin')} s/d {payload.get('end')}")
+    ws.cell(row=3, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=branch_label)
+    ws.column_dimensions["A"].width = 16
+    ws.column_dimensions["B"].width = 44
+    ws.column_dimensions["C"].width = 22
+
+    def _money(r, col, val, bold=False):
+        c = ws.cell(row=r, column=col, value=float(val or 0))
+        c.number_format = "#,##0.00"
+        if bold:
+            c.font = Font(bold=True)
+
+    r = 5
+    for f in payload.get("funds", []):
+        ws.cell(row=r, column=1, value=f["fund"]).font = Font(bold=True, size=12)
+        r += 1
+        for sec in f["sections"]:
+            ws.cell(row=r, column=1, value=sec["title"]).font = Font(bold=True, italic=True)
+            r += 1
+            for row in sec["rows"]:
+                ws.cell(row=r, column=1, value=row["account_code"])
+                ws.cell(row=r, column=2, value=row.get("account_name") or "")
+                _money(r, 3, row["value"])
+                r += 1
+            ws.cell(row=r, column=2, value=f"TOTAL {sec['title']}").font = Font(bold=True)
+            _money(r, 3, sec["total"], bold=True)
+            r += 2
+
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

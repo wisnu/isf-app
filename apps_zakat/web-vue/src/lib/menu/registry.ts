@@ -14,6 +14,9 @@ export const MENU_KEYS = [
   'keuangan.report.trial_balance',
   'keuangan.report.neraca',
   'keuangan.report.cash_flow',
+  'keuangan.report.general_ledger',
+  'keuangan.report.fund_changes',
+  'keuangan.report.fund_changes_detail',
   'admin.role_menu',
   'admin.users',
 ] as const
