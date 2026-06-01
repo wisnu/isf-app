@@ -695,3 +695,56 @@ def build_perubahan_dana_detail_xlsx(payload: dict, branch_label: str) -> bytes:
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Penerimaan / Pengeluaran Amil ────────────────────────────────────────────
+
+
+def build_amil_cash_xlsx(rows: list[dict], branch_label: str, period_label: str, title: str, with_budget: bool) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "data"
+    ws.cell(row=1, column=1, value=title).font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=period_label)
+
+    cols = [("Tanggal", 12), ("Kode Akun", 14), ("Nama Akun", 30), ("Keterangan", 40),
+            ("Channel", 14), ("Nominal", 18), ("No. Referensi", 18), ("No. Transaksi", 24), ("Inputer", 16)]
+    if with_budget:
+        cols += [("Anggaran", 28)]
+    hr = 5
+    for ci, (t, w) in enumerate(cols, 1):
+        c = ws.cell(row=hr, column=ci, value=t)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        ws.column_dimensions[get_column_letter(ci)].width = w
+
+    total = 0.0
+    r = hr
+    for row in rows:
+        r += 1
+        ws.cell(row=r, column=1, value=row["actualdate"])
+        ws.cell(row=r, column=2, value=row["account_code"])
+        ws.cell(row=r, column=3, value=row.get("account_name") or "")
+        ws.cell(row=r, column=4, value=row.get("description") or "")
+        ws.cell(row=r, column=5, value=row.get("channel") or "")
+        c = ws.cell(row=r, column=6, value=float(row.get("amount") or 0))
+        c.number_format = "#,##0.00"
+        ws.cell(row=r, column=7, value=row.get("referenceno") or "")
+        ws.cell(row=r, column=8, value=row.get("transactionno") or "")
+        ws.cell(row=r, column=9, value=row.get("inputer") or "")
+        if with_budget:
+            bud = " - ".join(p for p in [row.get("budgetcode"), row.get("budgetitemdescription")] if p)
+            ws.cell(row=r, column=10, value=bud)
+        total += float(row.get("amount") or 0)
+    r += 1
+    ws.cell(row=r, column=5, value="TOTAL").font = Font(bold=True)
+    tc = ws.cell(row=r, column=6, value=total)
+    tc.number_format = "#,##0.00"
+    tc.font = Font(bold=True)
+
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

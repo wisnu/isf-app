@@ -1353,3 +1353,68 @@ async def perubahan_dana_detail(branch: str | None, begin: str, end: str) -> dic
         "end": end,
         "konsolidasi": branch is None,
     }
+
+
+# ── Penerimaan / Pengeluaran Amil (fCashInReport / fCashOutReport) ────────────
+
+_AMIL_VIEW = {"in": "dwh.v_amil_cashin", "out": "dwh.v_amil_cashout"}
+
+
+def _amil_where(branch: str | None, begin: str, end: str) -> tuple[str, list]:
+    args: list = [date.fromisoformat(begin), date.fromisoformat(end)]
+    clause = "actualdate >= $1::date AND actualdate <= $2::date"
+    if branch:
+        args.append(branch)
+        clause += f" AND branch_code = ${len(args)}"
+    return clause, args
+
+
+async def amil_cash(
+    kind: str, branch: str | None, begin: str, end: str, page: int, page_size: int
+) -> dict | None:
+    if not await ping_dwh():
+        return None
+    view = _AMIL_VIEW[kind]
+    clause, args = _amil_where(branch, begin, end)
+    tot = await fetch_one_dwh(
+        f"SELECT count(*) n, COALESCE(SUM(amount),0)::float8 s FROM {view} WHERE {clause}", *args
+    )
+    total = int(tot["n"]) if tot else 0
+    extra = ", budgetcode, budgetitemdescription" if kind == "out" else ""
+    args_page = args + [page_size, (page - 1) * page_size]
+    rows = await fetch_all_dwh(
+        f"SELECT to_char(actualdate,'YYYY-MM-DD') AS actualdate, account_code, account_name, "
+        f"description, amount, referenceno, transactionno, inputer, channel{extra} "
+        f"FROM {view} WHERE {clause} ORDER BY actualdate, transactionno "
+        f"LIMIT ${len(args) + 1} OFFSET ${len(args) + 2}",
+        *args_page,
+    )
+    return {
+        "rows": rows,
+        "total": total,
+        "total_amount": float(tot["s"]) if tot else 0.0,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+async def amil_cash_rows(kind: str, branch: str | None, begin: str, end: str) -> list[dict] | None:
+    if not await ping_dwh():
+        return None
+    view = _AMIL_VIEW[kind]
+    clause, args = _amil_where(branch, begin, end)
+    extra = ", budgetcode, budgetitemdescription" if kind == "out" else ""
+    return await fetch_all_dwh(
+        f"SELECT to_char(actualdate,'YYYY-MM-DD') AS actualdate, account_code, account_name, "
+        f"description, amount, referenceno, transactionno, inputer, channel{extra} "
+        f"FROM {view} WHERE {clause} ORDER BY actualdate, transactionno LIMIT {CAP}",
+        *args,
+    )
+
+
+async def amil_cash_count(kind: str, branch: str | None, begin: str, end: str) -> int:
+    if not await ping_dwh():
+        return 0
+    clause, args = _amil_where(branch, begin, end)
+    row = await fetch_one_dwh(f"SELECT count(*) n FROM {_AMIL_VIEW[kind]} WHERE {clause}", *args)
+    return int(row["n"]) if row else 0

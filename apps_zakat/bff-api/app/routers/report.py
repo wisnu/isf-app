@@ -20,6 +20,8 @@ _ARUSKAS_MENU = "keuangan.report.cash_flow"
 _GL_MENU = "keuangan.report.general_ledger"
 _PD_MENU = "keuangan.report.fund_changes"
 _PDD_MENU = "keuangan.report.fund_changes_detail"
+_AMIL_IN_MENU = "keuangan.report.amil_in"
+_AMIL_OUT_MENU = "keuangan.report.amil_out"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -750,3 +752,86 @@ async def perubahan_dana_detail_export(
             )
         },
     )
+
+
+# ── Penerimaan / Pengeluaran Amil ────────────────────────────────────────────
+
+
+@router.get("/amil-cashin/branches")
+async def amil_cashin_branches(request: Request, _: str = Depends(require_menu(_AMIL_IN_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/amil-cashin")
+async def amil_cashin(
+    request: Request, _: str = Depends(require_menu(_AMIL_IN_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await get_report_api("/api/report/amil-cashin", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/amil-cashin/export.xlsx")
+async def amil_cashin_export(
+    request: Request, _: str = Depends(require_menu(_AMIL_IN_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await stream_report_api("/api/report/amil-cashin/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="penerimaanamil.xlsx"')})
+
+
+@router.get("/amil-cashout/branches")
+async def amil_cashout_branches(request: Request, _: str = Depends(require_menu(_AMIL_OUT_MENU))):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/amil-cashout")
+async def amil_cashout(
+    request: Request, _: str = Depends(require_menu(_AMIL_OUT_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await get_report_api("/api/report/amil-cashout", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/amil-cashout/export.xlsx")
+async def amil_cashout_export(
+    request: Request, _: str = Depends(require_menu(_AMIL_OUT_MENU)),
+    begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await stream_report_api("/api/report/amil-cashout/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(content=downstream.content, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": downstream.headers.get("content-disposition", 'attachment; filename="pengeluaranamil.xlsx"')})

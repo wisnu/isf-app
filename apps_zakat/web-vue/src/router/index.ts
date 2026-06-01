@@ -142,6 +142,26 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/penerimaan-amil',
+      name: 'keuangan-laporan-penerimaan-amil',
+      component: () => import('@/pages/keuangan/LaporanAmilPage.vue'),
+      meta: {
+        title: 'Penerimaan Amil',
+        menu_key: 'keuangan.report.amil_in' as MenuKey,
+        amilKind: 'in',
+      },
+    },
+    {
+      path: '/keuangan/laporan/pengeluaran-amil',
+      name: 'keuangan-laporan-pengeluaran-amil',
+      component: () => import('@/pages/keuangan/LaporanAmilPage.vue'),
+      meta: {
+        title: 'Pengeluaran Amil',
+        menu_key: 'keuangan.report.amil_out' as MenuKey,
+        amilKind: 'out',
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

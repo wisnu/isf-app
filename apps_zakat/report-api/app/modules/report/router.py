@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
     build_aruskas_xlsx,
+    build_amil_cash_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
     build_perubahan_dana_xlsx,
@@ -20,6 +21,9 @@ from app.modules.report.service import (
     CAP,
     ReportValidationError,
     aruskas,
+    amil_cash,
+    amil_cash_count,
+    amil_cash_rows,
     cash_account_label,
     cash_monthly,
     cash_mutation_export,
@@ -570,3 +574,55 @@ async def perubahan_dana_detail_xlsx(
         media_type=_XLSX_MIME,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ── Penerimaan / Pengeluaran Amil ────────────────────────────────────────────
+
+_AMIL_TITLE = {"in": "Laporan Penerimaan Amil", "out": "Laporan Pengeluaran Amil"}
+_AMIL_FILE = {"in": "penerimaanamil", "out": "pengeluaranamil"}
+
+
+async def _amil_list(kind, begin, end, branch, page, page_size):
+    data = await amil_cash(kind, _tb_branch(branch), begin, end, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+async def _amil_export(kind, begin, end, branch):
+    b = _tb_branch(branch)
+    total = await amil_cash_count(kind, b, begin, end)
+    if total > CAP:
+        return JSONResponse(
+            status_code=422,
+            content=err("REPORT_TOO_LARGE", f"Hasil {total:,} baris melebihi batas {CAP:,}. Persempit rentang tanggal."),
+        )
+    rows = await amil_cash_rows(kind, b, begin, end)
+    if rows is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_amil_cash_xlsx(rows, await _branch_label(b), _period_label(begin, end), _AMIL_TITLE[kind], kind == "out")
+    filename = f"{_AMIL_FILE[kind]}-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(content=xlsx, media_type=_XLSX_MIME,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/amil-cashin")
+async def amil_cashin(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+                      page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200)):
+    return await _amil_list("in", begin, end, branch, page, page_size)
+
+
+@router.get("/amil-cashin/export.xlsx")
+async def amil_cashin_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _amil_export("in", begin, end, branch)
+
+
+@router.get("/amil-cashout")
+async def amil_cashout(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None),
+                       page: int = Query(default=1, ge=1), page_size: int = Query(default=50, ge=1, le=200)):
+    return await _amil_list("out", begin, end, branch, page, page_size)
+
+
+@router.get("/amil-cashout/export.xlsx")
+async def amil_cashout_export(begin: str = Query(...), end: str = Query(...), branch: str | None = Query(default=None)):
+    return await _amil_export("out", begin, end, branch)

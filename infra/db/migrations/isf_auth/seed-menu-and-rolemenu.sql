@@ -37,6 +37,8 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.report.general_ledger', 'Buku Besar', 'Keuangan', '/keuangan/laporan/buku-besar', 153, 'A'),
   ('keuangan.report.fund_changes', 'Perubahan Dana', 'Keuangan', '/keuangan/laporan/perubahan-dana', 154, 'A'),
   ('keuangan.report.fund_changes_detail', 'Perubahan Dana Detail', 'Keuangan', '/keuangan/laporan/perubahan-dana-detail', 155, 'A'),
+  ('keuangan.report.amil_in', 'Penerimaan Amil', 'Keuangan', '/keuangan/laporan/penerimaan-amil', 160, 'A'),
+  ('keuangan.report.amil_out', 'Pengeluaran Amil', 'Keuangan', '/keuangan/laporan/pengeluaran-amil', 161, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -171,6 +173,19 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU',  'keuangan.report.fund_changes_detail', 'seed'),
   ('QAC',     'keuangan.report.fund_changes_detail', 'seed'),
   ('SPVACC',  'keuangan.report.fund_changes_detail', 'seed'),
+  -- Penerimaan Amil / Pengeluaran Amil — AllowedGroups: ADM;KEU;ACC;SPVKEU;QAC;SPVACC
+  ('ADM',     'keuangan.report.amil_in', 'seed'),
+  ('KEU',     'keuangan.report.amil_in', 'seed'),
+  ('ACC',     'keuangan.report.amil_in', 'seed'),
+  ('SPVKEU',  'keuangan.report.amil_in', 'seed'),
+  ('QAC',     'keuangan.report.amil_in', 'seed'),
+  ('SPVACC',  'keuangan.report.amil_in', 'seed'),
+  ('ADM',     'keuangan.report.amil_out', 'seed'),
+  ('KEU',     'keuangan.report.amil_out', 'seed'),
+  ('ACC',     'keuangan.report.amil_out', 'seed'),
+  ('SPVKEU',  'keuangan.report.amil_out', 'seed'),
+  ('QAC',     'keuangan.report.amil_out', 'seed'),
+  ('SPVACC',  'keuangan.report.amil_out', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),
