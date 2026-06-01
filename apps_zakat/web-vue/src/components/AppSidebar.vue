@@ -182,7 +182,7 @@ const parentBaseClass = computed(() =>
     :class="
       cn(
         'hidden lg:flex shrink-0 border-r border-border bg-surface flex-col transition-[width] duration-200',
-        sidebar.collapsed ? 'w-16' : 'w-60',
+        sidebar.collapsed ? 'w-16' : 'w-72',
       )
     "
   >
@@ -256,7 +256,7 @@ const parentBaseClass = computed(() =>
                 :to="child.to!"
                 :class="
                   cn(
-                    'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors',
+                    'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
                     isActiveItem(child)
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-muted hover:text-foreground hover:bg-background',
