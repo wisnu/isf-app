@@ -5,6 +5,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
@@ -48,6 +49,9 @@ const branch = ref<string>(auth.user?.primary_branch ?? '')
 const branches = ref<BranchOption[]>([])
 const account = ref<string>('')
 const accounts = ref<AccountOption[]>([])
+const accountOptions = computed(() =>
+  accounts.value.map((a) => ({ value: a.account_no, label: `${a.account_no} — ${a.account_name}` })),
+)
 
 const page = ref(1)
 const pageSize = ref(50)
@@ -162,10 +166,9 @@ onMounted(async () => {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Rekening</label>
-        <select v-model="account" class="h-9 rounded-lg border border-border bg-surface px-2 text-sm min-w-[18rem] focus:outline-none focus:ring-1 focus:ring-primary">
-          <option v-if="!accounts.length" value="">(tidak ada rekening)</option>
-          <option v-for="a in accounts" :key="a.account_no" :value="a.account_no">{{ a.account_no }} — {{ a.account_name }}</option>
-        </select>
+        <div class="min-w-[20rem]">
+          <SearchSelect v-model="account" :options="accountOptions" :placeholder="accounts.length ? 'Cari no. / nama rekening…' : '(tidak ada rekening)'" />
+        </div>
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-muted">Dari Tanggal</label>
