@@ -11,6 +11,7 @@ from app.routers.auth import router as auth_router
 from app.routers.auth_google import router as google_router
 from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.report import router as report_router
 from app.routers.tenants import router as tenants_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
@@ -80,6 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(google_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
     app.include_router(dashboard_router, prefix="/api")
+    app.include_router(report_router, prefix="/api")
     app.include_router(coa_router, prefix="/api")
     app.include_router(admin_router, prefix="/api")
     return app

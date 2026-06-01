@@ -425,9 +425,10 @@ isf-app/
   apps_zakat/                  ← portal Zakat (default)
     web-vue/
     bff-api/
-    api-python/
+    api-python/                 ← CRUD/management (coa, admin, identity, donors, zakat, waqf)
+    report-api/                 ← read/agregasi (dashboard + report); pool read-only business + DWH
     api-go/
-  apps_wakaf/                  ← portal Wakaf (clone, akan diverge)
+  apps_wakaf/                  ← portal Wakaf (clone, akan diverge; report-api menyusul)
     web-vue/
     bff-api/
     api-python/
@@ -481,15 +482,26 @@ apps_<domain>/
       shared/            # config, errors, request_id, response
     tests/
 
-  api-python/
+  api-python/              # CRUD / management / write-model
     pyproject.toml
     Dockerfile.dev
     app/
       main.py
       modules/
-        dashboard/       # router, schema, service (dummy data per tenant)
+        coa/, admin/, identity/  # active
         donors/, zakat/, waqf/   # scaffold per modul Fase 2+
-      shared/            # config, response
+      shared/            # config, db (business + isf_auth pool), response
+    tests/
+
+  report-api/            # read / agregasi / reporting (service terpisah, zakat)
+    pyproject.toml
+    Dockerfile.dev
+    app/
+      main.py            # init pool business + dwh (read-only); /health, /ready
+      modules/
+        dashboard/       # router, schema, service — DIPINDAH dari api-python
+        report/          # scaffold (router /report, service, schema); query via pool dwh
+      shared/            # config, db (business + dwh pool, read-only), response
     tests/
 
   api-go/
@@ -567,6 +579,7 @@ Catatan:
 
 ```env
 API_PYTHON_BASE_URL=http://api-python:8000
+REPORT_API_BASE_URL=http://report-api:8000   # dashboard + report upstream
 API_GO_BASE_URL=http://api-go:8080
 CUSTOMERS_BACKEND=python
 ORDERS_BACKEND=python
@@ -583,6 +596,22 @@ REDIS_URL=redis://redis:6379/0
 JWT_PUBLIC_KEY=...
 APP_ENV=development
 ```
+
+### Report Service (report-api)
+
+Service read/agregasi terpisah. Dua koneksi read-only — `DATABASE_URL` untuk
+dashboard (business views) dan `DWH_DATABASE_URL` untuk report (schema `dwh`).
+Saat ini keduanya menunjuk DB yang sama (`mziss_laz`); dipisah env agar DWH bisa
+pindah ke warehouse sendiri tanpa mengubah dashboard.
+
+```env
+DATABASE_URL=postgresql://user:pass@host:5432/mziss_laz
+DWH_DATABASE_URL=postgresql://user:pass@host:5432/mziss_laz
+APP_ENV=development
+```
+
+> Catatan: `report-api` adalah realisasi awal "Report Service" (lihat §4 Fase 3–4
+> & §23A) sebagai FastAPI. Jalur migrasi bertahap ke Go tetap mengikuti §18.
 
 ### Go Backend
 
@@ -1146,6 +1175,7 @@ Contoh service:
 web-vue      -> localhost:5173
 bff-api      -> localhost:7000
 api-python   -> localhost:8000
+report-api   -> localhost:8010   # dashboard + report (zakat)
 api-go       -> localhost:8080
 postgres     -> localhost:5432
 redis        -> localhost:6379

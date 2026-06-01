@@ -57,8 +57,11 @@ restart: stop run ## stop && run
 
 build: build-zakat build-wakaf ## Pre-build all 6 images (--security-opt label=disable)
 
-build-zakat: ## Pre-build 3 zakat images
-	@for svc in $(SERVICES); do \
+# Zakat carries an extra reporting service (report-api); wakaf belum.
+ZAKAT_SERVICES := api-python report-api bff-api web-vue
+
+build-zakat: ## Pre-build zakat images (incl. report-api)
+	@for svc in $(ZAKAT_SERVICES); do \
 	  echo ">>> building isf-zakat-$$svc:dev"; \
 	  (cd apps_zakat/$$svc && \
 	   podman build --security-opt label=disable -t isf-zakat-$$svc:dev -f Dockerfile.dev .) || exit 1; \
@@ -129,6 +132,7 @@ logs-wakaf: ## Tail wakaf logs only
 
 health: ## Curl /health on all BFFs + api-pythons
 	@printf "  zakat api-python :8000  "; curl -fsS http://localhost:8000/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
+	@printf "  zakat report-api :8010  "; curl -fsS http://localhost:8010/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  zakat bff-api    :7000  "; curl -fsS http://localhost:7000/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  wakaf api-python :8001  "; curl -fsS http://localhost:8001/health 2>/dev/null | head -c 80 || echo "DOWN"; echo
 	@printf "  wakaf bff-api    :7001  "; curl -fsS http://localhost:7001/health 2>/dev/null | head -c 80 || echo "DOWN"; echo

@@ -40,6 +40,33 @@ services:
       retries: 5
       start_period: 10s
 
+  report-api:
+    image: isf-zakat-report-api:dev
+    build:
+      context: ../apps_zakat/report-api
+      dockerfile: Dockerfile.dev
+    container_name: isf-zakat-report-api
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    environment:
+      APP_ENV: development
+      DOMAIN: zakat
+      # business read (dashboard): dashboard.v_*, transaction.*, program.*
+      DATABASE_URL: ${DATABASE_URL_ZAKAT:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_laz}
+      # DWH read (report): schema dwh.* — same server/DB for now, separate env so DWH can move out later
+      DWH_DATABASE_URL: ${DWH_DATABASE_URL_ZAKAT:-postgresql://transaction:solusi@host.containers.internal:5432/mziss_laz}
+    ports:
+      - "8010:8000"
+    volumes:
+      - ../apps_zakat/report-api:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
   bff-api:
     image: isf-zakat-bff-api:dev
     build:
@@ -56,6 +83,7 @@ services:
       APP_ENV: development
       DOMAIN: zakat
       API_PYTHON_BASE_URL: http://api-python:8000
+      REPORT_API_BASE_URL: http://report-api:8000
       SESSION_SECRET: ${SESSION_SECRET_ZAKAT:-dev-secret-zakat-change-me}
       CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173,http://${HOST_IP:-localhost}:5173
       AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
@@ -73,6 +101,8 @@ services:
       - bff-data:/data
     depends_on:
       api-python:
+        condition: service_healthy
+      report-api:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://${HOST_IP:-localhost}:7000/health', timeout=2).status == 200 else 1)"]
