@@ -11,13 +11,14 @@ CREATE SCHEMA IF NOT EXISTS dwh;
 
 CREATE OR REPLACE VIEW dwh.v_cash_summary_src AS
 SELECT
-    ca.accountno      AS account_no,
-    ca.accountname    AS account_name,
-    ca.currencycode   AS currency_code,
-    i.branchcode      AS branch_code,
-    t.actualdate      AS actualdate,
-    i.mutationtype    AS mutationtype,
-    i.amount          AS amount
+    ca.accountno        AS account_no,
+    ca.accountname      AS account_name,
+    ca.currencycode     AS currency_code,
+    i.branchcode        AS branch_code,
+    t.actualdate        AS actualdate,
+    i.mutationtype      AS mutationtype,
+    i.amount            AS amount,
+    ca.cashaccounttype  AS account_type
 FROM transaction.accounttransactionitem a
 JOIN transaction.transactionitem i ON a.transactionitemid = i.transactionitemid
 JOIN transaction.transaction t     ON i.transactionid = t.transactionid

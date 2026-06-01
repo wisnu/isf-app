@@ -88,6 +88,11 @@ const groups: MenuGroup[] = [
             to: '/keuangan/laporan/rekap-kas',
             icon: Banknote,
           },
+          {
+            label: 'Monitoring Saldo Bulanan',
+            to: '/keuangan/laporan/saldo-bulanan',
+            icon: Banknote,
+          },
         ],
       },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },

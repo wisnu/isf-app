@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
+    build_cash_monthly_xlsx,
     build_cash_mutation_xlsx,
     build_cash_summary_xlsx,
     build_general_transaction_xlsx,
@@ -12,6 +13,7 @@ from app.modules.report.export import (
 from app.modules.report.service import (
     CAP,
     cash_account_label,
+    cash_monthly,
     cash_mutation_export,
     cash_mutation_item_count,
     cash_mutation_page,
@@ -230,6 +232,38 @@ async def cash_summary_xlsx(
     label = f"{branch} - {binfo[0]['name']}" if binfo else branch
     xlsx = build_cash_summary_xlsx(data, label, _period_label(begin, end))
     filename = f"cashsummary-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Monitoring Saldo Kas/Bank Bulanan (fSummaryCashMonthly) ──────────────────
+
+@router.get("/cash-monthly")
+async def cash_monthly_ep(
+    branch: str = Query(...),
+    year: int = Query(default_factory=lambda: _date.today().year, ge=2000, le=2100),
+):
+    data = await cash_monthly(branch, year)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/cash-monthly/export.xlsx")
+async def cash_monthly_xlsx(
+    branch: str = Query(...),
+    year: int = Query(default_factory=lambda: _date.today().year, ge=2000, le=2100),
+):
+    data = await cash_monthly(branch, year)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    binfo = await list_branches(branch)
+    label = f"{branch} - {binfo[0]['name']}" if binfo else branch
+    xlsx = build_cash_monthly_xlsx(data, label, year)
+    filename = f"cashmonthly-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

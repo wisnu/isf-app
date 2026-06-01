@@ -7,6 +7,7 @@ bisa diganti tabel ETL independen tanpa ubah kontrak.
 
 from __future__ import annotations
 
+import calendar
 from datetime import date
 
 from app.shared.db import fetch_all_dwh, fetch_one_dwh, ping_dwh
@@ -417,3 +418,53 @@ async def cash_summary(branch: str, begin: str, end: str) -> dict | None:
 
 def _period(begin: str, end: str) -> str:
     return begin if begin == end else f"{begin} s/d {end}"
+
+
+# ── Monitoring Saldo Kas/Bank Bulanan (fSummaryCashMonthly) ──────────────────
+
+_CASHTYPE_LABEL = {"A": "BANK", "R": "KAS CABANG", "P": "PETTY CASH"}
+MONTHS_ID = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+
+
+async def cash_monthly(branch: str, year: int) -> dict | None:
+    if not await ping_dwh():
+        return None
+    # 12 tanggal akhir bulan kalender utk year → param $2..$13.
+    month_ends = [date(year, m, calendar.monthrange(year, m)[1]) for m in range(1, 13)]
+    net = "CASE WHEN mutationtype='D' THEN amount ELSE -amount END"
+    cols = ",\n".join(
+        f"SUM(CASE WHEN actualdate <= ${i + 2}::date THEN {net} ELSE 0 END)::float8 AS balance_{i + 1}"
+        for i in range(12)
+    )
+    sql = f"""
+        SELECT account_no, account_name, account_type,
+               {cols}
+        FROM dwh.v_cash_summary_src
+        WHERE branch_code = $1 AND actualdate <= $13::date
+        GROUP BY account_no, account_name, account_type
+        ORDER BY account_type, account_no
+    """
+    rows = await fetch_all_dwh(sql, branch, *month_ends)
+
+    groups: list[dict] = []
+    by_type: dict[str, dict] = {}
+    for r in rows:
+        balances = [r[f"balance_{m}"] for m in range(1, 13)]
+        atype = r["account_type"] or "-"
+        g = by_type.get(atype)
+        if g is None:
+            g = {
+                "type": atype,
+                "type_label": _CASHTYPE_LABEL.get(atype, "LAINNYA"),
+                "rows": [],
+                "totals": [0.0] * 12,
+            }
+            by_type[atype] = g
+            groups.append(g)
+        g["rows"].append(
+            {"account_no": r["account_no"], "account_name": r["account_name"], "balances": balances}
+        )
+        for m in range(12):
+            g["totals"][m] += balances[m]
+
+    return {"groups": groups, "year": year, "months": MONTHS_ID}

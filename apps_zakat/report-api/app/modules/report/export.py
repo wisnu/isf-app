@@ -286,3 +286,54 @@ def build_cash_summary_xlsx(payload: dict, branch_label: str, period_label: str)
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Monitoring Saldo Kas/Bank Bulanan (matriks akun × 12 bulan) ──────────────
+
+def build_cash_monthly_xlsx(payload: dict, branch_label: str, year: int) -> bytes:
+    months = payload.get("months", [])
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data"
+
+    ws.cell(row=1, column=1, value="Monitoring Saldo Kas/Bank Bulanan").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Tahun").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=year)
+
+    header_row = 5
+    headers = ["Rekening", *months]
+    for col_idx, title in enumerate(headers, 1):
+        c = ws.cell(row=header_row, column=col_idx, value=title)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        c.alignment = Alignment(horizontal="center", vertical="center")
+    ws.column_dimensions["A"].width = 40
+    for col_idx in range(2, 14):
+        ws.column_dimensions[get_column_letter(col_idx)].width = 16
+
+    def _bal_row(r, label, balances, bold=False):
+        cell = ws.cell(row=r, column=1, value=label)
+        if bold:
+            cell.font = Font(bold=True)
+        for m in range(12):
+            c = ws.cell(row=r, column=m + 2, value=float(balances[m] or 0))
+            c.number_format = "#,##0.00"
+            if bold:
+                c.font = Font(bold=True)
+
+    r = header_row
+    for grp in payload.get("groups", []):
+        r += 1
+        ws.cell(row=r, column=1, value=grp["type_label"]).font = Font(bold=True, italic=True)
+        for item in grp["rows"]:
+            r += 1
+            _bal_row(r, f"{item['account_no']} - {item.get('account_name') or ''}", item["balances"])
+        r += 1
+        _bal_row(r, f"Total {grp['type_label']}", grp["totals"], bold=True)
+
+    ws.freeze_panes = "B6"
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

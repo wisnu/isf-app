@@ -30,6 +30,7 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.report.general_transaction', 'List Transaksi Umum', 'Keuangan', '/keuangan/laporan/transaksi-umum', 141, 'A'),
   ('keuangan.report.cash_daily', 'Transaksi Kas/Bank Harian', 'Keuangan', '/keuangan/laporan/kas-harian', 142, 'A'),
   ('keuangan.report.cash_summary', 'Rekapitulasi Transaksi Kas/Bank', 'Keuangan', '/keuangan/laporan/rekap-kas', 143, 'A'),
+  ('keuangan.report.cash_monthly', 'Monitoring Saldo Kas/Bank Bulanan', 'Keuangan', '/keuangan/laporan/saldo-bulanan', 144, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -115,6 +116,13 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU',  'keuangan.report.cash_summary', 'seed'),
   ('QAC',     'keuangan.report.cash_summary', 'seed'),
   ('SPVACC',  'keuangan.report.cash_summary', 'seed'),
+  -- Monitoring Saldo Kas/Bank Bulanan — AllowedGroups legacy TR0028A (sama)
+  ('ADM',     'keuangan.report.cash_monthly', 'seed'),
+  ('KEU',     'keuangan.report.cash_monthly', 'seed'),
+  ('ACC',     'keuangan.report.cash_monthly', 'seed'),
+  ('SPVKEU',  'keuangan.report.cash_monthly', 'seed'),
+  ('QAC',     'keuangan.report.cash_monthly', 'seed'),
+  ('SPVACC',  'keuangan.report.cash_monthly', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

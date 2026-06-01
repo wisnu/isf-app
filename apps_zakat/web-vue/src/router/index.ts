@@ -79,6 +79,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/saldo-bulanan',
+      name: 'keuangan-laporan-saldo-bulanan',
+      component: () => import('@/pages/keuangan/LaporanCashMonthlyPage.vue'),
+      meta: {
+        title: 'Monitoring Saldo Kas/Bank Bulanan',
+        menu_key: 'keuangan.report.cash_monthly' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),
