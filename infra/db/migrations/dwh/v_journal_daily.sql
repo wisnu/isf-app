@@ -1,4 +1,4 @@
--- [REPORT-JOURNAL] View laporan jurnal harian (zakat / mziss_laz)
+-- [REPORT-JOURNAL] View laporan jurnal harian (business DB: mziss_laz + mziss_wakaf)
 --
 -- Fase view-based: membungkus query legacy fListJournalDaily atas tabel live
 -- transaction.{account, journal, journalitem, transaction}. Dibaca read-only oleh

@@ -1,4 +1,4 @@
--- [REPORT-GT] View laporan List Transaksi Umum (zakat / mziss_laz)
+-- [REPORT-GT] View laporan List Transaksi Umum (business DB: mziss_laz + mziss_wakaf)
 --
 -- Fase view-based: membungkus query legacy fGeneralTransaction atas tabel live
 -- transaction.*. Grain = transactionitem (master-detail di-group saat disajikan).

@@ -119,16 +119,20 @@ async def login(payload: LoginPayload, request: Request):
     request.session["active_tenant_id"] = default["id"]
     request.session["roles"] = [r["id_peran"] for r in profile["roles"]]
     request.session["branches"] = [b["kode_cabang"] for b in profile["branches"]]
-    primary = next((b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None)
+    primary = profile.get("primary_branch") or next(
+        (b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None
+    )
     request.session["primary_branch"] = primary
+    request.session["branch_access"] = profile.get("branch_access", "single")
     request.session["menus"] = list(profile["menus"])
 
     user_public = await build_user_public(
         db, result.user_id,
         roles=[r["id_peran"] for r in profile["roles"]],
         branches=[b["kode_cabang"] for b in profile["branches"]],
-        primary_branch=next((b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None),
+        primary_branch=primary,
         menus=list(profile["menus"]),
+        branch_access=profile.get("branch_access", "single"),
     )
     await audit.log(
         "login_success",
@@ -285,6 +289,7 @@ async def me(request: Request):
         branches=request.session.get("branches") or [],
         primary_branch=request.session.get("primary_branch"),
         menus=request.session.get("menus") or [],
+        branch_access=request.session.get("branch_access", "single"),
     )
     if user_public is None:
         request.session.clear()

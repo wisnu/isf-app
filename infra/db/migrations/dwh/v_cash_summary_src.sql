@@ -1,4 +1,4 @@
--- [REPORT-CASH] View sumber rekap kas/bank (zakat / mziss_laz)
+-- [REPORT-CASH] View sumber rekap kas/bank (business DB: mziss_laz + mziss_wakaf)
 --
 -- Fase view-based: mutasi mentah + metadata rekening untuk fSummaryCash.
 -- Agregasi (saldo awal/debet/kredit per akun) dihitung di report-api dgn param

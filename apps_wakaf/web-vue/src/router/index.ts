@@ -43,6 +43,51 @@ const router = createRouter({
       meta: { title: 'Manajemen Bank', menu_key: 'keuangan.bank' as MenuKey },
     },
     {
+      path: '/keuangan/laporan/jurnal-harian',
+      name: 'keuangan-laporan-jurnal-harian',
+      component: () => import('@/pages/keuangan/LaporanJurnalHarianPage.vue'),
+      meta: {
+        title: 'Laporan Jurnal Harian',
+        menu_key: 'keuangan.report.journal_daily' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/transaksi-umum',
+      name: 'keuangan-laporan-transaksi-umum',
+      component: () => import('@/pages/keuangan/LaporanGeneralTransactionPage.vue'),
+      meta: {
+        title: 'List Transaksi Umum',
+        menu_key: 'keuangan.report.general_transaction' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/kas-harian',
+      name: 'keuangan-laporan-kas-harian',
+      component: () => import('@/pages/keuangan/LaporanCashDailyPage.vue'),
+      meta: {
+        title: 'Transaksi Kas/Bank Harian',
+        menu_key: 'keuangan.report.cash_daily' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/rekap-kas',
+      name: 'keuangan-laporan-rekap-kas',
+      component: () => import('@/pages/keuangan/LaporanCashSummaryPage.vue'),
+      meta: {
+        title: 'Rekapitulasi Transaksi Kas/Bank',
+        menu_key: 'keuangan.report.cash_summary' as MenuKey,
+      },
+    },
+    {
+      path: '/keuangan/laporan/saldo-bulanan',
+      name: 'keuangan-laporan-saldo-bulanan',
+      component: () => import('@/pages/keuangan/LaporanCashMonthlyPage.vue'),
+      meta: {
+        title: 'Monitoring Saldo Kas/Bank Bulanan',
+        menu_key: 'keuangan.report.cash_monthly' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

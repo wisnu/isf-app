@@ -1,4 +1,4 @@
--- [REPORT-CASH] View mutasi kas/bank harian (zakat / mziss_laz)
+-- [REPORT-CASH] View mutasi kas/bank harian (business DB: mziss_laz + mziss_wakaf)
 --
 -- Fase view-based: membungkus query legacy fDailyCash (per rekening kas/bank).
 -- Grain = transactionitem per rekening. Saldo awal & running balance dihitung di

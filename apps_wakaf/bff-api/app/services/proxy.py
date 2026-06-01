@@ -17,6 +17,14 @@ async def get_report_api(path: str, params: dict | None = None) -> httpx.Respons
         return await client.get(url, params=params)
 
 
+async def stream_report_api(path: str, params: dict | None = None) -> httpx.Response:
+    """GET biner ke report-api (mis. export .xlsx). Timeout lebih longgar untuk
+    generate file. Caller meneruskan content + headers (Content-Type/Disposition)."""
+    url = f"{settings.report_api_base_url}{path}"
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        return await client.get(url, params=params)
+
+
 async def post_api_python(
     path: str,
     *,
