@@ -242,8 +242,8 @@ const parentBaseClass = computed(() =>
         <template v-for="item in group.items" :key="item.label">
           <div class="flex flex-col">
             <!-- Parent with children -->
+            <template v-if="item.children">
             <button
-              v-if="item.children"
               type="button"
               :title="
                 sidebar.collapsed
@@ -274,7 +274,7 @@ const parentBaseClass = computed(() =>
 
             <!-- Children list -->
             <div
-              v-if="item.children && !sidebar.collapsed && isExpanded(item.label)"
+              v-if="!sidebar.collapsed && isExpanded(item.label)"
               class="ml-4 mt-0.5 pl-3 border-l border-border flex flex-col gap-0.5"
             >
               <template v-for="(child, ci) in item.children" :key="child.section ?? child.label ?? ci">
@@ -311,6 +311,7 @@ const parentBaseClass = computed(() =>
                 </div>
               </template>
             </div>
+            </template>
 
             <!-- Standalone link (no children) -->
             <component
