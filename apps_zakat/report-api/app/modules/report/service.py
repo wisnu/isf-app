@@ -351,3 +351,69 @@ async def cash_account_label(account: str) -> str:
     )
     name = row["accountname"] if row else None
     return f"{account} - {name}" if name else account
+
+
+# ── Rekapitulasi Transaksi Kas/Bank (fSummaryCash) — per akun, group valuta ──
+
+async def cash_summary(branch: str, begin: str, end: str) -> dict | None:
+    if not await ping_dwh():
+        return None
+    rows = await fetch_all_dwh(
+        """
+        SELECT account_no, account_name, currency_code,
+          SUM(CASE WHEN mutationtype='D' AND actualdate >= $2::date THEN amount ELSE 0 END)::float8 AS debit,
+          SUM(CASE WHEN mutationtype='C' AND actualdate >= $2::date THEN amount ELSE 0 END)::float8 AS credit,
+          SUM(CASE WHEN actualdate < $2::date
+                   THEN (CASE WHEN mutationtype='D' THEN amount ELSE -amount END)
+                   ELSE 0 END)::float8 AS begin_balance
+        FROM dwh.v_cash_summary_src
+        WHERE branch_code = $1 AND actualdate < ($3::date + INTERVAL '1 day')
+        GROUP BY account_no, account_name, currency_code
+        ORDER BY currency_code, account_no
+        """,
+        branch, date.fromisoformat(begin), date.fromisoformat(end),
+    )
+
+    groups: list[dict] = []
+    by_ccy: dict[str, dict] = {}
+    grand = {"begin_balance": 0.0, "total_debit": 0.0, "total_credit": 0.0, "total_end": 0.0}
+    for r in rows:
+        total = r["debit"] - r["credit"]
+        end_balance = r["begin_balance"] + total
+        item = {
+            "account_no": r["account_no"],
+            "account_name": r["account_name"],
+            "begin_balance": r["begin_balance"],
+            "debit": r["debit"],
+            "credit": r["credit"],
+            "total": total,
+            "end_balance": end_balance,
+        }
+        ccy = r["currency_code"] or "-"
+        g = by_ccy.get(ccy)
+        if g is None:
+            g = {
+                "currency": ccy,
+                "rows": [],
+                "subtotal": {"begin_balance": 0.0, "debit": 0.0, "credit": 0.0, "total": 0.0, "end_balance": 0.0},
+            }
+            by_ccy[ccy] = g
+            groups.append(g)
+        g["rows"].append(item)
+        st = g["subtotal"]
+        st["begin_balance"] += item["begin_balance"]
+        st["debit"] += item["debit"]
+        st["credit"] += item["credit"]
+        st["total"] += total
+        st["end_balance"] += end_balance
+        # Grand total — semua IDR (rate=1); konversi multi-valuta menyusul.
+        grand["begin_balance"] += item["begin_balance"]
+        grand["total_debit"] += item["debit"]
+        grand["total_credit"] += item["credit"]
+        grand["total_end"] += end_balance
+
+    return {"groups": groups, "grand": grand, "period": _period(begin, end)}
+
+
+def _period(begin: str, end: str) -> str:
+    return begin if begin == end else f"{begin} s/d {end}"

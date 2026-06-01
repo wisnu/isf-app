@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
     build_cash_mutation_xlsx,
+    build_cash_summary_xlsx,
     build_general_transaction_xlsx,
     build_journal_daily_xlsx,
 )
@@ -14,6 +15,7 @@ from app.modules.report.service import (
     cash_mutation_export,
     cash_mutation_item_count,
     cash_mutation_page,
+    cash_summary,
     dwh_health,
     general_transaction_item_count,
     general_transaction_page,
@@ -194,6 +196,40 @@ async def cash_mutation_xlsx(
     label = await cash_account_label(account)
     xlsx = build_cash_mutation_xlsx(summary, label, _period_label(begin, end))
     filename = f"cashdaily-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── Rekapitulasi Transaksi Kas/Bank (fSummaryCash) ───────────────────────────
+
+@router.get("/cash-summary")
+async def cash_summary_ep(
+    branch: str = Query(...),
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+):
+    data = await cash_summary(branch, begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/cash-summary/export.xlsx")
+async def cash_summary_xlsx(
+    branch: str = Query(...),
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+):
+    data = await cash_summary(branch, begin, end)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    binfo = await list_branches(branch)
+    label = f"{branch} - {binfo[0]['name']}" if binfo else branch
+    xlsx = build_cash_summary_xlsx(data, label, _period_label(begin, end))
+    filename = f"cashsummary-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

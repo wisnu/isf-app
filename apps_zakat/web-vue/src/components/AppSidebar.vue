@@ -83,6 +83,11 @@ const groups: MenuGroup[] = [
             to: '/keuangan/laporan/kas-harian',
             icon: Banknote,
           },
+          {
+            label: 'Rekapitulasi Kas/Bank',
+            to: '/keuangan/laporan/rekap-kas',
+            icon: Banknote,
+          },
         ],
       },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },

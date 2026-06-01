@@ -12,6 +12,7 @@ router = APIRouter(prefix="/report", tags=["report"])
 _JOURNAL_MENU = "keuangan.report.journal_daily"
 _GT_MENU = "keuangan.report.general_transaction"
 _CASH_MENU = "keuangan.report.cash_daily"
+_CASH_SUMMARY_MENU = "keuangan.report.cash_summary"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -237,6 +238,65 @@ async def cash_mutation_export(
         headers={
             "Content-Disposition": downstream.headers.get(
                 "content-disposition", 'attachment; filename="cashdaily.xlsx"'
+            )
+        },
+    )
+
+
+# ── Rekapitulasi Transaksi Kas/Bank (fSummaryCash) ───────────────────────────
+
+@router.get("/cash-summary/branches")
+async def cash_summary_branches(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_SUMMARY_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-summary")
+async def cash_summary(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_SUMMARY_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    if not resolved:
+        return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
+    downstream = await get_report_api(
+        "/api/report/cash-summary", params={"branch": resolved, "begin": begin, "end": end}
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/cash-summary/export.xlsx")
+async def cash_summary_export(
+    request: Request,
+    _: str = Depends(require_menu(_CASH_SUMMARY_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    if not resolved:
+        return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
+    downstream = await stream_report_api(
+        "/api/report/cash-summary/export.xlsx", params={"branch": resolved, "begin": begin, "end": end}
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="cashsummary.xlsx"'
             )
         },
     )

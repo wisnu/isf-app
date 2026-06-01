@@ -70,6 +70,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/rekap-kas',
+      name: 'keuangan-laporan-rekap-kas',
+      component: () => import('@/pages/keuangan/LaporanCashSummaryPage.vue'),
+      meta: {
+        title: 'Rekapitulasi Transaksi Kas/Bank',
+        menu_key: 'keuangan.report.cash_summary' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

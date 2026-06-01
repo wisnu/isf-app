@@ -214,3 +214,75 @@ def build_cash_mutation_xlsx(summary: dict, account_label: str, period_label: st
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ── Rekapitulasi Kas/Bank (per akun, group valuta + subtotal) ────────────────
+
+_SUMCASH_COLS: list[tuple[str, int]] = [
+    ("Rekening", 40),
+    ("Saldo Awal", 18),
+    ("Debet", 18),
+    ("Kredit", 18),
+    ("Total", 18),
+    ("Saldo Akhir", 18),
+]
+
+
+def build_cash_summary_xlsx(payload: dict, branch_label: str, period_label: str) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data"
+
+    ws.cell(row=1, column=1, value="Rekapitulasi Transaksi Kas/Bank").font = Font(bold=True, size=14)
+    ws.cell(row=2, column=1, value="Cabang").font = Font(bold=True)
+    ws.cell(row=2, column=2, value=branch_label)
+    ws.cell(row=3, column=1, value="Periode").font = Font(bold=True)
+    ws.cell(row=3, column=2, value=period_label)
+    g = payload.get("grand", {})
+    grand_meta = [
+        ("Total Saldo Awal", g.get("begin_balance", 0)),
+        ("Total Debet", g.get("total_debit", 0)),
+        ("Total Kredit", g.get("total_credit", 0)),
+        ("Total Saldo Akhir", g.get("total_end", 0)),
+    ]
+    for i, (label, val) in enumerate(grand_meta, start=4):
+        ws.cell(row=i, column=1, value=label).font = Font(bold=True)
+        ws.cell(row=i, column=2, value=float(val or 0)).number_format = "#,##0.00"
+
+    header_row = 9
+    for col_idx, (title, width) in enumerate(_SUMCASH_COLS, 1):
+        c = ws.cell(row=header_row, column=col_idx, value=title)
+        c.font = Font(bold=True, color="FFFF00")
+        c.fill = PatternFill(start_color="0000FF", end_color="0000FF", fill_type="solid")
+        c.alignment = Alignment(horizontal="center", vertical="center")
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    def _num(cell, v):
+        cell.value = float(v or 0)
+        cell.number_format = "#,##0.00"
+
+    r = header_row
+    for grp in payload.get("groups", []):
+        r += 1
+        ws.cell(row=r, column=1, value=f"Valuta: {grp['currency']}").font = Font(bold=True, italic=True)
+        for item in grp["rows"]:
+            r += 1
+            ws.cell(row=r, column=1, value=f"{item['account_no']} - {item.get('account_name') or ''}")
+            _num(ws.cell(row=r, column=2), item["begin_balance"])
+            _num(ws.cell(row=r, column=3), item["debit"])
+            _num(ws.cell(row=r, column=4), item["credit"])
+            _num(ws.cell(row=r, column=5), item["total"])
+            _num(ws.cell(row=r, column=6), item["end_balance"])
+        st = grp["subtotal"]
+        r += 1
+        sub_cell = ws.cell(row=r, column=1, value=f"SUBTOTAL {grp['currency']}")
+        sub_cell.font = Font(bold=True)
+        for col, key in ((2, "begin_balance"), (3, "debit"), (4, "credit"), (5, "total"), (6, "end_balance")):
+            c = ws.cell(row=r, column=col)
+            _num(c, st[key])
+            c.font = Font(bold=True)
+
+    ws.freeze_panes = f"A{header_row + 1}"
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
