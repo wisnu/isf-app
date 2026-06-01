@@ -4,6 +4,7 @@ import {
   Banknote,
   BookOpen,
   ChevronDown,
+  FileText,
   HandCoins,
   Landmark,
   LayoutDashboard,
@@ -24,13 +25,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useSidebarStore } from '@/stores/sidebar'
 
 interface MenuItem {
-  label: string
+  label?: string
   to?: string
-  icon: FunctionalComponent
+  icon?: FunctionalComponent
   menu_key?: MenuKey
   disabled?: boolean
   badge?: string
   children?: MenuItem[]
+  section?: string // sub-heading di dalam daftar children (bukan item klik)
 }
 
 interface MenuGroup {
@@ -68,13 +70,37 @@ const groups: MenuGroup[] = [
       },
       {
         label: 'Laporan',
-        icon: BarChart3,
+        icon: FileText,
         children: [
+          { section: 'Kas & Transaksi' },
           { label: 'Transaksi Kas/Bank Harian',   menu_key: 'keuangan.report.cash_daily',         to: '/keuangan/laporan/kas-harian',     icon: Banknote },
           { label: 'Rekapitulasi Kas/Bank',        menu_key: 'keuangan.report.cash_summary',       to: '/keuangan/laporan/rekap-kas',      icon: Banknote },
           { label: 'Monitoring Saldo Kas Bulanan', menu_key: 'keuangan.report.cash_monthly',       to: '/keuangan/laporan/saldo-bulanan',  icon: Banknote },
           { label: 'Jurnal Harian',                menu_key: 'keuangan.report.journal_daily',      to: '/keuangan/laporan/jurnal-harian',  icon: BookOpen },
           { label: 'List Transaksi Umum',          menu_key: 'keuangan.report.general_transaction', to: '/keuangan/laporan/transaksi-umum', icon: BookOpen },
+          { section: 'Akuntansi' },
+          { label: 'Trial Balance', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Neraca', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Arus Kas', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Buku Besar', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Perubahan Dana', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Perubahan Dana Detail', icon: FileText, disabled: true, badge: 'Segera' },
+          { section: 'Penghimpunan & Penyaluran' },
+          { label: 'Penghimpunan Dana', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Penyaluran Dana', icon: FileText, disabled: true, badge: 'Segera' },
+          { section: 'Amil' },
+          { label: 'Penerimaan Amil', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Pengeluaran Amil', icon: FileText, disabled: true, badge: 'Segera' },
+          { section: 'Piutang' },
+          { label: 'Piutang pada Karyawan', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Piutang pada Non-Karyawan', icon: FileText, disabled: true, badge: 'Segera' },
+          { section: 'Uang Muka Kegiatan' },
+          { label: 'Rekapitulasi Uang Muka Kegiatan', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'List Transaksi Uang Muka Kegiatan', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Laporan Realisasi Project (Memo)', icon: FileText, disabled: true, badge: 'Segera' },
+          { label: 'Piutang Realisasi Penyaluran', icon: FileText, disabled: true, badge: 'Segera' },
+          { section: 'UPZ' },
+          { label: 'List Transaksi UPZ', icon: FileText, disabled: true, badge: 'Segera' },
         ],
       },
     ],
@@ -101,8 +127,10 @@ const visibleGroups = computed(() =>
             // leaf: check menu_key
             return it.menu_key && auth.hasMenu(it.menu_key) ? it : null
           }
-          // parent with children: filter children
-          const kids = it.children.filter((c) => c.menu_key && auth.hasMenu(c.menu_key))
+          // parent with children: filter children (section & placeholder selalu tampil)
+          const kids = it.children.filter(
+            (c) => c.section || c.disabled || (c.menu_key && auth.hasMenu(c.menu_key)),
+          )
           return kids.length > 0 ? { ...it, children: kids } : null
         })
         .filter((it): it is MenuItem => it !== null)
@@ -219,7 +247,7 @@ const parentBaseClass = computed(() =>
               type="button"
               :title="
                 sidebar.collapsed
-                  ? item.label + ': ' + item.children.map((c) => c.label).join(', ')
+                  ? item.label + ': ' + item.children.filter((c) => c.label).map((c) => c.label).join(', ')
                   : undefined
               "
               :class="
@@ -249,22 +277,39 @@ const parentBaseClass = computed(() =>
               v-if="item.children && !sidebar.collapsed && isExpanded(item.label)"
               class="ml-4 mt-0.5 pl-3 border-l border-border flex flex-col gap-0.5"
             >
-              <router-link
-                v-for="child in item.children"
-                :key="child.label"
-                :to="child.to!"
-                :class="
-                  cn(
-                    'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
-                    isActiveItem(child)
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted hover:text-foreground hover:bg-background',
-                  )
-                "
-              >
-                <component :is="child.icon" class="w-3.5 h-3.5 shrink-0" />
-                <span class="flex-1 truncate">{{ child.label }}</span>
-              </router-link>
+              <template v-for="(child, ci) in item.children" :key="child.section ?? child.label ?? ci">
+                <div
+                  v-if="child.section"
+                  class="px-2 pt-2 pb-0.5 text-[9px] uppercase tracking-wider text-muted/60 font-semibold first:pt-0.5"
+                >{{ child.section }}</div>
+                <router-link
+                  v-else-if="child.to && !child.disabled"
+                  :to="child.to"
+                  :class="
+                    cn(
+                      'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
+                      isActiveItem(child)
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted hover:text-foreground hover:bg-background',
+                    )
+                  "
+                >
+                  <component :is="child.icon" class="w-3.5 h-3.5 shrink-0" />
+                  <span class="flex-1 truncate">{{ child.label }}</span>
+                </router-link>
+                <div
+                  v-else
+                  :title="child.label"
+                  class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-muted/50 cursor-not-allowed"
+                >
+                  <component :is="child.icon" class="w-3.5 h-3.5 shrink-0" />
+                  <span class="flex-1 truncate">{{ child.label }}</span>
+                  <span
+                    v-if="child.badge"
+                    class="text-[9px] uppercase tracking-wide bg-background text-muted px-1 py-px rounded shrink-0"
+                  >{{ child.badge }}</span>
+                </div>
+              </template>
             </div>
 
             <!-- Standalone link (no children) -->
