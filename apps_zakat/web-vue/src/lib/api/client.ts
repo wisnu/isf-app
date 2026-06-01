@@ -56,11 +56,16 @@ async function downloadBlob(path: string, suggestedFilename: string): Promise<vo
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename
+  a.download = filename || 'download'
+  a.rel = 'noopener'
   document.body.appendChild(a)
   a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  // Tunda cleanup: revoke blob URL secara sinkron tepat setelah click membuat
+  // Chrome kehilangan nama download (jatuh ke UUID blob URL). Beri jeda.
+  setTimeout(() => {
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, 1000)
 }
 
 export const api = {

@@ -71,6 +71,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        # Agar nama file export (.xlsx) terbaca oleh fetch lintas-origin di FE.
+        expose_headers=["Content-Disposition"],
     )
 
     @app.get("/health")
