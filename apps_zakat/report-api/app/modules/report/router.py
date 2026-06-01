@@ -80,7 +80,7 @@ async def journal_daily_export(
         branch_label = "Semua Cabang"
 
     xlsx = build_journal_daily_xlsx(rows, branch_label, _period_label(begin, end))
-    filename = f"journaldaily{datetime.now():%Y%m%d%H%M%S}.xlsx"
+    filename = f"journaldaily-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

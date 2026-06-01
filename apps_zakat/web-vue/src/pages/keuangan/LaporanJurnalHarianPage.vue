@@ -114,10 +114,12 @@ async function exportXlsx() {
   exporting.value = true
   errorMsg.value = null
   try {
-    const ts = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
+    const d = new Date()
+    const p = (n: number) => String(n).padStart(2, '0')
+    const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
     await api.downloadBlob(
       `/api/report/journal-daily/export.xlsx?${queryParams(false)}`,
-      `journaldaily${ts}.xlsx`,
+      `journaldaily-${ts}.xlsx`,
     )
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
