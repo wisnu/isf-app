@@ -98,7 +98,8 @@ async function onSwitch(tenantId: string) {
       </DropdownMenu>
 
       <SystemDate />
-      <NotificationBell v-if="auth.user" />
+      <!-- TODO(fase-akhir): aktifkan kembali ikon notifikasi (ganti v-if="false" → "auth.user") -->
+      <NotificationBell v-if="false" />
       <UserMenu v-if="auth.user" />
     </div>
   </header>
