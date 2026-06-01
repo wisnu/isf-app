@@ -128,9 +128,10 @@ async function exportXlsx() {
   }
 }
 
+// Standar laporan: jangan auto-load data saat buka halaman — hanya siapkan
+// filter (cabang). Data di-load saat klik "Tampilkan".
 onMounted(async () => {
   await loadBranches()
-  await load()
 })
 </script>
 

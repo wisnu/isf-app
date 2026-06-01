@@ -133,9 +133,9 @@ async function exportXlsx() {
   }
 }
 
+// Standar laporan: data di-load saat klik "Tampilkan", bukan saat buka halaman.
 onMounted(async () => {
   await loadBranches()
-  await load()
 })
 </script>
 
