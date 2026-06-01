@@ -114,10 +114,10 @@ async function exportXlsx() {
   exporting.value = true
   errorMsg.value = null
   try {
-    const suffix = branch.value || 'semua'
+    const ts = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
     await api.downloadBlob(
       `/api/report/journal-daily/export.xlsx?${queryParams(false)}`,
-      `jurnal-harian-${suffix}-${begin.value}_${end.value}.xlsx`,
+      `journaldaily${ts}.xlsx`,
     )
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'

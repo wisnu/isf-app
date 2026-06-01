@@ -1,4 +1,4 @@
-from datetime import date as _date
+from datetime import date as _date, datetime
 
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
@@ -80,8 +80,7 @@ async def journal_daily_export(
         branch_label = "Semua Cabang"
 
     xlsx = build_journal_daily_xlsx(rows, branch_label, _period_label(begin, end))
-    suffix = branch if branch else "semua"
-    filename = f"jurnal-harian-{suffix}-{begin}_{end}.xlsx"
+    filename = f"journaldaily{datetime.now():%Y%m%d%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,
