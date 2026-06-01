@@ -27,6 +27,7 @@ INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order,
   ('keuangan.kas',           'Manajemen Kas',           'Keuangan',  '/keuangan/kas',          120, 'A'),
   ('keuangan.bank',          'Manajemen Bank',          'Keuangan',  '/keuangan/bank',         130, 'A'),
   ('keuangan.report.journal_daily', 'Laporan Jurnal Harian', 'Keuangan', '/keuangan/laporan/jurnal-harian', 140, 'A'),
+  ('keuangan.report.general_transaction', 'List Transaksi Umum', 'Keuangan', '/keuangan/laporan/transaksi-umum', 141, 'A'),
   ('admin.role_menu',        'Role ↔ Menu Mapping',     'Admin',     '/admin/role-menu',       910, 'A'),
   ('admin.users',            'User Management',         'Admin',     '/admin/users',           920, 'A')
 ON CONFLICT (menu_key) DO UPDATE SET
@@ -90,6 +91,14 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVACC',  'keuangan.report.journal_daily', 'seed'),
   ('DIST',    'keuangan.report.journal_daily', 'seed'),
   ('SPVDIST', 'keuangan.report.journal_daily', 'seed'),
+  ('ADM',     'keuangan.report.general_transaction', 'seed'),
+  ('SPVADM',  'keuangan.report.general_transaction', 'seed'),
+  ('KEU',     'keuangan.report.general_transaction', 'seed'),
+  ('SPVKEU',  'keuangan.report.general_transaction', 'seed'),
+  ('ACC',     'keuangan.report.general_transaction', 'seed'),
+  ('SPVACC',  'keuangan.report.general_transaction', 'seed'),
+  ('DIST',    'keuangan.report.general_transaction', 'seed'),
+  ('SPVDIST', 'keuangan.report.general_transaction', 'seed'),
   -- PHP / SPVPHP: penghimpunan
   ('PHP',     'dashboard.overview',     'seed'),
   ('PHP',     'dashboard.penghimpunan', 'seed'),

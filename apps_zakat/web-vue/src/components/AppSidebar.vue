@@ -73,6 +73,11 @@ const groups: MenuGroup[] = [
             to: '/keuangan/laporan/jurnal-harian',
             icon: BookOpen,
           },
+          {
+            label: 'List Transaksi Umum',
+            to: '/keuangan/laporan/transaksi-umum',
+            icon: BookOpen,
+          },
         ],
       },
       { label: 'Program', icon: HandCoins, disabled: true, badge: 'Fase 3' },

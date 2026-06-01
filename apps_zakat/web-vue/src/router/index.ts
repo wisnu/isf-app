@@ -52,6 +52,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/keuangan/laporan/transaksi-umum',
+      name: 'keuangan-laporan-transaksi-umum',
+      component: () => import('@/pages/keuangan/LaporanGeneralTransactionPage.vue'),
+      meta: {
+        title: 'List Transaksi Umum',
+        menu_key: 'keuangan.report.general_transaction' as MenuKey,
+      },
+    },
+    {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
       component: () => import('@/pages/DashboardKeuanganPage.vue'),

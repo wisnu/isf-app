@@ -3,10 +3,16 @@ from datetime import date as _date, datetime
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
-from app.modules.report.export import build_journal_daily_xlsx
+from app.modules.report.export import (
+    build_general_transaction_xlsx,
+    build_journal_daily_xlsx,
+)
 from app.modules.report.service import (
     CAP,
     dwh_health,
+    general_transaction_item_count,
+    general_transaction_page,
+    general_transaction_rows,
     journal_daily_count,
     journal_daily_page,
     journal_daily_rows,
@@ -81,6 +87,55 @@ async def journal_daily_export(
 
     xlsx = build_journal_daily_xlsx(rows, branch_label, _period_label(begin, end))
     filename = f"journaldaily-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    return Response(
+        content=xlsx,
+        media_type=_XLSX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+async def _branch_label(branch: str | None) -> str:
+    if not branch:
+        return "Semua Cabang"
+    binfo = await list_branches(branch)
+    bname = binfo[0]["name"] if binfo else ""
+    return f"{branch} - {bname}" if bname else branch
+
+
+@router.get("/general-transaction")
+async def general_transaction(
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+    branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
+):
+    data = await general_transaction_page(branch, begin, end, page, page_size)
+    if data is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    return ok(data)
+
+
+@router.get("/general-transaction/export.xlsx")
+async def general_transaction_export(
+    begin: str = Query(default_factory=lambda: _date.today().isoformat()),
+    end: str = Query(default_factory=lambda: _date.today().isoformat()),
+    branch: str | None = Query(default=None),
+):
+    total = await general_transaction_item_count(branch, begin, end)
+    if total > CAP:
+        return JSONResponse(
+            status_code=422,
+            content=err(
+                "REPORT_TOO_LARGE",
+                f"Hasil {total:,} baris melebihi batas {CAP:,}. Persempit rentang tanggal atau pilih satu cabang.",
+            ),
+        )
+    rows = await general_transaction_rows(branch, begin, end)
+    if rows is None:
+        return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
+    xlsx = build_general_transaction_xlsx(rows, await _branch_label(branch), _period_label(begin, end))
+    filename = f"generaltransaction-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,

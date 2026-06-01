@@ -10,6 +10,7 @@ from app.shared.response import err
 router = APIRouter(prefix="/report", tags=["report"])
 
 _JOURNAL_MENU = "keuangan.report.journal_daily"
+_GT_MENU = "keuangan.report.general_transaction"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -20,6 +21,13 @@ async def ping(request: Request):
         return error_response
     downstream = await get_report_api("/api/report/ping")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+async def _branches_for_session(request: Request):
+    access = request.session.get("branch_access", "single")
+    primary = request.session.get("primary_branch") or ""
+    scope = "all" if access == "all" else primary
+    return await get_report_api("/api/report/branches", params={"scope": scope})
 
 
 def _resolve_branch(request: Request, branch: str | None) -> tuple[str | None, JSONResponse | None]:
@@ -104,8 +112,63 @@ async def journal_daily_branches(
     request: Request,
     _: str = Depends(require_menu(_JOURNAL_MENU)),
 ):
-    access = request.session.get("branch_access", "single")
-    primary = request.session.get("primary_branch") or ""
-    scope = "all" if access == "all" else primary
-    downstream = await get_report_api("/api/report/branches", params={"scope": scope})
+    downstream = await _branches_for_session(request)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+# ── List Transaksi Umum (GT) ─────────────────────────────────────────────────
+
+@router.get("/general-transaction/branches")
+async def general_transaction_branches(
+    request: Request,
+    _: str = Depends(require_menu(_GT_MENU)),
+):
+    downstream = await _branches_for_session(request)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+@router.get("/general-transaction")
+async def general_transaction(
+    request: Request,
+    _: str = Depends(require_menu(_GT_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params: dict = {"begin": begin, "end": end, "page": page, "page_size": page_size}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await get_report_api("/api/report/general-transaction", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/general-transaction/export.xlsx")
+async def general_transaction_export(
+    request: Request,
+    _: str = Depends(require_menu(_GT_MENU)),
+    begin: str = Query(...),
+    end: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    resolved, error = _resolve_branch(request, branch)
+    if error is not None:
+        return error
+    params: dict = {"begin": begin, "end": end}
+    if resolved:
+        params["branch"] = resolved
+    downstream = await stream_report_api("/api/report/general-transaction/export.xlsx", params=params)
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={
+            "Content-Disposition": downstream.headers.get(
+                "content-disposition", 'attachment; filename="generaltransaction.xlsx"'
+            )
+        },
+    )
