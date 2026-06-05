@@ -257,6 +257,24 @@ const router = createRouter({
       component: () => import('@/pages/profile/PasswordPage.vue'),
       meta: { title: 'Ganti Password' },
     },
+    {
+      path: '/keuangan/upload/penghimpunan',
+      name: 'keuangan-upload-penghimpunan',
+      component: () => import('@/pages/keuangan/UploadPenghimpunanPage.vue'),
+      meta: { title: 'Upload Penghimpunan', menu_key: 'keuangan.upload.penghimpunan' as MenuKey },
+    },
+    {
+      path: '/keuangan/upload/penghimpunan/list',
+      name: 'keuangan-upload-penghimpunan-list',
+      component: () => import('@/pages/keuangan/UploadPenghimpunanListPage.vue'),
+      meta: { title: 'Daftar Batch Upload', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
+    },
+    {
+      path: '/keuangan/upload/penghimpunan/:id',
+      name: 'keuangan-upload-penghimpunan-detail',
+      component: () => import('@/pages/keuangan/UploadPenghimpunanDetailPage.vue'),
+      meta: { title: 'Detail Batch', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })

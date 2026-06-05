@@ -4,6 +4,7 @@ import {
   Banknote,
   BookOpen,
   ChevronDown,
+  ClipboardCheck,
   FileText,
   HandCoins,
   Landmark,
@@ -11,6 +12,7 @@ import {
   PieChart,
   Settings,
   TrendingUp,
+  Upload,
   Users,
   Wallet,
 } from 'lucide-vue-next'
@@ -64,6 +66,9 @@ const groups: MenuGroup[] = [
           { label: 'Chart of Accounts', to: '/keuangan/coa', icon: BookOpen },
           { label: 'Kas', to: '/keuangan/kas', icon: Banknote },
           { label: 'Bank', to: '/keuangan/bank', icon: Landmark },
+          { section: 'Upload' },
+          { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan', icon: Upload },
+          { label: 'Otorisasi Upload', to: '/keuangan/upload/penghimpunan/list', icon: ClipboardCheck },
         ],
       },
       {
