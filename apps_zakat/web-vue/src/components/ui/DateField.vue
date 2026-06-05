@@ -26,14 +26,25 @@ const picker = ref<HTMLInputElement | null>(null)
 
 watch(() => props.modelValue, (v) => { text.value = isoToDisplay(v) })
 
+function formatRaw(raw: string): string {
+  if (raw.length > 4) return `${raw.slice(0, 2)}-${raw.slice(2, 4)}-${raw.slice(4)}`
+  if (raw.length > 2) return `${raw.slice(0, 2)}-${raw.slice(2)}`
+  return raw
+}
+
 function onInput(e: Event) {
-  // auto-mask: hanya digit, sisipkan '-' jadi DD-MM-YYYY
-  const raw = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 8)
-  let out = raw
-  if (raw.length > 4) out = `${raw.slice(0, 2)}-${raw.slice(2, 4)}-${raw.slice(4)}`
-  else if (raw.length > 2) out = `${raw.slice(0, 2)}-${raw.slice(2)}`
+  const inp = e.target as HTMLInputElement
+  const isDeleting = inp.value.length < text.value.length
+  const raw = inp.value.replace(/\D/g, '').slice(0, 8)
+
+  // Saat delete: izinkan digit berkurang tanpa memaksa reformat ke 8 digit
+  // Saat tambah: format normal
+  const out = formatRaw(isDeleting && raw.length < 8 ? raw : raw.slice(0, 8))
+
+  // Langsung set DOM (hindari cursor loncat dari Vue re-render)
+  inp.value = out
   text.value = out
-  // auto-commit begitu format lengkap (DD-MM-YYYY) agar tak perlu blur
+
   if (out.length === 10) {
     const iso = displayToIso(out)
     if (iso) emit('update:modelValue', iso)
