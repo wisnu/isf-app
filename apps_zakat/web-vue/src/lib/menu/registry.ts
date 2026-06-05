@@ -28,6 +28,8 @@ export const MENU_KEYS = [
   'keuangan.report.project_memo',
   'keuangan.report.program_ar',
   'keuangan.report.upz',
+  'keuangan.upload.penghimpunan',
+  'keuangan.upload.penghimpunan.approve',
   'admin.role_menu',
   'admin.users',
 ] as const

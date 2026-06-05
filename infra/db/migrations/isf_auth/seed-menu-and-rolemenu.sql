@@ -273,6 +273,25 @@ ON CONFLICT (id_peran, menu_key) DO NOTHING;
 
 COMMIT;
 
+-- Upload Penghimpunan (2026-06-05)
+INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
+VALUES
+  ('keuangan.upload.penghimpunan',         'Upload Penghimpunan',           'Keuangan', '/keuangan/upload/penghimpunan',         190, 'A'),
+  ('keuangan.upload.penghimpunan.approve',  'Otorisasi Upload Penghimpunan', 'Keuangan', '/keuangan/upload/penghimpunan/approve', 191, 'A')
+ON CONFLICT (menu_key) DO UPDATE SET
+  label       = EXCLUDED.label,
+  group_label = EXCLUDED.group_label,
+  route_path  = EXCLUDED.route_path,
+  sort_order  = EXCLUDED.sort_order,
+  status      = EXCLUDED.status,
+  updated_at  = NOW();
+
+INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
+  ('KEU',    'keuangan.upload.penghimpunan',         'seed'),
+  ('SPVKEU', 'keuangan.upload.penghimpunan',         'seed'),
+  ('SPVKEU', 'keuangan.upload.penghimpunan.approve', 'seed')
+ON CONFLICT (id_peran, menu_key) DO NOTHING;
+
 -- Verify
 SELECT 'menu' AS table_name, COUNT(*) AS rows FROM isf_auth.menu
 UNION ALL

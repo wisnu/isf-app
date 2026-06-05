@@ -10,6 +10,7 @@ dependencies = [
   "asyncpg>=0.30",
   "openpyxl>=3.1",
   "xlrd>=2.0",
+  "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
