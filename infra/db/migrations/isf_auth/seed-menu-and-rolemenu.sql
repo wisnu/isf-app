@@ -292,6 +292,27 @@ INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
   ('SPVKEU', 'keuangan.upload.penghimpunan.approve', 'seed')
 ON CONFLICT (id_peran, menu_key) DO NOTHING;
 
+-- Histori Transaksi (2026-06-05)
+INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
+VALUES ('keuangan.transaksi.histori', 'Histori Transaksi', 'Keuangan', '/keuangan/transaksi/histori', 145, 'A')
+ON CONFLICT (menu_key) DO UPDATE SET
+  label       = EXCLUDED.label,
+  group_label = EXCLUDED.group_label,
+  route_path  = EXCLUDED.route_path,
+  sort_order  = EXCLUDED.sort_order,
+  status      = EXCLUDED.status,
+  updated_at  = NOW();
+
+INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
+  ('ADM',    'keuangan.transaksi.histori', 'seed'),
+  ('SPVADM', 'keuangan.transaksi.histori', 'seed'),
+  ('KEU',    'keuangan.transaksi.histori', 'seed'),
+  ('SPVKEU', 'keuangan.transaksi.histori', 'seed'),
+  ('ACC',    'keuangan.transaksi.histori', 'seed'),
+  ('SPVACC', 'keuangan.transaksi.histori', 'seed'),
+  ('QAC',    'keuangan.transaksi.histori', 'seed')
+ON CONFLICT (id_peran, menu_key) DO NOTHING;
+
 -- Verify
 SELECT 'menu' AS table_name, COUNT(*) AS rows FROM isf_auth.menu
 UNION ALL
