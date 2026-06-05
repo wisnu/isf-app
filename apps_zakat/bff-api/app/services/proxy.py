@@ -52,3 +52,10 @@ async def post_multipart_api_python(
     files = {file_field: (filename, file_content, content_type)}
     async with httpx.AsyncClient(timeout=30.0) as client:
         return await client.post(url, data=data, files=files)
+
+
+async def stream_api_python(path: str, params: dict | None = None) -> httpx.Response:
+    """GET biner ke api-python (mis. export .xlsx). Timeout lebih longgar untuk generate file."""
+    url = f"{settings.api_python_base_url}{path}"
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        return await client.get(url, params=params)
