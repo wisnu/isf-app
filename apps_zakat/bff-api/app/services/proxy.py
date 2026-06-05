@@ -36,3 +36,19 @@ async def post_api_python(
     url = f"{settings.api_python_base_url}{path}"
     async with httpx.AsyncClient(timeout=10.0) as client:
         return await client.request(method, url, json=json_body)
+
+
+async def post_multipart_api_python(
+    path: str,
+    *,
+    data: dict,
+    file_content: bytes,
+    file_field: str = 'file',
+    filename: str = 'upload',
+    content_type: str = 'application/octet-stream',
+) -> httpx.Response:
+    """POST multipart/form-data ke api-python (untuk upload file)."""
+    url = f"{settings.api_python_base_url}{path}"
+    files = {file_field: (filename, file_content, content_type)}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        return await client.post(url, data=data, files=files)
