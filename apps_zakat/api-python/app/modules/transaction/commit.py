@@ -411,17 +411,27 @@ async def _commit_item(conn, item: dict, *, branch_code: str, inputer: str,
 
 
 async def approve_batch(batch_id: int, authorized_user: str, branch_code: str,
-                        inputer: str) -> dict:
+                        inputer: str) -> int:
     """Approve a batch: turn every batch item into real accounting transactions.
 
     Each item is committed in its own DB transaction; the batch header is flipped
-    to authorized only after all items succeed. Returns a summary dict
-    ``{batch_id, total_committed, total_amount}``.
+    to authorized only after all items succeed. Returns the count of committed
+    transactions as an ``int``.
     """
     pool = get_pool()
     year = datetime.now(timezone.utc).year
 
     async with pool.acquire() as conn:
+        # Check batch exists and is not already approved
+        batch_row = await conn.fetchrow(
+            "SELECT authstatus FROM transaction.batchupload WHERE batchid = $1",
+            batch_id,
+        )
+        if not batch_row:
+            raise LookupError(f'Batch {batch_id} tidak ditemukan')
+        if (batch_row['authstatus'] or 'P') == 'A':
+            raise ValueError('Batch sudah pernah diotorisasi')
+
         items = await conn.fetch(
             """SELECT * FROM transaction.batchuploaditem
                WHERE batchid = $1
@@ -465,8 +475,4 @@ async def approve_batch(batch_id: int, authorized_user: str, branch_code: str,
                 batch_id, authorized_user, committed, grand_total,
             )
 
-    return {
-        'batch_id': batch_id,
-        'total_committed': committed,
-        'total_amount': grand_total,
-    }
+    return committed
