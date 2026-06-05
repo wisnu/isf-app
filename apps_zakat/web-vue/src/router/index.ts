@@ -275,6 +275,18 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/UploadPenghimpunanDetailPage.vue'),
       meta: { title: 'Detail Batch', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
     },
+    {
+      path: '/keuangan/transaksi/histori',
+      name: 'keuangan-transaksi-histori',
+      component: () => import('@/pages/keuangan/HistoriTransaksiPage.vue'),
+      meta: { title: 'Histori Transaksi', menu_key: 'keuangan.transaksi.histori' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/histori/:id',
+      name: 'keuangan-transaksi-histori-detail',
+      component: () => import('@/pages/keuangan/HistoriTransaksiDetailPage.vue'),
+      meta: { title: 'Detail Transaksi', menu_key: 'keuangan.transaksi.histori' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
