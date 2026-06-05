@@ -7,9 +7,10 @@ def test_basic_date_filter():
         '2026-06-01', '2026-06-30', 'actual', 'none',
         None, None, None, True, '',
     )
+    from datetime import date
     assert '$1' in where and '$2' in where
-    assert args[0] == '2026-06-01'
-    assert args[1] == '2026-06-30'
+    assert args[0] == date(2026, 6, 1)
+    assert args[1] == date(2026, 6, 30)
 
 
 def test_transaction_date_type():

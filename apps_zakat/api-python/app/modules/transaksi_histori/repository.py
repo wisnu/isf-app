@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import date as _date
 from app.shared.db import fetch_all, fetch_one
 
 _SORT_MAP = {
@@ -50,10 +51,10 @@ def build_search_where(
     Pure function — no DB access — fully unit-testable."""
     date_col = 't.actualdate' if date_type == 'actual' else 't.transactiondate'
     conds: list[str] = [
-        f"{date_col}::date >= $1",
-        f"{date_col}::date <= $2",
+        f"{date_col} >= $1",
+        f"{date_col} <= $2",
     ]
-    args: list = [begin, end]
+    args: list = [_date.fromisoformat(begin), _date.fromisoformat(end)]
 
     if branch:
         args.append(branch)
