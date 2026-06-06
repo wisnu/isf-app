@@ -2,14 +2,16 @@
 import { CalendarDays } from 'lucide-vue-next'
 import { shallowRef, useTemplateRef, watch } from 'vue'
 
-// Input tanggal format DD-MM-YYYY (tampilan) yang tetap mengikat nilai ISO
-// 'YYYY-MM-DD' via v-model. Dilengkapi date-picker native (tombol kalender).
+// Input tanggal DD-MM-YYYY (tampilan) ↔ YYYY-MM-DD ISO (v-model).
+// Mendukung input manual bebas: user bisa ketik "04-06-2026" atau "04062026".
+// Dashes disisipkan otomatis saat panjang digit menyentuh posisi 2 dan 4.
+// Format final (DD-MM-YYYY) divalidasi saat blur/commit.
 const props = defineProps<{ modelValue: string }>()
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 
 function isoToDisplay(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '')
-  return m ? `${m[3]}-${m[2]}-${m[1]}` : (iso || '')
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : ''
 }
 function displayToIso(s: string): string | null {
   const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec((s || '').trim())
@@ -17,48 +19,65 @@ function displayToIso(s: string): string | null {
   const iso = `${m[3]}-${m[2]}-${m[1]}`
   const d = new Date(iso + 'T00:00:00')
   if (isNaN(d.getTime())) return null
-  // pastikan komponen valid (mis. 31-02 ditolak)
   return d.toISOString().slice(0, 10) === iso ? iso : null
 }
 
 const text = shallowRef(isoToDisplay(props.modelValue))
 const picker = useTemplateRef<HTMLInputElement>('picker')
 
-watch(() => props.modelValue, (v) => { text.value = isoToDisplay(v) })
-
-function formatRaw(raw: string): string {
-  if (raw.length > 4) return `${raw.slice(0, 2)}-${raw.slice(2, 4)}-${raw.slice(4)}`
-  if (raw.length > 2) return `${raw.slice(0, 2)}-${raw.slice(2)}`
-  return raw
-}
+watch(() => props.modelValue, (v) => {
+  text.value = isoToDisplay(v)
+})
 
 function onInput(e: Event) {
   const inp = e.target as HTMLInputElement
-  const isDeleting = inp.value.length < text.value.length
-  const raw = inp.value.replace(/\D/g, '').slice(0, 8)
+  let val = inp.value
 
-  // Saat delete: izinkan digit berkurang tanpa memaksa reformat ke 8 digit
-  // Saat tambah: format normal
-  const out = formatRaw(isDeleting && raw.length < 8 ? raw : raw.slice(0, 8))
+  // Auto-insert dash setelah digit ke-2 dan ke-4 saat mengetik maju
+  const digits = val.replace(/\D/g, '')
+  if (digits.length === 2 && val === digits) {
+    val = digits + '-'
+    inp.value = val
+  } else if (digits.length === 4 && val.replace(/-/g, '') === digits) {
+    val = `${digits.slice(0, 2)}-${digits.slice(2)}-`
+    inp.value = val
+  }
 
-  // Langsung set DOM (hindari cursor loncat dari Vue re-render)
-  inp.value = out
-  text.value = out
+  text.value = val
 
-  if (out.length === 10) {
-    const iso = displayToIso(out)
+  // Emit langsung jika sudah 10 karakter valid
+  if (val.length === 10) {
+    const iso = displayToIso(val)
     if (iso) emit('update:modelValue', iso)
   }
 }
+
 function commit() {
-  const iso = displayToIso(text.value)
-  if (iso) emit('update:modelValue', iso)
-  else text.value = isoToDisplay(props.modelValue) // revert invalid
+  // Coba parse DD-MM-YYYY
+  let iso = displayToIso(text.value)
+  if (iso) {
+    text.value = isoToDisplay(iso)
+    emit('update:modelValue', iso)
+    return
+  }
+  // Fallback: 8 digit tanpa strip → format otomatis
+  const digits = text.value.replace(/\D/g, '')
+  if (digits.length === 8) {
+    const formatted = `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`
+    iso = displayToIso(formatted)
+    if (iso) {
+      text.value = formatted
+      emit('update:modelValue', iso)
+      return
+    }
+  }
+  // Invalid — revert ke nilai terakhir yang valid
+  text.value = isoToDisplay(props.modelValue)
 }
+
 function openPicker() {
   const el = picker.value
   if (!el) return
-  // showPicker() bila tersedia, else fokus (klik) input native
   // @ts-expect-error showPicker belum di semua lib dom
   if (typeof el.showPicker === 'function') el.showPicker()
   else el.click()
@@ -79,7 +98,6 @@ function onPick(e: Event) {
       maxlength="10"
       class="h-9 w-36 rounded-lg border border-border bg-surface pl-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
       @input="onInput"
-      @change="commit"
       @blur="commit"
     />
     <button
