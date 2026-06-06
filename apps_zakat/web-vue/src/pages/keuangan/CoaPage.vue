@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { Check, Download, FileText, Folder, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
 import Column from 'primevue/column'
-
-const FilterMatchMode = {
-  CONTAINS: 'contains',
-  STARTS_WITH: 'startsWith',
-  IN: 'in',
-  EQUALS: 'equals',
-} as const
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 
 interface CoaRow {
@@ -53,6 +47,7 @@ function typeBadgeClass(label: string) {
   return TYPE_BADGE[label] ?? 'bg-background text-muted border border-border'
 }
 
+// ── Data ──────────────────────────────────────────────────────────────────────
 const allRows = ref<CoaRow[]>([])
 const statsData = shallowRef<{ total: number; by_type: Record<string, number> } | null>(null)
 const loading = shallowRef(false)
@@ -60,48 +55,84 @@ const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 const compactMode = shallowRef(true)
 
-const filters = ref({
-  global:     { value: null as string | null,    matchMode: FilterMatchMode.CONTAINS },
-  code:       { value: null as string | null,    matchMode: FilterMatchMode.STARTS_WITH },
-  name:       { value: null as string | null,    matchMode: FilterMatchMode.CONTAINS },
-  type_label: { value: null as string[] | null,  matchMode: FilterMatchMode.IN },
-  parent:     { value: null as string | null,    matchMode: FilterMatchMode.STARTS_WITH },
-  is_detail:  { value: null as boolean | null,   matchMode: FilterMatchMode.EQUALS },
+// ── Filter state (manual — tidak pakai PrimeVue internal filter) ───────────
+const f = reactive({
+  global: '',
+  code: '',
+  name: '',
+  typeLabels: [] as string[],
+  parent: '',
+  isDetail: null as boolean | null,
 })
 
-const hasActiveFilter = computed(() =>
-  Object.values(filters.value).some(f => {
-    if (f.value === null || f.value === '') return false
-    if (Array.isArray(f.value)) return f.value.length > 0
-    return true
-  }),
+const hasActiveFilter = computed(
+  () => f.global !== '' || f.code !== '' || f.name !== '' ||
+        f.typeLabels.length > 0 || f.parent !== '' || f.isDetail !== null,
 )
 
 function clearFilters() {
-  filters.value.global.value = null
-  filters.value.code.value = null
-  filters.value.name.value = null
-  filters.value.type_label.value = null
-  filters.value.parent.value = null
-  filters.value.is_detail.value = null
+  f.global = ''
+  f.code = ''
+  f.name = ''
+  f.typeLabels = []
+  f.parent = ''
+  f.isDetail = null
 }
 
-function toggleTypeFilter(label: string, current: string[] | null, cb: () => void) {
-  const arr = current ? [...current] : []
-  const idx = arr.indexOf(label)
-  if (idx >= 0) arr.splice(idx, 1)
-  else arr.push(label)
-  filters.value.type_label.value = arr.length ? arr : null
-  cb()
+function toggleType(label: string) {
+  const idx = f.typeLabels.indexOf(label)
+  if (idx >= 0) f.typeLabels.splice(idx, 1)
+  else f.typeLabels.push(label)
 }
 
-function setIsDetailFilter(val: boolean | null, cb: () => void) {
-  filters.value.is_detail.value = val
-  cb()
-}
+// ── Client-side filtering ──────────────────────────────────────────────────
+const filteredRows = computed(() => {
+  let rows = allRows.value
 
-const inputClass = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted/60'
+  const g = f.global.trim().toLowerCase()
+  if (g) rows = rows.filter(r =>
+    r.code.toLowerCase().includes(g) ||
+    (r.name ?? '').toLowerCase().includes(g) ||
+    r.type_label.toLowerCase().includes(g) ||
+    (r.parent ?? '').toLowerCase().includes(g),
+  )
 
+  if (f.code) {
+    const q = f.code.toLowerCase()
+    rows = rows.filter(r => r.code.toLowerCase().startsWith(q))
+  }
+  if (f.name) {
+    const q = f.name.toLowerCase()
+    rows = rows.filter(r => (r.name ?? '').toLowerCase().includes(q))
+  }
+  if (f.typeLabels.length) {
+    rows = rows.filter(r => f.typeLabels.includes(r.type_label))
+  }
+  if (f.parent) {
+    const q = f.parent.toLowerCase()
+    rows = rows.filter(r => (r.parent ?? '').toLowerCase().startsWith(q))
+  }
+  if (f.isDetail !== null) {
+    rows = rows.filter(r => r.is_detail === f.isDetail)
+  }
+
+  return rows
+})
+
+// ── Pagination manual ──────────────────────────────────────────────────────
+const ROWS_PER_PAGE = 50
+const currentPage = shallowRef(1)
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / ROWS_PER_PAGE)))
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * ROWS_PER_PAGE
+  return filteredRows.value.slice(start, start + ROWS_PER_PAGE)
+})
+
+// Reset ke hal 1 saat filter berubah
+watch(filteredRows, () => { currentPage.value = 1 })
+
+// ── API ────────────────────────────────────────────────────────────────────
 async function loadAll() {
   loading.value = true
   errorMsg.value = null
@@ -137,6 +168,9 @@ async function exportXlsx() {
 }
 
 onMounted(loadAll)
+
+// Tailwind class untuk filter inputs di popup
+const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted/60'
 </script>
 
 <template>
@@ -145,7 +179,9 @@ onMounted(loadAll)
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-        <p class="text-sm text-muted">Akun perkiraan dari <code class="text-[11px] bg-muted/20 px-1 rounded">transaction.account</code></p>
+        <p class="text-sm text-muted">
+          Akun perkiraan dari <code class="text-[11px] bg-muted/20 px-1 rounded">transaction.account</code>
+        </p>
       </div>
       <div class="flex items-center gap-2">
         <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="loadAll">
@@ -182,7 +218,7 @@ onMounted(loadAll)
     <!-- Table card -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
 
-      <!-- Toolbar: Clear + compact mode + keyword search -->
+      <!-- Toolbar atas: Clear + compact + keyword search -->
       <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <Button
@@ -206,86 +242,74 @@ onMounted(loadAll)
             Compact
           </button>
         </div>
-
-        <!-- Global keyword search -->
         <div class="relative">
           <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
           <input
-            v-model="filters['global'].value"
+            v-model="f.global"
             placeholder="Keyword Search"
-            :class="[inputClass, 'pl-8 h-8 w-52']"
+            :class="[inputCls, 'pl-8 h-8 w-52']"
           />
         </div>
       </div>
 
-      <!-- DataTable dengan client-side filter -->
-      <AppDataTable
-        :value="allRows"
-        :loading="loading"
-        v-model:filters="filters"
-        filter-display="menu"
-        :global-filter-fields="['code', 'name', 'type_label', 'parent']"
-        :compact="compactMode"
-        :paginator="true"
-        :rows="50"
-        :rows-per-page-options="[25, 50, 100, 200]"
-        :always-show-paginator="false"
-        paginator-template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
-        current-page-report-template="{first}–{last} / {totalRecords}"
+      <!-- Pagination di atas tabel (standard) -->
+      <div v-if="filteredRows.length > ROWS_PER_PAGE || (allRows.length && currentPage > 1)"
+        class="px-4 py-2 border-b border-border flex items-center justify-end"
       >
-        <!-- Kode -->
+        <TablePagination
+          :page="currentPage"
+          :total-pages="totalPages"
+          :total="filteredRows.length"
+          :loading="loading"
+          unit="akun"
+          @prev="currentPage--"
+          @next="currentPage++"
+        />
+      </div>
+
+      <!-- DataTable — hanya render, filtering + pagination sudah manual -->
+      <AppDataTable :value="pagedRows" :loading="loading" :compact="compactMode" filter-display="menu">
+
         <Column field="code" header="Kode" style="width:110px;min-width:90px" :show-filter-match-modes="false">
           <template #body="{ data: r }">
             <span class="font-mono text-muted tabular-nums">{{ r.code }}</span>
           </template>
-          <template #filter="{ filterModel, filterCallback }">
-            <input
-              v-model="filterModel.value"
-              :class="inputClass"
-              placeholder="Cari kode…"
-              @input="filterCallback()"
-            />
+          <template #filter>
+            <input v-model="f.code" :class="inputCls" placeholder="Cari kode…" />
           </template>
         </Column>
 
-        <!-- Nama Akun -->
         <Column field="name" header="Nama Akun" :show-filter-match-modes="false">
           <template #body="{ data: r }">
-            <div class="flex items-center gap-1 leading-snug" :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }">
+            <div class="flex items-center gap-1 leading-snug"
+              :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }"
+            >
               <Folder v-if="!r.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
               <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
               <span :class="['text-[11px]', !r.is_detail && 'font-semibold']">{{ r.name ?? '—' }}</span>
             </div>
           </template>
-          <template #filter="{ filterModel, filterCallback }">
-            <input
-              v-model="filterModel.value"
-              :class="inputClass"
-              placeholder="Cari nama…"
-              @input="filterCallback()"
-            />
+          <template #filter>
+            <input v-model="f.name" :class="inputCls" placeholder="Cari nama…" />
           </template>
         </Column>
 
-        <!-- Tipe -->
         <Column field="type_label" header="Tipe" style="width:110px;min-width:90px" :show-filter-match-modes="false">
           <template #body="{ data: r }">
             <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(r.type_label)]">
               {{ r.type_label }}
             </span>
           </template>
-          <template #filter="{ filterModel, filterCallback }">
+          <template #filter>
             <div class="flex flex-col gap-1.5">
-              <label
-                v-for="t in TYPE_OPTIONS"
-                :key="t.code"
-                class="flex items-center gap-2 text-[11px] cursor-pointer py-0.5"
+              <label v-for="t in TYPE_OPTIONS" :key="t.code"
+                class="flex items-center gap-2 cursor-pointer py-0.5"
               >
                 <input
                   type="checkbox"
                   class="rounded"
-                  :checked="Array.isArray(filterModel.value) && filterModel.value.includes(t.label)"
-                  @change="toggleTypeFilter(t.label, filterModel.value, filterCallback)"
+                  :checked="f.typeLabels.includes(t.label)"
+                  @change="toggleType(t.label)"
                 />
                 <span :class="['px-1.5 py-px rounded text-[10px] font-semibold uppercase', typeBadgeClass(t.label)]">
                   {{ t.label }}
@@ -295,22 +319,15 @@ onMounted(loadAll)
           </template>
         </Column>
 
-        <!-- Parent -->
         <Column field="parent" header="Parent" style="width:90px;min-width:80px" :show-filter-match-modes="false">
           <template #body="{ data: r }">
             <span class="font-mono text-muted/60">{{ r.parent ?? '—' }}</span>
           </template>
-          <template #filter="{ filterModel, filterCallback }">
-            <input
-              v-model="filterModel.value"
-              :class="inputClass"
-              placeholder="Kode parent…"
-              @input="filterCallback()"
-            />
+          <template #filter>
+            <input v-model="f.parent" :class="inputCls" placeholder="Kode parent…" />
           </template>
         </Column>
 
-        <!-- Sifat -->
         <Column field="is_detail" header="Sifat" style="width:90px;min-width:80px" :show-filter-match-modes="false"
           :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold whitespace-nowrap' } }"
         >
@@ -324,19 +341,18 @@ onMounted(loadAll)
               </span>
             </div>
           </template>
-          <template #filter="{ filterModel, filterCallback }">
+          <template #filter>
             <div class="flex flex-col gap-1">
-              <button
-                v-for="opt in [{ v: null, l: 'Semua' }, { v: true, l: 'Detail' }, { v: false, l: 'Grup' }]"
+              <button v-for="opt in [{ v: null, l: 'Semua' }, { v: true, l: 'Detail' }, { v: false, l: 'Grup' }]"
                 :key="String(opt.v)"
                 type="button"
                 :class="[
                   'text-[11px] px-2.5 py-0.5 rounded-full border text-left transition-colors',
-                  filterModel.value === opt.v
+                  f.isDetail === opt.v
                     ? 'bg-primary text-primary-foreground border-primary font-medium'
                     : 'border-border text-muted hover:bg-background hover:text-foreground',
                 ]"
-                @click="setIsDetailFilter(opt.v, filterCallback)"
+                @click="f.isDetail = opt.v"
               >
                 {{ opt.l }}
               </button>
@@ -344,7 +360,6 @@ onMounted(loadAll)
           </template>
         </Column>
 
-        <!-- Aksi -->
         <Column header="Aksi" style="width:50px;min-width:50px"
           :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold' } }"
         >
