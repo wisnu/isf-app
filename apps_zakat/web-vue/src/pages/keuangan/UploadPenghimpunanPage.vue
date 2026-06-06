@@ -53,6 +53,12 @@ function statusColor(s: string) {
   return 'bg-red-100 text-red-800'
 }
 
+function resetUpload() {
+  phase.value = 'idle'
+  selectedFile.value = null
+  rows.value = []
+}
+
 async function downloadTemplate() {
   const res = await fetch(`${BASE_URL}/api/transaction/upload/penghimpunan/template`, {
     credentials: 'include',
@@ -265,11 +271,7 @@ async function saveDraft() {
       <div class="flex gap-3">
         <Button
           variant="outline"
-          @click="
-            phase = 'idle'
-            selectedFile = null
-            rows = []
-          "
+          @click="resetUpload"
           >Upload Lagi</Button
         >
         <router-link to="/keuangan/upload/penghimpunan/list">
