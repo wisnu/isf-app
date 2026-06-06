@@ -4,12 +4,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Loader2,
   Search,
 } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -192,47 +193,54 @@ onMounted(async () => {
 
     <!-- Table -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
-      <div v-if="loading && !data" class="flex justify-center p-12">
-        <Loader2 class="w-7 h-7 animate-spin text-primary" />
-      </div>
-      <div v-else-if="data && data.rows.length === 0" class="p-10 text-center text-sm text-muted italic">
-        Tidak ada data untuk filter ini.
-      </div>
-      <div v-else-if="data" class="overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold">Tanggal</th>
-              <th class="text-left px-3 py-1 font-semibold">No. Transaksi</th>
-              <th class="text-left px-3 py-1 font-semibold">Akun</th>
-              <th class="text-left px-3 py-1 font-semibold">Sub-akun</th>
-              <th class="text-left px-3 py-1 font-semibold">Keterangan</th>
-              <th class="text-right px-3 py-1 font-semibold">Debet</th>
-              <th class="text-right px-3 py-1 font-semibold">Kredit</th>
-              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</td>
-              <td class="px-3 py-1 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno || '—' }}</td>
-              <td class="px-3 py-1">
-                <span class="font-mono text-[11px] text-muted">{{ r.account_code }}</span>
-                <span class="ml-1">{{ r.account_name }}</span>
-              </td>
-              <td class="px-3 py-1 text-[11px] text-muted">
-                {{ [r.subaccountcode, r.subaccountname].filter(Boolean).join(' - ') || '—' }}
-              </td>
-              <td class="px-3 py-1 max-w-[24rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.debit_ekuiv) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.credit_ekuiv) }}</td>
-              <td class="px-3 py-1 text-[11px]">{{ r.inputer || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+        Atur filter lalu klik "Tampilkan"
       </div>
 
-      <!-- Pagination -->
+      <AppDataTable v-else :value="data?.rows ?? []" :loading="loading">
+        <Column field="journal_date" header="Tanggal">
+          <template #body="{ data: r }">
+            <span class="whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</span>
+          </template>
+        </Column>
+        <Column header="No. Transaksi">
+          <template #body="{ data: r }">
+            <span class="font-mono whitespace-nowrap">{{ r.transactionno || '—' }}</span>
+          </template>
+        </Column>
+        <Column header="Akun">
+          <template #body="{ data: r }">
+            <span class="font-mono text-muted">{{ r.account_code }}</span>
+            <span class="ml-1">{{ r.account_name }}</span>
+          </template>
+        </Column>
+        <Column header="Sub-akun">
+          <template #body="{ data: r }">
+            <span class="text-muted">{{ [r.subaccountcode, r.subaccountname].filter(Boolean).join(' - ') || '—' }}</span>
+          </template>
+        </Column>
+        <Column header="Keterangan">
+          <template #body="{ data: r }">
+            <span class="max-w-[24rem] truncate block" :title="r.description ?? ''">{{ r.description }}</span>
+          </template>
+        </Column>
+        <Column header="Debet" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }">
+            <span class="block text-right tabular-nums">{{ fmt(r.debit_ekuiv) }}</span>
+          </template>
+        </Column>
+        <Column header="Kredit" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }">
+            <span class="block text-right tabular-nums">{{ fmt(r.credit_ekuiv) }}</span>
+          </template>
+        </Column>
+        <Column header="Inputer">
+          <template #body="{ data: r }">{{ r.inputer || '—' }}</template>
+        </Column>
+        <template #empty>Tidak ada data untuk filter ini.</template>
+      </AppDataTable>
+
+      <!-- Pagination server-side — tetap manual -->
       <div v-if="data && data.total > 0" class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap">
         <p class="text-[11px] text-muted tabular-nums">
           Hal {{ data.page }} / {{ totalPages }} · total {{ data.total.toLocaleString('id-ID') }} baris
