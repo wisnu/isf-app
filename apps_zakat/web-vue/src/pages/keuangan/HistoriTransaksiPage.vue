@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import TransaksiDeleteDialog from '@/components/keuangan/TransaksiDeleteDialog.vue'
 import DateField from '@/components/ui/DateField.vue'
 import CrudLayout from '@/components/layout/CrudLayout.vue'
@@ -56,9 +57,6 @@ const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 const hasLoaded = shallowRef(false)
-
-const pageFrom = computed(() => total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1)
-const pageTo = computed(() => Math.min(page.value * pageSize.value, total.value))
 
 function goto(target: number) {
   page.value = Math.min(Math.max(1, target), totalPages.value || 1)
@@ -371,7 +369,21 @@ async function confirmDelete() {
             Atur filter lalu klik "Tampilkan"
           </div>
 
-          <div v-else-if="rows.length" class="overflow-x-auto">
+          <template v-else-if="rows.length">
+            <!-- Pagination di atas tabel (standard) -->
+            <div v-if="hasLoaded && totalPages > 1" class="px-4 py-2 border-b border-border flex items-center justify-end">
+              <TablePagination
+                :page="page"
+                :total-pages="totalPages"
+                :total="total"
+                :loading="loading"
+                unit="transaksi"
+                @prev="goto(page - 1)"
+                @next="goto(page + 1)"
+              />
+            </div>
+
+          <div class="overflow-x-auto">
             <table class="w-full text-[11px]">
               <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
                 <tr>
@@ -422,30 +434,6 @@ async function confirmDelete() {
               </tbody>
             </table>
           </div>
-
-          <!-- Pagination footer (pola COA) -->
-          <template #pagination>
-            <div
-              v-if="hasLoaded && totalPages > 1"
-              class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
-            >
-              <p class="text-[11px] text-muted tabular-nums">
-                {{ pageFrom }}–{{ pageTo }} / {{ total.toLocaleString('id-ID') }} transaksi
-              </p>
-              <div class="flex items-center gap-1">
-                <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(1)"><ChevronsLeft class="w-3 h-3" /></button>
-                <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page - 1)"><ChevronLeft class="w-3 h-3" /></button>
-                <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">{{ page }} / {{ totalPages }}</span>
-                <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page + 1)"><ChevronRight class="w-3 h-3" /></button>
-                <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(totalPages)"><ChevronsRight class="w-3 h-3" /></button>
-              </div>
-              <select v-model.number="pageSize" class="text-[11px] border border-border rounded-md px-2 py-0.5 bg-surface text-foreground" @change="goto(1)">
-                <option :value="25">25/hal</option>
-                <option :value="50">50/hal</option>
-                <option :value="100">100/hal</option>
-                <option :value="200">200/hal</option>
-              </select>
-            </div>
           </template>
         </DataPanel>
       </template>
