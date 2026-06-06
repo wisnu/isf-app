@@ -34,6 +34,20 @@ const pt = computed(() => ({
     root: { class: 'ml-1 p-0.5 rounded text-muted/50 hover:text-primary transition-colors cursor-pointer inline-flex items-center' },
   },
   columnFilterButtonIcon: { class: 'w-2.5 h-2.5' },
+  // Built-in paginator
+  pcPaginator: {
+    root: { class: 'px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap text-[11px]' },
+    content: { class: 'flex items-center gap-1' },
+    pages: { class: 'flex items-center gap-1' },
+    current: { class: 'text-muted tabular-nums mr-2' },
+    pcFirstPageButton:    { root: { class: 'p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors cursor-pointer' } },
+    pcPrevPageButton:     { root: { class: 'p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors cursor-pointer' } },
+    pcNextPageButton:     { root: { class: 'p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors cursor-pointer' } },
+    pcLastPageButton:     { root: { class: 'p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors cursor-pointer' } },
+    pcPageButton:         { root: { class: 'min-w-[1.75rem] h-7 px-1.5 rounded-md border border-border text-muted hover:bg-background transition-colors cursor-pointer tabular-nums text-center' } },
+    pcJumpToPageInput:    { root: { class: 'w-12 h-7 rounded-md border border-border px-2 text-center text-[11px] focus:outline-none focus:ring-1 focus:ring-primary' } },
+    pcRowsPerPageDropdown: { root: { class: 'h-7 rounded-md border border-border px-2 text-[11px] bg-surface focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer' } },
+  },
 }))
 </script>
 

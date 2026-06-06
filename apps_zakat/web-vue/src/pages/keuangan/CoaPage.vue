@@ -226,6 +226,12 @@ onMounted(loadAll)
         filter-display="menu"
         :global-filter-fields="['code', 'name', 'type_label', 'parent']"
         :compact="compactMode"
+        :paginator="true"
+        :rows="50"
+        :rows-per-page-options="[25, 50, 100, 200]"
+        :always-show-paginator="false"
+        paginator-template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
+        current-page-report-template="{first}–{last} / {totalRecords}"
       >
         <!-- Kode -->
         <Column field="code" header="Kode" style="width:110px;min-width:90px" :show-filter-match-modes="false">
