@@ -191,32 +191,32 @@ State `page`, `pageSize`, `totalPages`, `goto()` tetap ada di setiap halaman.
 
 ## Rollout: Halaman Laporan
 
-### POC (sesi ini)
+### Selesai — Full Migration (AppDataTable)
 - [x] `main.ts` — register PrimeVue unstyled
-- [x] `components/ui/AppDataTable.vue` — wrapper dibuat
-- [ ] `pages/keuangan/LaporanJurnalHarianPage.vue` — **sedang dikerjakan**
+- [x] `components/ui/AppDataTable.vue` — wrapper + #empty + #footer slot
+- [x] `LaporanJurnalHarianPage.vue`
+- [x] `LaporanGeneralTransactionPage.vue` — grouped cards, inner table migrated
+- [x] `LaporanCashDailyPage.vue`
+- [x] `LaporanCashSummaryPage.vue` — groupRows helper + subtotal rows
+- [x] `LaporanBukuBesarPage.vue` — per-account AppDataTable
+- [x] `LaporanNeracaPage.vue` — 2 AppDataTable (aktiva+pasiva), computed rows dengan total sentinel
+- [x] `LaporanArusKasPage.vue` — discriminated union AKTableRow, flat computed tableRows
+- [x] `LaporanAmilPage.vue` — Column v-if untuk kolom kondisional
+- [x] `LaporanARSummaryPage.vue` — _isTotal flag + row-class
+- [x] `LaporanPenghimpunanDanaPage.vue` — 2 tabel (rekap dana + detail transaksi)
+- [x] `LaporanPenyaluranDanaPage.vue`
+- [x] `LaporanPiutangRealisasiPage.vue` — total row + highlight amber Outstanding
+- [x] `LaporanRealisasiMemoPage.vue` — #footer grand-total
+- [x] `LaporanListUangMukaPage.vue` — status LPJ conditional color
+- [x] `LaporanUpzPage.vue` — per-account AppDataTable + #footer subtotal
 
-### Batch berikutnya (setelah POC verified)
-- [ ] `LaporanGeneralTransactionPage.vue`
-- [ ] `LaporanCashDailyPage.vue`
-- [ ] `LaporanCashSummaryPage.vue`
-- [ ] `LaporanCashMonthlyPage.vue`
-- [ ] `LaporanBukuBesarPage.vue`
-- [ ] `LaporanTrialBalancePage.vue`
-- [ ] `LaporanNeracaPage.vue`
-- [ ] `LaporanArusKasPage.vue`
-- [ ] `LaporanAmilPage.vue`
-- [ ] `LaporanARSummaryPage.vue`
-- [ ] `LaporanPenghimpunanDanaPage.vue`
-- [ ] `LaporanPenyaluranDanaPage.vue`
-- [ ] `LaporanPerubahanDanaPage.vue`
-- [ ] `LaporanPerubahanDanaDetailPage.vue`
-- [ ] `LaporanPiutangRealisasiPage.vue`
-- [ ] `LaporanRealisasiMemoPage.vue`
-- [ ] `LaporanListUangMukaPage.vue`
-- [ ] `LaporanUpzPage.vue`
+### Partial Migration (state guard saja — tabel terlalu kompleks)
+- [~] `LaporanCashMonthlyPage.vue` — pivot matrix kolom bulan dinamis; custom `<table>` dipertahankan
+- [~] `LaporanTrialBalancePage.vue` — group header + colspan dinamis; custom `<table>` dipertahankan
+- [~] `LaporanPerubahanDanaPage.vue` — card-grid hierarkis per dana; bukan flat table
+- [~] `LaporanPerubahanDanaDetailPage.vue` — bertingkat per dana × seksi; bukan flat table
 
-### Halaman non-laporan (opsional, pertimbangkan setelah laporan selesai)
+### Halaman non-laporan (opsional)
 - [ ] `HistoriTransaksiPage.vue`
 - [ ] `CoaPage.vue`
 - [ ] `RoleMenuPage.vue`
