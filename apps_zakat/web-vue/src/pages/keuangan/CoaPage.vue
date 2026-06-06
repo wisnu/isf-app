@@ -1,32 +1,12 @@
 <script setup lang="ts">
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Download,
-  FileText,
-  Folder,
-  HelpCircle,
-  Loader2,
-  Plus,
-  RefreshCw,
-  Search,
-  X,
-} from 'lucide-vue-next'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { Check, Download, FileText, Folder, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
+import { FilterMatchMode } from 'primevue/api'
+import Column from 'primevue/column'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
-import Input from '@/components/ui/Input.vue'
-import Tooltip from '@/components/ui/Tooltip.vue'
-import CrudLayout from '@/components/layout/CrudLayout.vue'
-import DataPanel from '@/components/layout/DataPanel.vue'
-import FilterGroup from '@/components/layout/FilterGroup.vue'
-import FilterPanel from '@/components/layout/FilterPanel.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import { api, ApiError } from '@/lib/api/client'
 
 interface CoaRow {
@@ -41,409 +21,328 @@ interface CoaRow {
   balance: number
 }
 
-interface Pagination {
-  page: number
-  page_size: number
-  total: number
-  total_pages: number
-}
-
 interface CoaList {
   rows: CoaRow[]
   stats: { total: number; by_type: Record<string, number> }
-  pagination: Pagination
+  pagination: { page: number; page_size: number; total: number; total_pages: number }
 }
 
-const data = ref<CoaList | null>(null)
-const loading = shallowRef(false)
-const exporting = shallowRef(false)
-const errorMsg = shallowRef<string | null>(null)
-const search = shallowRef('')
-const page = shallowRef(1)
-const pageSize = shallowRef(20)
-const tipsOpen = shallowRef(false)
-const compactMode = shallowRef(true)
-
-// === Filters ===
-type SifatValue = 'all' | 'detail' | 'group'
-
-const TYPE_OPTIONS: { code: string; label: string }[] = [
+const TYPE_OPTIONS = [
   { code: 'A', label: 'Aset' },
   { code: 'L', label: 'Liabilitas' },
   { code: 'E', label: 'Saldo Dana' },
   { code: 'I', label: 'Pendapatan' },
   { code: 'X', label: 'Penyaluran' },
 ]
-const SIFAT_OPTIONS: { value: SifatValue; label: string }[] = [
-  { value: 'all', label: 'Semua' },
-  { value: 'detail', label: 'Detail' },
-  { value: 'group', label: 'Grup' },
-]
-const LEVEL_OPTIONS: { value: number | null; label: string }[] = [
-  { value: null, label: 'Semua' },
-  { value: 0, label: '≤ 0' },
-  { value: 1, label: '≤ 1' },
-  { value: 2, label: '≤ 2' },
-  { value: 3, label: '≤ 3' },
-  { value: 4, label: '≤ 4' },
-]
 
-const typeFilters = shallowRef<Set<string>>(new Set())
-const sifatFilter = shallowRef<SifatValue>('all')
-const levelMax = shallowRef<number | null>(null)
-
-function toggleType(code: string) {
-  const next = new Set(typeFilters.value)
-  if (next.has(code)) next.delete(code)
-  else next.add(code)
-  typeFilters.value = next
-}
-
-const hasFilters = computed(
-  () =>
-    typeFilters.value.size > 0 ||
-    sifatFilter.value !== 'all' ||
-    levelMax.value !== null ||
-    search.value.trim() !== '',
-)
-
-function resetFilters() {
-  typeFilters.value = new Set()
-  sifatFilter.value = 'all'
-  levelMax.value = null
-  search.value = ''
-}
-
-function buildQueryParams(includePaging: boolean): URLSearchParams {
-  const params = new URLSearchParams()
-  if (includePaging) {
-    params.set('page', String(page.value))
-    params.set('page_size', String(pageSize.value))
-  }
-  const q = search.value.trim()
-  if (q) params.set('search', q)
-  if (typeFilters.value.size > 0) {
-    params.set('type', [...typeFilters.value].join(','))
-  }
-  if (sifatFilter.value === 'detail') params.set('is_detail', 'T')
-  else if (sifatFilter.value === 'group') params.set('is_detail', 'F')
-  if (levelMax.value !== null) params.set('max_level', String(levelMax.value))
-  return params
-}
-
-async function load() {
-  loading.value = true
-  errorMsg.value = null
-  try {
-    const params = buildQueryParams(true)
-    data.value = await api.get<CoaList>(`/api/coa/accounts?${params.toString()}`)
-  } catch (e) {
-    errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat COA'
-    data.value = null
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(search, (_val, _old, onCleanup) => {
-  const timer = setTimeout(() => {
-    page.value = 1
-    load()
-  }, 350)
-  onCleanup(() => clearTimeout(timer))
-})
-watch([page, pageSize], () => load())
-watch([typeFilters, sifatFilter, levelMax], () => {
-  page.value = 1
-  load()
-})
-
-onMounted(load)
-
-const pageInfo = computed(() => {
-  if (!data.value) return { from: 0, to: 0, total: 0, totalPages: 0 }
-  const { page: p, page_size: ps, total, total_pages } = data.value.pagination
-  const from = total === 0 ? 0 : (p - 1) * ps + 1
-  const to = Math.min(p * ps, total)
-  return { from, to, total, totalPages: total_pages }
-})
-
-const stats = computed(() => {
-  const rows = data.value?.rows ?? []
-  const by = data.value?.stats.by_type ?? {}
-  const detail = rows.filter((r) => r.is_detail).length
-  const group = rows.length - detail
-  return {
-    total: data.value?.stats.total ?? 0,
-    aset: by['Aset'] ?? 0,
-    detail,
-    group,
-  }
-})
-
-// Warna badge Tipe di tabel
 const TYPE_BADGE: Record<string, string> = {
-  Aset:       'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  Liabilitas: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-  'Saldo Dana':'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  Pendapatan: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  Penyaluran: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+  'Aset':       'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+  'Liabilitas': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
+  'Saldo Dana': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  'Pendapatan': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  'Penyaluran': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
 }
 
-function typeBadgeClass(label: string): string {
+function typeBadgeClass(label: string) {
   return TYPE_BADGE[label] ?? 'bg-background text-muted border border-border'
 }
 
-function indentStyle(level: number | null) {
-  const px = Math.max(0, (level ?? 0)) * 14
-  return { paddingLeft: px + 'px' }
+const allRows = ref<CoaRow[]>([])
+const statsData = shallowRef<{ total: number; by_type: Record<string, number> } | null>(null)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const compactMode = shallowRef(true)
+
+const filters = ref({
+  global:     { value: null as string | null,    matchMode: FilterMatchMode.CONTAINS },
+  code:       { value: null as string | null,    matchMode: FilterMatchMode.STARTS_WITH },
+  name:       { value: null as string | null,    matchMode: FilterMatchMode.CONTAINS },
+  type_label: { value: null as string[] | null,  matchMode: FilterMatchMode.IN },
+  parent:     { value: null as string | null,    matchMode: FilterMatchMode.STARTS_WITH },
+  is_detail:  { value: null as boolean | null,   matchMode: FilterMatchMode.EQUALS },
+})
+
+const hasActiveFilter = computed(() =>
+  Object.values(filters.value).some(f => {
+    if (f.value === null || f.value === '') return false
+    if (Array.isArray(f.value)) return f.value.length > 0
+    return true
+  }),
+)
+
+function clearFilters() {
+  filters.value.global.value = null
+  filters.value.code.value = null
+  filters.value.name.value = null
+  filters.value.type_label.value = null
+  filters.value.parent.value = null
+  filters.value.is_detail.value = null
 }
 
-function goto(target: number) {
-  const tp = pageInfo.value.totalPages || 1
-  page.value = Math.min(Math.max(1, target), tp)
+function toggleTypeFilter(label: string, current: string[] | null, cb: () => void) {
+  const arr = current ? [...current] : []
+  const idx = arr.indexOf(label)
+  if (idx >= 0) arr.splice(idx, 1)
+  else arr.push(label)
+  filters.value.type_label.value = arr.length ? arr : null
+  cb()
+}
+
+function setIsDetailFilter(val: boolean | null, cb: () => void) {
+  filters.value.is_detail.value = val
+  cb()
+}
+
+const inputClass = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted/60'
+
+async function loadAll() {
+  loading.value = true
+  errorMsg.value = null
+  try {
+    const first = await api.get<CoaList>('/api/coa/accounts?page=1&page_size=500')
+    let rows = [...first.rows]
+    for (let p = 2; p <= first.pagination.total_pages; p++) {
+      const more = await api.get<CoaList>(`/api/coa/accounts?page=${p}&page_size=500`)
+      rows = [...rows, ...more.rows]
+    }
+    allRows.value = rows
+    statsData.value = first.stats
+  } catch (e) {
+    errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat COA'
+  } finally {
+    loading.value = false
+  }
 }
 
 async function exportXlsx() {
   exporting.value = true
   errorMsg.value = null
   try {
-    const params = buildQueryParams(false)
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const domain = (import.meta.env.VITE_PORTAL_DOMAIN as string | undefined) ?? ''
     const suggested = domain ? `coa-${domain}-${today}.xlsx` : `coa-${today}.xlsx`
-    const path = '/api/coa/accounts.xlsx' + (params.toString() ? '?' + params.toString() : '')
-    await api.downloadBlob(path, suggested)
+    await api.downloadBlob('/api/coa/accounts.xlsx', suggested)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {
     exporting.value = false
   }
 }
+
+onMounted(loadAll)
 </script>
 
 <template>
-  <CrudLayout>
+  <div class="space-y-4">
+    <!-- Header + actions -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
+        <p class="text-sm text-muted">Akun perkiraan dari <code class="text-[11px] bg-muted/20 px-1 rounded">transaction.account</code></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="loadAll">
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+          Reload
+        </Button>
+        <Button
+          variant="outline" size="sm" class="gap-1.5 h-8 text-xs"
+          :disabled="exporting || loading || !allRows.length"
+          @click="exportXlsx"
+        >
+          <Download class="w-3.5 h-3.5" :class="{ 'animate-pulse': exporting }" />
+          {{ exporting ? 'Mengekspor…' : 'Export Excel' }}
+        </Button>
+        <Button size="sm" class="gap-1.5 h-8 text-xs" disabled>
+          <Plus class="w-3.5 h-3.5" />
+          Tambah Akun
+        </Button>
+      </div>
+    </div>
 
-    <!-- ── Page Header ── -->
-    <template #header>
-      <PageHeader
-        title="Chart of Accounts"
-        subtitle="Kelola akun perkiraan dari existing DB"
-        status-code="transaction.account"
-      >
-        <template #actions>
-          <Button variant="outline" size="sm" class="gap-1.5 h-8 rounded-lg text-xs" :disabled="loading" @click="load()">
-            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
-            Reload
-          </Button>
+    <!-- Stats ringkas -->
+    <div v-if="statsData" class="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted">
+      <span>Total: <strong class="text-foreground">{{ statsData.total }}</strong></span>
+      <span v-for="(n, label) in statsData.by_type" :key="label">
+        {{ label }}: <strong class="text-foreground">{{ n }}</strong>
+      </span>
+    </div>
+
+    <Alert v-if="errorMsg" variant="destructive" class="py-2 text-xs">
+      <strong>Error:</strong> {{ errorMsg }}
+    </Alert>
+
+    <!-- Table card -->
+    <div class="rounded-xl border border-border bg-surface overflow-hidden">
+
+      <!-- Toolbar: Clear + compact mode + keyword search -->
+      <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
           <Button
-            variant="outline" size="sm" class="gap-1.5 h-8 rounded-lg text-xs"
-            :disabled="exporting || loading || !data || data.pagination.total === 0"
-            @click="exportXlsx"
+            variant="outline" size="sm" class="gap-1 h-7 text-[11px]"
+            :disabled="!hasActiveFilter"
+            @click="clearFilters"
           >
-            <Download class="w-3.5 h-3.5" :class="{ 'animate-pulse': exporting }" />
-            {{ exporting ? 'Mengekspor…' : 'Export Excel' }}
+            <X class="w-3 h-3" />
+            Clear
           </Button>
-          <Button size="sm" class="gap-1.5 h-8 rounded-lg text-xs" disabled>
-            <Plus class="w-3.5 h-3.5" />
-            Tambah Akun
-          </Button>
-        </template>
-      </PageHeader>
-    </template>
-
-    <!-- ── Alert ── -->
-    <template v-if="errorMsg" #alert>
-      <Alert variant="destructive" class="py-2 text-xs">
-        <strong>Error:</strong> {{ errorMsg }}
-      </Alert>
-    </template>
-
-    <!-- ── Filter Sidebar ── -->
-    <template #filter>
-      <FilterPanel :has-filters="hasFilters" @reset="resetFilters">
-
-        <FilterGroup label="Cari Akun">
-          <div class="relative">
-            <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
-            <Input v-model="search" placeholder="Kode, nama, atau parent…" class="pl-8 rounded-xl text-xs h-8" />
-          </div>
-        </FilterGroup>
-
-        <FilterGroup label="Tipe">
-          <div class="flex flex-wrap gap-1">
-            <button
-              type="button"
-              :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
-                typeFilters.size === 0
-                  ? 'bg-primary text-primary-foreground border-primary font-medium'
-                  : 'border-border text-muted hover:bg-background hover:text-foreground']"
-              @click="typeFilters = new Set()"
-            >Semua</button>
-            <button
-              v-for="t in TYPE_OPTIONS" :key="t.code" type="button"
-              :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
-                typeFilters.has(t.code)
-                  ? 'bg-primary text-primary-foreground border-primary font-medium'
-                  : 'border-border text-muted hover:bg-background hover:text-foreground']"
-              @click="toggleType(t.code)"
-            >{{ t.label }}</button>
-          </div>
-        </FilterGroup>
-
-        <FilterGroup label="Sifat Akun">
-          <div class="flex flex-wrap gap-1">
-            <button
-              v-for="opt in SIFAT_OPTIONS" :key="opt.value" type="button"
-              :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors',
-                sifatFilter === opt.value
-                  ? 'bg-primary text-primary-foreground border-primary font-medium'
-                  : 'border-border text-muted hover:bg-background hover:text-foreground']"
-              @click="sifatFilter = opt.value"
-            >{{ opt.label }}</button>
-          </div>
-        </FilterGroup>
-
-        <FilterGroup label="Level">
-          <div class="flex flex-wrap gap-1">
-            <button
-              v-for="lv in LEVEL_OPTIONS" :key="String(lv.value)" type="button"
-              :class="['text-[11px] px-2.5 py-0.5 rounded-full border transition-colors tabular-nums',
-                levelMax === lv.value
-                  ? 'bg-primary text-primary-foreground border-primary font-medium'
-                  : 'border-border text-muted hover:bg-background hover:text-foreground']"
-              @click="levelMax = lv.value"
-            >{{ lv.label }}</button>
-          </div>
-        </FilterGroup>
-
-        <template #tips>
-          <p>• Klik beberapa <strong>Tipe</strong> sekaligus untuk multi-filter</p>
-          <p>• <strong>Level ≤ N</strong> tampilkan struktur tanpa detail</p>
-          <p>• <strong>Export Excel</strong> ikut filter aktif</p>
-        </template>
-
-      </FilterPanel>
-    </template>
-
-    <!-- ── Data Panel ── -->
-    <template #data>
-      <DataPanel
-        title="Daftar Akun"
-        :row-count="data?.rows.length"
-        :total="data?.pagination.total"
-        :loading="loading && !data"
-        :is-empty="!!data && data.rows.length === 0"
-      >
-        <!-- Controls -->
-        <template #controls>
-          <select class="text-[11px] border border-border rounded-lg px-2 py-1 bg-surface text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary">
-            <option>Urut kode</option>
-            <option>Urut nama</option>
-          </select>
           <button
             type="button"
-            :class="['text-[11px] px-2.5 py-1 rounded-lg border transition-colors',
+            :class="[
+              'text-[11px] px-2.5 py-0.5 rounded-lg border transition-colors',
               compactMode
                 ? 'bg-primary/10 border-primary text-primary font-medium'
-                : 'border-border text-muted hover:bg-background hover:text-foreground']"
+                : 'border-border text-muted hover:bg-background hover:text-foreground',
+            ]"
             @click="compactMode = !compactMode"
-          >Mode compact</button>
-        </template>
-
-        <!-- Table -->
-        <div v-if="data" class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
-              <tr>
-                <th class="text-left px-3 py-1 font-semibold w-24">Kode</th>
-                <th class="text-left px-3 py-1 font-semibold">Nama Akun</th>
-                <th class="text-left px-3 py-1 font-semibold w-24">Tipe</th>
-                <th class="text-left px-3 py-1 font-semibold w-20 max-md:hidden">Parent</th>
-                <th class="text-center px-3 py-1 font-semibold w-24">
-                  <Tooltip side="bottom" content-class="max-w-xs">
-                    <template #trigger>
-                      <span class="inline-flex items-center gap-1 cursor-help select-none" tabindex="0">
-                        Sifat <HelpCircle class="w-2.5 h-2.5 opacity-50" />
-                      </span>
-                    </template>
-                    <div class="space-y-1.5 normal-case tracking-normal text-xs">
-                      <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-positive/10 text-positive border border-positive/20">
-                          <Check class="w-2.5 h-2.5" /> DETAIL
-                        </span>
-                        <span>Akun leaf, bisa transaksi</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/20 text-muted border border-border">GRUP</span>
-                        <span>Akun header, tidak bisa transaksi</span>
-                      </div>
-                    </div>
-                  </Tooltip>
-                </th>
-                <th class="text-center px-3 py-1 font-semibold w-12">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in data.rows" :key="row.code"
-                :class="['border-b border-border/40 transition-colors hover:bg-muted/5', !row.is_detail ? 'bg-background/50' : '']"
-              >
-                <td :class="['px-3 font-mono text-[11px] text-muted tabular-nums', compactMode ? 'py-0.5' : 'py-1']">{{ row.code }}</td>
-                <td :class="['px-3', compactMode ? 'py-0.5' : 'py-1']">
-                  <div class="flex items-center gap-1" :style="indentStyle(row.level)">
-                    <span v-if="!row.is_detail" class="text-[9px] text-muted/50 select-none shrink-0">▸</span>
-                    <Folder v-if="!row.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
-                    <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
-                    <span :class="['text-[11px] leading-snug', !row.is_detail ? 'font-semibold' : '']">{{ row.name ?? '—' }}</span>
-                  </div>
-                </td>
-                <td :class="['px-3', compactMode ? 'py-0.5' : 'py-1']">
-                  <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(row.type_label)]">
-                    {{ row.type_label }}
-                  </span>
-                </td>
-                <td :class="['px-3 font-mono text-[11px] text-muted/60 max-md:hidden tabular-nums', compactMode ? 'py-0.5' : 'py-1']">{{ row.parent ?? '—' }}</td>
-                <td :class="['px-3 text-center', compactMode ? 'py-0.5' : 'py-1']">
-                  <span v-if="row.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
-                    <Check class="w-2 h-2" /> DETAIL
-                  </span>
-                  <span v-else class="inline-block text-[9px] font-medium px-1.5 py-px rounded bg-muted/10 text-muted border border-border">GRUP</span>
-                </td>
-                <td :class="['px-3 text-center', compactMode ? 'py-0.5' : 'py-1']">
-                  <span class="text-[10px] text-muted/30">—</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          >
+            Compact
+          </button>
         </div>
 
-        <!-- Pagination -->
-        <template #pagination>
-          <div
-            v-if="data && pageInfo.totalPages > 0"
-            class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
-          >
-            <p class="text-[11px] text-muted tabular-nums">{{ pageInfo.from }}–{{ pageInfo.to }} / {{ pageInfo.total }}</p>
-            <div class="flex items-center gap-1">
-              <button :disabled="page === 1" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(1)"><ChevronsLeft class="w-3 h-3" /></button>
-              <button :disabled="page === 1" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page - 1)"><ChevronLeft class="w-3 h-3" /></button>
-              <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">{{ page }} / {{ pageInfo.totalPages }}</span>
-              <button :disabled="page >= pageInfo.totalPages" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page + 1)"><ChevronRight class="w-3 h-3" /></button>
-              <button :disabled="page >= pageInfo.totalPages" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(pageInfo.totalPages)"><ChevronsRight class="w-3 h-3" /></button>
+        <!-- Global keyword search -->
+        <div class="relative">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
+          <input
+            v-model="filters['global'].value"
+            placeholder="Keyword Search"
+            :class="[inputClass, 'pl-8 h-8 w-52']"
+          />
+        </div>
+      </div>
+
+      <!-- DataTable dengan client-side filter -->
+      <AppDataTable
+        :value="allRows"
+        :loading="loading"
+        v-model:filters="filters"
+        filter-display="menu"
+        :global-filter-fields="['code', 'name', 'type_label', 'parent']"
+        :compact="compactMode"
+      >
+        <!-- Kode -->
+        <Column field="code" header="Kode" style="width:110px;min-width:90px" :show-filter-match-modes="false">
+          <template #body="{ data: r }">
+            <span class="font-mono text-muted tabular-nums">{{ r.code }}</span>
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <input
+              v-model="filterModel.value"
+              :class="inputClass"
+              placeholder="Cari kode…"
+              @input="filterCallback()"
+            />
+          </template>
+        </Column>
+
+        <!-- Nama Akun -->
+        <Column field="name" header="Nama Akun" :show-filter-match-modes="false">
+          <template #body="{ data: r }">
+            <div class="flex items-center gap-1 leading-snug" :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }">
+              <Folder v-if="!r.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
+              <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
+              <span :class="['text-[11px]', !r.is_detail && 'font-semibold']">{{ r.name ?? '—' }}</span>
             </div>
-            <select v-model.number="pageSize" class="text-[11px] border border-border rounded-md px-2 py-0.5 bg-surface text-foreground">
-              <option :value="15">15/hal</option>
-              <option :value="20">20/hal</option>
-              <option :value="25">25/hal</option>
-              <option :value="50">50/hal</option>
-            </select>
-          </div>
-        </template>
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <input
+              v-model="filterModel.value"
+              :class="inputClass"
+              placeholder="Cari nama…"
+              @input="filterCallback()"
+            />
+          </template>
+        </Column>
 
-      </DataPanel>
-    </template>
+        <!-- Tipe -->
+        <Column field="type_label" header="Tipe" style="width:110px;min-width:90px" :show-filter-match-modes="false">
+          <template #body="{ data: r }">
+            <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(r.type_label)]">
+              {{ r.type_label }}
+            </span>
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <div class="flex flex-col gap-1.5">
+              <label
+                v-for="t in TYPE_OPTIONS"
+                :key="t.code"
+                class="flex items-center gap-2 text-[11px] cursor-pointer py-0.5"
+              >
+                <input
+                  type="checkbox"
+                  class="rounded"
+                  :checked="Array.isArray(filterModel.value) && filterModel.value.includes(t.label)"
+                  @change="toggleTypeFilter(t.label, filterModel.value, filterCallback)"
+                />
+                <span :class="['px-1.5 py-px rounded text-[10px] font-semibold uppercase', typeBadgeClass(t.label)]">
+                  {{ t.label }}
+                </span>
+              </label>
+            </div>
+          </template>
+        </Column>
 
-  </CrudLayout>
+        <!-- Parent -->
+        <Column field="parent" header="Parent" style="width:90px;min-width:80px" :show-filter-match-modes="false">
+          <template #body="{ data: r }">
+            <span class="font-mono text-muted/60">{{ r.parent ?? '—' }}</span>
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <input
+              v-model="filterModel.value"
+              :class="inputClass"
+              placeholder="Kode parent…"
+              @input="filterCallback()"
+            />
+          </template>
+        </Column>
+
+        <!-- Sifat -->
+        <Column field="is_detail" header="Sifat" style="width:90px;min-width:80px" :show-filter-match-modes="false"
+          :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold whitespace-nowrap' } }"
+        >
+          <template #body="{ data: r }">
+            <div class="flex justify-center">
+              <span v-if="r.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
+                <Check class="w-2 h-2" /> DETAIL
+              </span>
+              <span v-else class="inline-block text-[9px] font-medium px-1.5 py-px rounded bg-muted/10 text-muted border border-border">
+                GRUP
+              </span>
+            </div>
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <div class="flex flex-col gap-1">
+              <button
+                v-for="opt in [{ v: null, l: 'Semua' }, { v: true, l: 'Detail' }, { v: false, l: 'Grup' }]"
+                :key="String(opt.v)"
+                type="button"
+                :class="[
+                  'text-[11px] px-2.5 py-0.5 rounded-full border text-left transition-colors',
+                  filterModel.value === opt.v
+                    ? 'bg-primary text-primary-foreground border-primary font-medium'
+                    : 'border-border text-muted hover:bg-background hover:text-foreground',
+                ]"
+                @click="setIsDetailFilter(opt.v, filterCallback)"
+              >
+                {{ opt.l }}
+              </button>
+            </div>
+          </template>
+        </Column>
+
+        <!-- Aksi -->
+        <Column header="Aksi" style="width:50px;min-width:50px"
+          :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold' } }"
+        >
+          <template #body>
+            <span class="flex justify-center text-[10px] text-muted/30">—</span>
+          </template>
+        </Column>
+
+        <template #empty>Tidak ada akun yang cocok dengan filter.</template>
+      </AppDataTable>
+    </div>
+  </div>
 </template>
