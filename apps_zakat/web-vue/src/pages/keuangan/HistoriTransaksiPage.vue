@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import TransaksiDeleteDialog from '@/components/keuangan/TransaksiDeleteDialog.vue'
 import DateField from '@/components/ui/DateField.vue'
 import CrudLayout from '@/components/layout/CrudLayout.vue'
 import DataPanel from '@/components/layout/DataPanel.vue'
@@ -38,23 +39,23 @@ const STORAGE_KEY = 'histori-transaksi-state'
 const router = useRouter()
 const today = new Date().toISOString().slice(0, 10)
 
-const begin = ref(today)
-const end = ref(today)
-const dateType = ref('actual')
-const sortBy = ref('actual_date')
-const searchCategory = ref('none')
-const searchText = ref('')
-const cashAccountNo = ref('')
-const page = ref(1)
-const pageSize = ref(50)
+const begin = shallowRef(today)
+const end = shallowRef(today)
+const dateType = shallowRef('actual')
+const sortBy = shallowRef('actual_date')
+const searchCategory = shallowRef('none')
+const searchText = shallowRef('')
+const cashAccountNo = shallowRef('')
+const page = shallowRef(1)
+const pageSize = shallowRef(50)
 
 const rows = ref<TransaksiRow[]>([])
-const total = ref(0)
-const totalPages = ref(1)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
-const hasLoaded = ref(false)
+const total = shallowRef(0)
+const totalPages = shallowRef(1)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const hasLoaded = shallowRef(false)
 
 const pageFrom = computed(() => total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1)
 const pageTo = computed(() => Math.min(page.value * pageSize.value, total.value))
@@ -64,9 +65,9 @@ function goto(target: number) {
   load()
 }
 
-const deleteConfirmId = ref<number | null>(null)
-const deleteMsg = ref<string | null>(null)
-const deleting = ref(false)
+const deleteConfirmId = shallowRef<number | null>(null)
+const deleteMsg = shallowRef<string | null>(null)
+const deleting = shallowRef(false)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
@@ -450,31 +451,13 @@ async function confirmDelete() {
       </template>
     </CrudLayout>
 
-    <!-- Delete confirm dialog -->
-    <div
+    <TransaksiDeleteDialog
       v-if="deleteConfirmId !== null"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-        <h2 class="mb-2 font-semibold">Konfirmasi Hapus Transaksi</h2>
-        <p class="mb-4 text-sm text-muted">
-          Transaksi #{{ deleteConfirmId }} akan dihapus. Jika sudah terotorisasi, akan masuk
-          antrean approval supervisor. Lanjutkan?
-        </p>
-        <Alert v-if="deleteMsg" variant="error" :message="deleteMsg" class="mb-3" />
-        <div class="flex justify-end gap-3">
-          <Button variant="outline" :disabled="deleting" @click="deleteConfirmId = null">
-            Batal
-          </Button>
-          <Button
-            class="bg-red-600 text-white hover:bg-red-700"
-            :disabled="deleting"
-            @click="confirmDelete"
-          >
-            {{ deleting ? 'Memproses...' : 'Ya, Hapus' }}
-          </Button>
-        </div>
-      </div>
-    </div>
+      :transaction-id="deleteConfirmId"
+      :message="deleteMsg"
+      :deleting="deleting"
+      @cancel="deleteConfirmId = null; deleteMsg = null"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>

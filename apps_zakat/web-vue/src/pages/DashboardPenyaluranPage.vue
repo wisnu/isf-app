@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, shallowRef, watch } from 'vue'
 
 import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
@@ -31,8 +31,8 @@ interface MemoItem {
   memo_date: string | null
 }
 
-const bulan = ref(new Date().getMonth() + 1)
-const tahun = ref(new Date().getFullYear())
+const bulan = shallowRef(new Date().getMonth() + 1)
+const tahun = shallowRef(new Date().getFullYear())
 
 const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
   () => api.get(`/api/dashboard/penyaluran/kpis?bulan=${bulan.value}&tahun=${tahun.value}`),

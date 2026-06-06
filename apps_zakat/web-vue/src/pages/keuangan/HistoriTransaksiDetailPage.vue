@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, RefreshCw, Trash2 } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -46,16 +46,16 @@ const router = useRouter()
 const auth = useAuthStore()
 const txId = Number(route.params.id)
 const detail = ref<TransaksiDetail | null>(null)
-const loading = ref(true)
-const errorMsg = ref<string | null>(null)
+const loading = shallowRef(true)
+const errorMsg = shallowRef<string | null>(null)
 
-const showDeleteConfirm = ref(false)
-const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const showDeleteConfirm = shallowRef(false)
+const deleting = shallowRef(false)
+const deleteError = shallowRef<string | null>(null)
 
-const showRepostConfirm = ref(false)
-const reposting = ref(false)
-const repostError = ref<string | null>(null)
+const showRepostConfirm = shallowRef(false)
+const reposting = shallowRef(false)
+const repostError = shallowRef<string | null>(null)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, Loader2, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -39,16 +39,16 @@ const today = new Date()
 const p = (n: number) => String(n).padStart(2, '0')
 const iso = (d: Date) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 
-const tanggal = ref<string>(iso(today))
-const jenisperiode = ref<'T' | 'B'>('T')
-const level = ref<number>(0) // 0 = semua
-const branch = ref<string>(auth.user?.primary_branch ?? '')
+const tanggal = shallowRef<string>(iso(today))
+const jenisperiode = shallowRef<'T' | 'B'>('T')
+const level = shallowRef<number>(0) // 0 = semua
+const branch = shallowRef<string>(auth.user?.primary_branch ?? '')
 const branches = ref<BranchOption[]>([])
 
 const data = ref<NeracaPayload | null>(null)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
 
 const levelOptions = [
   { v: 0, label: 'Semua level' },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, FileCheck, Upload } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -32,12 +32,12 @@ interface ParsedRow {
   pesan: string
 }
 
-const phase = ref<'idle' | 'preview' | 'submitted'>('idle')
+const phase = shallowRef<'idle' | 'preview' | 'submitted'>('idle')
 const selectedFile = ref<File | null>(null)
 const rows = ref<ParsedRow[]>([])
-const batchId = ref<number | null>(null)
-const loading = ref(false)
-const errorMsg = ref<string | null>(null)
+const batchId = shallowRef<number | null>(null)
+const loading = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
 
 const validRows = computed(() => rows.value.filter((r) => r.status !== 'invalid'))
 const invalidCount = computed(() => rows.value.filter((r) => r.status === 'invalid').length)

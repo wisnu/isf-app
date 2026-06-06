@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, Loader2, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -23,20 +23,20 @@ const p = (n: number) => String(n).padStart(2, '0')
 const today = new Date()
 const iso = (d: Date) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 
-const begin = ref(`${today.getFullYear()}-01-01`)
-const end = ref(iso(today))
-const branch = ref(auth.user?.primary_branch ?? '')
-const lpj = ref('')
+const begin = shallowRef(`${today.getFullYear()}-01-01`)
+const end = shallowRef(iso(today))
+const branch = shallowRef(auth.user?.primary_branch ?? '')
+const lpj = shallowRef('')
 const branches = ref<BranchOption[]>([])
-const page = ref(1)
+const page = shallowRef(1)
 const pageSize = 50
 
 const lpjOptions = [{ v: '', label: 'Semua Status' }, { v: 'B', label: 'Belum ada LPJ' }, { v: 'S', label: 'Sudah ada LPJ' }]
 
 const data = ref<Payload | null>(null)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
 const idr = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))
 const totalPages = computed(() => (data.value ? Math.max(1, Math.ceil(data.value.total / pageSize)) : 1))

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown, X } from 'lucide-vue-next'
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, shallowRef, useTemplateRef } from 'vue'
 
 // Combobox dropdown yang bisa diketik untuk search. Bind value via v-model.
 interface Option { value: string; label: string }
@@ -12,10 +12,10 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 
-const open = ref(false)
-const query = ref('')
-const inputEl = ref<HTMLInputElement | null>(null)
-const activeIdx = ref(0)
+const open = shallowRef(false)
+const query = shallowRef('')
+const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
+const activeIdx = shallowRef(0)
 
 const selectedLabel = computed(() => {
   if (!props.modelValue) return props.allLabel ?? ''

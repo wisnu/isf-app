@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, Loader2, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -17,14 +17,14 @@ const canPickBranch = computed(() => auth.user?.branch_access === 'all')
 
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i)
-const year = ref<number>(currentYear)
-const branch = ref<string>(auth.user?.primary_branch ?? '')
+const year = shallowRef<number>(currentYear)
+const branch = shallowRef<string>(auth.user?.primary_branch ?? '')
 const branches = ref<BranchOption[]>([])
 
 const data = ref<MonthlyPayload | null>(null)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))

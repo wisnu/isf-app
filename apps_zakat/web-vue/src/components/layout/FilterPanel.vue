@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { shallowRef } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
@@ -7,7 +7,7 @@ import CardContent from '@/components/ui/CardContent.vue'
 defineProps<{ hasFilters?: boolean }>()
 defineEmits<{ reset: [] }>()
 
-const tipsOpen = ref(false)
+const tipsOpen = shallowRef(false)
 </script>
 
 <template>

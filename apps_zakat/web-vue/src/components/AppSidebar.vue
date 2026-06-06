@@ -18,7 +18,7 @@ import {
   Wallet,
 } from 'lucide-vue-next'
 import type { FunctionalComponent } from 'vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AppLogo from '@/components/AppLogo.vue'
@@ -127,7 +127,7 @@ const sidebar = useSidebarStore()
 const route = useRoute()
 
 const EXPANDED_KEY = 'isf-sidebar-expanded-groups'
-const expandedParents = ref<Set<string>>(new Set())
+const expandedParents = shallowRef<Set<string>>(new Set())
 
 function persistExpanded() {
   localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expandedParents.value]))

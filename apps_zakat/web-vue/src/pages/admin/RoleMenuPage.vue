@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AlertCircle, Check, Loader2, RefreshCw, Save, Search, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -43,19 +43,19 @@ interface UpdateResponse {
   diff: { added: MappingPair[]; removed: MappingPair[] }
 }
 
-const loading = ref(true)
-const saving = ref(false)
-const errorMsg = ref<string | null>(null)
-const successMsg = ref<string | null>(null)
+const loading = shallowRef(true)
+const saving = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const successMsg = shallowRef<string | null>(null)
 
 const roles = ref<RoleInfo[]>([])
 const menus = ref<MenuInfo[]>([])
 
-const original = ref<Set<string>>(new Set())
-const current = ref<Set<string>>(new Set())
+const original = shallowRef<Set<string>>(new Set())
+const current = shallowRef<Set<string>>(new Set())
 
-const searchRole = ref('')
-const visibleGroups = ref<Set<string>>(new Set())
+const searchRole = shallowRef('')
+const visibleGroups = shallowRef<Set<string>>(new Set())
 
 const pairKey = (id_peran: string, menu_key: string) => `${id_peran}|${menu_key}`
 

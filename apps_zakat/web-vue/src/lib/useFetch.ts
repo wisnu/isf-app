@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 
 import { ApiError } from '@/lib/api/client'
 
@@ -8,8 +8,8 @@ import { ApiError } from '@/lib/api/client'
  * sendiri, gagal di satu section tidak menggagalkan section lain.
  */
 export function useFetch<T>(fetcher: () => Promise<T>) {
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const loading = shallowRef(false)
+  const error = shallowRef<string | null>(null)
   const data = ref<T | null>(null)
 
   async function load() {

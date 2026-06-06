@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { List } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -22,13 +22,13 @@ interface Batch {
 
 const router = useRouter()
 const today = new Date().toISOString().slice(0, 10)
-const begin = ref(today.slice(0, 8) + '01')
-const end = ref(today)
-const statusFilter = ref('')
+const begin = shallowRef(today.slice(0, 8) + '01')
+const end = shallowRef(today)
+const statusFilter = shallowRef('')
 const batches = ref<Batch[]>([])
-const loading = ref(false)
-const errorMsg = ref<string | null>(null)
-const hasLoaded = ref(false)
+const loading = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const hasLoaded = shallowRef(false)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)

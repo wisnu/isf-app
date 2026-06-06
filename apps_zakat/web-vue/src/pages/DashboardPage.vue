@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, shallowRef, watch } from 'vue'
 
 import AsnafDonut from '@/components/widgets/AsnafDonut.vue'
 import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
@@ -34,8 +34,8 @@ interface AsnafItem {
   count: number
 }
 
-const bulan = ref(new Date().getMonth() + 1)
-const tahun = ref(new Date().getFullYear())
+const bulan = shallowRef(new Date().getMonth() + 1)
+const tahun = shallowRef(new Date().getFullYear())
 
 // Per-chart fetchers — masing-masing independen. Kegagalan/lambatnya satu
 // widget tidak menggagalkan widget lain.

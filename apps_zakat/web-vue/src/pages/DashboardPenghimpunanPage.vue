@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { shallowRef } from 'vue'
 
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
 import Card from '@/components/ui/Card.vue'
@@ -9,8 +9,8 @@ import CardContent from '@/components/ui/CardContent.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
 import TrendChart from '@/components/widgets/TrendChart.vue'
 
-const bulan = ref(new Date().getMonth() + 1)
-const tahun = ref(new Date().getFullYear())
+const bulan = shallowRef(new Date().getMonth() + 1)
+const tahun = shallowRef(new Date().getFullYear())
 
 // KPI cards
 const kpis = {

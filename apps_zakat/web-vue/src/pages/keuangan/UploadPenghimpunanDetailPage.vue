@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ShieldCheck } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -39,11 +39,11 @@ const route = useRoute()
 const auth = useAuthStore()
 const batchId = Number(route.params.id)
 const detail = ref<BatchDetail | null>(null)
-const loading = ref(true)
-const approving = ref(false)
-const showConfirm = ref(false)
-const errorMsg = ref<string | null>(null)
-const approveError = ref<string | null>(null)
+const loading = shallowRef(true)
+const approving = shallowRef(false)
+const showConfirm = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const approveError = shallowRef<string | null>(null)
 
 const canApprove = computed(
   () =>

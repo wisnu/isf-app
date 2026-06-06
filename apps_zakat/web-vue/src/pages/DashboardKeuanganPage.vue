@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, shallowRef, watch } from 'vue'
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
 import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
 import KpiCard from '@/components/widgets/KpiCard.vue'
@@ -58,8 +58,8 @@ interface RekeningBundle {
   rekening: RekeningItem[]
 }
 
-const bulan = ref(new Date().getMonth() + 1)
-const tahun = ref(new Date().getFullYear())
+const bulan = shallowRef(new Date().getMonth() + 1)
+const tahun = shallowRef(new Date().getFullYear())
 
 // Per-chart fetchers — masing-masing independen.
 const kpisQ = useFetch<KpisBundle>(() =>

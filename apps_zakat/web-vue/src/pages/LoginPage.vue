@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Eye, EyeOff, Globe, Info } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -17,12 +17,12 @@ import { ApiError } from '@/lib/api/client'
 import { portalLabel } from '@/lib/portal'
 import { useAuthStore } from '@/stores/auth'
 
-const username = ref('')
-const password = ref('')
-const showPassword = ref(false)
-const errorMsg = ref<string | null>(null)
-const submitting = ref(false)
-const demoOpen = ref(false)
+const username = shallowRef('')
+const password = shallowRef('')
+const showPassword = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const submitting = shallowRef(false)
+const demoOpen = shallowRef(false)
 
 const auth = useAuthStore()
 const router = useRouter()

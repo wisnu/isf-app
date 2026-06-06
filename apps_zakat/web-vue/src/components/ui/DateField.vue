@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CalendarDays } from 'lucide-vue-next'
-import { ref, watch } from 'vue'
+import { shallowRef, useTemplateRef, watch } from 'vue'
 
 // Input tanggal format DD-MM-YYYY (tampilan) yang tetap mengikat nilai ISO
 // 'YYYY-MM-DD' via v-model. Dilengkapi date-picker native (tombol kalender).
@@ -21,8 +21,8 @@ function displayToIso(s: string): string | null {
   return d.toISOString().slice(0, 10) === iso ? iso : null
 }
 
-const text = ref(isoToDisplay(props.modelValue))
-const picker = ref<HTMLInputElement | null>(null)
+const text = shallowRef(isoToDisplay(props.modelValue))
+const picker = useTemplateRef<HTMLInputElement>('picker')
 
 watch(() => props.modelValue, (v) => { text.value = isoToDisplay(v) })
 

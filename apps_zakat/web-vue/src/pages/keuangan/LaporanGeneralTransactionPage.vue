@@ -7,7 +7,7 @@ import {
   Loader2,
   Search,
 } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -52,17 +52,17 @@ const canAll = computed(() => auth.user?.branch_access === 'all')
 const now = new Date()
 const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 const today = now.toISOString().slice(0, 10)
-const begin = ref(firstOfMonth)
-const end = ref(today)
-const branch = ref<string>(auth.user?.primary_branch ?? '')
+const begin = shallowRef(firstOfMonth)
+const end = shallowRef(today)
+const branch = shallowRef<string>(auth.user?.primary_branch ?? '')
 const branches = ref<BranchOption[]>([])
 
-const page = ref(1)
-const pageSize = ref(25)
+const page = shallowRef(1)
+const pageSize = shallowRef(25)
 const data = ref<GtPage | null>(null)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmt = (n: number) => (n ? idr.format(n) : '0,00')

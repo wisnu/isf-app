@@ -16,7 +16,7 @@ import {
   Search,
   X,
 } from 'lucide-vue-next'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -55,14 +55,14 @@ interface CoaList {
 }
 
 const data = ref<CoaList | null>(null)
-const loading = ref(false)
-const exporting = ref(false)
-const errorMsg = ref<string | null>(null)
-const search = ref('')
-const page = ref(1)
-const pageSize = ref(20)
-const tipsOpen = ref(false)
-const compactMode = ref(true)
+const loading = shallowRef(false)
+const exporting = shallowRef(false)
+const errorMsg = shallowRef<string | null>(null)
+const search = shallowRef('')
+const page = shallowRef(1)
+const pageSize = shallowRef(20)
+const tipsOpen = shallowRef(false)
+const compactMode = shallowRef(true)
 
 // === Filters ===
 type SifatValue = 'all' | 'detail' | 'group'
@@ -88,9 +88,9 @@ const LEVEL_OPTIONS: { value: number | null; label: string }[] = [
   { value: 4, label: '≤ 4' },
 ]
 
-const typeFilters = ref<Set<string>>(new Set())
-const sifatFilter = ref<SifatValue>('all')
-const levelMax = ref<number | null>(null)
+const typeFilters = shallowRef<Set<string>>(new Set())
+const sifatFilter = shallowRef<SifatValue>('all')
+const levelMax = shallowRef<number | null>(null)
 
 function toggleType(code: string) {
   const next = new Set(typeFilters.value)
@@ -113,8 +113,6 @@ function resetFilters() {
   levelMax.value = null
   search.value = ''
 }
-
-let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 function buildQueryParams(includePaging: boolean): URLSearchParams {
   const params = new URLSearchParams()
@@ -147,18 +145,18 @@ async function load() {
   }
 }
 
-watch(search, () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
+watch(search, (_val, _old, onCleanup) => {
+  const timer = setTimeout(() => {
     page.value = 1
     load()
   }, 350)
+  onCleanup(() => clearTimeout(timer))
 })
 watch([page, pageSize], () => load())
 watch([typeFilters, sifatFilter, levelMax], () => {
   page.value = 1
   load()
-}, { deep: true })
+})
 
 onMounted(load)
 
