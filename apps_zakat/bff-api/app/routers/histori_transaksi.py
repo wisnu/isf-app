@@ -34,13 +34,14 @@ async def search(
     search_category: str = Query(default='none'),
     search_text: str | None = Query(default=None),
     cash_account_no: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=500),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
 ):
     inj = _inject(request)
     params: dict = {
         'begin': begin, 'end': end, 'date_type': date_type,
         'sort_by': sort_by, 'search_category': search_category,
-        'limit': limit,
+        'page': page, 'page_size': page_size,
         'is_spv': str(inj['is_spv']).lower(),
         'user_id': inj['user_id'],
     }

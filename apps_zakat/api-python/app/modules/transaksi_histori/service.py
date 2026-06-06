@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from app.modules.transaksi_histori import repository as repo
 from app.modules.transaksi_histori.schema import (
-    JournalItem, RepostResult, TransaksiDetail, TransaksiRow,
+    JournalItem, RepostResult, SearchPage, TransaksiDetail, TransaksiRow,
 )
 from app.shared.db import get_pool
 
@@ -37,18 +37,36 @@ async def search(
     search_category: str = 'none',
     search_text: str | None = None,
     cash_account_no: str | None = None,
-    limit: int = 50,
+    page: int = 1,
+    page_size: int = 50,
     branch: str | None = None,
     is_spv: bool = False,
     user_id: str = '',
-) -> list[TransaksiRow]:
-    rows = await repo.search_transactions(
-        begin=begin, end=end, date_type=date_type, sort_by=sort_by,
-        search_category=search_category, search_text=search_text,
-        cash_account_no=cash_account_no, limit=limit,
-        branch=branch, is_spv=is_spv, user_id=user_id,
+) -> SearchPage:
+    page_size = min(max(1, page_size), 200)
+    page = max(1, page)
+    total, rows_raw = await __import__('asyncio').gather(
+        repo.count_transactions(
+            begin=begin, end=end, date_type=date_type,
+            search_category=search_category, search_text=search_text,
+            cash_account_no=cash_account_no, branch=branch,
+            is_spv=is_spv, user_id=user_id,
+        ),
+        repo.search_transactions(
+            begin=begin, end=end, date_type=date_type, sort_by=sort_by,
+            search_category=search_category, search_text=search_text,
+            cash_account_no=cash_account_no, page=page, page_size=page_size,
+            branch=branch, is_spv=is_spv, user_id=user_id,
+        ),
     )
-    return [_to_row(r) for r in rows]
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return SearchPage(
+        rows=[_to_row(r) for r in rows_raw],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
 
 
 async def detail(transaction_id: int) -> TransaksiDetail | None:

@@ -75,6 +75,27 @@ def build_search_where(
     return ' AND '.join(conds), args
 
 
+async def count_transactions(
+    begin: str, end: str,
+    date_type: str = 'actual',
+    search_category: str = 'none',
+    search_text: str | None = None,
+    cash_account_no: str | None = None,
+    branch: str | None = None,
+    is_spv: bool = False,
+    user_id: str = '',
+) -> int:
+    where, args = build_search_where(
+        begin, end, date_type, search_category, search_text,
+        cash_account_no, branch, is_spv, user_id,
+    )
+    row = await fetch_one(
+        f"SELECT COUNT(*)::int AS n FROM transaction.transaction t WHERE {where}",
+        *args,
+    )
+    return int((row or {}).get('n', 0))
+
+
 async def search_transactions(
     begin: str, end: str,
     date_type: str = 'actual',
@@ -82,7 +103,8 @@ async def search_transactions(
     search_category: str = 'none',
     search_text: str | None = None,
     cash_account_no: str | None = None,
-    limit: int = 50,
+    page: int = 1,
+    page_size: int = 50,
     branch: str | None = None,
     is_spv: bool = False,
     user_id: str = '',
@@ -92,9 +114,11 @@ async def search_transactions(
         cash_account_no, branch, is_spv, user_id,
     )
     order_col = _SORT_MAP.get(sort_by, 't.actualdate')
-    limit = min(max(1, limit), 500)
+    page_size = min(max(1, page_size), 200)
+    page = max(1, page)
+    offset = (page - 1) * page_size
     return await fetch_all(
-        f"{_TX_SELECT} WHERE {where} ORDER BY {order_col} ASC LIMIT {limit}",
+        f"{_TX_SELECT} WHERE {where} ORDER BY {order_col} ASC LIMIT {page_size} OFFSET {offset}",
         *args,
     )
 

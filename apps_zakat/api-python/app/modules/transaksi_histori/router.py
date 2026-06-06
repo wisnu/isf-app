@@ -34,20 +34,21 @@ async def search(
     search_category: str = Query(default='none'),
     search_text: str | None = Query(default=None),
     cash_account_no: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=500),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
     branch: str | None = Query(default=None),
     is_spv: bool = Query(default=False),
     user_id: str = Query(default=''),
 ):
     if not await ping():
         return JSONResponse(status_code=503, content=err('DB_UNAVAILABLE', 'Database not ready'))
-    rows = await service.search(
+    result = await service.search(
         begin=begin, end=end, date_type=date_type, sort_by=sort_by,
         search_category=search_category, search_text=search_text,
-        cash_account_no=cash_account_no, limit=limit,
+        cash_account_no=cash_account_no, page=page, page_size=page_size,
         branch=branch, is_spv=is_spv, user_id=user_id,
     )
-    return ok([r.model_dump() for r in rows])
+    return ok(result.model_dump())
 
 
 @router.get('/search/export.xlsx')

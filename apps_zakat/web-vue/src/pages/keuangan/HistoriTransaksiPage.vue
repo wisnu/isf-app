@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, Search } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -45,13 +45,24 @@ const sortBy = ref('actual_date')
 const searchCategory = ref('none')
 const searchText = ref('')
 const cashAccountNo = ref('')
-const limitRows = ref(50)
+const page = ref(1)
+const pageSize = ref(50)
 
 const rows = ref<TransaksiRow[]>([])
+const total = ref(0)
+const totalPages = ref(1)
 const loading = ref(false)
 const exporting = ref(false)
 const errorMsg = ref<string | null>(null)
 const hasLoaded = ref(false)
+
+const pageFrom = computed(() => total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1)
+const pageTo = computed(() => Math.min(page.value * pageSize.value, total.value))
+
+function goto(target: number) {
+  page.value = Math.min(Math.max(1, target), totalPages.value || 1)
+  load()
+}
 
 const deleteConfirmId = ref<number | null>(null)
 const deleteMsg = ref<string | null>(null)
@@ -75,7 +86,7 @@ function resetFilters() {
   searchCategory.value = 'none'
   searchText.value = ''
   cashAccountNo.value = ''
-  limitRows.value = 50
+  page.value = 1
 }
 
 function saveState() {
@@ -89,8 +100,11 @@ function saveState() {
       searchCategory: searchCategory.value,
       searchText: searchText.value,
       cashAccountNo: cashAccountNo.value,
-      limitRows: limitRows.value,
+      page: page.value,
+      pageSize: pageSize.value,
       rows: rows.value,
+      total: total.value,
+      totalPages: totalPages.value,
       hasLoaded: hasLoaded.value,
     }),
   )
@@ -108,8 +122,11 @@ function restoreState() {
     searchCategory.value = s.searchCategory ?? 'none'
     searchText.value = s.searchText ?? ''
     cashAccountNo.value = s.cashAccountNo ?? ''
-    limitRows.value = s.limitRows ?? 50
+    page.value = s.page ?? 1
+    pageSize.value = s.pageSize ?? 50
     rows.value = s.rows ?? []
+    total.value = s.total ?? 0
+    totalPages.value = s.totalPages ?? 1
     hasLoaded.value = s.hasLoaded ?? false
   } catch {
     // ignore corrupt state
@@ -134,15 +151,18 @@ function postedChip(s: string | null) {
   return s === 'T' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
 }
 
-function buildParams(): URLSearchParams {
+function buildParams(forExport = false): URLSearchParams {
   const p = new URLSearchParams({
     begin: begin.value,
     end: end.value,
     date_type: dateType.value,
     sort_by: sortBy.value,
     search_category: searchCategory.value,
-    limit: String(limitRows.value),
   })
+  if (!forExport) {
+    p.set('page', String(page.value))
+    p.set('page_size', String(pageSize.value))
+  }
   if (searchCategory.value !== 'none' && searchText.value)
     p.set('search_text', searchText.value)
   if (cashAccountNo.value)
@@ -159,7 +179,11 @@ async function load() {
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload?.error?.message ?? 'Gagal memuat data')
-    rows.value = payload.data
+    const d = payload.data
+    rows.value = d.rows
+    total.value = d.total
+    totalPages.value = d.total_pages
+    page.value = d.page
     hasLoaded.value = true
     saveState()
   } catch (e: unknown) {
@@ -173,7 +197,7 @@ async function exportXlsx() {
   exporting.value = true
   try {
     const res = await fetch(
-      `${BASE_URL}/api/transaksi-histori/search/export.xlsx?${buildParams()}`,
+      `${BASE_URL}/api/transaksi-histori/search/export.xlsx?${buildParams(true)}`,
       { credentials: 'include' },
     )
     if (!res.ok) throw new Error('Export gagal')
@@ -191,6 +215,11 @@ async function exportXlsx() {
   } finally {
     exporting.value = false
   }
+}
+
+function search() {
+  page.value = 1
+  load()
 }
 
 function goToDetail(id: number) {
@@ -229,7 +258,7 @@ async function confirmDelete() {
   <div class="p-6 space-y-3">
     <PageHeader title="Histori Transaksi">
       <template #actions>
-        <Button :disabled="loading" @click="load">
+        <Button :disabled="loading" @click="search">
           <Search class="mr-1 h-3.5 w-3.5" />
           {{ loading ? 'Memuat...' : 'Tampilkan' }}
         </Button>
@@ -324,15 +353,6 @@ async function confirmDelete() {
             />
           </FilterGroup>
 
-          <FilterGroup label="Maks Baris">
-            <input
-              v-model.number="limitRows"
-              type="number"
-              min="1"
-              max="500"
-              class="w-24 rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </FilterGroup>
         </FilterPanel>
       </template>
 
@@ -340,7 +360,7 @@ async function confirmDelete() {
         <DataPanel
           title="Daftar Transaksi"
           :row-count="rows.length"
-          :total="hasLoaded ? rows.length : undefined"
+          :total="hasLoaded ? total : undefined"
           :loading="loading"
           :is-empty="hasLoaded && !loading && rows.length === 0"
         >
@@ -351,20 +371,20 @@ async function confirmDelete() {
           </div>
 
           <div v-else-if="rows.length" class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full text-[11px]">
               <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
                 <tr>
                   <th class="px-3 py-1.5 text-left font-semibold">No Transaksi</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Rekening</th>
                   <th class="px-3 py-1.5 text-left font-semibold whitespace-nowrap">Tgl Aktual</th>
                   <th class="px-3 py-1.5 text-left font-semibold whitespace-nowrap">Tgl Trans</th>
-                  <th class="px-3 py-1 text-right font-semibold">Nominal</th>
+                  <th class="px-3 py-1.5 text-right font-semibold">Nominal</th>
                   <th class="px-3 py-1.5 text-left font-semibold min-w-[120px]">Nama Donatur</th>
                   <th class="px-3 py-1.5 text-left font-semibold min-w-[140px]">Keterangan</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Inputer</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Status</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Posted</th>
-                  <th class="px-3 py-1 text-center font-semibold w-12">Aksi</th>
+                  <th class="px-3 py-1.5 text-center font-semibold w-12">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -374,37 +394,19 @@ async function confirmDelete() {
                   class="border-b border-border/40 transition-colors hover:bg-muted/5 cursor-pointer"
                   @click="goToDetail(row.transactionid)"
                 >
-                  <td class="px-3 py-1 font-mono text-[10px] text-muted">
-                    {{ row.transactionno ?? '—' }}
-                  </td>
-                  <td class="px-3 py-1 max-w-[110px] truncate text-[11px]" :title="row.channelname ?? ''">
-                    {{ row.channelname ?? '—' }}
-                  </td>
-                  <td class="px-3 py-1 whitespace-nowrap text-[11px]">{{ dmy(row.actualdate) }}</td>
-                  <td class="px-3 py-1 whitespace-nowrap text-[11px]">{{ dmy(row.transactiondate) }}</td>
-                  <td class="px-3 py-1 text-right tabular-nums text-[11px]">{{ fmt(row.amount) }}</td>
-                  <td class="px-3 py-1 max-w-[130px] truncate text-[11px]" :title="row.donorname ?? ''">
-                    {{ row.donorname ?? '' }}
-                  </td>
-                  <td class="px-3 py-1 max-w-[180px] truncate text-[11px]" :title="row.description ?? ''">
-                    {{ row.description ?? '' }}
-                  </td>
-                  <td class="px-3 py-1 text-[11px]">{{ row.inputer ?? '' }}</td>
+                  <td class="px-3 py-1 font-mono text-[10px] text-muted">{{ row.transactionno ?? '—' }}</td>
+                  <td class="px-3 py-1 max-w-[110px] truncate" :title="row.channelname ?? ''">{{ row.channelname ?? '—' }}</td>
+                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.actualdate) }}</td>
+                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.transactiondate) }}</td>
+                  <td class="px-3 py-1 text-right tabular-nums">{{ fmt(row.amount) }}</td>
+                  <td class="px-3 py-1 max-w-[130px] truncate" :title="row.donorname ?? ''">{{ row.donorname ?? '' }}</td>
+                  <td class="px-3 py-1 max-w-[180px] truncate" :title="row.description ?? ''">{{ row.description ?? '' }}</td>
+                  <td class="px-3 py-1">{{ row.inputer ?? '' }}</td>
                   <td class="px-3 py-1">
-                    <span
-                      :class="[
-                        'rounded px-1 py-0.5 text-[9px] font-medium uppercase',
-                        authChip(row.authstatus),
-                      ]"
-                    >{{ authLabel(row.authstatus) }}</span>
+                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium uppercase', authChip(row.authstatus)]">{{ authLabel(row.authstatus) }}</span>
                   </td>
                   <td class="px-3 py-1">
-                    <span
-                      :class="[
-                        'rounded px-1 py-0.5 text-[9px] font-medium',
-                        postedChip(row.isposted),
-                      ]"
-                    >{{ row.isposted === 'T' ? 'Posted' : 'Belum' }}</span>
+                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium', postedChip(row.isposted)]">{{ row.isposted === 'T' ? 'Posted' : 'Belum' }}</span>
                   </td>
                   <td class="px-3 py-1 text-center" @click.stop>
                     <Button
@@ -419,6 +421,31 @@ async function confirmDelete() {
               </tbody>
             </table>
           </div>
+
+          <!-- Pagination footer (pola COA) -->
+          <template #pagination>
+            <div
+              v-if="hasLoaded && totalPages > 1"
+              class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
+            >
+              <p class="text-[11px] text-muted tabular-nums">
+                {{ pageFrom }}–{{ pageTo }} / {{ total.toLocaleString('id-ID') }} transaksi
+              </p>
+              <div class="flex items-center gap-1">
+                <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(1)"><ChevronsLeft class="w-3 h-3" /></button>
+                <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page - 1)"><ChevronLeft class="w-3 h-3" /></button>
+                <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">{{ page }} / {{ totalPages }}</span>
+                <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(page + 1)"><ChevronRight class="w-3 h-3" /></button>
+                <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background transition-colors" @click="goto(totalPages)"><ChevronsRight class="w-3 h-3" /></button>
+              </div>
+              <select v-model.number="pageSize" class="text-[11px] border border-border rounded-md px-2 py-0.5 bg-surface text-foreground" @change="goto(1)">
+                <option :value="25">25/hal</option>
+                <option :value="50">50/hal</option>
+                <option :value="100">100/hal</option>
+                <option :value="200">200/hal</option>
+              </select>
+            </div>
+          </template>
         </DataPanel>
       </template>
     </CrudLayout>

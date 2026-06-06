@@ -49,3 +49,11 @@ class DeleteResult(BaseModel):
 class RepostResult(BaseModel):
     journal_no: str
     success: bool
+
+
+class SearchPage(BaseModel):
+    rows: list[TransaksiRow]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
