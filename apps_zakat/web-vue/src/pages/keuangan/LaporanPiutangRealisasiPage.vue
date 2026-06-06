@@ -74,17 +74,17 @@ onMounted(async () => { await loadBranches() })
     <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
     <div v-else-if="data && data.rows.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada data untuk filter ini.</div>
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-xs">
+      <table class="w-full text-[11px]">
         <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
           <tr>
-            <th class="text-left px-3 py-2 font-semibold whitespace-nowrap">Tanggal</th>
-            <th class="text-left px-3 py-2 font-semibold">No. Memo</th>
-            <th class="text-left px-3 py-2 font-semibold">Jenis</th>
-            <th class="text-left px-3 py-2 font-semibold min-w-[14rem]">Keterangan</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Realisasi</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Dilaporkan</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Outstanding</th>
-            <th class="text-left px-3 py-2 font-semibold">Karyawan</th>
+            <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
+            <th class="text-left px-3 py-1 font-semibold">No. Memo</th>
+            <th class="text-left px-3 py-1 font-semibold">Jenis</th>
+            <th class="text-left px-3 py-1 font-semibold min-w-[14rem]">Keterangan</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Realisasi</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Dilaporkan</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Outstanding</th>
+            <th class="text-left px-3 py-1 font-semibold">Karyawan</th>
           </tr>
         </thead>
         <tbody>
@@ -99,11 +99,11 @@ onMounted(async () => { await loadBranches() })
             <td class="px-3 py-1">{{ r.employee_name }}</td>
           </tr>
           <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-3 py-2" colspan="4">TOTAL</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.amount) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.report_amount) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.outstanding) }}</td>
-            <td class="px-3 py-2"></td>
+            <td class="px-3 py-1" colspan="4">TOTAL</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.amount) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.report_amount) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.outstanding) }}</td>
+            <td class="px-3 py-1"></td>
           </tr>
         </tbody>
       </table>

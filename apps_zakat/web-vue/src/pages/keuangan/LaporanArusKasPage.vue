@@ -128,12 +128,12 @@ onMounted(async () => {
     <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
 
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto max-w-3xl">
-      <table class="w-full text-sm">
+      <table class="w-full text-[11px]">
         <tbody>
           <template v-for="sec in data.sections" :key="sec.title">
             <tr class="bg-background/40 border-b border-border">
-              <td class="px-4 py-2 font-semibold">{{ sec.title }}</td>
-              <td class="px-4 py-2"></td>
+              <td class="px-4 py-1 font-semibold">{{ sec.title }}</td>
+              <td class="px-4 py-1"></td>
             </tr>
             <tr v-for="(ln, i) in sec.lines" :key="sec.title + i" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-4 py-1 pl-8">{{ ln.label }}</td>
@@ -147,16 +147,16 @@ onMounted(async () => {
           </template>
 
           <tr class="border-t-2 border-border font-semibold">
-            <td class="px-4 py-2">Kenaikan (Penurunan) Kas Bersih</td>
-            <td class="px-4 py-2 text-right tabular-nums whitespace-nowrap" :class="data.kenaikan_bersih < 0 ? 'text-red-600' : ''">{{ fmt(data.kenaikan_bersih) }}</td>
+            <td class="px-4 py-1">Kenaikan (Penurunan) Kas Bersih</td>
+            <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap" :class="data.kenaikan_bersih < 0 ? 'text-red-600' : ''">{{ fmt(data.kenaikan_bersih) }}</td>
           </tr>
           <tr class="border-b border-border/30">
             <td class="px-4 py-1">Saldo Kas &amp; Setara Kas Awal Periode</td>
             <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.saldo_awal) }}</td>
           </tr>
           <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-4 py-2">Saldo Kas &amp; Setara Kas Akhir Periode</td>
-            <td class="px-4 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.saldo_akhir) }}</td>
+            <td class="px-4 py-1">Saldo Kas &amp; Setara Kas Akhir Periode</td>
+            <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.saldo_akhir) }}</td>
           </tr>
         </tbody>
       </table>

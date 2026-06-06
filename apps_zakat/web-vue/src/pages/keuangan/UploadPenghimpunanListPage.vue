@@ -90,16 +90,16 @@ async function load() {
     <Alert v-if="errorMsg" variant="error" :message="errorMsg" class="mb-3" />
 
     <div v-if="hasLoaded" class="overflow-hidden rounded-lg border border-border">
-      <table v-if="batches.length" class="w-full text-sm">
-        <thead class="bg-surface">
+      <table v-if="batches.length" class="w-full text-[11px]">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
           <tr>
-            <th class="px-3 py-2 text-left">Batch</th>
-            <th class="px-3 py-2 text-left">Filename</th>
-            <th class="px-3 py-2 text-left">Tgl Upload</th>
-            <th class="px-3 py-2 text-left">Uploader</th>
-            <th class="px-3 py-2 text-right">Record</th>
-            <th class="px-3 py-2 text-right">Total (Rp)</th>
-            <th class="px-3 py-2 text-left">Status</th>
+            <th class="px-3 py-1.5 text-left font-semibold">Batch</th>
+            <th class="px-3 py-1.5 text-left font-semibold">Filename</th>
+            <th class="px-3 py-1.5 text-left font-semibold">Tgl Upload</th>
+            <th class="px-3 py-1.5 text-left font-semibold">Uploader</th>
+            <th class="px-3 py-1.5 text-right font-semibold">Record</th>
+            <th class="px-3 py-1.5 text-right font-semibold">Total (Rp)</th>
+            <th class="px-3 py-1.5 text-left font-semibold">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -109,13 +109,13 @@ async function load() {
             class="cursor-pointer border-t border-border hover:bg-background"
             @click="router.push(`/keuangan/upload/penghimpunan/${b.batch_id}`)"
           >
-            <td class="px-3 py-2 font-mono text-xs">#{{ b.batch_id }}</td>
-            <td class="px-3 py-2 text-xs">{{ b.filename }}</td>
-            <td class="whitespace-nowrap px-3 py-2">{{ dmy(b.upload_date) }}</td>
-            <td class="px-3 py-2">{{ b.upload_user }}</td>
-            <td class="px-3 py-2 text-right">{{ b.total_record }}</td>
-            <td class="px-3 py-2 text-right">{{ fmt(b.total_amount) }}</td>
-            <td class="px-3 py-2">
+            <td class="px-3 py-1 font-mono text-xs">#{{ b.batch_id }}</td>
+            <td class="px-3 py-1 text-xs">{{ b.filename }}</td>
+            <td class="whitespace-nowrap px-3 py-1">{{ dmy(b.upload_date) }}</td>
+            <td class="px-3 py-1">{{ b.upload_user }}</td>
+            <td class="px-3 py-1.5 text-right font-semibold">{{ b.total_record }}</td>
+            <td class="px-3 py-1.5 text-right font-semibold">{{ fmt(b.total_amount) }}</td>
+            <td class="px-3 py-1">
               <span
                 :class="[
                   'rounded px-1.5 py-0.5 text-[10px] font-medium uppercase',

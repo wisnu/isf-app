@@ -162,17 +162,17 @@ async function confirmApprove() {
       </div>
 
       <div class="overflow-x-auto rounded-lg border border-border">
-        <table class="w-full text-xs">
-          <thead class="bg-surface">
+        <table class="w-full text-[11px]">
+          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
             <tr>
-              <th class="px-2 py-1.5 text-left">No</th>
-              <th class="px-2 py-1.5 text-left">Rekening</th>
-              <th class="px-2 py-1.5 text-left">Tanggal</th>
-              <th class="min-w-[160px] px-2 py-1.5 text-left">Keterangan</th>
-              <th class="px-2 py-1.5 text-left">Ref</th>
-              <th class="px-2 py-1.5 text-right">Total</th>
-              <th class="px-2 py-1.5 text-left">Status</th>
-              <th class="px-2 py-1.5 text-left">No Transaksi</th>
+              <th class="px-2 py-1.5 text-left font-semibold">No</th>
+              <th class="px-2 py-1.5 text-left font-semibold">Rekening</th>
+              <th class="px-2 py-1.5 text-left font-semibold">Tanggal</th>
+              <th class="min-w-[160px] px-2 py-1.5 text-left font-semibold">Keterangan</th>
+              <th class="px-2 py-1.5 text-left font-semibold">Ref</th>
+              <th class="px-2 py-1.5 text-right font-semibold">Total</th>
+              <th class="px-2 py-1.5 text-left font-semibold">Status</th>
+              <th class="px-2 py-1.5 text-left font-semibold">No Transaksi</th>
             </tr>
           </thead>
           <tbody>

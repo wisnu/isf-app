@@ -156,31 +156,31 @@ async function saveDraft() {
         </div>
 
         <div class="overflow-x-auto rounded-lg border border-border">
-          <table class="w-full text-xs">
-            <thead class="sticky top-0 bg-surface">
+          <table class="w-full text-[11px]">
+            <thead class="sticky top-0 text-[10px] text-muted uppercase tracking-widest border-b border-border bg-surface">
               <tr>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">No</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">Rekening</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">Tanggal</th>
-                <th class="min-w-[180px] whitespace-nowrap px-2 py-1.5 text-left">Keterangan</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">Ref</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Total</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Zakat P</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Zakat M</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Zakat F</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Zakat Per</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Infaq</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">InfaqT</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">DPU</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">A.Yatim</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">A.Asuh</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">T.Wakaf</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">T.Qurban</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Qurban</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">NonHalal</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-right">Fidyah</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">Status</th>
-                <th class="whitespace-nowrap px-2 py-1.5 text-left">Pesan</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">No</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">Rekening</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">Tanggal</th>
+                <th class="min-w-[180px] whitespace-nowrap px-2 py-1.5 text-left font-semibold">Keterangan</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">Ref</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Total</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Zakat P</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Zakat M</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Zakat F</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Zakat Per</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Infaq</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">InfaqT</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">DPU</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">A.Yatim</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">A.Asuh</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">T.Wakaf</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">T.Qurban</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Qurban</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">NonHalal</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-right font-semibold">Fidyah</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">Status</th>
+                <th class="whitespace-nowrap px-2 py-1.5 text-left font-semibold">Pesan</th>
               </tr>
             </thead>
             <tbody>

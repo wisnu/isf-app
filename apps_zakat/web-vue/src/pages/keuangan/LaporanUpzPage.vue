@@ -79,15 +79,15 @@ onMounted(async () => { await loadBranches() })
           <span class="text-xs text-muted ml-auto">Debet: <span class="tabular-nums text-foreground">{{ fmt(acc.total_debit) }}</span> · Kredit: <span class="tabular-nums text-foreground">{{ fmt(acc.total_credit) }}</span></span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-xs">
+          <table class="w-full text-[11px]">
             <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/30">
               <tr>
-                <th class="text-left px-3 py-1.5 font-semibold whitespace-nowrap">Tanggal</th>
-                <th class="text-left px-3 py-1.5 font-semibold whitespace-nowrap">No. Transaksi</th>
-                <th class="text-left px-3 py-1.5 font-semibold">Jenis</th>
-                <th class="text-left px-3 py-1.5 font-semibold min-w-[16rem]">Keterangan</th>
-                <th class="text-right px-3 py-1.5 font-semibold whitespace-nowrap">Debet</th>
-                <th class="text-right px-3 py-1.5 font-semibold whitespace-nowrap">Kredit</th>
+                <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
+                <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
+                <th class="text-left px-3 py-1 font-semibold">Jenis</th>
+                <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Keterangan</th>
+                <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
+                <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
               </tr>
             </thead>
             <tbody>
@@ -100,9 +100,9 @@ onMounted(async () => { await loadBranches() })
                 <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.credit) }}</td>
               </tr>
               <tr class="border-t-2 border-border bg-background/30 font-semibold">
-                <td class="px-3 py-1.5" colspan="4">Total</td>
-                <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_debit) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_credit) }}</td>
+                <td class="px-3 py-1" colspan="4">Total</td>
+                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_debit) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_credit) }}</td>
               </tr>
             </tbody>
           </table>

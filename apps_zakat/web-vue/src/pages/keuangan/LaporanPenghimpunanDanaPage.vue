@@ -142,30 +142,30 @@ onMounted(async () => { await loadBranches() })
 
     <template v-else-if="data">
       <div v-if="rekap" class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-xs">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold">Dana</th>
-              <th class="text-right px-3 py-2 font-semibold">Saldo Awal</th>
-              <th class="text-right px-3 py-2 font-semibold">Mutasi (Penerimaan)</th>
-              <th class="text-right px-3 py-2 font-semibold">Saldo Akhir</th>
-              <th class="text-right px-3 py-2 font-semibold">Jml Donatur</th>
+              <th class="text-left px-3 py-1 font-semibold">Dana</th>
+              <th class="text-right px-3 py-1 font-semibold">Saldo Awal</th>
+              <th class="text-right px-3 py-1 font-semibold">Mutasi (Penerimaan)</th>
+              <th class="text-right px-3 py-1 font-semibold">Saldo Akhir</th>
+              <th class="text-right px-3 py-1 font-semibold">Jml Donatur</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="f in rekap.funds" :key="f.fund_label" class="border-b border-border/20">
-              <td class="px-3 py-1.5 font-medium">{{ f.fund_label }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(f.saldo_awal) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(f.mutasi) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(f.saldo_akhir) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ f.donors }}</td>
+              <td class="px-3 py-1 font-medium">{{ f.fund_label }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.saldo_awal) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.mutasi) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.saldo_akhir) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ f.donors }}</td>
             </tr>
             <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
-              <td class="px-3 py-1.5">TOTAL</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_awal) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(rekap.grand_total.mutasi) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_akhir) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ rekap.grand_total.donors }}</td>
+              <td class="px-3 py-1">TOTAL</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_awal) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.mutasi) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_akhir) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ rekap.grand_total.donors }}</td>
             </tr>
           </tbody>
         </table>
@@ -173,17 +173,17 @@ onMounted(async () => { await loadBranches() })
 
       <div class="text-sm text-muted">Detail transaksi — total <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
       <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-xs">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold whitespace-nowrap">Tanggal</th>
-              <th class="text-left px-3 py-2 font-semibold">Dana</th>
-              <th class="text-left px-3 py-2 font-semibold">Akun</th>
-              <th class="text-left px-3 py-2 font-semibold">Donatur</th>
-              <th class="text-left px-3 py-2 font-semibold min-w-[12rem]">Keterangan</th>
-              <th class="text-left px-3 py-2 font-semibold">Channel</th>
-              <th class="text-left px-3 py-2 font-semibold whitespace-nowrap">No. Transaksi</th>
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Nominal</th>
+              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
+              <th class="text-left px-3 py-1 font-semibold">Dana</th>
+              <th class="text-left px-3 py-1 font-semibold">Akun</th>
+              <th class="text-left px-3 py-1 font-semibold">Donatur</th>
+              <th class="text-left px-3 py-1 font-semibold min-w-[12rem]">Keterangan</th>
+              <th class="text-left px-3 py-1 font-semibold">Channel</th>
+              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
+              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nominal</th>
             </tr>
           </thead>
           <tbody>

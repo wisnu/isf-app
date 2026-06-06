@@ -199,34 +199,34 @@ onMounted(async () => {
         Tidak ada data untuk filter ini.
       </div>
       <div v-else-if="data" class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold">Tanggal</th>
-              <th class="text-left px-3 py-2 font-semibold">No. Transaksi</th>
-              <th class="text-left px-3 py-2 font-semibold">Akun</th>
-              <th class="text-left px-3 py-2 font-semibold">Sub-akun</th>
-              <th class="text-left px-3 py-2 font-semibold">Keterangan</th>
-              <th class="text-right px-3 py-2 font-semibold">Debet</th>
-              <th class="text-right px-3 py-2 font-semibold">Kredit</th>
-              <th class="text-left px-3 py-2 font-semibold">Inputer</th>
+              <th class="text-left px-3 py-1 font-semibold">Tanggal</th>
+              <th class="text-left px-3 py-1 font-semibold">No. Transaksi</th>
+              <th class="text-left px-3 py-1 font-semibold">Akun</th>
+              <th class="text-left px-3 py-1 font-semibold">Sub-akun</th>
+              <th class="text-left px-3 py-1 font-semibold">Keterangan</th>
+              <th class="text-right px-3 py-1 font-semibold">Debet</th>
+              <th class="text-right px-3 py-1 font-semibold">Kredit</th>
+              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</td>
-              <td class="px-3 py-1.5 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno || '—' }}</td>
-              <td class="px-3 py-1.5">
+              <td class="px-3 py-1 whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</td>
+              <td class="px-3 py-1 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno || '—' }}</td>
+              <td class="px-3 py-1">
                 <span class="font-mono text-[11px] text-muted">{{ r.account_code }}</span>
                 <span class="ml-1">{{ r.account_name }}</span>
               </td>
-              <td class="px-3 py-1.5 text-[11px] text-muted">
+              <td class="px-3 py-1 text-[11px] text-muted">
                 {{ [r.subaccountcode, r.subaccountname].filter(Boolean).join(' - ') || '—' }}
               </td>
-              <td class="px-3 py-1.5 max-w-[24rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.debit_ekuiv) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.credit_ekuiv) }}</td>
-              <td class="px-3 py-1.5 text-[11px]">{{ r.inputer || '—' }}</td>
+              <td class="px-3 py-1 max-w-[24rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.debit_ekuiv) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.credit_ekuiv) }}</td>
+              <td class="px-3 py-1 text-[11px]">{{ r.inputer || '—' }}</td>
             </tr>
           </tbody>
         </table>

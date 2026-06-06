@@ -220,33 +220,33 @@ onMounted(async () => {
       <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
       <div v-else-if="data && data.rows.length === 0" class="p-10 text-center text-sm text-muted italic">Tidak ada mutasi untuk filter ini.</div>
       <div v-else-if="data" class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold">Tanggal</th>
-              <th class="text-left px-3 py-2 font-semibold">No Transaksi</th>
-              <th class="text-center px-2 py-2 font-semibold w-12">D/K</th>
-              <th class="text-right px-3 py-2 font-semibold">Nominal</th>
-              <th class="text-right px-3 py-2 font-semibold">Saldo</th>
-              <th class="text-left px-3 py-2 font-semibold">Keterangan</th>
-              <th class="text-left px-3 py-2 font-semibold">Referensi</th>
-              <th class="text-left px-3 py-2 font-semibold">Inputer</th>
-              <th class="text-left px-3 py-2 font-semibold">Status</th>
+              <th class="text-left px-3 py-1 font-semibold">Tanggal</th>
+              <th class="text-left px-3 py-1 font-semibold">No Transaksi</th>
+              <th class="text-center px-2 py-1.5 font-semibold w-12">D/K</th>
+              <th class="text-right px-3 py-1 font-semibold">Nominal</th>
+              <th class="text-right px-3 py-1 font-semibold">Saldo</th>
+              <th class="text-left px-3 py-1 font-semibold">Keterangan</th>
+              <th class="text-left px-3 py-1 font-semibold">Referensi</th>
+              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
+              <th class="text-left px-3 py-1 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1.5 whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</td>
-              <td class="px-3 py-1.5 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</td>
+              <td class="px-3 py-1 whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</td>
+              <td class="px-3 py-1 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</td>
               <td class="px-2 py-1.5 text-center">
                 <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', r.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">{{ r.mutationtype }}</span>
               </td>
-              <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.amount) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums font-medium">{{ fmt(r.balance) }}</td>
-              <td class="px-3 py-1.5 max-w-[20rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
-              <td class="px-3 py-1.5 text-[11px]">{{ r.reference_no || '—' }}</td>
-              <td class="px-3 py-1.5 text-[11px]">{{ r.inputer || '—' }}</td>
-              <td class="px-3 py-1.5 text-[11px]">{{ AUTH_LABEL[r.auth_status ?? ''] ?? (r.auth_status || '—') }}</td>
+              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.amount) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums font-medium">{{ fmt(r.balance) }}</td>
+              <td class="px-3 py-1 max-w-[20rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
+              <td class="px-3 py-1 text-[11px]">{{ r.reference_no || '—' }}</td>
+              <td class="px-3 py-1 text-[11px]">{{ r.inputer || '—' }}</td>
+              <td class="px-3 py-1 text-[11px]">{{ AUTH_LABEL[r.auth_status ?? ''] ?? (r.auth_status || '—') }}</td>
             </tr>
           </tbody>
         </table>

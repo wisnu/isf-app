@@ -113,17 +113,17 @@ onMounted(async () => {
     <div v-else-if="data && data.groups.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada data kas untuk filter ini.</div>
 
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-xs">
+      <table class="w-full text-[11px]">
         <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
           <tr>
-            <th class="text-left px-3 py-2 font-semibold sticky left-0 bg-background/50 min-w-[16rem]">Rekening</th>
-            <th v-for="m in data.months" :key="m" class="text-right px-3 py-2 font-semibold whitespace-nowrap">{{ m }}</th>
+            <th class="text-left px-3 py-1 font-semibold sticky left-0 bg-background/50 min-w-[16rem]">Rekening</th>
+            <th v-for="m in data.months" :key="m" class="text-right px-3 py-1 font-semibold whitespace-nowrap">{{ m }}</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="grp in data.groups" :key="grp.type">
             <tr class="bg-background/40">
-              <td class="px-3 py-1.5 font-semibold sticky left-0 bg-background/40" :colspan="13">{{ grp.type_label }}</td>
+              <td class="px-3 py-1 font-semibold sticky left-0 bg-background/40" :colspan="13">{{ grp.type_label }}</td>
             </tr>
             <tr v-for="r in grp.rows" :key="r.account_no" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-3 py-1 sticky left-0 bg-surface">
@@ -133,8 +133,8 @@ onMounted(async () => {
               <td v-for="(b, mi) in r.balances" :key="mi" class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(b) }}</td>
             </tr>
             <tr class="border-y-2 border-border bg-background/30 font-semibold">
-              <td class="px-3 py-1.5 sticky left-0 bg-background/30">Total {{ grp.type_label }}</td>
-              <td v-for="(b, mi) in grp.totals" :key="mi" class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(b) }}</td>
+              <td class="px-3 py-1 sticky left-0 bg-background/30">Total {{ grp.type_label }}</td>
+              <td v-for="(b, mi) in grp.totals" :key="mi" class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(b) }}</td>
             </tr>
           </template>
         </tbody>

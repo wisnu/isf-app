@@ -211,7 +211,7 @@ onMounted(async () => {
           <span class="text-xs text-muted truncate flex-1 min-w-[12rem]" :title="tx.description ?? ''">{{ tx.description }}</span>
         </div>
         <!-- Items -->
-        <table class="w-full text-sm">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border/60">
             <tr>
               <th class="text-left px-4 py-1.5 font-semibold">Ref Account</th>

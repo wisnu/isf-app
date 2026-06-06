@@ -359,11 +359,11 @@ async function exportXlsx() {
           <table class="w-full">
             <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
               <tr>
-                <th class="text-left px-3 py-1.5 font-semibold w-24">Kode</th>
-                <th class="text-left px-3 py-1.5 font-semibold">Nama Akun</th>
-                <th class="text-left px-3 py-1.5 font-semibold w-24">Tipe</th>
-                <th class="text-left px-3 py-1.5 font-semibold w-20 max-md:hidden">Parent</th>
-                <th class="text-center px-3 py-1.5 font-semibold w-24">
+                <th class="text-left px-3 py-1 font-semibold w-24">Kode</th>
+                <th class="text-left px-3 py-1 font-semibold">Nama Akun</th>
+                <th class="text-left px-3 py-1 font-semibold w-24">Tipe</th>
+                <th class="text-left px-3 py-1 font-semibold w-20 max-md:hidden">Parent</th>
+                <th class="text-center px-3 py-1 font-semibold w-24">
                   <Tooltip side="bottom" content-class="max-w-xs">
                     <template #trigger>
                       <span class="inline-flex items-center gap-1 cursor-help select-none" tabindex="0">
@@ -384,7 +384,7 @@ async function exportXlsx() {
                     </div>
                   </Tooltip>
                 </th>
-                <th class="text-center px-3 py-1.5 font-semibold w-12">Aksi</th>
+                <th class="text-center px-3 py-1 font-semibold w-12">Aksi</th>
               </tr>
             </thead>
             <tbody>

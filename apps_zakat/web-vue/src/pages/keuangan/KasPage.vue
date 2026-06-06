@@ -126,8 +126,8 @@ const stats = computed(() => ({
     <Card>
       <CardContent class="p-0">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="text-xs text-muted uppercase tracking-wide">
+          <table class="w-full text-[11px]">
+            <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
               <tr class="border-b border-border">
                 <th class="text-left px-4 py-2 font-medium w-24">Kode</th>
                 <th class="text-left px-4 py-2 font-medium">Nama Kas</th>
@@ -144,16 +144,16 @@ const stats = computed(() => ({
                 class="border-b border-border last:border-0 hover:bg-background/60"
                 :class="{ 'opacity-60': !a.active }"
               >
-                <td class="px-4 py-2 font-mono text-xs tabular-nums whitespace-nowrap">{{ a.code }}</td>
-                <td class="px-4 py-2 font-medium">{{ a.name }}</td>
-                <td class="px-4 py-2 text-muted text-xs max-md:hidden">{{ a.holder }}</td>
-                <td class="px-4 py-2 text-right font-medium tabular-nums whitespace-nowrap">
+                <td class="px-4 py-1 font-mono text-[11px] tabular-nums whitespace-nowrap">{{ a.code }}</td>
+                <td class="px-4 py-1 font-medium text-[11px]">{{ a.name }}</td>
+                <td class="px-4 py-1 text-muted text-[11px] max-md:hidden">{{ a.holder }}</td>
+                <td class="px-4 py-1 text-right font-medium tabular-nums whitespace-nowrap">
                   {{ formatIdr(a.balance) }}
                 </td>
-                <td class="px-4 py-2 text-muted text-xs max-md:hidden whitespace-nowrap">
+                <td class="px-4 py-1 text-muted text-[11px] max-md:hidden whitespace-nowrap">
                   {{ formatDate(a.updatedAt) }}
                 </td>
-                <td class="px-4 py-2 text-center">
+                <td class="px-4 py-1 text-center">
                   <span
                     class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded font-medium"
                     :class="

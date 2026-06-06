@@ -103,16 +103,16 @@ onMounted(async () => { await loadBranches() })
     <div v-else-if="data" class="space-y-3">
       <div class="text-sm text-muted">Total transaksi <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
       <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-xs">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold whitespace-nowrap">Tanggal</th>
-              <th class="text-left px-3 py-2 font-semibold">Akun (Karyawan)</th>
-              <th class="text-left px-3 py-2 font-semibold whitespace-nowrap">No. Transaksi</th>
-              <th class="text-left px-3 py-2 font-semibold min-w-[14rem]">Keterangan</th>
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Nominal</th>
-              <th class="text-left px-3 py-2 font-semibold">Status LPJ</th>
-              <th class="text-left px-3 py-2 font-semibold">Inputer</th>
+              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
+              <th class="text-left px-3 py-1 font-semibold">Akun (Karyawan)</th>
+              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
+              <th class="text-left px-3 py-1 font-semibold min-w-[14rem]">Keterangan</th>
+              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nominal</th>
+              <th class="text-left px-3 py-1 font-semibold">Status LPJ</th>
+              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
             </tr>
           </thead>
           <tbody>

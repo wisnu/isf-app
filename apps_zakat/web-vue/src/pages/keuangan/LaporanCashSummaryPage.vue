@@ -162,36 +162,36 @@ onMounted(async () => {
       <div v-for="grp in data.groups" :key="grp.currency" class="rounded-xl border border-border bg-surface overflow-hidden">
         <div class="px-4 py-2 bg-background/60 border-b border-border text-sm font-semibold">Valuta: {{ grp.currency }}</div>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-full text-[11px]">
             <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
               <tr>
-                <th class="text-left px-3 py-2 font-semibold">Rekening</th>
-                <th class="text-right px-3 py-2 font-semibold">Saldo Awal</th>
-                <th class="text-right px-3 py-2 font-semibold">Debet</th>
-                <th class="text-right px-3 py-2 font-semibold">Kredit</th>
-                <th class="text-right px-3 py-2 font-semibold">Total</th>
-                <th class="text-right px-3 py-2 font-semibold">Saldo Akhir</th>
+                <th class="text-left px-3 py-1 font-semibold">Rekening</th>
+                <th class="text-right px-3 py-1 font-semibold">Saldo Awal</th>
+                <th class="text-right px-3 py-1 font-semibold">Debet</th>
+                <th class="text-right px-3 py-1 font-semibold">Kredit</th>
+                <th class="text-right px-3 py-1 font-semibold">Total</th>
+                <th class="text-right px-3 py-1 font-semibold">Saldo Akhir</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="r in grp.rows" :key="r.account_no" class="border-b border-border/40 hover:bg-muted/5">
-                <td class="px-3 py-1.5">
+                <td class="px-3 py-1">
                   <span class="font-mono text-[11px] text-muted">{{ r.account_no }}</span>
                   <span class="ml-1">{{ r.account_name }}</span>
                 </td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.begin_balance) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.debit) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.credit) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(r.total) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums font-medium">{{ fmt(r.end_balance) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.begin_balance) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.debit) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.credit) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.total) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums font-medium">{{ fmt(r.end_balance) }}</td>
               </tr>
               <tr class="border-t-2 border-border bg-background/40 font-semibold">
-                <td class="px-3 py-1.5">Subtotal {{ grp.currency }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(grp.subtotal.begin_balance) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(grp.subtotal.debit) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(grp.subtotal.credit) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(grp.subtotal.total) }}</td>
-                <td class="px-3 py-1.5 text-right tabular-nums">{{ fmt(grp.subtotal.end_balance) }}</td>
+                <td class="px-3 py-1">Subtotal {{ grp.currency }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(grp.subtotal.begin_balance) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(grp.subtotal.debit) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(grp.subtotal.credit) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(grp.subtotal.total) }}</td>
+                <td class="px-3 py-1 text-right tabular-nums">{{ fmt(grp.subtotal.end_balance) }}</td>
               </tr>
             </tbody>
           </table>

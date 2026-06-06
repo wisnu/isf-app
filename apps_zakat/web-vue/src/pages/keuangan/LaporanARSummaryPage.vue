@@ -115,16 +115,16 @@ onMounted(async () => { await loadBranches() })
     <div v-else-if="data && data.rows.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada akun untuk filter ini.</div>
 
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-xs">
+      <table class="w-full text-[11px]">
         <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
           <tr>
-            <th class="text-left px-3 py-2 font-semibold">No. Akun</th>
-            <th class="text-left px-3 py-2 font-semibold min-w-[16rem]">Nama</th>
-            <th v-if="data.with_debtor" class="text-left px-3 py-2 font-semibold">Keterangan</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Saldo Awal</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Debet</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Kredit</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Saldo Akhir</th>
+            <th class="text-left px-3 py-1 font-semibold">No. Akun</th>
+            <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Nama</th>
+            <th v-if="data.with_debtor" class="text-left px-3 py-1 font-semibold">Keterangan</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Awal</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Akhir</th>
           </tr>
         </thead>
         <tbody>
@@ -138,11 +138,11 @@ onMounted(async () => { await loadBranches() })
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap font-medium">{{ fmt(r.saldo_akhir) }}</td>
           </tr>
           <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-3 py-2" :colspan="data.with_debtor ? 3 : 2">TOTAL</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debet) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.kredit) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
+            <td class="px-3 py-1" :colspan="data.with_debtor ? 3 : 2">TOTAL</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debet) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.kredit) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
           </tr>
         </tbody>
       </table>

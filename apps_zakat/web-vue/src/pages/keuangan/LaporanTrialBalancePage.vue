@@ -142,22 +142,22 @@ onMounted(async () => {
     <div v-else-if="data && data.groups.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada data untuk filter ini.</div>
 
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-xs">
+      <table class="w-full text-[11px]">
         <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
           <tr>
-            <th class="text-left px-3 py-2 font-semibold">Kode</th>
-            <th class="text-left px-3 py-2 font-semibold min-w-[18rem]">Nama Account</th>
-            <th v-if="data.konsolidasi" class="text-left px-3 py-2 font-semibold">Cabang</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Saldo Awal</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Debet</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Kredit</th>
-            <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Saldo Akhir</th>
+            <th class="text-left px-3 py-1 font-semibold">Kode</th>
+            <th class="text-left px-3 py-1 font-semibold min-w-[18rem]">Nama Account</th>
+            <th v-if="data.konsolidasi" class="text-left px-3 py-1 font-semibold">Cabang</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Awal</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
+            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Akhir</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="grp in data.groups" :key="grp.type">
             <tr class="bg-background/40">
-              <td class="px-3 py-1.5 font-semibold" :colspan="data.konsolidasi ? 7 : 6">{{ grp.type_label }}</td>
+              <td class="px-3 py-1 font-semibold" :colspan="data.konsolidasi ? 7 : 6">{{ grp.type_label }}</td>
             </tr>
             <tr v-for="r in grp.rows" :key="grp.type + r.account_code + (r.branch_code ?? '')" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-3 py-1 font-mono text-[10px] text-muted whitespace-nowrap">{{ r.account_code }}</td>
@@ -169,19 +169,19 @@ onMounted(async () => {
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_akhir) }}</td>
             </tr>
             <tr class="border-y-2 border-border bg-background/30 font-semibold">
-              <td class="px-3 py-1.5" :colspan="data.konsolidasi ? 3 : 2">Total {{ grp.type_label }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_awal) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.debit) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.credit) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_akhir) }}</td>
+              <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">Total {{ grp.type_label }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_awal) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.debit) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.credit) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_akhir) }}</td>
             </tr>
           </template>
           <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-3 py-2" :colspan="data.konsolidasi ? 3 : 2">GRAND TOTAL</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debit) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.credit) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
+            <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">GRAND TOTAL</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debit) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.credit) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
           </tr>
         </tbody>
       </table>

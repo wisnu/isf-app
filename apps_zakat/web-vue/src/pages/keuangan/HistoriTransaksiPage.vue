@@ -358,13 +358,13 @@ async function confirmDelete() {
                   <th class="px-3 py-1.5 text-left font-semibold">Rekening</th>
                   <th class="px-3 py-1.5 text-left font-semibold whitespace-nowrap">Tgl Aktual</th>
                   <th class="px-3 py-1.5 text-left font-semibold whitespace-nowrap">Tgl Trans</th>
-                  <th class="px-3 py-1.5 text-right font-semibold">Nominal</th>
+                  <th class="px-3 py-1 text-right font-semibold">Nominal</th>
                   <th class="px-3 py-1.5 text-left font-semibold min-w-[120px]">Nama Donatur</th>
                   <th class="px-3 py-1.5 text-left font-semibold min-w-[140px]">Keterangan</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Inputer</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Status</th>
                   <th class="px-3 py-1.5 text-left font-semibold">Posted</th>
-                  <th class="px-3 py-1.5 text-center font-semibold w-12">Aksi</th>
+                  <th class="px-3 py-1 text-center font-semibold w-12">Aksi</th>
                 </tr>
               </thead>
               <tbody>

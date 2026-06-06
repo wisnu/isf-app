@@ -165,16 +165,16 @@ onMounted(async () => {
       </div>
 
       <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-xs">
+        <table class="w-full text-[11px]">
           <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
             <tr>
-              <th class="text-left px-3 py-2 font-semibold min-w-[26rem]">Akun</th>
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal }}</th>
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal_prev }}</th>
+              <th class="text-left px-3 py-1 font-semibold min-w-[26rem]">Akun</th>
+              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal }}</th>
+              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal_prev }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr class="bg-background/40"><td class="px-3 py-1.5 font-bold" colspan="3">AKTIVA</td></tr>
+            <tr class="bg-background/40"><td class="px-3 py-1 font-bold" colspan="3">AKTIVA</td></tr>
             <tr v-for="r in data.aktiva" :key="'a' + r.account_code" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-3 py-1" :style="{ paddingLeft: `${0.75 + r.account_level * 1.25}rem` }">
                 <span :class="r.account_level === 0 ? 'font-semibold' : ''">
@@ -186,12 +186,12 @@ onMounted(async () => {
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap text-muted">{{ fmt(r.balance_prev) }}</td>
             </tr>
             <tr class="border-y-2 border-border bg-background/30 font-semibold">
-              <td class="px-3 py-1.5">Total Aktiva</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva) }}</td>
-              <td class="px-3 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva_prev) }}</td>
+              <td class="px-3 py-1">Total Aktiva</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva_prev) }}</td>
             </tr>
 
-            <tr class="bg-background/40"><td class="px-3 py-1.5 font-bold" colspan="3">PASIVA</td></tr>
+            <tr class="bg-background/40"><td class="px-3 py-1 font-bold" colspan="3">PASIVA</td></tr>
             <tr v-for="r in data.pasiva" :key="'p' + r.account_code" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-3 py-1" :style="{ paddingLeft: `${0.75 + r.account_level * 1.25}rem` }">
                 <span :class="r.account_level === 0 ? 'font-semibold' : ''">
@@ -203,9 +203,9 @@ onMounted(async () => {
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap text-muted">{{ fmt(r.balance_prev) }}</td>
             </tr>
             <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-              <td class="px-3 py-2">Total Pasiva</td>
-              <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva) }}</td>
-              <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva_prev) }}</td>
+              <td class="px-3 py-1">Total Pasiva</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva_prev) }}</td>
             </tr>
           </tbody>
         </table>
