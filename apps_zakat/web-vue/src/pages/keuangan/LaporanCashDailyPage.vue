@@ -223,49 +223,61 @@ onMounted(async () => {
         Atur filter lalu klik "Tampilkan"
       </div>
       <AppDataTable v-else :value="data?.rows ?? []" :loading="loading">
-        <Column header="Tanggal">
+        <Column header="Tanggal" style="width:90px;min-width:90px">
           <template #body="{ data: r }">
             <span class="whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</span>
           </template>
         </Column>
-        <Column header="No Transaksi">
+        <Column header="No Transaksi" style="width:170px;min-width:150px">
           <template #body="{ data: r }">
-            <span class="font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</span>
+            <span class="font-mono whitespace-nowrap">{{ r.transactionno }}</span>
           </template>
         </Column>
-        <Column header="D/K" :pt="{ headerCell: { class: 'text-center px-2 py-1 font-semibold whitespace-nowrap w-12' } }">
+        <Column
+          header="D/K"
+          style="width:44px;min-width:44px"
+          :pt="{ headerCell: { class: 'text-center px-2 py-1 font-semibold' } }"
+        >
           <template #body="{ data: r }">
             <span class="flex justify-center">
               <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', r.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">{{ r.mutationtype }}</span>
             </span>
           </template>
         </Column>
-        <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <Column
+          header="Nominal"
+          style="width:115px;min-width:100px"
+          :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold' } }"
+        >
           <template #body="{ data: r }">
             <span class="block text-right tabular-nums">{{ fmt(r.amount) }}</span>
           </template>
         </Column>
-        <Column header="Saldo" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <Column
+          header="Saldo"
+          style="width:130px;min-width:115px"
+          :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold' } }"
+        >
           <template #body="{ data: r }">
             <span class="block text-right tabular-nums font-medium">{{ fmt(r.balance) }}</span>
           </template>
         </Column>
-        <Column header="Keterangan">
+        <Column header="Keterangan" :pt="{ bodyCell: { class: 'px-3 py-1 overflow-hidden max-w-xs' } }">
           <template #body="{ data: r }">
-            <span class="max-w-[20rem] truncate block" :title="r.description ?? ''">{{ r.description }}</span>
+            <span class="truncate block" :title="r.description ?? ''">{{ r.description }}</span>
           </template>
         </Column>
-        <Column header="Referensi">
+        <Column header="Referensi" style="width:80px;min-width:60px">
           <template #body="{ data: r }">
-            <span>{{ r.reference_no || '—' }}</span>
+            <span class="text-muted">{{ r.reference_no || '—' }}</span>
           </template>
         </Column>
-        <Column header="Inputer">
+        <Column header="Inputer" style="width:70px;min-width:60px">
           <template #body="{ data: r }">
             <span>{{ r.inputer || '—' }}</span>
           </template>
         </Column>
-        <Column header="Status">
+        <Column header="Status" style="width:120px;min-width:100px">
           <template #body="{ data: r }">
             <span>{{ AUTH_LABEL[r.auth_status ?? ''] ?? (r.auth_status || '—') }}</span>
           </template>

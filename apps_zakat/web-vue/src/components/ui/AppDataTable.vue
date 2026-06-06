@@ -11,7 +11,7 @@ const pt = {
   headerCell: { class: 'text-left px-3 py-1 font-semibold whitespace-nowrap' },
   tbody: { class: '' },
   row: { class: 'border-b border-border/40 hover:bg-muted/5 transition-colors' },
-  bodyCell: { class: 'px-3 py-1' },
+  bodyCell: { class: 'px-3 py-1 overflow-hidden' },
   emptyMessageCell: { class: 'p-10 text-center text-sm text-muted italic' },
   loadingOverlay: { class: 'absolute inset-0 flex items-center justify-center bg-surface/80 z-10' },
   loadingIcon: { class: 'w-7 h-7 animate-spin text-primary' },
