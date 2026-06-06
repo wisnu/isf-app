@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { Check, Download, FileText, Folder, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
-import { FilterMatchMode } from 'primevue/api'
 import Column from 'primevue/column'
+
+const FilterMatchMode = {
+  CONTAINS: 'contains',
+  STARTS_WITH: 'startsWith',
+  IN: 'in',
+  EQUALS: 'equals',
+} as const
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
