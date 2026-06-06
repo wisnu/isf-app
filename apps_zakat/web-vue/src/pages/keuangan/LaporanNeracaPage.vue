@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -16,6 +18,15 @@ interface NeracaRow {
   balance: number
   balance_prev: number
 }
+interface NeracaTotalRow {
+  __isTotal: true
+  __label: string
+  __isFinal?: boolean
+  balance: number
+  balance_prev: number
+}
+type NeracaTableRow = NeracaRow | NeracaTotalRow
+
 interface NeracaPayload {
   aktiva: NeracaRow[]
   pasiva: NeracaRow[]
@@ -63,6 +74,24 @@ const fmt = (n: number) => idr.format(Math.round(n ?? 0))
 
 const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.value)}` : '')
 const baseQS = () => `tanggal=${tanggal.value}&jenisperiode=${jenisperiode.value}&level=${level.value}${branchQS()}`
+
+// Rows dengan sentinel total di akhir
+const aktivaRows = computed<NeracaTableRow[]>(() => {
+  if (!data.value) return []
+  return [
+    ...data.value.aktiva,
+    { __isTotal: true, __label: 'Total Aktiva', balance: data.value.total_aktiva, balance_prev: data.value.total_aktiva_prev },
+  ]
+})
+const pasivaRows = computed<NeracaTableRow[]>(() => {
+  if (!data.value) return []
+  return [
+    ...data.value.pasiva,
+    { __isTotal: true, __label: 'Total Pasiva', __isFinal: true, balance: data.value.total_pasiva, balance_prev: data.value.total_pasiva_prev },
+  ]
+})
+
+function isTotal(r: NeracaTableRow): r is NeracaTotalRow { return '__isTotal' in r }
 
 async function loadBranches() {
   try {
@@ -152,7 +181,9 @@ onMounted(async () => {
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
 
     <div v-else-if="data" class="space-y-3">
       <div class="rounded-xl border bg-surface p-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm"
@@ -164,51 +195,81 @@ onMounted(async () => {
         <span class="text-muted ml-auto text-xs">Per {{ data.tanggal }} · Pembanding {{ data.tanggal_prev }} ({{ data.jenisperiode }})</span>
       </div>
 
-      <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold min-w-[26rem]">Akun</th>
-              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal }}</th>
-              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nilai per {{ data.tanggal_prev }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="bg-background/40"><td class="px-3 py-1 font-bold" colspan="3">AKTIVA</td></tr>
-            <tr v-for="r in data.aktiva" :key="'a' + r.account_code" class="border-b border-border/30 hover:bg-muted/5">
-              <td class="px-3 py-1" :style="{ paddingLeft: `${0.75 + r.account_level * 1.25}rem` }">
-                <span :class="r.account_level === 0 ? 'font-semibold' : ''">
-                  <span class="font-mono text-[10px] text-muted">{{ r.account_code }}</span>
-                  <span class="ml-1">{{ r.account_name }}</span>
-                </span>
-              </td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap" :class="r.account_level === 0 ? 'font-semibold' : ''">{{ fmt(r.balance) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap text-muted">{{ fmt(r.balance_prev) }}</td>
-            </tr>
-            <tr class="border-y-2 border-border bg-background/30 font-semibold">
-              <td class="px-3 py-1">Total Aktiva</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_aktiva_prev) }}</td>
-            </tr>
+      <!-- Tabel AKTIVA -->
+      <div>
+        <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted bg-background/50 border border-border rounded-t-xl border-b-0">AKTIVA</div>
+        <AppDataTable :value="aktivaRows" :loading="loading">
+          <template #empty>Tidak ada data untuk filter ini.</template>
+          <Column :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[26rem]' } }">
+            <template #header>Akun</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block px-3 py-1 font-semibold"
+                    :class="r.__isFinal ? 'font-bold' : ''">{{ r.__label }}</span>
+              <span v-else :style="{ paddingLeft: `${0.75 + (r as NeracaRow).account_level * 1.25}rem` }" class="block"
+                    :class="(r as NeracaRow).account_level === 0 ? 'font-semibold' : ''">
+                <span class="font-mono text-[10px] text-muted">{{ (r as NeracaRow).account_code }}</span>
+                <span class="ml-1">{{ (r as NeracaRow).account_name }}</span>
+              </span>
+            </template>
+          </Column>
+          <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #header>Nilai per {{ data.tanggal }}</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-semibold"
+                    :class="r.__isFinal ? 'font-bold' : ''">{{ fmt(r.balance) }}</span>
+              <span v-else class="block text-right tabular-nums whitespace-nowrap px-3 py-1"
+                    :class="(r as NeracaRow).account_level === 0 ? 'font-semibold' : ''">{{ fmt((r as NeracaRow).balance) }}</span>
+            </template>
+          </Column>
+          <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #header>Nilai per {{ data.tanggal_prev }}</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-semibold"
+                    :class="r.__isFinal ? 'font-bold' : ''">{{ fmt(r.balance_prev) }}</span>
+              <span v-else class="block text-right tabular-nums whitespace-nowrap text-muted px-3 py-1">{{ fmt((r as NeracaRow).balance_prev) }}</span>
+            </template>
+          </Column>
+        </AppDataTable>
+      </div>
 
-            <tr class="bg-background/40"><td class="px-3 py-1 font-bold" colspan="3">PASIVA</td></tr>
-            <tr v-for="r in data.pasiva" :key="'p' + r.account_code" class="border-b border-border/30 hover:bg-muted/5">
-              <td class="px-3 py-1" :style="{ paddingLeft: `${0.75 + r.account_level * 1.25}rem` }">
-                <span :class="r.account_level === 0 ? 'font-semibold' : ''">
-                  <span class="font-mono text-[10px] text-muted">{{ r.account_code }}</span>
-                  <span class="ml-1">{{ r.account_name }}</span>
-                </span>
-              </td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap" :class="r.account_level === 0 ? 'font-semibold' : ''">{{ fmt(r.balance) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap text-muted">{{ fmt(r.balance_prev) }}</td>
-            </tr>
-            <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-              <td class="px-3 py-1">Total Pasiva</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.total_pasiva_prev) }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Tabel PASIVA -->
+      <div>
+        <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted bg-background/50 border border-border rounded-t-xl border-b-0">PASIVA</div>
+        <AppDataTable :value="pasivaRows" :loading="false">
+          <template #empty>Tidak ada data untuk filter ini.</template>
+          <Column :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[26rem]' } }">
+            <template #header>Akun</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block px-3 py-1 font-bold text-primary">{{ r.__label }}</span>
+              <span v-else :style="{ paddingLeft: `${0.75 + (r as NeracaRow).account_level * 1.25}rem` }" class="block"
+                    :class="(r as NeracaRow).account_level === 0 ? 'font-semibold' : ''">
+                <span class="font-mono text-[10px] text-muted">{{ (r as NeracaRow).account_code }}</span>
+                <span class="ml-1">{{ (r as NeracaRow).account_name }}</span>
+              </span>
+            </template>
+          </Column>
+          <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #header>Nilai per {{ data.tanggal }}</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-bold text-primary">{{ fmt(r.balance) }}</span>
+              <span v-else class="block text-right tabular-nums whitespace-nowrap px-3 py-1"
+                    :class="(r as NeracaRow).account_level === 0 ? 'font-semibold' : ''">{{ fmt((r as NeracaRow).balance) }}</span>
+            </template>
+          </Column>
+          <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #header>Nilai per {{ data.tanggal_prev }}</template>
+            <template #body="{ data: r }">
+              <span v-if="isTotal(r)"
+                    class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-bold text-primary">{{ fmt(r.balance_prev) }}</span>
+              <span v-else class="block text-right tabular-nums whitespace-nowrap text-muted px-3 py-1">{{ fmt((r as NeracaRow).balance_prev) }}</span>
+            </template>
+          </Column>
+        </AppDataTable>
       </div>
     </div>
   </div>

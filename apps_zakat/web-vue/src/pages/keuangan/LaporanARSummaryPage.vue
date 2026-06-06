@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -12,6 +14,7 @@ import { useAuthStore } from '@/stores/auth'
 interface ARRow {
   accountno: string; accountname: string | null; debtor_description: string | null
   saldo_awal: number; debet: number; kredit: number; saldo_akhir: number
+  _isTotal?: boolean
 }
 interface ARPayload {
   rows: ARRow[]
@@ -41,6 +44,14 @@ const data = ref<ARPayload | null>(null)
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
+
+const tableRows = computed<ARRow[]>(() => {
+  if (!data.value) return []
+  return [
+    ...data.value.rows,
+    { accountno: '', accountname: null, debtor_description: null, _isTotal: true, ...data.value.grand_total },
+  ]
+})
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))
@@ -111,41 +122,41 @@ onMounted(async () => { await loadBranches() })
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-    <div v-else-if="data && data.rows.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada akun untuk filter ini.</div>
-
-    <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-[11px]">
-        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-          <tr>
-            <th class="text-left px-3 py-1 font-semibold">No. Akun</th>
-            <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Nama</th>
-            <th v-if="data.with_debtor" class="text-left px-3 py-1 font-semibold">Keterangan</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Awal</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Akhir</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-            <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.accountno }}</td>
-            <td class="px-3 py-1">{{ r.accountname }}</td>
-            <td v-if="data.with_debtor" class="px-3 py-1 text-muted">{{ r.debtor_description }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_awal) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.debet) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.kredit) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap font-medium">{{ fmt(r.saldo_akhir) }}</td>
-          </tr>
-          <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-3 py-1" :colspan="data.with_debtor ? 3 : 2">TOTAL</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debet) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.kredit) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
     </div>
+    <AppDataTable v-else :value="tableRows" :loading="loading"
+      :row-class="(r: ARRow) => r._isTotal ? 'border-t-2 border-primary/40 bg-primary/5 font-bold' : ''">
+      <Column :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <template #header>No. Akun</template>
+        <template #body="{ data: r }">
+          <span v-if="r._isTotal" class="font-bold">TOTAL</span>
+          <span v-else class="font-mono text-[10px] whitespace-nowrap">{{ r.accountno }}</span>
+        </template>
+      </Column>
+      <Column header="Nama" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[16rem]' } }">
+        <template #body="{ data: r }">
+          <span v-if="!r._isTotal">{{ r.accountname }}</span>
+        </template>
+      </Column>
+      <Column v-if="data?.with_debtor" header="Keterangan">
+        <template #body="{ data: r }">
+          <span v-if="!r._isTotal" class="text-muted">{{ r.debtor_description }}</span>
+        </template>
+      </Column>
+      <Column header="Saldo Awal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_awal) }}</span></template>
+      </Column>
+      <Column header="Debet" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.debet) }}</span></template>
+      </Column>
+      <Column header="Kredit" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.kredit) }}</span></template>
+      </Column>
+      <Column header="Saldo Akhir" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap font-medium">{{ fmt(r.saldo_akhir) }}</span></template>
+      </Column>
+      <template #empty>Tidak ada data untuk filter ini.</template>
+    </AppDataTable>
   </div>
 </template>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import Column from 'primevue/column'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -98,37 +100,38 @@ onMounted(async () => { await loadBranches() })
       <Button variant="outline" size="sm" class="gap-1.5 h-9" :disabled="exporting || loading || !data || !data.total" @click="exportXlsx"><Download class="w-4 h-4" :class="{ 'animate-pulse': exporting }" />{{ exporting ? 'Mengekspor…' : 'Export Excel' }}</Button>
     </div>
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-    <div v-else-if="data && data.total === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada transaksi untuk filter ini.</div>
-    <div v-else-if="data" class="space-y-3">
-      <div class="text-sm text-muted">Total transaksi <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
-      <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
-              <th class="text-left px-3 py-1 font-semibold">Akun (Karyawan)</th>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
-              <th class="text-left px-3 py-1 font-semibold min-w-[14rem]">Keterangan</th>
-              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nominal</th>
-              <th class="text-left px-3 py-1 font-semibold">Status LPJ</th>
-              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.actualdate) }}</td>
-              <td class="px-3 py-1">{{ r.accountname }}</td>
-              <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</td>
-              <td class="px-3 py-1 whitespace-pre-line">{{ r.description }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.amount) }}</td>
-              <td class="px-3 py-1"><span :class="r.lpj_label === 'Sudah Ada LPJ' ? 'text-emerald-600' : 'text-amber-600'">{{ r.lpj_label }}</span></td>
-              <td class="px-3 py-1">{{ r.inputer }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
+    <div v-else class="space-y-3">
+      <div v-if="data" class="text-sm text-muted">Total transaksi <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
+      <div class="rounded-xl border border-border bg-surface overflow-hidden">
+        <AppDataTable :value="data?.rows ?? []" :loading="loading">
+          <Column header="Tanggal">
+            <template #body="{ data: r }"><span class="whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</span></template>
+          </Column>
+          <Column field="accountname" header="Akun (Karyawan)" />
+          <Column header="No. Transaksi">
+            <template #body="{ data: r }"><span class="font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</span></template>
+          </Column>
+          <Column header="Keterangan" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[14rem]' } }">
+            <template #body="{ data: r }">
+              <span class="max-w-[24rem] truncate block" :title="r.description ?? ''">{{ r.description }}</span>
+            </template>
+          </Column>
+          <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.amount) }}</span></template>
+          </Column>
+          <Column header="Status LPJ">
+            <template #body="{ data: r }">
+              <span :class="r.lpj_label === 'Sudah Ada LPJ' ? 'text-emerald-600' : 'text-amber-600'">{{ r.lpj_label }}</span>
+            </template>
+          </Column>
+          <Column field="inputer" header="Inputer" />
+          <template #empty>Tidak ada transaksi untuk filter ini.</template>
+        </AppDataTable>
       </div>
-      <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
+      <div v-if="data && totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
         <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="goPage(page - 1)">‹ Sebelumnya</Button>
         <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>
         <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Berikutnya ›</Button>

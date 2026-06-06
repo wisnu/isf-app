@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -123,7 +123,9 @@ onMounted(async () => {
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
 
     <div v-else-if="data" class="grid gap-4 md:grid-cols-2">
       <div v-for="f in data.funds" :key="f.fund" class="rounded-xl border border-border bg-surface overflow-hidden">

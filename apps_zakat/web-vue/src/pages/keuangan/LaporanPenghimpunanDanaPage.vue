@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -15,7 +17,7 @@ interface CollRow {
   donorname: string | null; transactionno: string | null; inputer: string | null
 }
 interface CollPayload { rows: CollRow[]; total: number; total_amount: number; page: number; page_size: number }
-interface RekapFund { fund_label: string; saldo_awal: number; mutasi: number; saldo_akhir: number; donors: number }
+interface RekapFund { fund_label: string; saldo_awal: number; mutasi: number; saldo_akhir: number; donors: number; _isTotal?: boolean }
 interface RekapPayload { funds: RekapFund[]; grand_total: { saldo_awal: number; mutasi: number; saldo_akhir: number; donors: number } }
 interface BranchOption { code: string; name: string }
 
@@ -44,6 +46,14 @@ const rekap = ref<RekapPayload | null>(null)
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
+
+const rekapRows = computed<RekapFund[]>(() => {
+  if (!rekap.value) return []
+  return [
+    ...rekap.value.funds,
+    { fund_label: 'TOTAL', _isTotal: true, ...rekap.value.grand_total },
+  ]
+})
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))
@@ -138,68 +148,51 @@ onMounted(async () => { await loadBranches() })
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
 
-    <template v-else-if="data">
-      <div v-if="rekap" class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold">Dana</th>
-              <th class="text-right px-3 py-1 font-semibold">Saldo Awal</th>
-              <th class="text-right px-3 py-1 font-semibold">Mutasi (Penerimaan)</th>
-              <th class="text-right px-3 py-1 font-semibold">Saldo Akhir</th>
-              <th class="text-right px-3 py-1 font-semibold">Jml Donatur</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="f in rekap.funds" :key="f.fund_label" class="border-b border-border/20">
-              <td class="px-3 py-1 font-medium">{{ f.fund_label }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.saldo_awal) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.mutasi) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(f.saldo_akhir) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ f.donors }}</td>
-            </tr>
-            <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
-              <td class="px-3 py-1">TOTAL</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_awal) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.mutasi) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(rekap.grand_total.saldo_akhir) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ rekap.grand_total.donors }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <template v-else>
+      <AppDataTable v-if="rekap || loading" :value="rekapRows" :loading="loading && !rekap"
+        :row-class="(r: RekapFund) => r._isTotal ? 'border-t-2 border-primary/40 bg-primary/5 font-bold' : ''">
+        <Column header="Dana">
+          <template #body="{ data: r }"><span class="font-medium">{{ r.fund_label }}</span></template>
+        </Column>
+        <Column header="Saldo Awal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.saldo_awal) }}</span></template>
+        </Column>
+        <Column header="Mutasi (Penerimaan)" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.mutasi) }}</span></template>
+        </Column>
+        <Column header="Saldo Akhir" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.saldo_akhir) }}</span></template>
+        </Column>
+        <Column header="Jml Donatur" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ r.donors }}</span></template>
+        </Column>
+        <template #empty>Tidak ada data untuk filter ini.</template>
+      </AppDataTable>
 
-      <div class="text-sm text-muted">Detail transaksi — total <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
-      <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
-              <th class="text-left px-3 py-1 font-semibold">Dana</th>
-              <th class="text-left px-3 py-1 font-semibold">Akun</th>
-              <th class="text-left px-3 py-1 font-semibold">Donatur</th>
-              <th class="text-left px-3 py-1 font-semibold min-w-[12rem]">Keterangan</th>
-              <th class="text-left px-3 py-1 font-semibold">Channel</th>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
-              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nominal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.actualdate) }}</td>
-              <td class="px-3 py-1">{{ r.fund_label }}</td>
-              <td class="px-3 py-1">{{ r.account_name }}</td>
-              <td class="px-3 py-1">{{ r.donorname }}</td>
-              <td class="px-3 py-1 whitespace-pre-line">{{ r.description }}</td>
-              <td class="px-3 py-1">{{ r.channel }}</td>
-              <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.amount) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div v-if="data" class="text-sm text-muted">Detail transaksi — total <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
+      <AppDataTable :value="data?.rows ?? []" :loading="loading">
+        <Column header="Tanggal">
+          <template #body="{ data: r }"><span class="whitespace-nowrap">{{ dmy(r.actualdate) }}</span></template>
+        </Column>
+        <Column field="fund_label" header="Dana" />
+        <Column field="account_name" header="Akun" />
+        <Column field="donorname" header="Donatur" />
+        <Column header="Keterangan" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[12rem]' } }">
+          <template #body="{ data: r }"><span class="whitespace-pre-line">{{ r.description }}</span></template>
+        </Column>
+        <Column field="channel" header="Channel" />
+        <Column header="No. Transaksi">
+          <template #body="{ data: r }"><span class="font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</span></template>
+        </Column>
+        <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.amount) }}</span></template>
+        </Column>
+        <template #empty>Tidak ada transaksi untuk filter ini.</template>
+      </AppDataTable>
       <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
         <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="loadPage(page - 1)">‹ Sebelumnya</Button>
         <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>

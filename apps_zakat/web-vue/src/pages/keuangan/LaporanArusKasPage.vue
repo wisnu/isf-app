@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -20,6 +22,16 @@ interface AKPayload {
   konsolidasi: boolean
 }
 interface BranchOption { code: string; name: string }
+
+// Sentinel row types untuk flatten
+type AKTableRow =
+  | { __kind: 'section-header'; title: string }
+  | { __kind: 'line'; label: string; value: number }
+  | { __kind: 'subtotal'; title: string; subtotal: number }
+  | { __kind: 'spacer' }
+  | { __kind: 'summary-kenaikan'; value: number }
+  | { __kind: 'summary-saldo-awal'; value: number }
+  | { __kind: 'summary-saldo-akhir'; value: number }
 
 const auth = useAuthStore()
 const canPickBranch = computed(() => auth.user?.branch_access === 'all')
@@ -42,6 +54,23 @@ const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFr
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))
 
 const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.value)}` : '')
+
+// Flatten semua baris ke satu array untuk AppDataTable
+const tableRows = computed<AKTableRow[]>(() => {
+  if (!data.value) return []
+  const rows: AKTableRow[] = []
+  for (const sec of data.value.sections) {
+    rows.push({ __kind: 'section-header', title: sec.title })
+    for (const ln of sec.lines)
+      rows.push({ __kind: 'line', label: ln.label, value: ln.value })
+    rows.push({ __kind: 'subtotal', title: sec.title, subtotal: sec.subtotal })
+    rows.push({ __kind: 'spacer' })
+  }
+  rows.push({ __kind: 'summary-kenaikan', value: data.value.kenaikan_bersih })
+  rows.push({ __kind: 'summary-saldo-awal', value: data.value.saldo_awal })
+  rows.push({ __kind: 'summary-saldo-akhir', value: data.value.saldo_akhir })
+  return rows
+})
 
 async function loadBranches() {
   try {
@@ -125,41 +154,53 @@ onMounted(async () => {
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-
-    <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto max-w-3xl">
-      <table class="w-full text-[11px]">
-        <tbody>
-          <template v-for="sec in data.sections" :key="sec.title">
-            <tr class="bg-background/40 border-b border-border">
-              <td class="px-4 py-1 font-semibold">{{ sec.title }}</td>
-              <td class="px-4 py-1"></td>
-            </tr>
-            <tr v-for="(ln, i) in sec.lines" :key="sec.title + i" class="border-b border-border/30 hover:bg-muted/5">
-              <td class="px-4 py-1 pl-8">{{ ln.label }}</td>
-              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap" :class="ln.value < 0 ? 'text-red-600' : ''">{{ fmt(ln.value) }}</td>
-            </tr>
-            <tr class="border-y border-border bg-background/30 font-semibold">
-              <td class="px-4 py-1.5">Jumlah {{ sec.title }}</td>
-              <td class="px-4 py-1.5 text-right tabular-nums whitespace-nowrap" :class="sec.subtotal < 0 ? 'text-red-600' : ''">{{ fmt(sec.subtotal) }}</td>
-            </tr>
-            <tr><td colspan="2" class="py-1"></td></tr>
-          </template>
-
-          <tr class="border-t-2 border-border font-semibold">
-            <td class="px-4 py-1">Kenaikan (Penurunan) Kas Bersih</td>
-            <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap" :class="data.kenaikan_bersih < 0 ? 'text-red-600' : ''">{{ fmt(data.kenaikan_bersih) }}</td>
-          </tr>
-          <tr class="border-b border-border/30">
-            <td class="px-4 py-1">Saldo Kas &amp; Setara Kas Awal Periode</td>
-            <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.saldo_awal) }}</td>
-          </tr>
-          <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-4 py-1">Saldo Kas &amp; Setara Kas Akhir Periode</td>
-            <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.saldo_akhir) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
     </div>
+
+    <AppDataTable v-else :value="tableRows" :loading="loading" class="max-w-3xl">
+      <template #empty>Tidak ada data untuk filter ini.</template>
+
+      <!-- Kolom label -->
+      <Column :pt="{ headerCell: { class: 'px-4 py-1 font-semibold' } }">
+        <template #header>&nbsp;</template>
+        <template #body="{ data: r }">
+          <span v-if="r.__kind === 'section-header'"
+                class="block px-4 py-1 font-semibold bg-background/40">{{ r.title }}</span>
+          <span v-else-if="r.__kind === 'line'"
+                class="block px-4 py-1 pl-8">{{ r.label }}</span>
+          <span v-else-if="r.__kind === 'subtotal'"
+                class="block px-4 py-1.5 font-semibold bg-background/30">Jumlah {{ r.title }}</span>
+          <span v-else-if="r.__kind === 'spacer'" class="block py-1" />
+          <span v-else-if="r.__kind === 'summary-kenaikan'"
+                class="block px-4 py-1 font-semibold">Kenaikan (Penurunan) Kas Bersih</span>
+          <span v-else-if="r.__kind === 'summary-saldo-awal'"
+                class="block px-4 py-1">Saldo Kas &amp; Setara Kas Awal Periode</span>
+          <span v-else-if="r.__kind === 'summary-saldo-akhir'"
+                class="block px-4 py-1 font-bold text-primary">Saldo Kas &amp; Setara Kas Akhir Periode</span>
+        </template>
+      </Column>
+
+      <!-- Kolom nilai -->
+      <Column :pt="{ headerCell: { class: 'text-right px-4 py-1 font-semibold whitespace-nowrap' } }">
+        <template #header>Nominal</template>
+        <template #body="{ data: r }">
+          <span v-if="r.__kind === 'section-header' || r.__kind === 'spacer'" />
+          <span v-else-if="r.__kind === 'line'"
+                class="block text-right tabular-nums whitespace-nowrap px-4 py-1"
+                :class="r.value < 0 ? 'text-red-600' : ''">{{ fmt(r.value) }}</span>
+          <span v-else-if="r.__kind === 'subtotal'"
+                class="block text-right tabular-nums whitespace-nowrap px-4 py-1.5 font-semibold bg-background/30"
+                :class="r.subtotal < 0 ? 'text-red-600' : ''">{{ fmt(r.subtotal) }}</span>
+          <span v-else-if="r.__kind === 'summary-kenaikan'"
+                class="block text-right tabular-nums whitespace-nowrap px-4 py-1 font-semibold"
+                :class="r.value < 0 ? 'text-red-600' : ''">{{ fmt(r.value) }}</span>
+          <span v-else-if="r.__kind === 'summary-saldo-awal'"
+                class="block text-right tabular-nums whitespace-nowrap px-4 py-1">{{ fmt(r.value) }}</span>
+          <span v-else-if="r.__kind === 'summary-saldo-akhir'"
+                class="block text-right tabular-nums whitespace-nowrap px-4 py-1 font-bold text-primary">{{ fmt(r.value) }}</span>
+        </template>
+      </Column>
+    </AppDataTable>
   </div>
 </template>

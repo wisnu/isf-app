@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import Column from 'primevue/column'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -70,43 +72,46 @@ onMounted(async () => { await loadBranches() })
     </div>
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
     <Alert v-if="data && data.capped" variant="default" class="text-xs">Hasil dibatasi 50.000 baris — persempit periode/cabang.</Alert>
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-    <div v-else-if="data && data.accounts.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada transaksi UPZ untuk filter ini.</div>
-    <div v-else-if="data" class="space-y-5">
-      <div v-for="acc in data.accounts" :key="acc.account_code" class="rounded-xl border border-border bg-surface overflow-hidden">
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
+    <div v-else class="space-y-5">
+      <div v-for="acc in (data?.accounts ?? [])" :key="acc.account_code" class="rounded-xl border border-border bg-surface overflow-hidden">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 bg-background/40 border-b border-border">
           <span class="font-semibold text-sm">{{ acc.account_code }} — {{ acc.account_name }}</span>
           <span class="text-xs text-muted ml-auto">Debet: <span class="tabular-nums text-foreground">{{ fmt(acc.total_debit) }}</span> · Kredit: <span class="tabular-nums text-foreground">{{ fmt(acc.total_credit) }}</span></span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-[11px]">
-            <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/30">
-              <tr>
-                <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
-                <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
-                <th class="text-left px-3 py-1 font-semibold">Jenis</th>
-                <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Keterangan</th>
-                <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
-                <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(r, i) in acc.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-                <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.journal_date) }}</td>
-                <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</td>
-                <td class="px-3 py-1">{{ r.trxtype }}</td>
-                <td class="px-3 py-1 whitespace-pre-line">{{ r.description }}<span v-if="r.subaccount" class="text-muted"> · {{ r.subaccount }}</span></td>
-                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.debit) }}</td>
-                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.credit) }}</td>
-              </tr>
-              <tr class="border-t-2 border-border bg-background/30 font-semibold">
-                <td class="px-3 py-1" colspan="4">Total</td>
-                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_debit) }}</td>
-                <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_credit) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <AppDataTable :value="acc.rows" :loading="loading && !data">
+          <Column header="Tanggal">
+            <template #body="{ data: r }"><span class="whitespace-nowrap tabular-nums">{{ dmy(r.journal_date) }}</span></template>
+          </Column>
+          <Column header="No. Transaksi">
+            <template #body="{ data: r }"><span class="font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</span></template>
+          </Column>
+          <Column field="trxtype" header="Jenis" />
+          <Column header="Keterangan" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[16rem]' } }">
+            <template #body="{ data: r }">
+              <span class="max-w-[24rem] truncate block" :title="(r.description + (r.subaccount ? ' · ' + r.subaccount : ''))">{{ r.description }}<span v-if="r.subaccount" class="text-muted"> · {{ r.subaccount }}</span></span>
+            </template>
+          </Column>
+          <Column header="Debet" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.debit) }}</span></template>
+          </Column>
+          <Column header="Kredit" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.credit) }}</span></template>
+          </Column>
+          <template #empty>Tidak ada transaksi UPZ untuk filter ini.</template>
+          <template #footer>
+            <tr class="border-t-2 border-border bg-background/30 font-semibold text-[11px]">
+              <td class="px-3 py-1" colspan="4">Total</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_debit) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(acc.total_credit) }}</td>
+            </tr>
+          </template>
+        </AppDataTable>
+      </div>
+      <div v-if="loading && !data" class="p-10 text-center">
+        <span class="text-sm text-muted italic">Memuat data…</span>
       </div>
     </div>
   </div>

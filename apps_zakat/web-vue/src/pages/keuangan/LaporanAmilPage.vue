@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -129,44 +131,58 @@ onMounted(async () => { await loadBranches() })
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
 
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-    <div v-else-if="data && data.total === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada transaksi untuk filter ini.</div>
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
 
-    <div v-else-if="data" class="space-y-3">
-      <div class="flex flex-wrap items-center gap-x-6 text-sm">
+    <div v-else class="space-y-3">
+      <div v-if="data" class="flex flex-wrap items-center gap-x-6 text-sm">
         <span class="text-muted">Total transaksi: <span class="font-medium text-foreground">{{ data.total }}</span></span>
         <span class="text-muted">Total nominal: <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></span>
       </div>
-      <div class="rounded-xl border border-border bg-surface overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
-              <th class="text-left px-3 py-1 font-semibold">Akun</th>
-              <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Keterangan</th>
-              <th class="text-left px-3 py-1 font-semibold">Channel</th>
-              <th v-if="isOut" class="text-left px-3 py-1 font-semibold">Anggaran</th>
-              <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">No. Transaksi</th>
-              <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nominal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.actualdate) }}</td>
-              <td class="px-3 py-1"><span class="font-mono text-[10px] text-muted">{{ r.account_code }}</span> {{ r.account_name }}</td>
-              <td class="px-3 py-1 whitespace-pre-line">{{ r.description }}</td>
-              <td class="px-3 py-1">{{ r.channel }}</td>
-              <td v-if="isOut" class="px-3 py-1 text-muted">{{ [r.budgetcode, r.budgetitemdescription].filter(Boolean).join(' - ') }}</td>
-              <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.amount) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
-        <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="goPage(page - 1)">‹ Sebelumnya</Button>
+
+      <AppDataTable :value="data?.rows ?? []" :loading="loading">
+        <template #empty>Tidak ada transaksi untuk filter ini.</template>
+
+        <Column header="Tanggal" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block px-3 py-1 whitespace-nowrap">{{ dmy(r.actualdate) }}</span></template>
+        </Column>
+
+        <Column header="Akun" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold' } }">
+          <template #body="{ data: r }">
+            <span class="block px-3 py-1">
+              <span class="font-mono text-[10px] text-muted">{{ r.account_code }}</span> {{ r.account_name }}
+            </span>
+          </template>
+        </Column>
+
+        <Column header="Keterangan" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[16rem]' } }">
+          <template #body="{ data: r }"><span class="block px-3 py-1 whitespace-pre-line">{{ r.description }}</span></template>
+        </Column>
+
+        <Column header="Channel" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold' } }">
+          <template #body="{ data: r }"><span class="block px-3 py-1">{{ r.channel }}</span></template>
+        </Column>
+
+        <Column v-if="isOut" header="Anggaran" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold' } }">
+          <template #body="{ data: r }">
+            <span class="block px-3 py-1 text-muted">{{ [r.budgetcode, r.budgetitemdescription].filter(Boolean).join(' - ') }}</span>
+          </template>
+        </Column>
+
+        <Column header="No. Transaksi" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.transactionno }}</span></template>
+        </Column>
+
+        <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums px-3 py-1 whitespace-nowrap">{{ fmt(r.amount) }}</span></template>
+        </Column>
+      </AppDataTable>
+
+      <div v-if="data && totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
+        <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="goPage(page - 1)">&#8249; Sebelumnya</Button>
         <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>
-        <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Berikutnya ›</Button>
+        <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Berikutnya &#8250;</Button>
       </div>
     </div>
   </div>

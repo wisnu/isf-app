@@ -4,12 +4,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Loader2,
   Search,
 } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import { api, ApiError } from '@/lib/api/client'
@@ -191,15 +192,12 @@ onMounted(async () => {
     </div>
 
     <!-- Grouped list -->
-    <div v-if="loading && !data" class="flex justify-center p-12">
-      <Loader2 class="w-7 h-7 animate-spin text-primary" />
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
     </div>
-    <div v-else-if="data && data.transactions.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">
-      Tidak ada transaksi untuk filter ini.
-    </div>
-    <div v-else-if="data" class="space-y-3">
+    <div v-else class="space-y-3">
       <div
-        v-for="(tx, ti) in data.transactions"
+        v-for="(tx, ti) in data?.transactions ?? []"
         :key="ti"
         class="rounded-xl border border-border bg-surface overflow-hidden"
       >
@@ -211,39 +209,43 @@ onMounted(async () => {
           <span class="text-xs text-muted truncate flex-1 min-w-[12rem]" :title="tx.description ?? ''">{{ tx.description }}</span>
         </div>
         <!-- Items -->
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border/60">
-            <tr>
-              <th class="text-left px-4 py-1.5 font-semibold">Ref Account</th>
-              <th class="text-center px-2 py-1.5 font-semibold w-12">D/K</th>
-              <th class="text-right px-4 py-1.5 font-semibold w-40">Nominal</th>
-              <th class="text-left px-4 py-1.5 font-semibold">Keterangan</th>
-              <th class="text-left px-4 py-1.5 font-semibold">Budget</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(it, ii) in tx.items" :key="ii" class="border-b border-border/30 last:border-0">
-              <td class="px-4 py-1.5">
-                <span class="font-mono text-[11px] text-muted">{{ it.refaccountno }}</span>
-                <span class="ml-1">{{ it.refaccountname }}</span>
-              </td>
-              <td class="px-2 py-1.5 text-center">
+        <AppDataTable :value="tx.items" :loading="false">
+          <Column header="Ref Account">
+            <template #body="{ data: it }">
+              <span class="font-mono text-[11px] text-muted">{{ it.refaccountno }}</span>
+              <span class="ml-1">{{ it.refaccountname }}</span>
+            </template>
+          </Column>
+          <Column header="D/K" :pt="{ headerCell: { class: 'text-center px-2 py-1 font-semibold whitespace-nowrap w-12' } }">
+            <template #body="{ data: it }">
+              <span class="flex justify-center">
                 <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', it.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">
                   {{ it.mutationtype }}
                 </span>
-              </td>
-              <td class="px-4 py-1.5 text-right tabular-nums">{{ fmt(it.amount) }}</td>
-              <td class="px-4 py-1.5 max-w-[20rem] truncate" :title="it.item_description ?? ''">{{ it.item_description }}</td>
-              <td class="px-4 py-1.5 text-[11px] text-muted">
-                {{ [it.budget_code, it.budget_item_description].filter(Boolean).join(' - ') || '—' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </span>
+            </template>
+          </Column>
+          <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+            <template #body="{ data: it }">
+              <span class="block text-right tabular-nums">{{ fmt(it.amount) }}</span>
+            </template>
+          </Column>
+          <Column header="Keterangan">
+            <template #body="{ data: it }">
+              <span class="max-w-[20rem] truncate block" :title="it.item_description ?? ''">{{ it.item_description }}</span>
+            </template>
+          </Column>
+          <Column header="Budget">
+            <template #body="{ data: it }">
+              <span class="text-muted">{{ [it.budget_code, it.budget_item_description].filter(Boolean).join(' - ') || '—' }}</span>
+            </template>
+          </Column>
+          <template #empty>—</template>
+        </AppDataTable>
       </div>
 
       <!-- Pagination -->
-      <div v-if="data.total > 0" class="flex items-center justify-between gap-2 flex-wrap px-1">
+      <div v-if="data && data.total > 0" class="flex items-center justify-between gap-2 flex-wrap px-1">
         <p class="text-[11px] text-muted tabular-nums">
           Hal {{ data.page }} / {{ totalPages }} · {{ data.total.toLocaleString('id-ID') }} transaksi
         </p>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { AlertTriangle, ChevronLeft, ChevronRight, Download, Loader2, Search } from 'lucide-vue-next'
+import { AlertTriangle, ChevronLeft, ChevronRight, Download, Search } from 'lucide-vue-next'
+import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
@@ -217,40 +219,59 @@ onMounted(async () => {
 
     <!-- Table -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
-      <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-      <div v-else-if="data && data.rows.length === 0" class="p-10 text-center text-sm text-muted italic">Tidak ada mutasi untuk filter ini.</div>
-      <div v-else-if="data" class="overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-            <tr>
-              <th class="text-left px-3 py-1 font-semibold">Tanggal</th>
-              <th class="text-left px-3 py-1 font-semibold">No Transaksi</th>
-              <th class="text-center px-2 py-1.5 font-semibold w-12">D/K</th>
-              <th class="text-right px-3 py-1 font-semibold">Nominal</th>
-              <th class="text-right px-3 py-1 font-semibold">Saldo</th>
-              <th class="text-left px-3 py-1 font-semibold">Keterangan</th>
-              <th class="text-left px-3 py-1 font-semibold">Referensi</th>
-              <th class="text-left px-3 py-1 font-semibold">Inputer</th>
-              <th class="text-left px-3 py-1 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/40 hover:bg-muted/5">
-              <td class="px-3 py-1 whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</td>
-              <td class="px-3 py-1 font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</td>
-              <td class="px-2 py-1.5 text-center">
-                <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', r.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">{{ r.mutationtype }}</span>
-              </td>
-              <td class="px-3 py-1 text-right tabular-nums">{{ fmt(r.amount) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums font-medium">{{ fmt(r.balance) }}</td>
-              <td class="px-3 py-1 max-w-[20rem] truncate" :title="r.description ?? ''">{{ r.description }}</td>
-              <td class="px-3 py-1 text-[11px]">{{ r.reference_no || '—' }}</td>
-              <td class="px-3 py-1 text-[11px]">{{ r.inputer || '—' }}</td>
-              <td class="px-3 py-1 text-[11px]">{{ AUTH_LABEL[r.auth_status ?? ''] ?? (r.auth_status || '—') }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+        Atur filter lalu klik "Tampilkan"
       </div>
+      <AppDataTable v-else :value="data?.rows ?? []" :loading="loading">
+        <Column header="Tanggal">
+          <template #body="{ data: r }">
+            <span class="whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</span>
+          </template>
+        </Column>
+        <Column header="No Transaksi">
+          <template #body="{ data: r }">
+            <span class="font-mono text-[11px] whitespace-nowrap">{{ r.transactionno }}</span>
+          </template>
+        </Column>
+        <Column header="D/K" :pt="{ headerCell: { class: 'text-center px-2 py-1 font-semibold whitespace-nowrap w-12' } }">
+          <template #body="{ data: r }">
+            <span class="flex justify-center">
+              <span :class="['text-[10px] font-semibold px-1.5 py-px rounded', r.mutationtype === 'D' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300']">{{ r.mutationtype }}</span>
+            </span>
+          </template>
+        </Column>
+        <Column header="Nominal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }">
+            <span class="block text-right tabular-nums">{{ fmt(r.amount) }}</span>
+          </template>
+        </Column>
+        <Column header="Saldo" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }">
+            <span class="block text-right tabular-nums font-medium">{{ fmt(r.balance) }}</span>
+          </template>
+        </Column>
+        <Column header="Keterangan">
+          <template #body="{ data: r }">
+            <span class="max-w-[20rem] truncate block" :title="r.description ?? ''">{{ r.description }}</span>
+          </template>
+        </Column>
+        <Column header="Referensi">
+          <template #body="{ data: r }">
+            <span>{{ r.reference_no || '—' }}</span>
+          </template>
+        </Column>
+        <Column header="Inputer">
+          <template #body="{ data: r }">
+            <span>{{ r.inputer || '—' }}</span>
+          </template>
+        </Column>
+        <Column header="Status">
+          <template #body="{ data: r }">
+            <span>{{ AUTH_LABEL[r.auth_status ?? ''] ?? (r.auth_status || '—') }}</span>
+          </template>
+        </Column>
+        <template #empty>Tidak ada mutasi untuk filter ini.</template>
+      </AppDataTable>
       <div v-if="data && data.total > 0" class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap">
         <p class="text-[11px] text-muted tabular-nums">Hal {{ data.page }} / {{ totalPages }} · {{ data.total.toLocaleString('id-ID') }} mutasi</p>
         <div class="flex items-center gap-1">

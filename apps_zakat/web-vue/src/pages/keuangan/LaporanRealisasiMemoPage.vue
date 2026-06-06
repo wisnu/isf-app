@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Download, Loader2, Search } from 'lucide-vue-next'
+import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import Column from 'primevue/column'
 
 import Alert from '@/components/ui/Alert.vue'
+import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import Input from '@/components/ui/Input.vue'
@@ -78,40 +80,43 @@ onMounted(async () => { await loadBranches() })
       <Button variant="outline" size="sm" class="gap-1.5 h-9" :disabled="exporting || loading || !data || !data.rows.length" @click="exportXlsx"><Download class="w-4 h-4" :class="{ 'animate-pulse': exporting }" />{{ exporting ? 'Mengekspor…' : 'Export Excel' }}</Button>
     </div>
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
-    <div v-if="loading && !data" class="flex justify-center p-12"><Loader2 class="w-7 h-7 animate-spin text-primary" /></div>
-    <div v-else-if="data && data.rows.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada memo untuk filter ini.</div>
-    <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-[11px]">
-        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
-          <tr>
-            <th class="text-left px-3 py-1 font-semibold whitespace-nowrap">Tanggal</th>
-            <th class="text-left px-3 py-1 font-semibold">No. Memo</th>
-            <th class="text-left px-3 py-1 font-semibold min-w-[16rem]">Subjek</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Nilai Memo</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Realisasi</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Pengembalian</th>
-            <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Outstanding</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(r, i) in data.rows" :key="i" class="border-b border-border/20 hover:bg-muted/5">
-            <td class="px-3 py-1 whitespace-nowrap">{{ dmy(r.memo_date) }}</td>
-            <td class="px-3 py-1 font-mono text-[10px] whitespace-nowrap">{{ r.memo_number }}</td>
-            <td class="px-3 py-1">{{ r.memo_subject }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.memo_amount) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.total_realisasi) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.total_return) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap font-medium" :class="r.outstanding > 0 ? 'text-amber-600' : ''">{{ fmt(r.outstanding) }}</td>
-          </tr>
-          <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
+    <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
+      Atur filter lalu klik "Tampilkan"
+    </div>
+    <div v-else class="rounded-xl border border-border bg-surface overflow-hidden">
+      <AppDataTable :value="data?.rows ?? []" :loading="loading">
+        <Column header="Tanggal">
+          <template #body="{ data: r }"><span class="whitespace-nowrap tabular-nums">{{ dmy(r.memo_date) }}</span></template>
+        </Column>
+        <Column header="No. Memo">
+          <template #body="{ data: r }"><span class="font-mono text-[10px] whitespace-nowrap">{{ r.memo_number }}</span></template>
+        </Column>
+        <Column header="Subjek" :pt="{ headerCell: { class: 'text-left px-3 py-1 font-semibold min-w-[16rem]' } }">
+          <template #body="{ data: r }"><span class="max-w-[24rem] truncate block" :title="r.memo_subject ?? ''">{{ r.memo_subject }}</span></template>
+        </Column>
+        <Column header="Nilai Memo" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.memo_amount) }}</span></template>
+        </Column>
+        <Column header="Realisasi" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.total_realisasi) }}</span></template>
+        </Column>
+        <Column header="Pengembalian" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.total_return) }}</span></template>
+        </Column>
+        <Column header="Outstanding" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
+          <template #body="{ data: r }"><span class="block text-right tabular-nums font-medium" :class="r.outstanding > 0 ? 'text-amber-600' : ''">{{ fmt(r.outstanding) }}</span></template>
+        </Column>
+        <template #empty>Tidak ada memo untuk filter ini.</template>
+        <template v-if="data && data.rows.length" #footer>
+          <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold text-[11px]">
             <td class="px-3 py-1" colspan="3">TOTAL</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.memo_amount) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.total_realisasi) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.total_return) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.outstanding) }}</td>
           </tr>
-        </tbody>
-      </table>
+        </template>
+      </AppDataTable>
     </div>
   </div>
 </template>
