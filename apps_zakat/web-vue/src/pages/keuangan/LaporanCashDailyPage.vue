@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { AlertTriangle, ChevronLeft, ChevronRight, Download, Search } from 'lucide-vue-next'
+import { AlertTriangle, Download, Search } from 'lucide-vue-next'
 import Column from 'primevue/column'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
@@ -219,6 +220,19 @@ onMounted(async () => {
 
     <!-- Table -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
+      <!-- Pagination — atas tabel -->
+      <div v-if="data && data.total > 0" class="px-4 py-2 border-b border-border flex items-center justify-end">
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="data.total"
+          :loading="loading"
+          unit="mutasi"
+          @prev="goto(page - 1)"
+          @next="goto(page + 1)"
+        />
+      </div>
+
       <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
         Atur filter lalu klik "Tampilkan"
       </div>
@@ -284,14 +298,6 @@ onMounted(async () => {
         </Column>
         <template #empty>Tidak ada mutasi untuk filter ini.</template>
       </AppDataTable>
-      <div v-if="data && data.total > 0" class="px-4 py-2 border-t border-border flex items-center justify-between gap-2 flex-wrap">
-        <p class="text-[11px] text-muted tabular-nums">Hal {{ data.page }} / {{ totalPages }} · {{ data.total.toLocaleString('id-ID') }} mutasi</p>
-        <div class="flex items-center gap-1">
-          <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background" @click="goto(page - 1)"><ChevronLeft class="w-3.5 h-3.5" /></button>
-          <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">{{ page }}</span>
-          <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background" @click="goto(page + 1)"><ChevronRight class="w-3.5 h-3.5" /></button>
-        </div>
-      </div>
     </div>
   </div>
 </template>

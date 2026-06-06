@@ -8,6 +8,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
@@ -141,6 +142,18 @@ onMounted(async () => { await loadBranches() })
         <span class="text-muted">Total nominal: <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></span>
       </div>
 
+      <div v-if="data && data.total > 0" class="px-1 py-2 border-b border-border flex items-center justify-end">
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="data.total"
+          :loading="loading"
+          unit="transaksi"
+          @prev="goPage(page - 1)"
+          @next="goPage(page + 1)"
+        />
+      </div>
+
       <AppDataTable :value="data?.rows ?? []" :loading="loading">
         <template #empty>Tidak ada transaksi untuk filter ini.</template>
 
@@ -179,11 +192,6 @@ onMounted(async () => { await loadBranches() })
         </Column>
       </AppDataTable>
 
-      <div v-if="data && totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
-        <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="goPage(page - 1)">&#8249; Sebelumnya</Button>
-        <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>
-        <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Berikutnya &#8250;</Button>
-      </div>
     </div>
   </div>
 </template>

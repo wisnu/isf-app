@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
@@ -106,6 +107,17 @@ onMounted(async () => { await loadBranches() })
     <div v-else class="space-y-3">
       <div v-if="data" class="text-sm text-muted">Total transaksi <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
       <div class="rounded-xl border border-border bg-surface overflow-hidden">
+        <div v-if="data && data.total > 0" class="px-4 py-2 border-b border-border flex items-center justify-end">
+          <TablePagination
+            :page="page"
+            :total-pages="totalPages"
+            :total="data.total"
+            :loading="loading"
+            unit="transaksi"
+            @prev="goPage(page - 1)"
+            @next="goPage(page + 1)"
+          />
+        </div>
         <AppDataTable :value="data?.rows ?? []" :loading="loading">
           <Column header="Tanggal">
             <template #body="{ data: r }"><span class="whitespace-nowrap tabular-nums">{{ dmy(r.actualdate) }}</span></template>
@@ -130,11 +142,6 @@ onMounted(async () => { await loadBranches() })
           <Column field="inputer" header="Inputer" />
           <template #empty>Tidak ada transaksi untuk filter ini.</template>
         </AppDataTable>
-      </div>
-      <div v-if="data && totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
-        <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="goPage(page - 1)">‹ Sebelumnya</Button>
-        <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>
-        <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="goPage(page + 1)">Berikutnya ›</Button>
       </div>
     </div>
   </div>

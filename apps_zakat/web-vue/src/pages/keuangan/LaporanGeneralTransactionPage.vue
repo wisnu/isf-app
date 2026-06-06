@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import {
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   Download,
   Search,
 } from 'lucide-vue-next'
@@ -13,6 +11,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
@@ -196,6 +195,18 @@ onMounted(async () => {
       Atur filter lalu klik "Tampilkan"
     </div>
     <div v-else class="space-y-3">
+      <div v-if="data && data.total > 0" class="px-1 py-2 border-b border-border flex items-center justify-end">
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="data.total"
+          :loading="loading"
+          unit="transaksi"
+          @prev="goto(page - 1)"
+          @next="goto(page + 1)"
+        />
+      </div>
+
       <div
         v-for="(tx, ti) in data?.transactions ?? []"
         :key="ti"
@@ -244,17 +255,6 @@ onMounted(async () => {
         </AppDataTable>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="data && data.total > 0" class="flex items-center justify-between gap-2 flex-wrap px-1">
-        <p class="text-[11px] text-muted tabular-nums">
-          Hal {{ data.page }} / {{ totalPages }} · {{ data.total.toLocaleString('id-ID') }} transaksi
-        </p>
-        <div class="flex items-center gap-1">
-          <button :disabled="page <= 1 || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background" @click="goto(page - 1)"><ChevronLeft class="w-3.5 h-3.5" /></button>
-          <span class="text-[11px] px-2.5 py-0.5 rounded-md bg-background border border-border tabular-nums">{{ page }}</span>
-          <button :disabled="page >= totalPages || loading" class="p-1 rounded-md border border-border text-muted disabled:opacity-30 hover:bg-background" @click="goto(page + 1)"><ChevronRight class="w-3.5 h-3.5" /></button>
-        </div>
-      </div>
     </div>
   </div>
 </template>

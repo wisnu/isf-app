@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
@@ -174,6 +175,17 @@ onMounted(async () => { await loadBranches() })
       </AppDataTable>
 
       <div v-if="data" class="text-sm text-muted">Detail transaksi — total <span class="font-medium text-foreground">{{ data.total }}</span>, nominal <span class="font-medium text-foreground tabular-nums">{{ fmt(data.total_amount) }}</span></div>
+      <div v-if="data && data.total > 0" class="px-4 py-2 border-b border-border flex items-center justify-end">
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="data.total"
+          :loading="loading"
+          unit="transaksi"
+          @prev="loadPage(page - 1)"
+          @next="loadPage(page + 1)"
+        />
+      </div>
       <AppDataTable :value="data?.rows ?? []" :loading="loading">
         <Column header="Tanggal">
           <template #body="{ data: r }"><span class="whitespace-nowrap">{{ dmy(r.actualdate) }}</span></template>
@@ -193,11 +205,6 @@ onMounted(async () => { await loadBranches() })
         </Column>
         <template #empty>Tidak ada transaksi untuk filter ini.</template>
       </AppDataTable>
-      <div v-if="totalPages > 1" class="flex items-center justify-center gap-3 text-sm">
-        <Button variant="outline" size="sm" :disabled="page <= 1 || loading" @click="loadPage(page - 1)">‹ Sebelumnya</Button>
-        <span class="text-muted">Halaman {{ page }} / {{ totalPages }}</span>
-        <Button variant="outline" size="sm" :disabled="page >= totalPages || loading" @click="loadPage(page + 1)">Berikutnya ›</Button>
-      </div>
     </template>
   </div>
 </template>
