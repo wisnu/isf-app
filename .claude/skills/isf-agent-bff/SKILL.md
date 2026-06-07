@@ -82,6 +82,7 @@ Untuk endpoint yang mengembalikan xlsx:
 
 ```python
 from app.services.proxy import stream_report_api
+from app.services.auth import require_menu, _resolve_branch
 
 @router.get("/api/report/kas/export.xlsx")
 @require_menu("keuangan.report.kas")
@@ -150,6 +151,53 @@ router = APIRouter()
 @require_menu("penghimpunan.muzakki")
 async def list_muzakki(request: Request, page: int = 1, limit: int = 25):
     return await forward_get(request, "/internal/muzakki", params={"page": page, "limit": limit})
+```
+
+## Contoh Lengkap
+
+Router dengan endpoint protected, pagination, dan exception handling:
+
+```python
+# app/routers/transaksi.py
+from fastapi import APIRouter, Request, HTTPException
+from app.services.auth import require_menu, _resolve_branch
+from app.services.proxy import forward_get, forward_post
+
+router = APIRouter()
+
+# Protected endpoint dengan pagination + branch
+@router.get("/api/transaksi")
+@require_menu("keuangan.transaksi")
+async def list_transaksi(
+    request: Request,
+    page: int = 1,
+    limit: int = 25,
+    tanggal_dari: str = None,
+    tanggal_sampai: str = None,
+):
+    branch = _resolve_branch(request)  # 403 otomatis jika single-branch minta branch lain
+    try:
+        return await forward_get(request, "/internal/transaksi", params={
+            "page": page, "limit": limit,
+            "branch": branch,
+            "tanggal_dari": tanggal_dari,
+            "tanggal_sampai": tanggal_sampai,
+        })
+    except HTTPException:
+        raise  # teruskan BRANCH_DENIED / MENU_DENIED dari proxy
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Unprotected endpoint (tidak perlu @require_menu)
+@router.get("/api/health")
+async def health():
+    return {"status": "ok"}
+```
+
+Register di `app/main.py`:
+```python
+from app.routers.transaksi import router as transaksi_router
+app.include_router(transaksi_router)
 ```
 
 ## Constraint
