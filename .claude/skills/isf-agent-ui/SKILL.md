@@ -201,7 +201,7 @@ Jangan pernah pakai `alert()`, `confirm()`, atau `console.log` di komponen.
 
 ```ts
 const auth = useAuthStore()
-// auth store: user, roles[], menus[], branches[], active_tenant_id
+// auth store: user, roles[], menus[], branches[], primary_branch, branch_access, active_tenant_id
 const canView = computed(() => auth.menus.includes(MENU_KEYS.KEUANGAN_COA))
 ```
 
@@ -209,6 +209,70 @@ const canView = computed(() => auth.menus.includes(MENU_KEYS.KEUANGAN_COA))
 <!-- v-if ONLY — jangan pernah CSS display:none -->
 <Button v-if="auth.roles.includes('admin')" label="Hapus" />
 <Button v-if="canView" label="Export" />
+```
+
+### Dashboard Widget Independence
+
+Dashboard pages (`DashboardPage`, `DashboardKeuanganPage`, `DashboardPenyaluranPage`) tidak punya shared loading state.
+Setiap widget load MANDIRI via `useFetch()` dari `lib/useFetch.ts`:
+
+```ts
+// components/widgets/PenghimpunanWidget.vue
+import { useFetch } from '@/lib/useFetch'
+
+const { data, loading, error } = useFetch(() => GET('/api/dashboard/penghimpunan'))
+```
+
+Widget gagal tampil error-nya sendiri; widget lain tetap render normal.
+Jangan pakai shared `loading` ref di level halaman dashboard.
+
+### Report Page — Konteks Pipeline
+
+Ketika membuat laporan page baru, kamu HANYA mengerjakan **step 4** dari 5:
+
+1. DWH view (`dwh.v_*`) — isf-agent-db
+2. report-api module — isf-agent-python
+3. BFF route — isf-agent-bff
+4. **Frontend page ← KAMU** — `Laporan[Name]Page.vue` + menu key + route + sidebar
+5. Seed menu + role_menu — isf-agent-seed
+
+Steps 1-3 harus sudah ada sebelum kamu bisa fetch data.
+Jika belum ada, laporkan ke orchestrator — jangan buat endpoint dummy sendiri.
+
+### Branch Access RBAC di UI
+
+Auth store mengekspos info branch yang perlu diperhatikan di UI:
+
+```ts
+const auth = useAuthStore()
+// Properties lengkap:
+// auth.user           — profil user
+// auth.roles[]        — array role codes
+// auth.menus[]        — menu keys yang diizinkan
+// auth.branches[]     — semua cabang yang bisa diakses
+// auth.primary_branch — cabang utama user
+// auth.branch_access  — 'all' | 'single'
+// auth.active_tenant_id
+```
+
+User dengan `branch_access='single'` hanya bisa akses `primary_branch`.
+BFF sudah enforce ini — kalau UI kirim branch lain, BFF return `BRANCH_DENIED` (403).
+
+Handle error `BRANCH_DENIED` di setiap API call yang butuh parameter branch:
+
+```ts
+try {
+  const res = await GET('/api/laporan/kas', { branch, tanggal_dari, tanggal_sampai })
+  data.value = res.data
+} catch (e) {
+  if (e.error?.code === 'BRANCH_DENIED') {
+    toast.error('Akses cabang ini tidak diizinkan')
+  } else if (e.error?.code === 'MENU_DENIED') {
+    toast.error('Akses menu tidak diizinkan')
+  } else {
+    toast.error('Gagal memuat data')
+  }
+}
 ```
 
 ## Aturan Supporting (vue-best-practices — berlaku jika vue-primevue-zakat-ui tidak cover)
