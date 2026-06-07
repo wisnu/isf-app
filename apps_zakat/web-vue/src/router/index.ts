@@ -287,6 +287,18 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/HistoriTransaksiDetailPage.vue'),
       meta: { title: 'Detail Transaksi', menu_key: 'keuangan.transaksi.histori' as MenuKey },
     },
+    {
+      path: '/keuangan/transaksi/penyaluran',
+      name: 'keuangan-transaksi-penyaluran',
+      component: () => import('@/pages/keuangan/PenyaluranDanaPage.vue'),
+      meta: { title: 'Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/penyaluran/baru',
+      name: 'keuangan-transaksi-penyaluran-baru',
+      component: () => import('@/pages/keuangan/PenyaluranDanaFormPage.vue'),
+      meta: { title: 'Input Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ArrowDownCircle,
   BarChart3,
   Banknote,
   BookOpen,
@@ -69,6 +70,7 @@ const groups: MenuGroup[] = [
           { label: 'Bank', to: '/keuangan/bank', icon: Landmark },
           { section: 'Transaksi' },
           { label: 'Histori Transaksi', to: '/keuangan/transaksi/histori', icon: Clock },
+          { label: 'Input Penyaluran Dana', to: '/keuangan/transaksi/penyaluran', icon: ArrowDownCircle },
           { section: 'Upload' },
           { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan', icon: Upload },
           { label: 'Otorisasi Upload', to: '/keuangan/upload/penghimpunan/list', icon: ClipboardCheck },

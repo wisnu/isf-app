@@ -29,6 +29,7 @@ export const MENU_KEYS = [
   'keuangan.report.program_ar',
   'keuangan.report.upz',
   'keuangan.transaksi.histori',
+  'keuangan.transaksi.penyaluran',
   'keuangan.upload.penghimpunan',
   'keuangan.upload.penghimpunan.approve',
   'admin.role_menu',
