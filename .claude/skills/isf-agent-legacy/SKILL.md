@@ -552,6 +552,320 @@ Untuk memahami satu fitur (contoh: "Kas Masuk" di modul `core/`):
 - Cabang, user, konfigurasi → `enterprise/`
 - Karyawan dan aset tetap → `personalia/`
 
+## Alur Migrasi Lengkap dari Menu
+
+Gunakan alur ini setiap kali diminta migrasi fitur. Mulai dari file `.mnu`,
+telusuri sampai ke backend script, lalu susun output terstruktur untuk semua agent yang terlibat.
+
+```
+[.mnu] → role + StringTag
+   ↓
+[menus/*.py] → path form aktual (app.CreateForm)
+   ↓
+[dialogs/{path}.svr]   → field definitions (nama, tipe, required)
+[dialogs/{path}.dfr]   → layout visual (field labels, sections, visibility)
+[dialogs/{path}_intr.py] → UI flow, event handlers, lookup calls
+[dialogs/{path}_data.py] → load (FormSetDataEx) + save (SimpanData)
+   ↓
+[scripts/X/Y.py]       → backend business logic entry point
+[script_modules/*.py]  → persistent class implementations (via default.mcf)
+[app.mdt]              → DB schema (tabel fisik, relasi, kolom)
+```
+
+---
+
+### Fase 1 — Baca File `.mnu`: Role dan Kandidat Form
+
+Buka file `.mnu` di `{modul}/menus/`. Untuk setiap `MenuItem` yang bukan separator:
+
+```xml
+object:rmn::MenuItem<
+  Caption='Daftar Penyaluran'
+  OnClick='ShowDistributionClick'
+  AllowedGroups='SPVDIST;DIST;ADM'
+  StringTag='penyaluran/qryDistribution'
+>
+```
+
+Ekstrak:
+- **Caption** → label menu (untuk LABEL di isf-agent-seed)
+- **AllowedGroups** → petakan ke role_code isf-app (lihat tabel peta di section sebelumnya)
+- **StringTag** → kandidat path form; hanya valid jika `OnClick='ShowQueryClick'`
+- **AllowedUsers** → username spesifik (jarang; catat jika ada)
+
+---
+
+### Fase 2 — Resolve Path Form Aktual
+
+**Kasus A — `OnClick='ShowQueryClick'` + ada `StringTag`:**
+Path form langsung dari StringTag:
+```
+StringTag='penyaluran/qryDistribution'
+→ dialogs/penyaluran/qryDistribution.*
+```
+
+**Kasus B — `OnClick` spesifik (nama function lain):**
+StringTag **tidak bisa dipercaya**. Buka `menus/*.py`, cari function dengan nama itu:
+
+```python
+# menus/Penyaluran.py
+def ShowDistributionClick(menu, app):
+    fTran = app.CreateForm('Penyaluran/fFundDistribution',   # ← path aktual
+                           'Penyaluran/fFundDistribution', 0, None, None)
+    fTran.Show()
+```
+
+→ path form: `dialogs/Penyaluran/fFundDistribution.*`
+
+Catat path ini — dipakai di semua Fase berikutnya.
+
+---
+
+### Fase 3 — Baca File Form di `dialogs/{path}.*`
+
+Ada 4 file yang perlu dibaca. Baca dalam urutan ini:
+
+#### 3a. `.svr` — Definisi Dataset / Field Form
+
+Format XML-like yang mendefinisikan semua field yang ada di form.
+
+```
+object:uipFormName::UIPageInfo<
+  Fields={
+    object::UIFieldInfo<
+      FieldName='TransactionDate'
+      DataType='Date'
+      Required=True
+      Caption='Tanggal Transaksi'
+    >, object::UIFieldInfo<
+      FieldName='Amount'
+      DataType='Currency'
+      Required=True
+      Caption='Jumlah'
+    >, object::UIFieldInfo<
+      FieldName='Description'
+      DataType='String'
+      Required=False
+      Caption='Keterangan'
+    >, ...
+  }
+>
+```
+
+Ekstrak per field:
+- `FieldName` → nama field di dataset (dipakai di `_intr.py` dan `_data.py`)
+- `DataType` → `Date | Currency | String | Integer | Boolean` → mapping ke tipe Vue + Python
+- `Required` → validasi yang perlu diterapkan di isf-app baru
+- `Caption` → label yang ditampilkan ke user
+
+DataType mapping ke isf-app:
+| Legacy DataType | Vue input | Python type |
+|---|---|---|
+| `Date` | `DateField.vue` | `date` |
+| `Currency` | `Input` + format angka | `Decimal` |
+| `String` | `Input` | `str` |
+| `Integer` | `Input` type number | `int` |
+| `Boolean` | `Checkbox` | `bool` |
+
+#### 3b. `.dfr` — Layout Visual Form
+
+File RTF-like yang mendefinisikan tata letak UI. Tidak perlu dibaca seluruhnya — cari pola ini:
+
+```
+object:TLabel<
+  Caption='Tanggal'       ← label yang tampil di UI
+  Visible=True
+>
+object:TEdit<
+  DataField='TransactionDate'   ← nama field yang di-bind
+  ReadOnly=False
+  Visible=True
+>
+object:TGroupBox<
+  Caption='Data Transaksi'      ← nama section / group
+>
+object:TPageControl<            ← tab container
+  ...
+  object:TTabSheet<
+    Caption='Detail'            ← nama tab
+  >
+>
+```
+
+Dari `.dfr`, ekstrak:
+- **Section/group labels** → struktur layout halaman isf-app (Card sections, accordion)
+- **Tab names** → jika form multi-tab, buat komponen terpisah per tab
+- **ReadOnly fields** → field yang hanya tampil, tidak bisa diedit (render sebagai teks, bukan input)
+- **Hidden fields** (`Visible=False`) → data teknis yang tidak perlu ditampilkan di UI baru
+
+Tidak perlu memetakan posisi pixel — DAF adalah desktop app, layout pixel tidak relevan untuk web.
+
+#### 3c. `_intr.py` — Alur UI dan Event Handlers
+
+Baca seluruh file. Fokus pada:
+
+**Saat form dibuka** — cari `FormShow`, `FormCreate`, atau assignment awal:
+```python
+def FormShow(self):
+    self.BranchCode = self.app.GetUserInfo()[4]  # pre-fill dari session
+    self._loadRekeningList()                      # populate dropdown
+```
+
+**Saat user klik OK/Simpan** — cari nama button handler:
+```python
+def bOKClick(self):
+    # validasi client-side
+    if self.Amount <= 0:
+        raise Exception, 'Jumlah harus lebih dari 0'
+    # kirim ke server
+    ph = self.app.ExecuteScript('Transaction.CashIn', self.app.CreateValues([...]))
+    # atau: self.FormObject.CallServerMethod('SimpanData', ...)
+```
+
+**Lookup / dropdown** — cari `ExecuteScript` yang hasilnya dipakai isi dropdown:
+```python
+def _loadRekeningList(self):
+    ph = self.app.ExecuteScript('Account.GetActiveAccounts', None)
+    # populate self.cboRekening
+```
+
+Catat semua `ExecuteScript` calls — setiap satu adalah endpoint API yang perlu dibuat di isf-app.
+
+#### 3d. `_data.py` — Load dan Save Server-Side
+
+**`FormSetDataEx`** — dipanggil saat form dibuka, isi default values:
+```python
+def FormSetDataEx(uideflist, params):
+    recT = uideflist.uipTransaction.Dataset.AddRecord()
+    recT.Inputer = str(config.SecurityContext.UserId)        # default: current user
+    recT.BranchCode = str(config.SecurityContext.GetUserInfo()[4])  # default: cabang user
+    recT.TransactionDate = int(config.Now())                 # default: hari ini
+```
+→ ini adalah nilai default yang harus diisi di `onMounted` atau `ref` initial di Vue.
+
+**`SimpanData`** — dipanggil saat save, berisi validasi + DB write:
+```python
+def SimpanData(config, params, returns):
+    oData = params.uipTransaction.GetRecord(0)
+    # validasi server-side
+    if oData.Amount <= 0:
+        returns.CreateValues(['IsErr', 1], ['ErrMessage', 'Jumlah tidak valid'])
+        return
+    # persist
+    config.BeginTransaction()
+    oTran = helper.CreatePObject('Transaction', {...})
+    oTran.Amount = oData.Amount
+    oTran.CreateJournal()
+    config.Commit()
+```
+→ ini adalah service.py logic di api-python baru.
+
+---
+
+### Fase 4 — Trace Backend Scripts
+
+Untuk setiap `ExecuteScript('X.Y', ...)` yang ditemukan di `_intr.py`:
+
+1. Buka `scripts/X/Y.py`
+2. Temukan entry function (nama sesuai, atau `main()`)
+3. Ikuti semua `modman.getModule` → `scripts/A/B.py`
+4. Ikuti semua `helper.CreatePObject('ClassName')` → lookup `default.mcf`:
+   ```
+   [classlist]: ClassName = shortname
+   [liblist]:   shortname = Filename
+   → script_modules/Filename.py
+   ```
+5. Di `script_modules/Filename.py`, baca method yang dipanggil
+6. Catat semua operasi DB: `.Save()`, `.Delete()`, `.CreateJournal()`, field yang di-set
+
+Untuk setiap class yang terlibat, buka `app.mdt` dan cari `TypeName='ClassName'`:
+```
+object:ClassTypeDecl<
+  TypeName='Transaction'
+  PTableName='TRANSACTION'          ← nama tabel DB fisik
+  Members={
+    object:FieldMember<
+      MemberName='Amount'
+      PhysicalName='amount'         ← nama kolom di DB
+      DataType='Currency'
+    >, object:LinkMember<
+      MemberName='LBatch'
+      LinkedClass=$TYPEDECLS['TransactionBatch']  ← relasi ke tabel lain
+    >, ...
+  }
+>
+```
+
+---
+
+### Fase 5 — Susun Output Migrasi
+
+Setelah membaca semua file, laporkan dalam format ini. Format ini langsung bisa dipakai
+oleh masing-masing agent tanpa perlu disambiguasi lebih lanjut.
+
+```
+==== HASIL ANALISIS MIGRASI ====
+
+FITUR:    [nama fitur, misal: Penyaluran Dana]
+MODUL:    [docs/legacy-apps/{modul}/]
+SOURCE:   [menus/{file}.mnu — Caption='{caption}']
+
+── AKSES ──────────────────────────────────────────────
+ROLES (AllowedGroups):  SPVDIST, DIST, ADMIN
+→ Untuk isf-agent-seed: MENU_KEY=penyaluran.distribusi, ROLES=SPVDIST,DIST,ADMIN
+
+── FORM ───────────────────────────────────────────────
+DIALOG PATH: dialogs/Penyaluran/fFundDistribution.*
+FIELD DEFINITIONS (dari .svr):
+  - TransactionDate  : Date     [required] — Tanggal Transaksi
+  - BranchCode       : String   [required] — Kode Cabang
+  - Amount           : Currency [required] — Jumlah
+  - Description      : String   [optional] — Keterangan
+
+LAYOUT (dari .dfr):
+  - Section: "Data Transaksi" → fields: TransactionDate, BranchCode, Amount
+  - Section: "Detail" → fields: Description, [lainnya]
+  - ReadOnly fields: BranchCode (auto dari session), Inputer
+  - Hidden fields: BatchId (teknis, tidak perlu ditampilkan)
+
+── UI FLOW (_intr.py) ──────────────────────────────────
+ON OPEN:
+  - BranchCode ← session user
+  - TransactionDate ← hari ini
+  - Dropdown rekening ← ExecuteScript('Account.GetActiveAccounts')
+
+ON SAVE:
+  - Validasi client: Amount > 0
+  - ExecuteScript('Transaction.CashIn', {Amount, BranchCode, ...})
+  - Error handling: rec.Is_Err → tampilkan pesan
+
+── SAVE LOGIC (scripts/Transaction/CashIn.py) ──────────
+ENTRY FUNCTION: CashInNew(config, srequest, params)
+ALUR:
+  1. Parse srequest → dict
+  2. GetBatchUser(date) via scripts#Transaction.Batch
+  3. CreatePObject('Transaction') → script_modules/Transaction.py
+  4. oTran.Amount = ..., oTran.CreateJournal()
+  5. config.Commit()
+
+── SCHEMA DB (app.mdt) ─────────────────────────────────
+ENTITAS TERLIBAT:
+  - Transaction   → tabel: TRANSACTION   — kolom: transaction_id, amount, branch_code, ...
+  - TransactionBatch → tabel: TRANS_BATCH — kolom: batch_id, batch_date, inputer, ...
+  - FinancialAccount → tabel: FIN_ACCOUNT — (read-only lookup)
+
+RELASI: Transaction.LBatch → TransactionBatch
+
+── HANDOFF KE AGENT LAIN ───────────────────────────────
+→ isf-agent-seed   : MENU_KEY, LABEL, ROLES (lihat bagian AKSES)
+→ isf-agent-db     : buat dwh.v_distribution jika perlu laporan dari tabel ini
+→ isf-agent-python : implementasi service CashIn + repository query TRANSACTION
+→ isf-agent-ui     : form fields (dari FIELD DEFINITIONS + LAYOUT), endpoint dari BFF
+```
+
+Jika satu domain punya banyak fitur (banyak MenuItem di `.mnu`), analisis semua terlebih
+dahulu lalu susun satu output gabungan — lebih efisien dari pada analisis satu-satu.
+
 ## Constraint
 
 - Tidak mengubah file legacy — hanya membaca dan menganalisis
