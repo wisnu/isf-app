@@ -328,6 +328,26 @@ podman-compose -f docker-compose.wakaf.yml up -d   # → http://localhost:5174
 
 ---
 
+## Subagent Skills (untuk Workflow)
+
+Gunakan sebagai `agentType` di Workflow scripts atau `Agent` tool:
+
+| Skill | Domain | Path scope |
+|---|---|---|
+| `isf-agent-ui` | Vue 3 frontend | `apps_{portal}/web-vue/src/` |
+| `isf-agent-bff` | BFF-API gateway | `apps_{portal}/bff-api/app/` |
+| `isf-agent-python` | Business API + report-api | `apps_{portal}/api-python/` + `report-api/` |
+| `isf-agent-db` | DB migrations + DWH views | `infra/db/migrations/` |
+| `isf-agent-seed` | DB seeding (menu, user, config) | `infra/db/migrations/seed/` |
+
+```js
+// Contoh di Workflow script
+const ui = await agent("Buat MuzakkiPage", { agentType: 'isf-agent-ui', model: 'haiku' })
+const bff = await agent("Tambah endpoint /api/muzakki", { agentType: 'isf-agent-bff', model: 'haiku' })
+```
+
+---
+
 ## What This Agent Does NOT Do
 
 - No backend code (bff-api, api-python, report-api)
