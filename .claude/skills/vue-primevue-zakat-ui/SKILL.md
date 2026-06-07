@@ -279,6 +279,85 @@ const canViewLaporan = computed(() => auth.menus.includes(MENU_KEYS.KEUANGAN_LAP
 
 ---
 
+## #12 Rule — Layout Width: Maximize for 1080p, Mobile Friendly
+
+**Primary target:** desktop 1920×1080 (office workstation). **Secondary target:** mobile (branch staff smartphones).
+
+### Core Principle
+
+Content must **fill the full width** of the working area. With a ~256px sidebar, the effective content area on 1080p is ~1660px — use it. Do not shrink pages with narrow `max-w-*` wrappers.
+
+```vue
+<!-- correct — fills the content area -->
+<div class="p-4 sm:p-6 space-y-4">...</div>
+
+<!-- wrong — unnecessarily constrains content -->
+<div class="max-w-4xl mx-auto p-6">...</div>
+```
+
+Exception: dialogs and modals may use a bounded width (`max-w-xl`, `max-w-2xl`, etc.).
+
+### Page Wrapper
+
+Every page component should open with a full-width wrapper and responsive padding:
+
+```vue
+<template>
+  <div class="p-4 sm:p-6 space-y-4">
+    <!-- content here -->
+  </div>
+</template>
+```
+
+### Responsive Grid
+
+Collapse to 1 column on mobile, expand on larger screens:
+
+```vue
+<!-- Dashboard summary cards / KPI widgets -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">...</div>
+
+<!-- Two-column form layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">...</div>
+
+<!-- Filter bar (laporan) -->
+<div class="flex flex-wrap gap-3 items-end">...</div>
+```
+
+### Tables — Full Width + Horizontal Scroll on Mobile
+
+DataTable must be `w-full`. Wrap with `overflow-x-auto` so mobile users can scroll horizontally:
+
+```vue
+<div class="overflow-x-auto rounded-b border border-surface-200">
+  <DataTable :value="records" class="w-full" ...>
+    <Column field="..." header="..." class="min-w-[120px]" />
+  </DataTable>
+</div>
+```
+
+Use `min-w-[Xpx]` on columns as a floor — never fixed pixel widths that block growth.
+
+### Sidebar Pivot Breakpoint
+
+- **`lg:` and above** — sidebar visible, content offset right
+- **Below `lg:`** — sidebar hidden, shown as drawer overlay on toggle
+
+Use `lg:` as the single pivot between mobile and desktop layout variants.
+
+### Breakpoint Reference (Tailwind v4)
+
+| Prefix | Min-width | Context |
+|---|---|---|
+| *(none)* | 0px | Mobile base |
+| `sm:` | 640px | Tablet portrait |
+| `md:` | 768px | Tablet landscape |
+| `lg:` | 1024px | Small desktop / laptop — sidebar pivot |
+| `xl:` | 1280px | 1080p desktop — primary target |
+| `2xl:` | 1536px | Wide monitor |
+
+---
+
 ## CSS Layer Order (main.css — do not change)
 
 ```css
