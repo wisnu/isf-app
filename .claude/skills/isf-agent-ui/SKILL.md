@@ -122,6 +122,95 @@ Sebelum buat komponen baru, cek `components/ui/`:
 
 Buat file `components/ui/` baru hanya jika tidak ada yang cocok.
 
+### Layout — Maksimalkan Lebar untuk 1080p, Mobile Friendly
+
+**Target utama:** desktop 1920×1080 (layar kantor). **Target sekunder:** mobile (smartphone petugas cabang).
+
+#### Prinsip Utama
+
+- Konten harus **mengisi lebar penuh** area kerja — jangan pakai `max-w-*` sempit (max-w-3xl, max-w-4xl, dll) di level page wrapper
+- Sidebar lebar ~256px (desktop) — area konten efektif ~1660px pada 1080p. Gunakan seluruhnya
+- Jangan center-constraint halaman dengan `mx-auto max-w-screen-lg` — app ini bukan blog
+- Exception: dialog/modal boleh punya lebar terbatas (`max-w-xl`, `max-w-2xl`, dll)
+
+#### Page Wrapper Pattern
+
+```vue
+<!-- benar — mengisi penuh area konten -->
+<div class="p-4 sm:p-6 space-y-4">
+  ...
+</div>
+
+<!-- salah — mengecilkan konten secara tidak perlu -->
+<div class="max-w-4xl mx-auto p-6">
+  ...
+</div>
+```
+
+#### Responsive Grid
+
+Gunakan multi-column grid yang collapse ke 1 kolom di mobile:
+
+```vue
+<!-- Dashboard cards / summary widgets -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  ...
+</div>
+
+<!-- Form 2-kolom (kiri: field, kanan: field) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  ...
+</div>
+
+<!-- Filter bar laporan -->
+<div class="flex flex-wrap gap-3 items-end">
+  ...
+</div>
+```
+
+#### Tabel — Selalu Full Width + Horizontal Scroll di Mobile
+
+DataTable harus `w-full`. Di mobile, wrap dengan `overflow-x-auto`:
+
+```vue
+<div class="overflow-x-auto rounded-b border border-surface-200">
+  <DataTable :value="records" class="w-full" ...>
+    ...
+  </DataTable>
+</div>
+```
+
+Jangan set lebar kolom tabel dengan nilai pixel statis — pakai `min-w-[120px]` sebagai floor
+agar kolom tidak terlalu sempit, tapi tetap bisa berkembang.
+
+#### Sidebar Behavior
+
+- **Desktop (lg+):** sidebar selalu terlihat, konten di sebelah kanannya (`ml-64` atau `pl-64`)
+- **Mobile (< lg):** sidebar disembunyikan, tampil sebagai drawer overlay saat toggle
+- Gunakan breakpoint `lg:` sebagai pivot utama antara mobile dan desktop layout
+
+#### Breakpoint Reference (Tailwind v4)
+
+| Prefix | Min-width | Konteks |
+|---|---|---|
+| *(none)* | 0px | Mobile base |
+| `sm:` | 640px | Tablet portrait |
+| `md:` | 768px | Tablet landscape |
+| `lg:` | 1024px | Desktop kecil / laptop |
+| `xl:` | 1280px | Desktop 1080p |
+| `2xl:` | 1536px | Wide monitor |
+
+Pivot sidebar: `lg:`. Grid multi-kolom: mulai dari `sm:` atau `md:`. Target 1080p: gunakan `xl:` untuk fine-tuning spacing/column.
+
+#### Padding & Spacing
+
+```
+Mobile:  p-3 atau p-4 (ruang sempit)
+Desktop: sm:p-5 xl:p-6 (lebih lega)
+```
+
+Gap antar komponen: `gap-4` (mobile) → `xl:gap-6` (desktop).
+
 ### Report Pages: No Auto-Load
 
 Report / laporan pages TIDAK BOLEH fetch data saat komponen mount.
