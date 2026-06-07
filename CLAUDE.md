@@ -1,123 +1,314 @@
-# CLAUDE.md — isf-app orientation
+# isf-app / web-vue — Claude Code Instructions
 
-Konteks tambahan untuk Claude di luar yang ada di [README.md](README.md), [docs/architecture.md](docs/architecture.md), dan [docs/runbook-local.md](docs/runbook-local.md). Fokus pada hal yang **tidak obvious dari kode**.
+## Active Skills
 
-## ⚠️ Recovery state (2026-05-27)
+For any Vue component, page, layout, or UI code in this project, use **both** skills:
 
-Repo ini di-rebuild setelah NTFS corruption tanggal 2026-05-27 menghapus 74 commit lokal yang belum di-push. Working tree dipulihkan dari rescue snapshot + base commit `ac3056` + DB schema dump. Audit trail di `~/rescue/git-metadata-snapshot/` dan branch `recovery/2026-05-27-ntfs-corruption`.
+1. **`vue-primevue-zakat-ui`** (primary) — project-specific conventions, stack
+   boundaries, PrimeVue unstyled patterns, pagination, date handling, report
+   pages, brand tokens. **These rules override everything else. No exceptions.**
 
-**Yang masih outstanding** lihat [`docs/recovery/README.md`](docs/recovery/README.md) §"Still TODO" — singkatnya: ETL runners (14 file), admin/profile pages frontend, beberapa test admin. (Rename schema `datamart`→`dwh` di `mziss_wakaf` **sudah selesai** 2026-06-01.)
+2. **`vue-best-practices`** (supporting) — general Vue 3 Composition API best
+   practices, `<script setup>` patterns, reactivity, component design.
+   Apply when `vue-primevue-zakat-ui` doesn't address the specific case.
 
-## Topologi 2 portal × 2 database
+When the two conflict, `vue-primevue-zakat-ui` always wins.
 
-Setiap portal (zakat & wakaf) punya **DUA database terpisah**:
+---
 
-| Portal | Business DB | Auth DB | Schemas |
-|---|---|---|---|
-| Zakat | `mziss_laz` | `isf_auth_zakat` | business: `transaction`/`accounting`/`enterprise`/`fund`/`program`/`personalia`/`school` (legacy) + `dwh` (datamart final). auth: `isf_auth` |
-| Wakaf | `mziss_wakaf` | `isf_auth_wakaf` | sama legacy + schema `dwh` (di-rename dari `datamart` 2026-06-01, konsisten dgn zakat). auth: `isf_auth` |
+## Project Identity
 
-**Env vars**:
-- `DATABASE_URL_ZAKAT` / `DATABASE_URL_WAKAF` → business DB (di `infra/.env`)
-- `ISF_AUTH_DATABASE_URL_ZAKAT` / `ISF_AUTH_DATABASE_URL_WAKAF` → auth DB
+**App:** isf-app — ZISWAF Platform (Zakat + Wakaf)
+**Service:** `web-vue` — Vue 3 SPA, the only UI layer
+**Portal Zakat:** runs on `:5173`, talks to `bff-api` on `:7000`
+**Portal Wakaf:** runs on `:5174`, talks to `bff-api` on `:7001`
 
-User & kredensial DB lokal: `transaction:solusi` (lihat `.env.example`).
+The frontend ONLY knows `VITE_API_BASE_URL` (points to bff-api).
+Never call `api-python` (:8000) or `report-api` (:8010) directly from the browser.
 
-## Auth & RBAC
+---
 
-- **Auth DB schema** (`isf_auth.*`): `users`, `user_credentials`, `user_provider_links`, `tenants`, `tenant_memberships`, `menu`, `role_menu`, `audit_log`
-- **Identity service** di `apps_*/api-python/app/modules/identity/`: lookup profile + roles + menus per user
-- **IdentityClient** di `apps_*/bff-api/app/services/identity_client.py`: httpx wrapper untuk panggil identity service dari BFF
-- **Login flow** (BFF): authenticate → fetch profile via IdentityClient → populate session dengan `user_id`, `active_tenant_id`, `roles[]`, `branches[]`, `primary_branch`, `branch_access`, `menus[]`. Frontend baca lewat `stores/auth.ts`. Fail-closed kalau identity service down (HTTP 503 `IDENTITY_UNAVAILABLE`).
-- **Branch RBAC**: `branch_access` = `'all'` bila `enterprise.userapp.tipe_akses_cabang='S'` (Seluruh), else `'single'` (`T`=Tunggal — hanya cabang default). BFF `_resolve_branch` (routers/report.py) kunci user 'single' ke `primary_branch` & tolak cabang lain (403); user 'all' boleh pilih cabang / semua.
-- **⚠️ Session menus snapshot saat login**: `session["menus"]` diisi waktu login. Nambah row `role_menu` baru **tidak** berlaku utk session aktif → user harus **logout + login** ulang (kalau tidak, router guard redirect `?denied=`).
-- **Gating endpoint backend**: `require_menu("menu.key")` FastAPI dependency, audit di-tulis ke `isf_auth.audit_log` saat deny
-- **Gating sidebar/router frontend**: `auth.menus[]` array, sidebar di-filter, router guard cek `meta.menu_key`
-- **MENU_KEYS** constant di `apps_*/web-vue/src/lib/menu/registry.ts` — single source of truth untuk semua menu key
-- **⚠️ Demo user gotcha**: `auth_seed.py` hanya seed `ADMIN/FINANCE.A/FINANCE.B` ke `isf_auth.users`. Identity lookup ke `enterprise.userapp` (mziss_*) akan 404 untuk username itu → login fail dengan `UNKNOWN_IDENTITY`. Untuk E2E pakai script `testing/setup-e2e-users.sh` yang pilih user nyata dari `enterprise.userapp` — **catatan**: script masih reference SQLite (predates auth-pg migration), perlu port ke asyncpg sebelum bisa dipakai.
-- **isf_auth seed**: `infra/db/migrations/isf_auth/seed-menu-and-rolemenu.sql` populates semua menu key (match `MENU_KEYS` registry) + `role_menu` per role aktif di `enterprise.peran`. Idempotent (`ON CONFLICT`) — re-apply tiap nambah menu. Refine via admin UI `/admin/role-menu`.
+## Topology: 2 Portal × 2 Database
 
-## Independent chart load
+Each portal has two separate databases:
 
-- Dashboard pages (`DashboardPage`, `DashboardKeuanganPage`, `DashboardPenyaluranPage`) tidak ada shared loading state — tiap widget load sendiri lewat `useFetch(fetcher)` di `apps_*/web-vue/src/lib/useFetch.ts`. Failed widget tampil error sendiri, widget lain tetap render normal.
-- `Toast.vue` + `useToast.ts` sudah ada baseline (top-right, accent left-border) tapi **belum di-mount** di `App.vue`. Wire `<Toast />` saat rebuild fitur yang butuh, mis. PasswordPage / UsersPage.
+| Portal | Business DB    | Auth DB           |
+|--------|---------------|-------------------|
+| Zakat  | `mziss_laz`   | `isf_auth_zakat`  |
+| Wakaf  | `mziss_wakaf` | `isf_auth_wakaf`  |
 
-## Username convention
+Business DB schemas: `transaction` / `accounting` / `enterprise` / `fund` / `program` / `personalia` + `dwh` (datamart final).
+Auth DB schema: `isf_auth` — tables: `users`, `user_credentials`, `tenants`, `tenant_memberships`, `menu`, `role_menu`, `audit_log`.
 
-**Input case-insensitive, storage uppercase.** Normalisasi di boundary BFF (sebelum query DB). Login dengan `wisnu`, `WISNU`, atau `Wisnu` semua match record dengan `username = 'WISNU'`. Pattern ini dipakai di kedua portal (apps_zakat + apps_wakaf).
+Env vars (in `infra/.env`):
+- `DATABASE_URL_ZAKAT` / `DATABASE_URL_WAKAF` — business DB
+- `ISF_AUTH_DATABASE_URL_ZAKAT` / `ISF_AUTH_DATABASE_URL_WAKAF` — auth DB
+- DB credentials on this host: `transaction:solusi`
 
-## Datamart / DWH
+---
 
-- Schema `dwh.*` di kedua DB: `mziss_laz` (zakat) & `mziss_wakaf` (wakaf, di-rename dari `datamart` 2026-06-01)
-- Tabel utama: `dim_branch`, `dim_donor`, `dim_fund_type`, `dm_*_monthly` (aggregates per bulan × cabang × fund_entity), `fact_fundraising_monthly`, `etl_log`, `etl_watermark`
-- ETL runner di `apps_zakat/api-python/etl/` (untuk wakaf belum di-mirror full)
-- Grain agregasi: tahun-bulan × (branch_key, fund_entity, ...) — `fund_entity` part of unique key sejak migration 007
+## Tech Stack (actual, from architecture.md)
 
-## Laporan (report-api service)
+| Layer              | Tool                                        |
+|--------------------|---------------------------------------------|
+| Framework          | Vue 3.5 + Vite 5 + **TypeScript**           |
+| Component Library  | PrimeVue 4.5 — **unstyled** mode            |
+| UI Primitives      | reka-ui (shadcn-vue pattern)                |
+| Styling            | Tailwind CSS 4.0                            |
+| State              | Pinia 2.2                                   |
+| Routing            | Vue Router 4.4 (named routes only)          |
+| Charts             | Chart.js 4.4 via vue-chartjs                |
+| Icons              | **Lucide icons** (not PrimeIcons)           |
+| HTTP               | `lib/api/client.ts` — custom fetch wrapper  |
+| Testing            | Vitest + Vue Test Utils                     |
 
-- **report-api** = service FastAPI **terpisah** per portal (read/agregasi: dashboard + report), read-only ke business DB + DWH. Port host: zakat **:8010**, wakaf **:8011**. api-python **tak lagi** serve `/api/dashboard/*` (pindah ke report-api). Lihat `docs/architecture.md` §9.
-- **Standar UX laporan**: halaman laporan **TIDAK auto-load data** saat dibuka — `onMounted` hanya siapkan filter (cabang/rekening). Data baru di-load saat user klik **"Tampilkan"**. (Export disabled sampai ada data.)
-- **Konvensi format tanggal (wajib semua laporan)**: tampilan **DD-MM-YYYY**, nilai internal/API tetap ISO `YYYY-MM-DD`. (1) **Filter** pakai komponen `components/ui/DateField.vue` (input teks DD-MM-YYYY + auto-mask + date-picker native, `v-model` ISO) — **jangan** `<input type=date>` lagi. (2) **Preview** bungkus sel tanggal dengan `dmy()` dari `lib/date.ts`; **baris dari backend tetap ISO** (`to_char(... ,'YYYY-MM-DD')`) supaya `ORDER BY`/running-balance kronologis benar — jangan ubah alias to_char ke DD-MM-YYYY (meng-shadow ORDER BY → urutan rusak). (3) **Header payload** (`begin`/`end`/`tanggal`/`tanggal_prev`) + `_period_label` (router) + sel tanggal di **export openpyxl** diformat DD-MM-YYYY via helper `_dmy` (ada di `service.py`, `router.py`, `export.py`).
-- **Pola tambah laporan** (semua laporan keuangan pakai ini): (1) view `dwh.v_<name>` di `mziss_*` membungkus query legacy — agregasi/running-balance dihitung di report-api, bukan di view; (2) `report-api/app/modules/report/` → `service.py` + `router.py` (`/report/<name>` + `/<name>/export.xlsx`) + `export.py` (openpyxl); (3) BFF `routers/report.py` → route `require_menu('keuangan.report.<key>')` + `_resolve_branch` + `stream_report_api` utk xlsx; (4) frontend `pages/keuangan/Laporan*Page.vue` + key di `lib/menu/registry.ts` + child di sidebar grup "Laporan" + route `meta.menu_key`; (5) tambah menu+role_menu di `seed-menu-and-rolemenu.sql`, apply ke `isf_auth_zakat`.
-- **Referensi legacy**: query asli di `docs/legacy-apps/core/dialogs/Report/f<Name>_data.py`. **AllowedGroups** di menu legacy (`.dfr`/`.mnu`) → daftar role utk `role_menu` (mis. fDailyCash/fSummaryCash/fSummaryCashMonthly → `ADM;KEU;ACC;SPVKEU;QAC;SPVACC`).
-- **Export xlsx**: report-api set header `Content-Disposition`; BFF CORS **wajib** `expose_headers=["Content-Disposition"]` agar nama file kebaca lintas-origin; `downloadBlob` (FE) **tunda** `revokeObjectURL` (else Chrome simpan nama UUID). Cap 50k baris; async + menu "Hasil Laporan" = fase 2.
-- Laporan aktif **zakat + wakaf** (di-mirror 2026-06-01): Jurnal Harian, List Transaksi Umum, Transaksi Kas/Bank Harian, Rekapitulasi Kas/Bank, Monitoring Saldo Bulanan. View DWH portal-neutral (`infra/db/migrations/dwh/v_*.sql`, apply ke `mziss_laz` **dan** `mziss_wakaf`). Catatan: sidebar wakaf **di-filter** `auth.menus` (children punya `menu_key`); sidebar zakat tidak.
-- Laporan **zakat-only** (belum di-mirror ke wakaf) — 17 laporan, semua pakai pola di atas + DateField/dmy. Akuntansi: **Trial Balance**, **Neraca** (`dailybalance`+`accounthierarchy`, view `dwh.v_daily_balance`; ⚠️ dailybalance s/d 2025-12-31 → data 2026 belum akurat), **Arus Kas** + **Perubahan Dana** + **Perubahan Dana Detail** (config-driven `BalanceSumItem`/`Member` group AK_*/PD_*, view `dwh.v_aruskas_item_account`; helper `_balancesum_mutations/_balancesum_balance`), **Buku Besar** (view `dwh.v_general_ledger`, posting langsung; rekonsiliasi awal+net=akhir). Transaksi: **Penghimpunan** (`v_collection`, accounttitype='D') + **Penyaluran** (`v_distribution`, 'Z') Dana, **Penerimaan/Pengeluaran Amil** (`v_amil_cash{in,out}`; cashin transactioncode 'CI', cashout akun di hierarki **530000**), **Piutang Karyawan/Non-Karyawan/Rekap Uang Muka** (`v_ar_account`, `accountreceivabletype` **E/D/C**, saldo awal=Σ mutasi<begin), **List Uang Muka/Realisasi Memo/Piutang Realisasi** (`v_program_reports`: accounttitype='C'cattype='D'+LPJ / `program.realizationmemo` / `program.realization`+StatusReceivableReport), **List UPZ** (`v_upz_trx`, akun **210302/110109**). Spec TB+Neraca: `docs/superpowers/specs/2026-06-01-trial-balance-neraca-design.md`.
-- **Config Arus Kas/Perubahan Dana portal-specific** (`transaction.balancesum*`, tak ada di schema dump): seeder per-portal `infra/db/migrations/seed/balancesum-config-{zakat,wakaf}.sql` (dump SEMUA group AK_*+PD_*, idempotent) — **jangan cross-apply** (zakat 31 item AK_MUT, wakaf 6 item beda COA). Layout Arus Kas/Perubahan Dana di service **zakat-specific** (struktur Zakat/Infaq/Amil); wakaf butuh layout sendiri.
-- **Dropdown panjang**: pakai komponen `components/ui/SearchSelect.vue` (combobox bisa diketik, search by value/label, keyboard nav, clear, opsi "semua" via `all-label`). Sudah dipakai: Buku Besar (akun), Transaksi Kas/Bank Harian (rekening).
+> ⚠️ PrimeVue is in **unstyled** mode — do NOT assume default PrimeVue styles.
+> All visual styling comes from Tailwind + reka-ui + custom `components/ui/`.
 
-## Konvensi commit
+---
 
-**Format wajib**: setiap commit diawali prefix `[TAG]` lalu conventional-commit:
+## Non-Negotiable Rules
+
+### 1. Pagination Always on Top
+- NEVER use `:paginator="true"` on `<DataTable>`
+- ALWAYS use a standalone `<Paginator>` component placed ABOVE the table
+- Default rows per page: **25**
+- Always show record count: "Showing X–Y of Z records"
+
+### 2. Hybrid Stack — Strict Boundaries
+- **PrimeVue** → complex headless components (DataTable, Dialog, Steps, etc.)
+- **reka-ui / components/ui/** → buttons, inputs, cards, alerts, badges
+- **Tailwind** → layout, spacing, flex/grid, responsive, all visual styling
+- PrimeVue is unstyled — never rely on its default theme classes
+
+### 3. Always TypeScript + `<script setup>`
+- All files use `.ts` / `.vue` with `<script setup lang="ts">`
+- No Options API, no `defineComponent()`, no `.js` files in `src/`
+- Type all props, emits, and composable return values
+
+### 4. API — Use `lib/api/client.ts` Only
+- Use the project's fetch wrapper: `GET()`, `POST()`, `blob()` from `lib/api/client.ts`
+- Never use raw `fetch()` or install Axios — client.ts is the only HTTP layer
+- Base URL is always `VITE_API_BASE_URL` (resolves to bff-api)
+
+### 5. Date Handling
+- **Display:** always use `dmy()` from `lib/date.ts` → formats to `DD-MM-YYYY`
+- **Internal / API payload:** always ISO `YYYY-MM-DD`
+- **User input:** always use `components/ui/DateField.vue` (v-model = ISO string)
+- Never format dates inline in templates — always go through `dmy()`
+- Backend columns stay ISO (`to_char(...,'YYYY-MM-DD')`) — never alias to DD-MM-YYYY (breaks ORDER BY)
+
+### 6. UI Components — Use Existing First
+Before creating a new component, check `components/ui/` for:
+- `Button`, `Card`, `Input`, `Alert` — standard primitives
+- `DateField.vue` — all date inputs
+- `SearchSelect.vue` — all long dropdowns (combobox + keyboard nav + clear)
+- `TablePagination.vue` — pagination display
+- `Modal.vue` — dialogs/modals
+
+Only create a new `components/ui/` component if nothing fits.
+
+### 7. Report Pages — No Auto-Load
+- Report/laporan pages must NOT fetch data on mount
+- Data is fetched only when the user clicks "Tampilkan" (Show)
+- Always show an empty/prompt state before the button is clicked
+- Export disabled until data is present
+
+### 8. Menu Keys — Use Registry
+- All menu keys must be registered in `lib/menu/registry.ts` (MENU_KEYS)
+- Every route that requires a menu permission must have `meta.menu_key`
+- Never hardcode menu key strings outside of the registry
+
+### 9. Async Feedback Is Mandatory
+Every async operation must have all three:
+- `loading = true` before the call
+- success toast on success
+- error toast on failure + `finally` resets loading
+- Never use `alert()`, `confirm()`, or `console.log` in components
+
+### 10. Role-Based UI
+- Use `v-if` tied to Pinia `auth` store — never CSS `display:none`
+- Auth store (`stores/auth.ts`) exposes: `user`, `roles`, `menus[]`, `branches`, `active_tenant_id`
+- Check menu access via `menus[]` — session snapshot from login
+- `menus[]` is populated at login time; new `role_menu` rows only take effect after **logout + login**
+
+---
+
+## Actual Folder Structure
+
+```
+src/
+├── main.ts                   ← entry: mount + Pinia + router + PrimeVue
+├── App.vue
+├── router/
+│   └── index.ts              ← 60+ named routes, meta.menu_key per route
+├── stores/
+│   ├── auth.ts               ← user, roles, menus[], branches, active_tenant
+│   ├── sidebar.ts            ← collapsed state, active menu
+│   ├── notifications.ts
+│   └── theme.ts              ← dark/light mode
+├── pages/
+│   ├── LoginPage.vue
+│   ├── DashboardPage.vue
+│   ├── dashboard/            ← KeuanganPage, PenyaluranPage, PenghimpunanPage
+│   ├── keuangan/             ← all financial pages (CoaPage, KasPage, etc.)
+│   ├── HistoriTransaksiPage.vue
+│   ├── admin/                ← RoleMenuPage, UsersPage
+│   └── profile/              ← PasswordPage
+├── components/
+│   ├── AppHeader.vue
+│   ├── AppSidebar.vue
+│   ├── AppLogo.vue
+│   ├── UserMenu.vue
+│   ├── SystemDate.vue
+│   ├── NotificationBell.vue
+│   ├── widgets/              ← chart widgets per dashboard domain
+│   └── ui/                   ← Button, Card, Input, Alert, DateField,
+│                                SearchSelect, TablePagination, Modal, ...
+├── lib/
+│   ├── api/client.ts         ← fetch wrapper: GET/POST/blob
+│   ├── date.ts               ← dmy() — ISO → DD-MM-YYYY display
+│   ├── format.ts             ← currency, number formatters
+│   ├── charts.ts             ← Chart.js global plugin register
+│   ├── menu/registry.ts      ← MENU_KEYS — single source of truth
+│   └── useFetch.ts           ← composable: loading/error/data state
+```
+
+---
+
+## API Response Shape
+
+Always handle these shapes from bff-api:
+
+```ts
+// Single object
+{ data: { ... }, meta: { request_id: string } }
+
+// List with pagination
+{
+  data: [...],
+  pagination: { page: number, limit: number, total: number, total_pages: number },
+  meta: { request_id: string }
+}
+
+// Error
+{ error: { code: string, message: string, details: null }, meta: { request_id: string } }
+```
+
+Common error codes to handle in UI:
+- `UNAUTHORIZED` (401) → redirect to login
+- `MENU_DENIED` (403) → show "Access Denied" message
+- `BRANCH_DENIED` (403) → show branch restriction message
+- `VALIDATION_ERROR` (422) → show field-level errors
+
+---
+
+## Table Page Layout (3-Part Structure)
+
+```
+┌────────────────────────────────────────────────────┐
+│ TOOLBAR  [Search input]  [Filter btn]  [Add btn]   │  rounded-t border
+├────────────────────────────────────────────────────┤
+│ PAGINATION  Showing 1–25 of 342      [< 1 2 3 >]  │  border-x
+├────────────────────────────────────────────────────┤
+│ DataTable (lazy, no built-in paginator)            │  rounded-b border
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+## Auth & RBAC (Frontend Context)
+
+- **Login flow**: BFF authenticates → fetches profile via IdentityClient → populates session with `user_id`, `active_tenant_id`, `roles[]`, `branches[]`, `primary_branch`, `branch_access`, `menus[]`
+- **Branch RBAC**: `branch_access='all'` if `enterprise.userapp.tipe_akses_cabang='S'` (Seluruh); else `'single'` (Tunggal — default branch only). BFF locks `'single'` users to `primary_branch` (403 on others)
+- **Sidebar filtering**: sidebar children filtered by `auth.menus` (each item has `menu_key`). Wakaf portal filters; zakat portal currently does not
+- **Username convention**: input case-insensitive, stored uppercase. Normalized at BFF boundary — `wisnu`, `WISNU`, `Wisnu` all match `username='WISNU'`
+- **Dev E2E users** (password `test1234`, set manually in `isf_auth_*.user_credentials`): `HADI` (DIST/SPVDIST, branch_access=all) for dashboard/jurnal; `RAIS` (ACC/KEU, single-branch 001) for laporan kas/finance
+
+---
+
+## Dashboard — Independent Widget Load
+
+Dashboard pages (`DashboardPage`, `DashboardKeuanganPage`, `DashboardPenyaluranPage`) have no shared loading state — each widget loads independently via `useFetch(fetcher)` in `lib/useFetch.ts`. A failed widget shows its own error; other widgets render normally.
+
+---
+
+## Report System (Laporan)
+
+**report-api** = separate FastAPI service per portal, read-only to business DB + DWH.
+Ports: zakat **:8010**, wakaf **:8011**. BFF proxies via `stream_report_api`.
+
+### Adding a New Report Page (5-Step Pattern)
+
+When asked to add a laporan/report page, always follow this order:
+
+1. **DWH view** — `dwh.v_<name>` in `mziss_*` (backend, not frontend)
+2. **report-api module** — `service.py` + `router.py` + `export.py` (openpyxl)
+3. **BFF route** — `require_menu('keuangan.report.<key>')` + `_resolve_branch` + `stream_report_api` for xlsx
+4. **Frontend** — new `pages/keuangan/Laporan*Page.vue` + key in `lib/menu/registry.ts` + sidebar child in "Laporan" group + route with `meta.menu_key`
+5. **Seed** — menu + role_menu rows in `seed-menu-and-rolemenu.sql`, apply to `isf_auth_zakat`
+
+Frontend step (4) is the only step this agent handles.
+
+### Report UX Rules
+- Filter: use `DateField.vue` (v-model = ISO string, displays DD-MM-YYYY) — never `<input type="date">`
+- Preview: wrap date cells with `dmy()` from `lib/date.ts`
+- Long dropdowns (rekening, akun): use `SearchSelect.vue`
+- Export: BFF sets `Content-Disposition`; `downloadBlob` defers `revokeObjectURL` so Chrome preserves filename
+
+### Active Reports: Zakat + Wakaf (mirrored 2026-06-01)
+Jurnal Harian, List Transaksi Umum, Transaksi Kas/Bank Harian, Rekapitulasi Kas/Bank, Monitoring Saldo Bulanan.
+DWH views are portal-neutral (`infra/db/migrations/dwh/v_*.sql`, applied to both DBs).
+
+### Active Reports: Zakat Only (17 laporan)
+Akuntansi: Trial Balance, Neraca, Arus Kas, Perubahan Dana, Perubahan Dana Detail, Buku Besar.
+Transaksi: Penghimpunan (accounttitype='D'), Penyaluran ('Z'), Penerimaan/Pengeluaran Amil (akun 530000),
+Piutang Karyawan/Non-Karyawan/Rekap Uang Muka (accountreceivabletype E/D/C), List UPZ (akun 210302/110109),
+List Uang Muka, Realisasi Memo, Piutang Realisasi.
+
+### Config Arus Kas/Perubahan Dana
+- Config in `transaction.balancesum*` — portal-specific, do NOT cross-apply seeders
+- Zakat: `infra/db/migrations/seed/balancesum-config-zakat.sql` (31 AK_MUT items)
+- Wakaf: `infra/db/migrations/seed/balancesum-config-wakaf.sql` (6 items, different COA)
+
+---
+
+## Commit Convention
+
+**Mandatory format:**
 
 ```
 [TAG] type(scope): subject
 ```
 
-- `[TAG]` = tag singkat (UPPER-KEBAB) yang **relevan dengan enhancement/perubahan** yang dilakukan, mis. `[INDEPENDENT-LOAD]`, `[AUTH-PG]`, `[DASHBOARD]`. Pilih yang deskriptif tapi ringkas; reuse tag aktif di bawah kalau cocok, atau buat baru kalau perlu.
-- Lanjutkan dengan conventional-commit (`feat`, `fix`, `chore`, `docs`, `refactor`) + scope yang menyebut feature/context, mis. `feat(dashboard):`, `chore(infra):`.
-- Cari contoh di history: `git log --grep='\['`.
+- `[TAG]` = short UPPER-KEBAB tag relevant to the change (e.g. `[UX]`, `[DASHBOARD]`, `[UPLOAD-PENGHIMPUNAN]`). Reuse active tags or create a descriptive new one
+- Conventional-commit follows: `feat`, `fix`, `chore`, `docs`, `refactor` + scope naming the feature/context
+- Check history for examples: `git log --grep='\['`
 
-Scope/tag yang aktif:
-- `INDEPENDENT-LOAD`, `auth-pg`, `admin+ui`, `dwh`, `recovery` — recent post-recovery work
-- `MIGRATE-AUTHDB`, `ADMIN-USERS`, `CHANGE-PASSWORD`, `UX`, `ETL-DATAMART`, `DATAMART-CABANG`, `DASHBOARD`, `DASHBOARD-KEUANGAN`, `ETL`, `USERNAME-UPPER`, `DOCS`, `RECOVERY` — legacy from reflog
+Active tags: `UX`, `PRIMEVUE`, `INDEPENDENT-LOAD`, `DASHBOARD`, `DASHBOARD-KEUANGAN`, `ETL`, `DWH`, `DOCS`, `RECOVERY`, `ADMIN-USERS`, `CHANGE-PASSWORD`, `AUTH-PG`, `MIGRATE-AUTHDB`
 
-## Konvensi testing
+---
 
-Setiap fitur baru → buat E2E script reusable di `testing/`:
-- `testing/e2e-<feature>.sh` (curl-based, run ke localhost ports)
-- Contoh: `testing/e2e-admin-users.sh`, `testing/e2e-etl-datamart.sh`
+## Testing Convention
 
-Per-service punya `test.sh` wrapper:
-- `apps_*/api-python/test.sh`
-- `apps_*/bff-api/test.sh`
+Every new feature → reusable E2E script in `testing/`:
+- `testing/e2e-<feature>.sh` (curl-based, targets localhost ports)
+- Per-service test wrappers: `apps_*/api-python/test.sh`, `apps_*/bff-api/test.sh`
+- Python tests in `tests/` with pytest. TDD for service logic with non-trivial branching
 
-Tests Python di `tests/` dengan pytest. TDD untuk service code yang punya logic non-trivial.
+---
 
-## First-time DB setup
+## Dev Workflow
 
-Apply schema + seed ke dua DB auth (DBs sudah harus exist di Postgres lokal — buat via `createdb` di bawah):
+**Host**: Fedora 44 / kernel 7 / crun / SELinux Enforcing.
+`podman build` inside `podman-compose up --build` fails at `pip install`/`npm install` due to SELinux MCS mprotect block.
+Workaround: pre-build with `--security-opt label=disable`, then `up -d` without `--build`.
+Compose already carries `security_opt: [label=disable]` per service.
 
-```bash
-for portal in zakat wakaf; do
-  PGPASSWORD=solusi createdb -h localhost -U postgres "isf_auth_$portal"
-  PGPASSWORD=solusi psql -h localhost -U postgres -d "isf_auth_$portal" \
-    -f infra/db/migrations/isf_auth/recovered-schema-$portal.sql
-  PGPASSWORD=solusi psql -h localhost -U postgres -d "isf_auth_$portal" \
-    -f infra/db/migrations/isf_auth/seed-menu-and-rolemenu.sql
-done
-```
-
-Business DB (`mziss_laz`, `mziss_wakaf`) diasumsikan sudah ada — repo tidak ship schema-nya (legacy), cuma `docs/datadictionary/ddl_all_schema.sql` referensi.
-
-## Dev workflow
-
-**Host caveat (Fedora 44 / kernel 6.19 / crun 1.27 / SELinux Enforcing)**: `podman build` di dalam `podman-compose up --build` gagal di langkah `RUN pip install` / `RUN npm install` dengan `cannot apply additional memory protection after relocation: Permission denied` — SELinux MCS label block `libc` mprotect. Workaround: pre-build manual dengan `--security-opt label=disable`, baru `up -d` tanpa `--build`. Compose runtime sudah carry `security_opt: [label=disable]` per-service.
-
-Ada **`Makefile`**: `make build` (pre-build semua image incl **report-api**), `make run`, `make health`, `make migrate`. Pakai ini ketimbang loop manual.
+Use **`Makefile`** shortcuts: `make build`, `make run`, `make health`, `make migrate`.
 
 ```bash
-# 1. Pre-build images (only when pyproject.toml / package.json changes — source di bind-mount auto-reload)
+# Pre-build (only when pyproject.toml / package.json changes — source is bind-mounted)
 for portal in zakat wakaf; do
   for svc in api-python report-api bff-api web-vue; do
     (cd apps_$portal/$svc && \
@@ -125,18 +316,24 @@ for portal in zakat wakaf; do
   done
 done
 
-# 2. Start (no --build)
+# Start (no --build)
 cd infra
 podman-compose -f docker-compose.zakat.yml up -d   # → http://localhost:5173
 podman-compose -f docker-compose.wakaf.yml up -d   # → http://localhost:5174
 ```
 
-`.env` opsional — compose pakai defaults di `${VAR:-...}` untuk dev. Copy `.env.example → .env` kalau perlu override (HOST_IP, Google OAuth, dst).
+`.env` optional — compose uses `${VAR:-...}` defaults for dev. Copy `.env.example → .env` to override HOST_IP, Google OAuth, etc.
 
-Demo akun seeded ke `isf_auth.users`: `ADMIN/admin123`, `FINANCE.A/finance123`, `FINANCE.B/finance123`. **Lihat warning di §Auth & RBAC** — username ini bisa authenticate tapi gagal identity lookup ke `enterprise.userapp`. Untuk login berhasil end-to-end, port `testing/setup-e2e-users.sh` ke asyncpg, atau manual insert: pilih row dari `enterprise.userapp` yang punya role+menu mapping, lalu `INSERT INTO isf_auth.users (id, username, display_name, status) VALUES (...)` + `set_password`.
+> ⚠️ Never host the working repo on NTFS — the repo was lost once (2026-05-27) due to NTFS corruption. Working tree is now at `~/workshop/isf-app/` (ext4).
 
-**Dev E2E users** (user nyata di `enterprise.userapp`, password lokal `test1234` di-set manual ke `isf_auth_zakat.user_credentials`): `HADI` (DIST/SPVDIST, `branch_access=all`) utk dashboard/jurnal/transaksi-umum; `RAIS` (ACC/KEU, single-branch 001) utk laporan kas/finance. Pilih user yang role-nya cocok dgn AllowedGroups menu yang diuji. Set password: `UPDATE isf_auth.user_credentials SET password_hash=<bcrypt> WHERE user_id=(SELECT id FROM isf_auth.users WHERE username='<U>')`.
+---
 
-## Hindari working repo di NTFS
+## What This Agent Does NOT Do
 
-Repo asli pernah di-host di partisi NTFS Windows (D:) via ntfs-3g. **JANGAN ULANGI** — partisi NTFS rawan corruption setelah unsafe shutdown, dan ntfs-3g tidak full implement journal replay. Working repo sekarang di `~/workshop/isf-app/` (ext4). Partisi NTFS D: hanya untuk file sharing dengan Windows.
+- No backend code (bff-api, api-python, report-api)
+- No database queries or migrations
+- No Docker/podman compose changes
+- No direct calls to api-python (:8000) or report-api (:8010) from frontend
+- No raw `fetch()` — always use `lib/api/client.ts`
+- No Options API, no Vuex, no Axios
+- No inline `style="..."` — Tailwind classes only

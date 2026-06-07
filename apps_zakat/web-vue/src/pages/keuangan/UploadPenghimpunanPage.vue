@@ -4,7 +4,7 @@ import { computed, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { BASE_URL } from '@/lib/api/client'
+import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 
 interface ParsedRow {
@@ -60,16 +60,10 @@ function resetUpload() {
 }
 
 async function downloadTemplate() {
-  const res = await fetch(`${BASE_URL}/api/transaction/upload/penghimpunan/template`, {
-    credentials: 'include',
-  })
-  if (!res.ok) return
-  const blob = await res.blob()
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = 'template-upload-penghimpunan.xlsx'
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  await api.downloadBlob(
+    '/api/transaction/upload/penghimpunan/template',
+    'template-upload-penghimpunan.xlsx',
+  )
 }
 
 async function parseFile() {
@@ -79,14 +73,8 @@ async function parseFile() {
   try {
     const form = new FormData()
     form.append('file', selectedFile.value)
-    const res = await fetch(`${BASE_URL}/api/transaction/upload/penghimpunan/parse`, {
-      method: 'POST',
-      credentials: 'include',
-      body: form,
-    })
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Parse gagal')
-    rows.value = payload.data.rows
+    const result = await api.upload<{ rows: ParsedRow[] }>('/api/transaction/upload/penghimpunan/parse', form)
+    rows.value = result.rows
     phase.value = 'preview'
   } catch (e: unknown) {
     errorMsg.value = e instanceof Error ? e.message : String(e)
@@ -102,14 +90,8 @@ async function saveDraft() {
   try {
     const form = new FormData()
     form.append('file', selectedFile.value)
-    const res = await fetch(`${BASE_URL}/api/transaction/upload/penghimpunan/draft`, {
-      method: 'POST',
-      credentials: 'include',
-      body: form,
-    })
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Simpan draft gagal')
-    batchId.value = payload.data.batch_id
+    const result = await api.upload<{ batch_id: number }>('/api/transaction/upload/penghimpunan/draft', form)
+    batchId.value = result.batch_id
     phase.value = 'submitted'
   } catch (e: unknown) {
     errorMsg.value = e instanceof Error ? e.message : String(e)

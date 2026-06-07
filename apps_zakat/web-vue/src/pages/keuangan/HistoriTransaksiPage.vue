@@ -13,8 +13,15 @@ import DataPanel from '@/components/layout/DataPanel.vue'
 import FilterGroup from '@/components/layout/FilterGroup.vue'
 import FilterPanel from '@/components/layout/FilterPanel.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import { BASE_URL } from '@/lib/api/client'
+import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+
+interface SearchResult {
+  rows: TransaksiRow[]
+  total: number
+  total_pages: number
+  page: number
+}
 
 interface TransaksiRow {
   transactionid: number
@@ -173,12 +180,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const res = await fetch(`${BASE_URL}/api/transaksi-histori/search?${buildParams()}`, {
-      credentials: 'include',
-    })
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Gagal memuat data')
-    const d = payload.data
+    const d = await api.get<SearchResult>(`/api/transaksi-histori/search?${buildParams()}`)
     rows.value = d.rows
     total.value = d.total
     totalPages.value = d.total_pages
@@ -195,20 +197,11 @@ async function load() {
 async function exportXlsx() {
   exporting.value = true
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/transaksi-histori/search/export.xlsx?${buildParams(true)}`,
-      { credentials: 'include' },
+    await api.downloadBlob(
+      '/api/transaksi-histori/search/export.xlsx',
+      `histori-transaksi-${begin.value}-${end.value}.xlsx`,
+      buildParams(true),
     )
-    if (!res.ok) throw new Error('Export gagal')
-    const disp = res.headers.get('Content-Disposition') ?? ''
-    const match = /filename\s*=\s*"?([^";]+)"?/i.exec(disp)
-    const filename = match?.[1] ?? `histori-transaksi-${begin.value}-${end.value}.xlsx`
-    const blob = await res.blob()
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = filename
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
   } catch (e: unknown) {
     errorMsg.value = e instanceof Error ? e.message : String(e)
   } finally {
@@ -232,17 +225,7 @@ async function confirmDelete() {
   deleteMsg.value = null
   const targetId = deleteConfirmId.value
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/transaksi-histori/transactions/${targetId}/delete`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      },
-    )
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Hapus gagal')
+    await api.post(`/api/transaksi-histori/transactions/${targetId}/delete`, {})
     deleteConfirmId.value = null
     await load()
   } catch (e: unknown) {

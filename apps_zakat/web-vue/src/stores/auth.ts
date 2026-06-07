@@ -105,10 +105,6 @@ export const useAuthStore = defineStore('auth', {
         '/api/tenants/switch', { tenant_id: tenantId },
       )
       this.activeTenantId = result.active_tenant_id
-      console.log('[audit] tenant switched', {
-        tenant_id: tenantId,
-        at: new Date().toISOString(),
-      })
     },
 
     async refreshProfile() {

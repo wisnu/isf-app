@@ -23,3 +23,7 @@ __pycache__/
 # Logs
 *.log
 docs/legacy-apps/
+
+.agents/
+.claude/
+.playwright-mcp/

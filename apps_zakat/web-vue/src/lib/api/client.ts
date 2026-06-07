@@ -33,8 +33,25 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (payload as { data: T }).data
 }
 
-async function downloadBlob(path: string, suggestedFilename: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}${path}`, { credentials: 'include' })
+async function uploadFormData<T>(path: string, formData: FormData): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+  const payload = await response.json().catch(() => ({} as Record<string, unknown>))
+  if (!response.ok) {
+    const errorPayload = (payload as { error?: { code?: string; message?: string } }).error
+    const code = errorPayload?.code ?? 'UNKNOWN_ERROR'
+    const message = errorPayload?.message ?? response.statusText
+    throw new ApiError(code, message, response.status)
+  }
+  return (payload as { data: T }).data
+}
+
+async function downloadBlob(path: string, suggestedFilename: string, params?: URLSearchParams): Promise<void> {
+  const fetchUrl = params ? `${BASE_URL}${path}?${params}` : `${BASE_URL}${path}`
+  const response = await fetch(fetchUrl, { credentials: 'include' })
   if (!response.ok) {
     let code = `HTTP_${response.status}`
     let message = response.statusText
@@ -53,9 +70,9 @@ async function downloadBlob(path: string, suggestedFilename: string): Promise<vo
   const filename = match?.[1] ?? suggestedFilename
 
   const blob = await response.blob()
-  const url = URL.createObjectURL(blob)
+  const objectUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url
+  a.href = objectUrl
   a.download = filename || 'download'
   a.rel = 'noopener'
   document.body.appendChild(a)
@@ -64,12 +81,14 @@ async function downloadBlob(path: string, suggestedFilename: string): Promise<vo
   // Chrome kehilangan nama download (jatuh ke UUID blob URL). Beri jeda.
   setTimeout(() => {
     document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    URL.revokeObjectURL(objectUrl)
   }, 1000)
 }
 
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
+  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
+  upload: <T>(path: string, formData: FormData) => uploadFormData<T>(path, formData),
   downloadBlob,
 }

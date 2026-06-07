@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { api, ApiError, BASE_URL } from '@/lib/api/client'
+import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
@@ -69,17 +69,7 @@ async function confirmApprove() {
   approving.value = true
   approveError.value = null
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/transaction/upload/penghimpunan/batches/${batchId}/approve`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      },
-    )
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Otorisasi gagal')
+    await api.post(`/api/transaction/upload/penghimpunan/batches/${batchId}/approve`, {})
     detail.value = await api.get<BatchDetail>(
       `/api/transaction/upload/penghimpunan/batches/${batchId}`,
     )

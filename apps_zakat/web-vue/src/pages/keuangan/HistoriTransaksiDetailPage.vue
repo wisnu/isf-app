@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { api, ApiError, BASE_URL } from '@/lib/api/client'
+import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useAuthStore } from '@/stores/auth'
 
@@ -84,17 +84,7 @@ async function doDelete() {
   deleting.value = true
   deleteError.value = null
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/transaksi-histori/transactions/${txId}/delete`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      },
-    )
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Hapus gagal')
+    await api.post(`/api/transaksi-histori/transactions/${txId}/delete`, {})
     showDeleteConfirm.value = false
     router.push('/keuangan/transaksi/histori')
   } catch (e: unknown) {
@@ -108,17 +98,7 @@ async function doRepost() {
   reposting.value = true
   repostError.value = null
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/transaksi-histori/transactions/${txId}/repost`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      },
-    )
-    const payload = await res.json()
-    if (!res.ok) throw new Error(payload?.error?.message ?? 'Re-post gagal')
+    await api.post(`/api/transaksi-histori/transactions/${txId}/repost`, {})
     showRepostConfirm.value = false
     detail.value = await api.get<TransaksiDetail>(
       `/api/transaksi-histori/transactions/${txId}`,
