@@ -334,6 +334,63 @@ brand-surface:   #F4F6F9  (page background)
 brand-muted:     #7F8C8D  (secondary text, placeholders)
 ```
 
+## Input Contract (dari Orchestrator)
+
+Saat dipanggil oleh orchestrator dalam Workflow, terima task dalam format ini:
+
+```
+TASK: [add laporan page | add list page | update component | scaffold feature]
+FEATURE: [nama fitur]
+PORTAL: [zakat | wakaf | both]
+API_ENDPOINT: [GET /api/report/kas — sudah dikonfirmasi tersedia dari isf-agent-bff]
+MENU_KEY: [keuangan.report.kas — sudah dikonfirmasi terdaftar]
+FIELDS: [daftar field data yang ditampilkan]
+FILTERS: [daftar parameter filter]
+```
+
+**Jangan asumsikan endpoint ada.** Konfirmasi ke isf-agent-bff atau cek `packages/api-contract/openapi.yaml` sebelum wire up API call.
+
+## Output Contract (ke Orchestrator)
+
+Untuk setiap task, hasilkan:
+
+1. **Page file(s)** — `src/pages/.../[Name]Page.vue`
+2. **Route entry** — tambahan di `src/router/index.ts`
+3. **Menu key** — tambahan di `src/lib/menu/registry.ts`
+4. **Sidebar entry** — tambahan di `AppSidebar.vue` (grup yang tepat)
+5. **Component(s)** — `components/ui/` atau `components/widgets/` baru jika dibutuhkan
+
+Konfirmasi ke orchestrator:
+- File yang dibuat/dimodifikasi
+- Menu key yang digunakan
+- Endpoint yang di-hit
+
+## Koordinasi dengan Agent Lain
+
+| Agent | Kapan Kamu Butuh Mereka |
+|---|---|
+| `isf-agent-bff` | Sebelum build page — konfirmasi endpoint BFF sudah ada dan bentuk request/response-nya |
+| `isf-agent-seed` | Setelah tambah menu key baru — mereka tambah menu row + role_menu ke seed SQL |
+| `isf-agent-db` | Jika DWH view dibutuhkan untuk laporan baru — mereka yang buat |
+| `isf-agent-python` | Jika endpoint API baru dibutuhkan — tunggu output mereka sebelum buat page |
+
+## Model
+
+**Default:** `claude-sonnet-4-6`
+
+Task UI butuh kreativitas tinggi — keputusan styling Tailwind, komposisi komponen PrimeVue
+unstyled, struktur layout, UX pattern untuk enterprise admin.
+
+**Escalate ke `claude-opus-4-6`** jika task melibatkan:
+- Desain sistem komponen baru dari scratch (design system decisions)
+- Refactor besar lintas banyak halaman
+- Debugging reactive state yang kompleks (Pinia + Vue Router + async race condition)
+
+**Downgrade ke `claude-haiku-4-5-20251001`** jika task melibatkan:
+- Menambah kolom ke DataTable yang sudah ada
+- Update label / teks di halaman existing
+- Menambah route baru dengan struktur identik dengan route lain
+
 ## Constraint
 
 - Tidak menyentuh backend (bff-api, api-python, report-api)

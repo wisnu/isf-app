@@ -41,6 +41,30 @@ agar `menus[]` di session terupdate. Seed tidak langsung aktif untuk session yan
 - `balancesum-config-wakaf.sql` → apply ke `mziss_wakaf` ONLY
 - Config ini berbeda strukturnya — cross-apply merusak laporan Arus Kas/Perubahan Dana.
 
+## Active Roles (14 Role dalam Sistem)
+
+Saat tambah menu baru, assign ke role yang relevan. Cek `AllowedGroups` di legacy `.mnu` file
+untuk referensi role mana yang harus dapat akses.
+
+| Role Code | Deskripsi |
+|---|---|
+| `ADMIN` | System administrator |
+| `ACC` | Akuntansi |
+| `KEU` | Keuangan / Finance |
+| `DIST` | Distribusi |
+| `SPVDIST` | Supervisor Distribusi |
+| `AUDIT` | Auditor |
+| `MGR` | Manager |
+| `DIR` | Direktur |
+| `SPVKEU` | Supervisor Keuangan |
+| `SPVACC` | Supervisor Akuntansi |
+| `UPZ` | Unit Pengumpul Zakat |
+| `FUND` | Penghimpunan Dana |
+| `PROG` | Program Manager |
+| `HR` | Human Resources |
+
+Role lain bisa ditemukan di `seed-menu-and-rolemenu.sql` — selalu cek file aktual.
+
 ## Dev Users yang Sudah Ada
 
 | Username | Role | branch_access | Branch |
@@ -119,6 +143,72 @@ SELECT username, full_name, is_active FROM isf_auth.users WHERE username = 'BUDI
 SELECT username, role_code, tipe_akses_cabang, kode_cabang_utama
 FROM isf_auth.tenant_memberships WHERE username = 'BUDI';
 ```
+
+## Input Contract (dari Orchestrator)
+
+```
+TASK: [add menu | add role_menu | update label | add balancesum item]
+MENU_KEY: [keuangan.report.kas]
+LABEL: [Laporan Kas/Bank]
+PARENT_KEY: [keuangan.report]
+SORT_ORDER: [15]
+ROLES: [ACC, KEU, MGR, DIR, AUDIT]
+PORTAL: [zakat | wakaf | both]
+LEGACY_REFERENCE: [AllowedGroups dari .mnu file — opsional]
+```
+
+## Output Contract (ke Orchestrator)
+
+Untuk setiap task, hasilkan:
+
+1. **SQL snippet** untuk di-append ke `seed-menu-and-rolemenu.sql`:
+   - `INSERT INTO isf_auth.menu ... ON CONFLICT (menu_key) DO NOTHING`
+   - `INSERT INTO isf_auth.role_menu ... ON CONFLICT (role_code, menu_key) DO NOTHING` (1 row per role)
+
+2. **Apply command**:
+```bash
+# Untuk kedua portal
+for portal in zakat wakaf; do
+  PGPASSWORD=solusi psql -h localhost -U transaction -d "isf_auth_$portal" \
+    -f infra/db/migrations/isf_auth/seed-menu-and-rolemenu.sql
+done
+```
+
+3. **Notifikasi ke isf-agent-ui** — exact `MENU_KEYS` entry yang harus ditambah:
+```ts
+// Tambah ke lib/menu/registry.ts MENU_KEYS:
+KEUANGAN_LAPORAN_KAS: 'keuangan.report.kas',
+```
+
+## Status Seed Saat Ini (Baseline)
+
+File `seed-menu-and-rolemenu.sql` mengandung:
+- **9 menu keys** di seluruh grup: dashboard, keuangan, admin
+- **45 role_menu rows** untuk 14 active roles
+- Apply idempotent — aman di-rerun kapan saja
+
+Saat tambah entry baru, selalu **append** ke file — jangan rewrite baris yang sudah ada.
+
+## Koordinasi dengan Agent Lain
+
+| Agent | Kapan |
+|---|---|
+| `isf-agent-ui` | Selalu — setelah tambah menu key, notifikasi mereka tambah ke `MENU_KEYS` registry |
+| `isf-agent-bff` | Setelah tambah menu key — mereka pakai dalam `@require_menu()` |
+| `isf-agent-db` | Mereka punya schema DDL, kamu punya data rows |
+| `isf-agent-python` | Tidak langsung |
+
+## Model
+
+**Default:** `claude-haiku-4-5-20251001`
+
+Task seed adalah yang paling sederhana dan paling templated — hanya `INSERT ... ON CONFLICT DO NOTHING`
+dengan pola yang sama persis setiap kali.
+
+**Escalate ke `claude-sonnet-4-6`** jika task melibatkan:
+- Audit keseluruhan konsistensi 3-way (DB menu ↔ role_menu ↔ registry.ts) lintas kedua portal
+- Merancang hierarki menu baru untuk fitur besar (banyak parent/child key)
+- Mapping `AllowedGroups` dari legacy `.mnu` yang ambigu ke role sistem yang ada
 
 ## Constraint
 

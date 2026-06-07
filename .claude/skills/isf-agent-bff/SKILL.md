@@ -115,6 +115,8 @@ async def export_kas(request: Request, ...):
 | `UNAUTHORIZED` | 401 | Token tidak valid / tidak ada |
 | `MENU_DENIED` | 403 | User tidak punya akses menu ini |
 | `BRANCH_DENIED` | 403 | User single-branch request branch lain |
+| `IDENTITY_UNAVAILABLE` | 503 | api-python /identity down saat login |
+| `UNKNOWN_IDENTITY` | 404 | Username tidak ditemukan di enterprise.userapp |
 | `VALIDATION_ERROR` | 422 | Request body/param tidak valid |
 
 ## Dual-Portal Config
@@ -199,6 +201,73 @@ Register di `app/main.py`:
 from app.routers.transaksi import router as transaksi_router
 app.include_router(transaksi_router)
 ```
+
+## Session Payload Shape
+
+Cookie: `isf_session`, httpOnly, SameSite=lax. Session harus selalu mengandung:
+
+```python
+{
+  "user_id": str,
+  "username": str,
+  "display_name": str,
+  "active_tenant_id": str,
+  "roles": list[str],
+  "branches": list[str],
+  "primary_branch": str,
+  "branch_access": "all" | "single",
+  "menus": list[str]   # snapshot saat login — stale sampai re-login
+}
+```
+
+## Input Contract (dari Orchestrator)
+
+```
+TASK: [add route | add proxy | add auth provider | update CORS]
+ENDPOINT: [HTTP method + path, misal GET /api/report/kas]
+MENU_KEY: [keuangan.report.kas]
+DOWNSTREAM: [api-python | report-api]
+DOWNSTREAM_PATH: [/report/kas]
+BRANCH_GATED: [yes | no]
+PORTAL: [zakat | wakaf | both]
+```
+
+## Output Contract (ke Orchestrator)
+
+Untuk setiap endpoint baru, hasilkan:
+
+1. **Router function** di `app/routers/*.py` yang relevan
+2. **`@require_menu()`** dengan menu key yang benar
+3. **`_resolve_branch()`** jika report/dashboard endpoint
+4. **Import** di `app/main.py` jika router file baru
+
+Konfirmasi ke orchestrator:
+- Endpoint path + HTTP method
+- Menu key yang digunakan
+- Downstream target (api-python atau report-api)
+- Response shape (proxied as-is atau ditransformasi)
+
+## Koordinasi dengan Agent Lain
+
+| Agent | Kapan |
+|---|---|
+| `isf-agent-ui` | Konfirmasi kontrak endpoint sebelum mereka wire up API call |
+| `isf-agent-python` | Konfirmasi downstream endpoint ada sebelum proxy |
+| `isf-agent-seed` | Setelah tambah menu key baru — mereka tambah ke seed SQL |
+| `isf-agent-db` | Tidak langsung — database diakses oleh api-python/report-api |
+
+## Model
+
+**Default:** `claude-haiku-4-5-20251001`
+
+Task BFF sangat templated — pola add route + `@require_menu()` + `_resolve_branch()` +
+`forward_get/forward_post/stream_report_api()` berulang konsisten di setiap endpoint baru.
+
+**Escalate ke `claude-sonnet-4-6`** jika task melibatkan:
+- Perubahan auth flow (login, session, OAuth Google)
+- Logika multi-tenant baru atau perubahan session payload shape
+- Debugging CORS atau cookie behavior lintas portal
+- Implementasi provider auth baru (bukan sekedar add route)
 
 ## Constraint
 

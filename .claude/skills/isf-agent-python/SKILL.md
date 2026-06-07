@@ -30,11 +30,14 @@ Setiap fitur baru mengikuti struktur ini (berlaku untuk api-python maupun report
 ```
 app/modules/{fitur}/
 ├── __init__.py
-├── router.py    ← FastAPI router, endpoint definitions, parameter parsing
-├── service.py   ← business logic, DB queries (asyncpg / SQLAlchemy)
-├── schema.py    ← Pydantic v2 request/response models
-└── export.py    ← xlsx generation via openpyxl (hanya jika ada export)
+├── router.py       ← FastAPI router, endpoint definitions, parameter parsing
+├── service.py      ← business logic — calls repository, transformasi data (TANPA SQL)
+├── repository.py   ← raw SQL via asyncpg — tidak ada business logic
+├── schema.py       ← Pydantic v2 request/response models
+└── export.py       ← xlsx generation via openpyxl (hanya jika ada export)
 ```
+
+**Aturan ketat:** Jangan taruh SQL di `service.py`. Jangan taruh business logic di `repository.py`.
 
 Register router baru di `app/main.py`:
 
@@ -43,13 +46,15 @@ from app.modules.muzakki.router import router as muzakki_router
 app.include_router(muzakki_router)
 ```
 
-## DB Connection
+## DB Connection & Dual Pool
 
-Gunakan `shared/db.py` — dual-pool aware, sudah handle zakat vs wakaf:
+`shared/db.py` menyediakan pool yang sesuai konteks — selalu pakai `get_db()`, jangan buat connection sendiri.
 
+### api-python (read/write)
 ```python
 from app.shared.db import get_db
 
+# business_pool → mziss_laz / mziss_wakaf (read/write)
 async def list_coa(page: int, limit: int):
     async with get_db() as conn:
         rows = await conn.fetch(
@@ -59,7 +64,38 @@ async def list_coa(page: int, limit: int):
     return rows
 ```
 
-Jangan buat connection baru sendiri — selalu pakai `get_db()`.
+`api-python` juga punya `auth_pool` untuk lookup identity ke `isf_auth_*` — read-only.
+
+### report-api (read-only)
+```python
+# business_pool → mziss_* untuk laporan operasional
+# dwh_pool      → schema dwh dalam mziss_* untuk DWH views
+```
+
+`report-api` **tidak boleh write** ke database apapun.
+
+## Response Shape (gunakan shared helpers)
+
+```python
+from app.shared.response import ok, err
+
+# list dengan pagination
+return ok({
+    "data": rows,
+    "pagination": {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "total_pages": ceil(total / limit)
+    }
+})
+
+# single object
+return ok({"data": item})
+
+# error
+return err("VALIDATION_ERROR", "Invalid input", 422)
+```
 
 ## Pydantic v2 Schemas
 
@@ -183,6 +219,64 @@ async def test_filter_penghimpunan_by_type():
         assert len(result) == 1
         assert result[0]["accounttitype"] == "D"
 ```
+
+## Input Contract (dari Orchestrator)
+
+```
+TASK: [add module | add endpoint | add report | fix service logic]
+SERVICE: [api-python | report-api]
+MODULE: [nama modul]
+PORTAL: [zakat | wakaf | both]
+ENDPOINT: [HTTP method + path]
+DWH_VIEW: [dwh.v_<name> — sudah dikonfirmasi dibuat oleh isf-agent-db]
+FIELDS: [response fields]
+FILTERS: [query params]
+```
+
+## Output Contract (ke Orchestrator)
+
+Untuk setiap modul atau endpoint baru:
+
+1. `router.py` — endpoint dengan path, method, dependencies yang benar
+2. `schema.py` — Pydantic request + response models
+3. `service.py` — business / aggregation logic
+4. `repository.py` — SQL queries
+5. `export.py` — jika XLSX export dibutuhkan
+6. Import ditambah ke `app/main.py`
+
+Konfirmasi ke orchestrator:
+- Exact endpoint path + method
+- Response shape (untuk bff-api proxy dengan benar)
+- DWH view mana yang di-query (untuk task report-api)
+
+## Koordinasi dengan Agent Lain
+
+| Agent | Kapan |
+|---|---|
+| `isf-agent-db` | Sebelum build report — konfirmasi DWH view sudah ada |
+| `isf-agent-bff` | Setelah buat endpoint — konfirmasi path agar BFF bisa proxy |
+| `isf-agent-seed` | Tidak langsung — tapi menu key baru dari fitur harus dikomunikasikan |
+| `isf-agent-ui` | Tidak pernah langsung — bff-api adalah contract boundary |
+
+## Model
+
+**Default:** `claude-sonnet-4-6`
+
+Business logic, aggregasi data keuangan, running balance, dual-pool asyncpg,
+dan parsing upload Excel butuh reasoning yang kuat. Kesalahan di layer ini
+berdampak langsung ke data.
+
+**Escalate ke `claude-opus-4-6`** jika task melibatkan:
+- Migrasi modul dari Python ke Go (Strangler Fig pattern)
+- Implementasi ETL runners yang kompleks
+- Debugging race condition di asyncpg dual-pool
+- Logika aggregasi laporan akuntansi yang kompleks (Trial Balance, Neraca,
+  Arus Kas dengan hierarki COA)
+
+**Downgrade ke `claude-haiku-4-5-20251001`** jika task melibatkan:
+- Menambah field baru ke response schema yang sudah ada
+- Membuat endpoint CRUD sederhana dengan pola identik modul lain
+- Update query filter parameter yang sudah ada
 
 ## Constraint
 
