@@ -32,6 +32,9 @@ Setiap modul memiliki struktur identik — pelajari `core/` sebagai referensi ut
 ├── dialogs/           ← Form UI + client/server scripts
 ├── scripts/           ← Business logic server-side (entry points)
 ├── script_modules/    ← Class library (persistent objects)
+├── menus/             ← Sitemap menu aplikasi + event handlers
+│   ├── popupmenus/    ← Popup/context menus per domain
+│   └── ...
 ├── app.mdt            ← Schema & class definitions (text, version-controlled)
 ├── app.tmdt           ← Compiled schema (binary, auto-generated — JANGAN baca)
 ├── default.mcf        ← Peta class-to-module (INI format)
@@ -181,6 +184,61 @@ oService = modman.getModule(config, 'scripts#Transaction.CashIn')
 | `helper.CreatePObject('X')` | `default.mcf` classlist → liblist | `script_modules/X.py` |
 | `helper.GetObject('X', id)` | `default.mcf` classlist → liblist | `script_modules/X.py` |
 | `modman.getModule(config, 'scripts#A.B')` | Langsung (tidak pakai mcf) | `scripts/A/B.py` |
+
+## Folder `menus/` — Sitemap & Navigasi Aplikasi
+
+`menus/` adalah **peta navigasi lengkap** modul — sangat berguna untuk:
+- Menemukan dialog apa saja yang ada di modul
+- Memahami role/grup siapa yang boleh akses fitur tertentu
+- Memetakan menu legacy ke struktur menu isf-app baru
+
+### File per Menu
+
+| File | Peran |
+|---|---|
+| `.mnu` | Definisi struktur menu (sitemap) — format XML-like |
+| `.py` | Event handler client-side (misal: `ShowQueryClick`, `GetFormQueryClick`) |
+| `_server.py` | Handler server-side untuk menu |
+| `.bdl` | Compiled artifact — **JANGAN baca** |
+
+### Format `.mnu` — Cara Membacanya
+
+```xml
+object:rmn::MenuItem<
+  Caption='Daftar COA (Chart of Account)'   ← label yang tampil di menu
+  OnClick='ShowQueryClick'                   ← event handler di .py
+  AllowedGroups='SPVKEU;ADM;KEU;ACC'        ← role yang boleh akses (semicolon-separated)
+  StringTag='master/qryCOA'                 ← path ke dialog: dialogs/master/qryCOA.*
+>
+```
+
+**`StringTag`** adalah pointer ke dialog: `'folder/namaform'` → `dialogs/{folder}/{namaform}.*`
+
+**`AllowedGroups`** = role codes yang boleh akses menu ini.
+**`AllowedUsers`** = username spesifik (jarang, biasanya untuk admin saja).
+**Caption `'-'`** = separator/divider di menu.
+
+### `menus/popupmenus/` — Context Menus per Domain
+
+```
+menus/popupmenus/
+├── donatur/         ← popup menu untuk tabel/list donatur
+├── accounting/      ← popup menu untuk entri akuntansi
+├── budget/          ← popup menu untuk anggaran
+├── master/          ← popup menu untuk data master
+├── rekening/        ← popup menu untuk rekening
+└── [domain lain]/
+```
+
+Struktur file sama dengan `menus/` — `.mnu`, `.py`, `_server.py`.
+
+### Cara Pakai untuk Analisis Migrasi
+
+Untuk menemukan **semua fitur di suatu domain**:
+1. Buka `.mnu` file yang relevan (misal `Transaksi.mnu`, `Accounting.mnu`)
+2. Cari semua `MenuItem` dengan `StringTag` — setiap entry adalah satu dialog/form
+3. Catat `AllowedGroups` — ini mapping role legacy ke permission baru
+4. Gunakan `StringTag` (`'folder/namaform'`) untuk locate dialog: `dialogs/{folder}/{namaform}_intr.py`
 
 ## Helper Utama: `phelper.PObjectHelper`
 
