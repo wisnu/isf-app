@@ -149,6 +149,22 @@ SELECT * FROM accounting.chart_of_accounts WHERE ...
 SELECT * FROM dwh.v_jurnal_harian WHERE ...
 ```
 
+## SQL Cast Convention
+
+Gunakan **function cast** (`CAST(x AS type)`) bukan double colon operator (`x::type`):
+
+```sql
+-- benar
+WHERE CAST(tanggal AS DATE) BETWEEN $1 AND $2
+SELECT CAST(jumlah AS NUMERIC(15,2)) FROM ...
+
+-- salah
+WHERE tanggal::DATE BETWEEN $1 AND $2
+SELECT jumlah::NUMERIC(15,2) FROM ...
+```
+
+Berlaku untuk semua SQL di service.py, router.py, maupun DWH view definitions.
+
 ## Testing
 
 Tulis pytest untuk service logic yang punya branching non-trivial:

@@ -77,6 +77,22 @@ ALTER TABLE transaction.penghimpunan
   ADD COLUMN IF NOT EXISTS status_approval VARCHAR(20) DEFAULT 'pending';
 ```
 
+## SQL Cast Convention
+
+Gunakan **function cast** (`CAST(x AS type)`) bukan double colon operator (`x::type`):
+
+```sql
+-- benar
+WHERE CAST(tanggal AS DATE) >= CURRENT_DATE
+ALTER TABLE t ALTER COLUMN x TYPE DATE USING CAST(x AS DATE);
+
+-- salah
+WHERE tanggal::DATE >= CURRENT_DATE
+ALTER TABLE t ALTER COLUMN x TYPE DATE USING x::DATE;
+```
+
+Berlaku untuk semua SQL di migration files dan DWH view definitions.
+
 ## DWH Views
 
 DWH views ada di `infra/db/migrations/dwh/v_*.sql`.
@@ -101,6 +117,18 @@ WHERE j.deleted_at IS NULL;
 
 Kalau view butuh JOIN ke tabel yang berbeda antara portal, buat dua file terpisah:
 `v_nama_view_zakat.sql` dan `v_nama_view_wakaf.sql` dan dokumentasikan alasannya.
+
+### Portal-Specific vs Single View
+
+**Gunakan satu file** (`v_nama.sql`) jika:
+- Semua tabel dalam JOIN ada di kedua DB dengan nama yang sama
+- Logic filter identik di zakat + wakaf
+- Tandai header: `-- APPLY TO: mziss_laz, mziss_wakaf`
+
+**Gunakan split files** (`v_nama_zakat.sql` + `v_nama_wakaf.sql`) jika:
+- Ada tabel JOIN yang berbeda antara portal (mis. nama kolom atau struktur berbeda)
+- Logic discriminator berbeda per portal
+- Dokumentasikan alasan perbedaannya di comment header masing-masing file
 
 ## Menambah Migration Baru
 
