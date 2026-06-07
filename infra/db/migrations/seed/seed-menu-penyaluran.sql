@@ -15,10 +15,12 @@ ON CONFLICT (menu_key) DO UPDATE SET
   route_path = EXCLUDED.route_path,
   status = EXCLUDED.status;
 
--- Role assignments for penyaluran menu
+-- Role assignments: keuangan, distribusi, admin
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
+  ('KEU',     'keuangan.transaksi.penyaluran', 'system'),
+  ('SPVKEU',  'keuangan.transaksi.penyaluran', 'system'),
   ('SPVDIST', 'keuangan.transaksi.penyaluran', 'system'),
-  ('DIST', 'keuangan.transaksi.penyaluran', 'system'),
-  ('ADM', 'keuangan.transaksi.penyaluran', 'system')
+  ('DIST',    'keuangan.transaksi.penyaluran', 'system'),
+  ('ADM',     'keuangan.transaksi.penyaluran', 'system')
 ON CONFLICT DO NOTHING;
