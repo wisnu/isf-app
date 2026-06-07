@@ -295,6 +295,65 @@ Untuk menemukan **semua fitur di suatu domain**:
 4. Catat `AllowedGroups` per menu item → ini mapping role legacy ke permission isf-app baru
 5. Gunakan path dari `app.CreateForm` untuk locate: `dialogs/{formpath}_intr.py`
 
+### Ekstraksi Hak Akses Menu untuk Migrasi
+
+Saat migrasi fitur, baca **semua** `MenuItem` yang bukan separator (`Caption='-'`) dari
+`.mnu` domain yang relevan, lalu petakan `AllowedGroups`-nya ke `role_code` isf-app.
+
+#### Peta Legacy Group → isf-app Role Code
+
+| Legacy `AllowedGroups` | isf-app `role_code` | Keterangan |
+|---|---|---|
+| `ADM` | `ADMIN` | System administrator |
+| `ACC` | `ACC` | Akuntansi |
+| `KEU` | `KEU` | Keuangan |
+| `SPVKEU` | `SPVKEU` | Supervisor Keuangan |
+| `DIST` | `DIST` | Distribusi |
+| `SPVDIST` | `SPVDIST` | Supervisor Distribusi |
+| `MGR` | `MGR` | Manager |
+| `DIR` | `DIR` | Direktur |
+| `AUDIT` | `AUDIT` | Auditor |
+| `FUND` | `FUND` | Penghimpunan |
+| `UPZ` | `UPZ` | Unit Pengumpul Zakat |
+
+Jika kamu menemukan kode grup yang tidak ada di tabel ini, tandai sebagai **ambigu** dan
+laporkan ke orchestrator — jangan mapping sendiri.
+
+#### Pola Ekstraksi
+
+Untuk setiap `MenuItem` di `.mnu`:
+
+```
+Caption       → label menu di UI
+AllowedGroups → role_code isf-app (pisahkan by ';', petakan per tabel di atas)
+StringTag     → menu_key kandidat (format: 'folder/namaform' → slug kebab)
+AllowedUsers  → abaikan kecuali ada username non-admin (jarang)
+```
+
+Contoh:
+```xml
+object:rmn::MenuItem<
+  Caption='Daftar Penyaluran'
+  AllowedGroups='SPVDIST;DIST;ADM'
+  StringTag='penyaluran/qryDistribution'
+>
+```
+→ `AllowedGroups: SPVDIST, DIST, ADM` → role_code: `SPVDIST`, `DIST`, `ADMIN`
+
+#### Format Output untuk isf-agent-seed
+
+Laporkan hasil ekstraksi dalam format ini agar langsung bisa dipakai oleh isf-agent-seed:
+
+```
+MENU_KEY:  penyaluran.distribusi
+LABEL:     Daftar Penyaluran
+ROLES:     SPVDIST, DIST, ADMIN
+SOURCE:    docs/legacy-apps/program/menus/Distribusi.mnu — Caption='Daftar Penyaluran'
+```
+
+Satu baris per menu item. Jika satu domain punya banyak item, daftarkan semuanya sebelum
+menyerahkan ke isf-agent-seed agar seeding bisa dilakukan sekaligus.
+
 ## Helper Utama: `phelper.PObjectHelper`
 
 `PObjectHelper` adalah utility class utama untuk operasi persistent object:
