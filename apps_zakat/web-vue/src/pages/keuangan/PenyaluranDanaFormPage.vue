@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, shallowRef, computed } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -128,6 +128,7 @@ function onPaymentTypeChange(type: 'B' | 'C' | 'K' | 'A') {
 }
 
 function addItem() {
+  if (loading.value) return
   items.value.push({
     _id: _idCtr++,
     product_id: null,
@@ -218,9 +219,22 @@ async function submit() {
   }
 }
 
+function onKeydown(e: KeyboardEvent) {
+  // Alt+N — tambah item baru (N = New item)
+  if (e.altKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault()
+    addItem()
+  }
+}
+
 onMounted(() => {
   loadLookups()
   loadRekening()
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
@@ -388,13 +402,15 @@ onMounted(() => {
             <Button variant="secondary" size="sm" @click="addItem">+ Tambah Item</Button>
           </div>
 
-          <!-- Empty state -->
-          <div
+          <!-- Empty state — klikable -->
+          <button
             v-if="items.length === 0"
-            class="py-16 text-center text-sm text-zinc-400"
+            class="w-full py-16 text-center text-sm text-zinc-400 hover:text-primary hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition rounded"
+            @click="addItem"
           >
-            Klik "+ Tambah Item" untuk menambah produk penyaluran.
-          </div>
+            <span>Klik "+ Tambah Item" untuk menambah produk penyaluran.</span>
+            <kbd class="ml-2 rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
+          </button>
 
           <!-- Items table -->
           <div v-if="items.length > 0" class="divide-y">
@@ -479,13 +495,15 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Hint: selalu tampil saat ada items -->
-          <div
+          <!-- Hint klikable: selalu tampil saat ada items -->
+          <button
             v-if="items.length > 0"
-            class="border-t px-5 py-2.5 text-xs italic text-zinc-400 dark:text-zinc-500"
+            class="flex w-full items-center gap-2 border-t px-5 py-2.5 text-left text-xs italic text-zinc-400 hover:text-primary hover:bg-zinc-50/60 dark:text-zinc-500 dark:hover:bg-zinc-800/40 transition"
+            @click="addItem"
           >
-            Klik "+ Tambah Item" untuk menambah produk penyaluran.
-          </div>
+            <span>Klik "+ Tambah Item" untuk menambah produk penyaluran.</span>
+            <kbd class="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 not-italic text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
+          </button>
 
           <!-- Footer total -->
           <div v-if="items.length > 0" class="flex items-center justify-end gap-3 border-t bg-zinc-50 px-5 py-3 dark:bg-zinc-800">
