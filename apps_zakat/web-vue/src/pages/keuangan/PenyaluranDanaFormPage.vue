@@ -225,226 +225,276 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl space-y-6 pb-10">
-    <header class="flex items-center justify-between">
+  <!-- 1080p: 2-panel layout — left sticky 420px, right flex-1 -->
+  <div class="w-full pb-6">
+
+    <!-- Page header -->
+    <header class="mb-4 flex items-center justify-between">
       <h1 class="text-2xl font-bold tracking-tight">Input Penyaluran Dana</h1>
       <Button variant="ghost" :disabled="loading" @click="router.back()">Kembali</Button>
     </header>
 
-    <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
+    <Alert v-if="errorMsg" variant="destructive" class="mb-4">{{ errorMsg }}</Alert>
 
-    <!-- Header Form -->
-    <section class="space-y-4 rounded border bg-white p-6 dark:bg-zinc-900">
-      <h2 class="font-semibold text-zinc-700 dark:text-zinc-300">Informasi Transaksi</h2>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label class="mb-1 block text-sm font-medium">
-            Tanggal Transaksi <span class="text-red-500">*</span>
-          </label>
-          <DateField v-model="actualDate" />
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium">No. Referensi</label>
-          <input
-            v-model="referenceNo"
-            placeholder="Opsional"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-          />
-        </div>
-        <div class="md:col-span-2">
-          <label class="mb-1 block text-sm font-medium">
-            Keterangan <span class="text-red-500">*</span>
-          </label>
-          <input
-            v-model="description"
-            placeholder="Keterangan transaksi"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium">Dibayarkan Kepada</label>
-          <input
-            v-model="paidTo"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium">Diterima Dari</label>
-          <input
-            v-model="receivedFrom"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-          />
-        </div>
-      </div>
-    </section>
+    <!-- 2-panel body -->
+    <div class="flex w-full flex-col gap-5 xl:flex-row xl:items-start">
 
-    <!-- Jenis Pembayaran -->
-    <section class="space-y-4 rounded border bg-white p-6 dark:bg-zinc-900">
-      <h2 class="font-semibold text-zinc-700 dark:text-zinc-300">Jenis Pembayaran</h2>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="tab in paymentTabs"
-          :key="tab.v"
-          :class="[
-            'rounded border px-4 py-1.5 text-sm font-medium transition',
-            paymentType === tab.v
-              ? 'border-primary bg-primary text-white'
-              : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800',
-          ]"
-          @click="onPaymentTypeChange(tab.v)"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+      <!-- ── LEFT PANEL: sticky header + payment ────────────────────────── -->
+      <div class="flex w-full shrink-0 flex-col gap-4 xl:w-[420px] xl:sticky xl:top-4">
 
-      <div class="grid gap-4 md:grid-cols-2">
-        <!-- Rekening pembayaran -->
-        <div v-if="paymentType !== 'C' && paymentType !== 'A'">
-          <label class="mb-1 block text-sm font-medium">
-            {{ paymentType === 'B' ? 'Rekening Bank' : 'Rekening Kas Kecil' }}
-            <span class="text-red-500">*</span>
-          </label>
-          <SearchSelect
-            :options="rekeningOptions.map((r) => ({ value: r.account_no, label: `${r.account_name} (${r.account_no})` }))"
-            :model-value="paymentAccountNo ?? ''"
-            placeholder="Pilih rekening..."
-            @update:model-value="onBankSelected($event as string)"
-          />
-        </div>
-
-        <div v-if="paymentType === 'A'">
-          <label class="mb-1 block text-sm font-medium">Kode Aset <span class="text-red-500">*</span></label>
-          <input
-            :value="paymentAccountNo ?? ''"
-            placeholder="Kode akun GL aset"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            @input="paymentAccountNo = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-
-        <div v-if="paymentType === 'C'" class="rounded border border-dashed p-3 text-sm text-zinc-500">
-          Kas cabang dipilih otomatis oleh sistem berdasarkan cabang pengguna.
-        </div>
-
-        <!-- Sumber Dana -->
-        <div>
-          <label class="mb-1 block text-sm font-medium">
-            Sumber Dana (Produk Penghimpunan) <span class="text-red-500">*</span>
-          </label>
-          <SearchSelect
-            :options="fundAccountOptions.map((f) => ({ value: f.account_no, label: `${f.account_name} (${f.account_no})` }))"
-            :model-value="fundAccountNo ?? ''"
-            placeholder="Pilih sumber dana..."
-            @update:model-value="fundAccountNo = $event as string || null"
-          />
-          <p v-if="paymentType === 'B' && !paymentAccountNo" class="mt-1 text-xs text-zinc-400">
-            Pilih rekening bank terlebih dahulu.
-          </p>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm font-medium">Cabang Produk</label>
-          <input
-            v-model="productBranchCode"
-            class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-          />
-        </div>
-      </div>
-    </section>
-
-    <!-- Items -->
-    <section class="space-y-4 rounded border bg-white p-6 dark:bg-zinc-900">
-      <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-zinc-700 dark:text-zinc-300">Detail Distribusi</h2>
-        <Button variant="secondary" size="sm" @click="addItem">+ Tambah Item</Button>
-      </div>
-
-      <div
-        v-if="items.length === 0"
-        class="rounded border border-dashed py-8 text-center text-sm text-zinc-400"
-      >
-        Klik "+ Tambah Item" untuk menambah produk penyaluran.
-      </div>
-
-      <div v-for="item in items" :key="item._id" class="space-y-3 rounded border p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Item {{ item._id }}
-            <span v-if="item.product_name" class="ml-2 text-zinc-400">— {{ item.product_name }}</span>
-          </span>
-          <button class="text-xs text-red-500 hover:underline" @click="removeItem(item._id)">
-            Hapus
-          </button>
-        </div>
-        <div class="grid gap-3 md:grid-cols-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium">
-              Produk <span class="text-red-500">*</span>
-            </label>
-            <SearchSelect
-              :options="productOptions.map((p) => ({ value: p.product_id, label: `[${p.fund_category}] ${p.product_name}` }))"
-              :model-value="item.product_id ?? ''"
-              placeholder="Pilih produk..."
-              @update:model-value="onProductSelected(item, $event as string)"
-            />
+        <!-- Informasi Transaksi -->
+        <section class="space-y-3 rounded border bg-white p-5 dark:bg-zinc-900">
+          <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Informasi Transaksi
+          </h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-sm font-medium">
+                Tanggal <span class="text-red-500">*</span>
+              </label>
+              <DateField v-model="actualDate" />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium">No. Referensi</label>
+              <input
+                v-model="referenceNo"
+                placeholder="Opsional"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+              />
+            </div>
+            <div class="col-span-2">
+              <label class="mb-1 block text-sm font-medium">
+                Keterangan <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="description"
+                placeholder="Keterangan transaksi"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium">Dibayarkan Kepada</label>
+              <input
+                v-model="paidTo"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium">Diterima Dari</label>
+              <input
+                v-model="receivedFrom"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+              />
+            </div>
           </div>
-          <div v-if="item.fund_entity === 1">
-            <label class="mb-1 block text-xs font-medium">
-              Ashnaf <span class="text-red-500">*</span>
-            </label>
-            <select
-              v-model="item.ashnaf"
-              class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+        </section>
+
+        <!-- Jenis Pembayaran -->
+        <section class="space-y-3 rounded border bg-white p-5 dark:bg-zinc-900">
+          <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Jenis Pembayaran
+          </h2>
+          <!-- Tabs -->
+          <div class="flex gap-1.5">
+            <button
+              v-for="tab in paymentTabs"
+              :key="tab.v"
+              :class="[
+                'flex-1 rounded border py-1.5 text-xs font-medium transition',
+                paymentType === tab.v
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800',
+              ]"
+              @click="onPaymentTypeChange(tab.v)"
+            >{{ tab.label }}</button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Rekening Bank / Kas Kecil -->
+            <div v-if="paymentType !== 'C' && paymentType !== 'A'">
+              <label class="mb-1 block text-sm font-medium">
+                {{ paymentType === 'B' ? 'Rekening Bank' : 'Rekening Kas Kecil' }}
+                <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect
+                :options="rekeningOptions.map((r) => ({ value: r.account_no, label: `${r.account_name} (${r.account_no})` }))"
+                :model-value="paymentAccountNo ?? ''"
+                placeholder="Pilih rekening..."
+                @update:model-value="onBankSelected($event as string)"
+              />
+            </div>
+            <!-- Aset / GL -->
+            <div v-if="paymentType === 'A'">
+              <label class="mb-1 block text-sm font-medium">Kode Aset <span class="text-red-500">*</span></label>
+              <input
+                :value="paymentAccountNo ?? ''"
+                placeholder="Kode akun GL aset"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                @input="paymentAccountNo = ($event.target as HTMLInputElement).value"
+              />
+            </div>
+            <!-- Kas Cabang -->
+            <div v-if="paymentType === 'C'" class="rounded border border-dashed p-3 text-xs text-zinc-500">
+              Kas cabang dipilih otomatis berdasarkan cabang pengguna.
+            </div>
+
+            <!-- Sumber Dana -->
+            <div>
+              <label class="mb-1 block text-sm font-medium">
+                Sumber Dana <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect
+                :options="fundAccountOptions.map((f) => ({ value: f.account_no, label: `${f.account_name} (${f.account_no})` }))"
+                :model-value="fundAccountNo ?? ''"
+                placeholder="Pilih sumber dana..."
+                @update:model-value="fundAccountNo = $event as string || null"
+              />
+              <p v-if="paymentType === 'B' && !paymentAccountNo" class="mt-1 text-xs text-zinc-400">
+                Pilih rekening bank terlebih dahulu.
+              </p>
+            </div>
+
+            <!-- Cabang Produk -->
+            <div>
+              <label class="mb-1 block text-sm font-medium">Cabang Produk</label>
+              <input
+                v-model="productBranchCode"
+                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Action buttons (kiri bawah) -->
+        <div class="flex gap-3">
+          <Button variant="ghost" class="flex-1" :disabled="loading" @click="router.back()">Batal</Button>
+          <Button class="flex-1" :disabled="loading || items.length === 0" @click="submit">
+            {{ loading ? 'Menyimpan...' : 'Simpan Transaksi' }}
+          </Button>
+        </div>
+      </div>
+
+      <!-- ── RIGHT PANEL: Detail Distribusi (scrollable) ────────────────── -->
+      <div class="flex-1 min-w-0">
+        <section class="rounded border bg-white dark:bg-zinc-900">
+          <!-- Header distribusi -->
+          <div class="flex items-center justify-between border-b px-5 py-3">
+            <div>
+              <h2 class="font-semibold text-zinc-700 dark:text-zinc-300">Detail Distribusi</h2>
+              <p class="text-xs text-zinc-400">{{ items.length }} item · Total:
+                <span class="font-semibold text-zinc-700 dark:text-zinc-200">Rp {{ fmt(totalAmount) }}</span>
+              </p>
+            </div>
+            <Button variant="secondary" size="sm" @click="addItem">+ Tambah Item</Button>
+          </div>
+
+          <!-- Empty state -->
+          <div
+            v-if="items.length === 0"
+            class="py-16 text-center text-sm text-zinc-400"
+          >
+            Klik "+ Tambah Item" untuk menambah produk penyaluran.
+          </div>
+
+          <!-- Items table -->
+          <div v-if="items.length > 0" class="divide-y">
+            <!-- Table header -->
+            <div class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 bg-zinc-50 px-5 py-2 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+              <span>Produk <span class="text-red-400">*</span></span>
+              <span>Ashnaf</span>
+              <span>Jumlah (Rp) <span class="text-red-400">*</span></span>
+              <span>Keterangan</span>
+              <span>Kode Anggaran</span>
+              <span></span>
+            </div>
+
+            <!-- Item rows -->
+            <div
+              v-for="item in items"
+              :key="item._id"
+              class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 px-5 py-3 items-start hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
             >
-              <option value="">-- Pilih Ashnaf --</option>
-              <option v-for="a in ashnafOptions" :key="a.code" :value="a.code">
-                {{ a.name }}
-              </option>
-            </select>
+              <!-- Produk -->
+              <div>
+                <SearchSelect
+                  :options="productOptions.map((p) => ({ value: p.product_id, label: `[${p.fund_category}] ${p.product_name}` }))"
+                  :model-value="item.product_id ?? ''"
+                  placeholder="Pilih produk..."
+                  @update:model-value="onProductSelected(item, $event as string)"
+                />
+              </div>
+
+              <!-- Ashnaf (hanya untuk Zakat) -->
+              <div>
+                <select
+                  v-if="item.fund_entity === 1"
+                  v-model="item.ashnaf"
+                  class="h-9 w-full rounded border px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                >
+                  <option value="">-- Pilih --</option>
+                  <option v-for="a in ashnafOptions" :key="a.code" :value="a.code">{{ a.name }}</option>
+                </select>
+                <span v-else class="flex h-9 items-center text-xs text-zinc-400">—</span>
+              </div>
+
+              <!-- Jumlah -->
+              <div>
+                <input
+                  v-model.number="item.amount"
+                  type="number"
+                  min="1"
+                  placeholder="0"
+                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                />
+              </div>
+
+              <!-- Keterangan -->
+              <div>
+                <input
+                  v-model="item.description"
+                  placeholder="Opsional"
+                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                />
+              </div>
+
+              <!-- Kode Anggaran -->
+              <div>
+                <input
+                  v-model="item.dist_item_account"
+                  placeholder="Opsional"
+                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                />
+              </div>
+
+              <!-- Hapus -->
+              <div class="flex h-9 items-center">
+                <button
+                  class="rounded p-1 text-zinc-400 hover:text-red-500"
+                  title="Hapus item"
+                  @click="removeItem(item._id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">
-              Jumlah (Rp) <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model.number="item.amount"
-              type="number"
-              min="1"
-              placeholder="0"
-              class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            />
+
+          <!-- Hint: selalu tampil saat ada items -->
+          <div
+            v-if="items.length > 0"
+            class="border-t px-5 py-2.5 text-xs italic text-zinc-400 dark:text-zinc-500"
+          >
+            Klik "+ Tambah Item" untuk menambah produk penyaluran.
           </div>
-          <div class="md:col-span-2">
-            <label class="mb-1 block text-xs font-medium">Keterangan Item</label>
-            <input
-              v-model="item.description"
-              placeholder="Opsional"
-              class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            />
+
+          <!-- Footer total -->
+          <div v-if="items.length > 0" class="flex items-center justify-end gap-3 border-t bg-zinc-50 px-5 py-3 dark:bg-zinc-800">
+            <span class="text-sm text-zinc-500">Total Penyaluran:</span>
+            <span class="text-xl font-bold text-zinc-800 dark:text-zinc-100">Rp {{ fmt(totalAmount) }}</span>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">Kode Item Anggaran</label>
-            <input
-              v-model="item.dist_item_account"
-              placeholder="Opsional"
-              class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            />
-          </div>
-        </div>
+        </section>
       </div>
 
-      <div class="flex items-center justify-end gap-4 border-t pt-3">
-        <span class="text-sm text-zinc-500">Total Penyaluran:</span>
-        <span class="text-lg font-bold">Rp {{ fmt(totalAmount) }}</span>
-      </div>
-    </section>
-
-    <!-- Actions -->
-    <div class="flex justify-end gap-3">
-      <Button variant="ghost" :disabled="loading" @click="router.back()">Batal</Button>
-      <Button :disabled="loading || items.length === 0" @click="submit">
-        {{ loading ? 'Menyimpan...' : 'Simpan Transaksi' }}
-      </Button>
     </div>
   </div>
 </template>
