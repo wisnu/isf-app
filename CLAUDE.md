@@ -339,6 +339,7 @@ Gunakan sebagai `agentType` di Workflow scripts atau `Agent` tool:
 | `isf-agent-python` | Business API + report-api | `apps_{portal}/api-python/` + `report-api/` |
 | `isf-agent-db` | DB migrations + DWH views | `infra/db/migrations/` |
 | `isf-agent-seed` | DB seeding (menu, user, config) | `infra/db/migrations/seed/` |
+| `isf-agent-legacy` | Baca & analisis legacy DAF code | `docs/legacy-apps/{modul}/` |
 
 ```js
 // Contoh di Workflow script
