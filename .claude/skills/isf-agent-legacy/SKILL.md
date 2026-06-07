@@ -113,31 +113,74 @@ Entry point tiap script biasanya function dengan nama deskriptif + parameter `(c
 
 ## Script Modules (Class Library)
 
-File di `script_modules/` adalah **persistent class** yang dipanggil via `modman`:
+File di `script_modules/` berisi **persistent class** — implementasi entitas bisnis.
+`helper.CreatePObject` dan `helper.GetObject` **selalu** melalui `default.mcf` untuk menemukan file yang tepat.
+
+### Rantai Resolusi `helper.CreatePObject` / `helper.GetObject`
+
+```
+helper.CreatePObject('Transaction', param)
+         │
+         ▼
+default.mcf [classlist]
+  Transaction = mtran          ← cari nama class, dapat shortname
+         │
+         ▼
+default.mcf [liblist]
+  mtran = Transaction          ← cari shortname, dapat filename (tanpa .py)
+         │
+         ▼
+script_modules/Transaction.py  ← load class dari sini
+  class Transaction(pobject.PObject)
+```
 
 ```python
-import com.ihsan.util.modman as modman
-
-# Load script module
-oService = modman.getModule(config, 'scripts#Transaction.GeneralTransaction')
-
-# Load persistent class (melalui default.mcf mapping)
+# Contoh di scripts/Transaction/CashIn.py
 helper = phelper.PObjectHelper(config)
-oTran = helper.CreatePObject('Transaction', param)  # → script_modules/Transaction.py
-oAccount = helper.GetObject('FinancialAccount', id) # → script_modules/FinancialAccount.py
+
+oTran = helper.CreatePObject('Transaction', {'Owner': oBatch, 'TranCode': 'CI'})
+# → default.mcf: Transaction → mtran → script_modules/Transaction.py → class Transaction
+
+oAccount = helper.GetObject('FinancialAccount', account_id)
+# → default.mcf: FinancialAccount → maccount → script_modules/FinancialAccount.py → class FinancialAccount
 ```
 
-Mapping class ke file ada di `default.mcf`:
+### `default.mcf` — Isi Lengkap Mapping
+
 ```ini
 [liblist]
-mtran=Transaction        # shortname=filename (script_modules/Transaction.py)
-maccount=FinancialAccount
+mtran = Transaction          # shortname = filename di script_modules/ (tanpa .py)
+maccount = FinancialAccount
+mproduct = Product
+mparam = Parameter
+mbudget = Budget
+mdonor = Donor
 
 [classlist]
-Transaction=mtran        # ClassName=shortname
-TransactionBatch=mtran
-FinancialAccount=maccount
+Transaction = mtran          # ClassName = shortname
+TransactionBatch = mtran     # beberapa class bisa 1 file
+TransactionItem = mtran
+FinancialAccount = maccount
+Product = mproduct
+Budget = mbudget
+Donor = mdonor
 ```
+
+### `modman.getModule` — Berbeda, Tidak Pakai `default.mcf`
+
+`modman.getModule` dengan prefix `scripts#` **langsung** ke folder `scripts/`, tidak lewat mapping:
+
+```python
+# scripts#Folder.File → scripts/Folder/File.py (tidak lewat default.mcf)
+oService = modman.getModule(config, 'scripts#Transaction.CashIn')
+# → scripts/Transaction/CashIn.py  (bukan script_modules/)
+```
+
+| Call | Lookup | Target |
+|---|---|---|
+| `helper.CreatePObject('X')` | `default.mcf` classlist → liblist | `script_modules/X.py` |
+| `helper.GetObject('X', id)` | `default.mcf` classlist → liblist | `script_modules/X.py` |
+| `modman.getModule(config, 'scripts#A.B')` | Langsung (tidak pakai mcf) | `scripts/A/B.py` |
 
 ## Helper Utama: `phelper.PObjectHelper`
 
