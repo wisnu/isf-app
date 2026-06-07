@@ -139,6 +139,81 @@ TransactionBatch=mtran
 FinancialAccount=maccount
 ```
 
+## Helper Utama: `phelper.PObjectHelper`
+
+`PObjectHelper` adalah utility class utama untuk operasi persistent object:
+
+```python
+import com.ihsan.foundation.pobjecthelper as phelper
+
+helper = phelper.PObjectHelper(config)
+
+helper.CreatePObject('Transaction', param)        # Buat instance baru, insert ke DB
+helper.GetObject('FinancialAccount', account_id)  # Load by primary key
+helper.GetObjectByNames('TransactionBatch', {     # Load by multiple field criteria
+    'Inputer': user_id,
+    'BatchDate': today
+})
+```
+
+Tersedia di semua `_data.py` (via `uideflist.config`) dan `scripts/*.py` (via parameter `config`).
+
+## Asal-usul `srequest` di Script Functions
+
+Di `scripts/*.py`, parameter `srequest` adalah **JSON string** yang dikirim dari client:
+
+```python
+# Client (_intr.py) — serialize data ke JSON string
+import simplejson
+values = self.app.CreateValues([
+    ['Amount', self.Amount],
+    ['BranchCode', self.BranchCode]
+])
+ph = self.app.ExecuteScript('Transaction.CashIn', values)
+
+# Server (scripts/Transaction/CashIn.py) — terima dan parse
+def CashInNew(config, srequest, params):
+    request = simplejson.loads(srequest)  # {'Amount': ..., 'BranchCode': ...}
+    amount = request['Amount']
+```
+
+`params` berisi dataset form langsung (untuk akses via `params.uipTransaction`).
+`srequest` berisi data yang di-serialize eksplisit oleh caller.
+
+## `modman.getModule` — Format Path
+
+```python
+modman.getModule(config, 'scripts#Transaction.CashIn')
+#                          ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^
+#                          prefix   Folder.Filename (tanpa .py)
+#
+# Resolves ke: {modul}/scripts/Transaction/CashIn.py
+```
+
+Prefix `scripts#` = cari di folder `scripts/`. Dot notation = subfolder/filename.
+Berbeda dengan `helper.CreatePObject` yang lewat `default.mcf` mapping.
+
+## Lifecycle Form: `FormSetDataEx` vs `SimpanData`
+
+Keduanya adalah function di `_data.py` yang dipanggil oleh DAF runtime:
+
+| Function | Dipanggil saat | Parameter | Tujuan |
+|---|---|---|---|
+| `FormSetDataEx(uideflist, params)` | Form **dibuka** | `uideflist` = UI datasets | Isi dataset default, load data awal |
+| `SimpanData(config, params, returns)` | User klik **Simpan** via `CallServerMethod` | `params` = data dari form | Validasi + persist ke DB |
+
+```python
+# _data.py — dua function lifecycle form
+def FormSetDataEx(uideflist, params):
+    config = uideflist.config          # ← akses config via uideflist
+    recT = uideflist.uipTransaction.Dataset.AddRecord()
+    recT.BranchCode = str(config.SecurityContext.GetUserInfo()[4])
+
+def SimpanData(config, params, returns):
+    oData = params.uipTransaction.GetRecord(0)   # ← data dari form
+    returns.CreateValues(['IsErr', 0], ['ErrMessage', ''])
+```
+
 ## Pola Transaction DB (Wajib Diketahui)
 
 Semua operasi tulis ke DB menggunakan pattern ini:
@@ -216,16 +291,51 @@ simplejson.loads(srequest)           # bukan json.loads
 
 Semua import menggunakan `com.ihsan.*` namespace (Jython/Java interop).
 
+## Alur End-to-End (Contoh: Kas Masuk)
+
+```
+User klik "OK" di form
+        ↓
+_intr.py (fCashIn_intr.py)
+  bOKClick() → self.app.ExecuteScript('Transaction.CashIn', values)
+        ↓
+scripts/Transaction/CashIn.py
+  CashInNew(config, srequest, params)
+    request = simplejson.loads(srequest)
+    config.BeginTransaction()
+        ↓
+  modman.getModule(config, 'scripts#Transaction.Batch')
+  → scripts/Transaction/Batch.py
+    oBatch = oBatchHelper.GetBatchUser(config, request['ActualDate'])
+        ↓
+  helper.CreatePObject('Transaction', {'Owner': oBatch, 'TranCode': 'CI'})
+  → default.mcf: Transaction → mtran → script_modules/Transaction.py
+    class Transaction(pobject.PObject)
+        ↓
+  oTran.CreateJournal()
+  config.Commit()
+        ↓
+return JSON response → kembali ke _intr.py → update UI
+```
+
 ## Cara Membaca Fitur Baru
 
-Untuk memahami satu fitur (contoh: "Kas Masuk"):
+Untuk memahami satu fitur (contoh: "Kas Masuk" di modul `core/`):
 
-1. **Temukan dialog**: cari di `dialogs/` folder dengan nama relevan (`fCashIn*`)
-2. **Baca `_intr.py`**: pahami alur UI, event mana yang trigger server call
-3. **Identifikasi `ExecuteScript` / `CallServerMethod`**: catat target yang dipanggil
-4. **Baca target script**: buka `scripts/{path}` atau function di `_data.py`
-5. **Trace ke script_modules**: ikuti `modman.getModule` dan `helper.CreatePObject`
-6. **Lihat .mdt**: untuk memahami struktur data entitas yang terlibat
+1. **Temukan dialog**: `docs/legacy-apps/core/dialogs/` — cari folder dengan nama relevan (`fCashIn*`)
+2. **Baca `_intr.py`**: event handlers client-side, cari semua `ExecuteScript` dan `CallServerMethod`
+3. **Trace `ExecuteScript('X.Y', ...)`** → buka `scripts/X/Y.py`, cari entry function
+4. **Trace `CallServerMethod('SimpanData', ...)`** → tetap di `_data.py` form yang sama
+5. **Ikuti `modman.getModule(config, 'scripts#A.B')`** → `scripts/A/B.py`
+6. **Ikuti `helper.CreatePObject('ClassName')`** → cek `default.mcf` untuk mapping → `script_modules/`
+7. **Lihat `app.mdt`** untuk struktur field dan relasi tabel DB entitas yang terlibat
+
+**Modul yang benar per domain:**
+- Transaksi kas/jurnal/akuntansi → `core/`
+- Program dan distribusi ZIS → `program/`
+- Donatur dan penerimaan dana → `fund/`
+- Cabang, user, konfigurasi → `enterprise/`
+- Karyawan dan aset tetap → `personalia/`
 
 ## Constraint
 
