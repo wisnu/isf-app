@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import AppHeader from '@/components/AppHeader.vue'
 import AppSidebar from '@/components/AppSidebar.vue'
+import Toast from '@/components/ui/Toast.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -21,4 +22,5 @@ const showShell = computed(() => Boolean(auth.user) && Boolean(auth.activeTenant
       </main>
     </div>
   </div>
+  <Toast />
 </template>

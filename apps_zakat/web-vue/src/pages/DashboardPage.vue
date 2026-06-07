@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, watch } from 'vue'
 
-import AsnafDonut from '@/components/widgets/AsnafDonut.vue'
-import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
-import KpiCard from '@/components/widgets/KpiCard.vue'
-import TrendChart from '@/components/widgets/TrendChart.vue'
+import AsnafDonut from '@/components/widgets/AsnafDonutWidget.vue'
+import BudgetProgress from '@/components/widgets/BudgetProgressWidget.vue'
+import KpiCard from '@/components/widgets/KpiCardWidget.vue'
+import TrendChart from '@/components/widgets/TrendChartWidget.vue'
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
 import { api } from '@/lib/api/client'
 import { useFetch } from '@/lib/useFetch'

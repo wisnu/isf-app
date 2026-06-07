@@ -15,6 +15,7 @@ import FilterPanel from '@/components/layout/FilterPanel.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+import { useToast } from '@/lib/useToast'
 
 interface SearchResult {
   rows: TransaksiRow[]
@@ -45,6 +46,7 @@ interface TransaksiRow {
 const STORAGE_KEY = 'histori-transaksi-state'
 
 const router = useRouter()
+const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
 const begin = shallowRef(today)
@@ -226,6 +228,7 @@ async function confirmDelete() {
   const targetId = deleteConfirmId.value
   try {
     await api.post(`/api/transaksi-histori/transactions/${targetId}/delete`, {})
+    toast.success('Transaksi berhasil dihapus')
     deleteConfirmId.value = null
     await load()
   } catch (e: unknown) {

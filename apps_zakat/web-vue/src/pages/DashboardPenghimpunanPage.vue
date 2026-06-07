@@ -6,8 +6,8 @@ import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
-import KpiCard from '@/components/widgets/KpiCard.vue'
-import TrendChart from '@/components/widgets/TrendChart.vue'
+import KpiCard from '@/components/widgets/KpiCardWidget.vue'
+import TrendChart from '@/components/widgets/TrendChartWidget.vue'
 
 const bulan = shallowRef(new Date().getMonth() + 1)
 const tahun = shallowRef(new Date().getFullYear())

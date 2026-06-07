@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, watch } from 'vue'
 
-import BudgetProgress from '@/components/widgets/BudgetProgress.vue'
-import KpiCard from '@/components/widgets/KpiCard.vue'
-import MemoList from '@/components/widgets/MemoList.vue'
+import BudgetProgress from '@/components/widgets/BudgetProgressWidget.vue'
+import KpiCard from '@/components/widgets/KpiCardWidget.vue'
+import MemoList from '@/components/widgets/MemoListWidget.vue'
 import PeriodFilter from '@/components/ui/PeriodFilter.vue'
 import { api } from '@/lib/api/client'
 import { useFetch } from '@/lib/useFetch'

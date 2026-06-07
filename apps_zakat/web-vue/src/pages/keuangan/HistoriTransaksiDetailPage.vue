@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+import { useToast } from '@/lib/useToast'
 import { useAuthStore } from '@/stores/auth'
 
 interface JournalItem {
@@ -44,6 +45,7 @@ interface TransaksiDetail {
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const toast = useToast()
 const txId = Number(route.params.id)
 const detail = ref<TransaksiDetail | null>(null)
 const loading = shallowRef(true)
@@ -85,6 +87,7 @@ async function doDelete() {
   deleteError.value = null
   try {
     await api.post(`/api/transaksi-histori/transactions/${txId}/delete`, {})
+    toast.success('Transaksi berhasil dihapus')
     showDeleteConfirm.value = false
     router.push('/keuangan/transaksi/histori')
   } catch (e: unknown) {
@@ -99,6 +102,7 @@ async function doRepost() {
   repostError.value = null
   try {
     await api.post(`/api/transaksi-histori/transactions/${txId}/repost`, {})
+    toast.success('Jurnal berhasil di-repost')
     showRepostConfirm.value = false
     detail.value = await api.get<TransaksiDetail>(
       `/api/transaksi-histori/transactions/${txId}`,

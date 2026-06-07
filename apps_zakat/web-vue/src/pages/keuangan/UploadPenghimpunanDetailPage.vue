@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+import { useToast } from '@/lib/useToast'
 import { useAuthStore } from '@/stores/auth'
 
 interface BatchItem {
@@ -37,6 +38,7 @@ interface BatchDetail {
 
 const route = useRoute()
 const auth = useAuthStore()
+const toast = useToast()
 const batchId = Number(route.params.id)
 const detail = ref<BatchDetail | null>(null)
 const loading = shallowRef(true)
@@ -70,6 +72,7 @@ async function confirmApprove() {
   approveError.value = null
   try {
     await api.post(`/api/transaction/upload/penghimpunan/batches/${batchId}/approve`, {})
+    toast.success('Batch berhasil diotorisasi')
     detail.value = await api.get<BatchDetail>(
       `/api/transaction/upload/penghimpunan/batches/${batchId}`,
     )
