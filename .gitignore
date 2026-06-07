@@ -25,5 +25,6 @@ __pycache__/
 docs/legacy-apps/
 
 .agents/
-.claude/
+.claude/*
+!.claude/skills/
 .playwright-mcp/
