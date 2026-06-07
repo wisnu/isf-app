@@ -162,10 +162,9 @@ async def penyaluran_list(
         prp.fetch_list(begin, end, search, branch, page, page_size),
     )
     total_pages = max(1, (total + page_size - 1) // page_size)
-    return JSONResponse(content={
-        'data': [r.model_dump() for r in rows],
+    return ok({
+        'rows': [r.model_dump() for r in rows],
         'pagination': {'page': page, 'limit': page_size, 'total': total, 'total_pages': total_pages},
-        'meta': {'request_id': None},
     })
 
 

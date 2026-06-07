@@ -26,7 +26,7 @@ interface PenyaluranRow {
 }
 
 interface ListResponse {
-  data: PenyaluranRow[]
+  rows: PenyaluranRow[]
   pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
@@ -73,7 +73,7 @@ async function load() {
     })
     if (search.value.trim()) params.set('search', search.value.trim())
     const res = await api.get<ListResponse>(`/api/penyaluran/?${params}`)
-    rows.value = res.data
+    rows.value = res.rows
     total.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
     hasLoaded.value = true
