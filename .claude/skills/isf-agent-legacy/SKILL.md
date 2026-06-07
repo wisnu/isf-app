@@ -232,13 +232,68 @@ menus/popupmenus/
 
 Struktur file sama dengan `menus/` — `.mnu`, `.py`, `_server.py`.
 
+### `.mnu` Tidak Cukup — Harus Baca `.py`
+
+**`.mnu` hanya menyebut nama function** di `OnClick`, bukan path dialog aktual.
+Untuk tahu dialog mana yang dibuka, **wajib baca `menus/*.py`**:
+
+```xml
+<!-- .mnu — hanya tahu OnClick, tidak tahu path dialog -->
+object:rmn::MenuItem<
+  Caption='Kas Masuk'
+  OnClick='FundCollectionClick'   ← nama function, bukan path
+  AllowedGroups='KEU;ACC'
+>
+```
+
+```python
+# menus/Transaksi.py — di sini baru ketahuan path dialog aktualnya
+def FundCollectionClick(menu, app):
+    ph = app.CreateValues(['x', 0])
+    fTran = app.CreateForm('Transaksi/fFundCollection',   # ← path ke dialog
+                           'Transaksi/fFundCollection', 0, ph, None)
+    fTran.Show()
+```
+
+### Dua Pola `OnClick` di `.py`
+
+**Pola 1 — Generic handler** (pakai `menu.StringTag`, hanya untuk item yang punya `StringTag`):
+```python
+def ShowQueryClick(menu, app):
+    formname = menu.StringTag          # ambil path dari .mnu
+    dlg = app.CreateForm(formname, formname, 0, None, None)
+    dlg.FormContainer.Show()
+```
+
+**Pola 2 — Specific handler** (path dialog hardcoded di function):
+```python
+def CashAdvanceClick(menu, app):
+    fTran = app.CreateForm('Transaksi/fCashAdvance',      # path hardcoded
+                           'Transaksi/fCashAdvance', 0, None, None)
+    fTran.Show()
+```
+
+Untuk Pola 2, path dialog **hanya bisa diketahui dengan membaca `.py`**.
+
+### `app.CreateForm` — Cara Baca Argumennya
+
+```python
+app.CreateForm(formpath, formname, mode, params, extra)
+#              ^^^^^^^^^^^^^^^^^   ^^^^
+#              path ke dialogs/    mode: 0=normal, 1=modal, 2=modeless
+#
+# formpath: 'Transaksi/fCashAdvance' → dialogs/Transaksi/fCashAdvance.*
+# params:   CreateValues([...]) atau None — data yang dikirim ke FormSetDataEx
+```
+
 ### Cara Pakai untuk Analisis Migrasi
 
 Untuk menemukan **semua fitur di suatu domain**:
-1. Buka `.mnu` file yang relevan (misal `Transaksi.mnu`, `Accounting.mnu`)
-2. Cari semua `MenuItem` dengan `StringTag` — setiap entry adalah satu dialog/form
-3. Catat `AllowedGroups` — ini mapping role legacy ke permission baru
-4. Gunakan `StringTag` (`'folder/namaform'`) untuk locate dialog: `dialogs/{folder}/{namaform}_intr.py`
+1. Buka `.mnu` — identifikasi semua `MenuItem` dan nilai `OnClick`-nya
+2. Untuk item dengan `StringTag` + `OnClick='ShowQueryClick'` → path dialog langsung dari `StringTag`
+3. Untuk item dengan `OnClick` spesifik (misal `'CashAdvanceClick'`) → **baca `.py`**, cari function itu, lihat `app.CreateForm(...)` untuk path aktual
+4. Catat `AllowedGroups` per menu item → ini mapping role legacy ke permission isf-app baru
+5. Gunakan path dari `app.CreateForm` untuk locate: `dialogs/{formpath}_intr.py`
 
 ## Helper Utama: `phelper.PObjectHelper`
 
