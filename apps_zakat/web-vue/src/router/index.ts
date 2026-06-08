@@ -300,6 +300,12 @@ const router = createRouter({
       meta: { title: 'Input Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
     },
     {
+      path: '/keuangan/transaksi/penyaluran/edit/:id',
+      name: 'keuangan-transaksi-penyaluran-edit',
+      component: () => import('@/pages/keuangan/PenyaluranDanaFormPage.vue'),
+      meta: { title: 'Edit Draft Penyaluran', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
+    },
+    {
       path: '/keuangan/transaksi/penghimpunan',
       name: 'keuangan-transaksi-penghimpunan',
       component: () => import('@/pages/keuangan/PenghimpunanDanaPage.vue'),
@@ -310,6 +316,12 @@ const router = createRouter({
       name: 'keuangan-transaksi-penghimpunan-baru',
       component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
       meta: { title: 'Input Penghimpunan Dana', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/penghimpunan/edit/:id',
+      name: 'keuangan-transaksi-penghimpunan-edit',
+      component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
+      meta: { title: 'Edit Draft Penghimpunan', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
     },
     {
       path: '/keuangan/monitoring/otorisasi',
