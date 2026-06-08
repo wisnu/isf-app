@@ -123,6 +123,8 @@ async def list_submissions(
     submitted_by: str | None = None,
     branch: str | None = None,
     branch_access: str = 'single',
+    date_from: str | None = None,
+    date_to: str | None = None,
     page: int = 1,
     page_size: int = 25,
 ) -> tuple[list[dict], int]:
@@ -132,8 +134,10 @@ async def list_submissions(
              AND (CAST($2 AS text) IS NULL OR s.entity_type = $2)
              AND (CAST($3 AS text) IS NULL OR s.status = $3)
              AND (CAST($4 AS text) IS NULL OR s.submitted_by = $4)
-             AND (CAST($5 AS text) IS NULL OR $6 = 'all' OR s.branch_code = $5)""",
-        module, entity_type, status, submitted_by, branch, branch_access,
+             AND (CAST($5 AS text) IS NULL OR $6 = 'all' OR s.branch_code = $5)
+             AND (CAST($7 AS text) IS NULL OR s.submitted_at >= CAST($7 AS date))
+             AND (CAST($8 AS text) IS NULL OR s.submitted_at < CAST($8 AS date) + INTERVAL '1 day')""",
+        module, entity_type, status, submitted_by, branch, branch_access, date_from, date_to,
     )
     total = int(total_row['n']) if total_row else 0
     offset = (page - 1) * page_size
@@ -146,9 +150,11 @@ async def list_submissions(
              AND (CAST($3 AS text) IS NULL OR s.status = $3)
              AND (CAST($4 AS text) IS NULL OR s.submitted_by = $4)
              AND (CAST($5 AS text) IS NULL OR $6 = 'all' OR s.branch_code = $5)
+             AND (CAST($7 AS text) IS NULL OR s.submitted_at >= CAST($7 AS date))
+             AND (CAST($8 AS text) IS NULL OR s.submitted_at < CAST($8 AS date) + INTERVAL '1 day')
            ORDER BY s.created_at DESC
-           LIMIT $7 OFFSET $8""",
-        module, entity_type, status, submitted_by, branch, branch_access,
+           LIMIT $9 OFFSET $10""",
+        module, entity_type, status, submitted_by, branch, branch_access, date_from, date_to,
         page_size, offset,
     )
     return rows, total

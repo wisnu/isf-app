@@ -34,6 +34,7 @@ export const MENU_KEYS = [
   'keuangan.upload.penghimpunan',
   'keuangan.upload.penghimpunan.approve',
   'keuangan.monitoring.otorisasi',
+  'keuangan.monitoring.riwayat',
   'admin.role_menu',
   'admin.users',
 ] as const

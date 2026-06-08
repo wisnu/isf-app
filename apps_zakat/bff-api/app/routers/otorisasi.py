@@ -54,6 +54,8 @@ async def list_pending(
     _: str = Depends(require_menu(_MENU_MONITORING)),
     module: str | None = Query(default=None),
     entity_type: str | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=200),
 ):
@@ -63,6 +65,10 @@ async def list_pending(
         params['module'] = module
     if entity_type:
         params['entity_type'] = entity_type
+    if date_from:
+        params['date_from'] = date_from
+    if date_to:
+        params['date_to'] = date_to
     if s['branch']:
         params['branch'] = s['branch']
     if s['branch_access']:
@@ -173,6 +179,8 @@ async def my_submissions(
     request: Request,
     entity_type: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=200),
 ):
@@ -180,7 +188,6 @@ async def my_submissions(
     if entity_type:
         await _check_dynamic_menu(request, entity_type)
     else:
-        # No entity_type filter — require at least one menu from ENTITY_MENU
         checker = require_menu(_MENU_MONITORING)
         await checker(request)
     s = _session(request)
@@ -193,6 +200,10 @@ async def my_submissions(
         params['entity_type'] = entity_type
     if status:
         params['status'] = status
+    if date_from:
+        params['date_from'] = date_from
+    if date_to:
+        params['date_to'] = date_to
     downstream = await get_api_python('/api/otorisasi/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())

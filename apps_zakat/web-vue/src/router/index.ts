@@ -329,6 +329,12 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/OtorisasiPage.vue'),
       meta: { title: 'Otorisasi', menu_key: 'keuangan.monitoring.otorisasi' as MenuKey },
     },
+    {
+      path: '/keuangan/monitoring/riwayat',
+      name: 'keuangan-monitoring-riwayat',
+      component: () => import('@/pages/keuangan/RiwayatSubmissionPage.vue'),
+      meta: { title: 'Riwayat Submission', menu_key: 'keuangan.monitoring.riwayat' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })

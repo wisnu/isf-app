@@ -28,7 +28,7 @@ interface Submission {
   approval_log: ApprovalLog[]
 }
 
-const props = defineProps<{ submission: Submission | null; open: boolean }>()
+const props = defineProps<{ submission: Submission | null; open: boolean; readonly?: boolean }>()
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'approved', id: number): void
@@ -406,7 +406,7 @@ const hasDesc   = computed(() => items.value.some(i => i.description))
           </div>
 
           <!-- ── Actions (sticky bottom) ─────────────────────────────── -->
-          <div v-if="submission.status === 'PENDING'" class="shrink-0 border-t bg-white px-6 py-4">
+          <div v-if="submission.status === 'PENDING' && !props.readonly" class="shrink-0 border-t bg-white px-6 py-4">
             <div v-if="!showRejectForm" class="flex gap-3">
               <button @click="approve" :disabled="loading"
                       class="flex-1 rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition">

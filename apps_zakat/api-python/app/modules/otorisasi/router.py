@@ -95,12 +95,15 @@ async def list_submissions(
     submitted_by: str | None = Query(None),
     branch: str | None = Query(None),
     branch_access: str = Query('single'),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=200),
 ):
     rows, total = await repo.list_submissions(
         module=module, entity_type=entity_type, status=status,
         submitted_by=submitted_by, branch=branch, branch_access=branch_access,
+        date_from=date_from, date_to=date_to,
         page=page, page_size=page_size,
     )
     return JSONResponse({

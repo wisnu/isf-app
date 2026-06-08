@@ -5,6 +5,7 @@ import { computed, onMounted, ref, shallowRef } from 'vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
+import DateField from '@/components/ui/DateField.vue'
 import { api } from '@/lib/api/client'
 import { dmyt } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
@@ -39,6 +40,14 @@ const loading = shallowRef(false)
 const hasLoaded = shallowRef(false)
 const selectedIds = ref(new Set<number>())
 const filterEntityType = shallowRef<string | null>(null)
+
+function defaultDateFrom(): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - 1)
+  return d.toISOString().slice(0, 10)
+}
+const filterDateFrom = shallowRef(defaultDateFrom())
+const filterDateTo = shallowRef(new Date().toISOString().slice(0, 10))
 const drawerOpen = ref(false)
 const drawerSubmission = ref<SubmissionRow | null>(null)
 const bulkLoading = shallowRef(false)
@@ -171,6 +180,8 @@ async function load() {
       page_size: String(pageSize.value),
     })
     if (filterEntityType.value) params.set('entity_type', filterEntityType.value)
+    if (filterDateFrom.value) params.set('date_from', filterDateFrom.value)
+    if (filterDateTo.value) params.set('date_to', filterDateTo.value)
     const res = await api.get<ListResponse>(`/api/otorisasi/pending/?${params}`)
     rows.value = res.rows
     total.value = res.pagination.total
@@ -253,8 +264,18 @@ function onRejected() { drawerOpen.value = false; load() }
       </button>
     </header>
 
-    <!-- Toolbar: entity filter + contextual bulk actions -->
-    <div class="flex flex-wrap items-center gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+    <!-- Toolbar: filter + bulk actions -->
+    <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+      <!-- Tanggal dari -->
+      <div>
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Dari Tanggal</label>
+        <DateField v-model="filterDateFrom" />
+      </div>
+      <!-- Tanggal sampai -->
+      <div>
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Sampai Tanggal</label>
+        <DateField v-model="filterDateTo" />
+      </div>
       <!-- Entity type filter dropdown -->
       <div>
         <label class="mb-1 block text-xs font-medium text-zinc-500">Jenis Input</label>
