@@ -57,7 +57,7 @@ const begin = shallowRef(today)
 const end = shallowRef(today)
 const search = shallowRef('')
 const page = shallowRef(1)
-const pageSize = shallowRef(25)
+const pageSize = shallowRef(20)
 
 const txRows = ref<PenyaluranRow[]>([])
 const subRows = ref<SubmissionRow[]>([])
@@ -244,7 +244,9 @@ onMounted(load)
         :total-pages="totalPages"
         :total="total"
         :page-size="pageSize"
-        @goto="goto"
+        @prev="goto(page - 1)"
+        @next="goto(page + 1)"
+        @update:page-size="pageSize = $event; goto(1)"
       />
     </div>
 

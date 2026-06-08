@@ -57,7 +57,7 @@ const searchCategory = shallowRef('none')
 const searchText = shallowRef('')
 const cashAccountNo = shallowRef('')
 const page = shallowRef(1)
-const pageSize = shallowRef(50)
+const pageSize = shallowRef(20)
 
 const rows = ref<TransaksiRow[]>([])
 const total = shallowRef(0)
@@ -364,10 +364,12 @@ async function confirmDelete() {
                 :page="page"
                 :total-pages="totalPages"
                 :total="total"
+                :page-size="pageSize"
                 :loading="loading"
                 unit="transaksi"
                 @prev="goto(page - 1)"
                 @next="goto(page + 1)"
+                @update:page-size="pageSize = $event; goto(1)"
               />
             </div>
 

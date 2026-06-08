@@ -70,6 +70,7 @@ const rows = ref<SubmissionRow[]>([])
 const total = shallowRef(0)
 const totalPages = shallowRef(1)
 const page = shallowRef(1)
+const pageSize = shallowRef(20)
 const loading = shallowRef(false)
 const hasLoaded = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
@@ -80,7 +81,7 @@ async function load() {
   try {
     const params = new URLSearchParams({
       page: String(page.value),
-      page_size: '25',
+      page_size: String(pageSize.value),
     })
     if (filterEntityType.value) params.set('entity_type', filterEntityType.value)
     if (filterStatus.value) params.set('status', filterStatus.value)
@@ -231,14 +232,16 @@ onMounted(load)
         <template v-else>Pilih filter lalu klik Tampilkan</template>
       </span>
       <TablePagination
-        v-if="hasLoaded && totalPages > 1"
+        v-if="hasLoaded"
         :page="page"
         :total-pages="totalPages"
         :total="total"
+        :page-size="pageSize"
         :loading="loading"
         unit="submission"
         @prev="goto(page - 1)"
         @next="goto(page + 1)"
+        @update:page-size="pageSize = $event; goto(1)"
       />
     </div>
 

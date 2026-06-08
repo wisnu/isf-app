@@ -37,7 +37,7 @@ const rows = ref<SubmissionRow[]>([])
 const total = shallowRef(0)
 const totalPages = shallowRef(1)
 const page = shallowRef(1)
-const pageSize = shallowRef(25)
+const pageSize = shallowRef(20)
 const loading = shallowRef(false)
 const hasLoaded = shallowRef(false)
 const selectedIds = ref(new Set<number>())
@@ -325,7 +325,9 @@ function onRejected() { drawerOpen.value = false; load() }
         :total-pages="totalPages"
         :total="total"
         :page-size="pageSize"
-        @goto="goto"
+        @prev="goto(page - 1)"
+        @next="goto(page + 1)"
+        @update:page-size="pageSize = $event; goto(1)"
       />
     </div>
 
