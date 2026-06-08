@@ -62,7 +62,7 @@ const PAYMENT_LABEL: Record<string, string> = {
   K: 'Kas Kecil', C: 'Kas Cabang', B: 'Bank', A: 'Aset/GL',
 }
 
-type SummaryItem = { label: string; value: string }
+type SummaryItem = { label: string; value: string; isAction?: boolean }
 
 function parsePayload(payload: unknown): Record<string, any> {
   if (typeof payload === 'string') {
@@ -107,6 +107,7 @@ function summaryFor(row: SubmissionRow): SummaryItem[] {
       break
     case 'coa':
       items.push(
+        p.action ? { label: 'Aksi', value: String(p.action).toUpperCase(), isAction: true } : null,
         p.account_no ? { label: 'Kode', value: p.account_no } : null,
         p.account_name ? { label: 'Nama', value: p.account_name } : null,
         p.account_type ? { label: 'Tipe', value: p.account_type } : null,
@@ -114,15 +115,16 @@ function summaryFor(row: SubmissionRow): SummaryItem[] {
       break
     case 'kas':
       items.push(
+        p.action ? { label: 'Aksi', value: String(p.action).toUpperCase(), isAction: true } : null,
         (p.account_name ?? p.name ?? p.code) ? { label: 'Nama', value: p.account_name ?? p.name ?? p.code } : null,
       )
       break
     case 'bank':
       items.push(
+        p.action ? { label: 'Aksi', value: String(p.action).toUpperCase(), isAction: true } : null,
         p.account_name ? { label: 'Nama', value: p.account_name } : null,
         p.bank_account_no ? { label: 'No. Rek', value: p.bank_account_no } : null,
         (p.bank_name ?? p.bank_code) ? { label: 'Bank', value: p.bank_name ?? p.bank_code } : null,
-        p.action ? { label: 'Aksi', value: String(p.action).toUpperCase() } : null,
       )
       break
   }
@@ -369,8 +371,21 @@ function onRejected() { drawerOpen.value = false; load() }
                   :key="item.label"
                   class="flex items-baseline gap-1 text-xs"
                 >
-                  <span class="shrink-0 text-zinc-400">{{ item.label }}:</span>
-                  <span class="truncate max-w-[180px] text-zinc-700 dark:text-zinc-300">{{ item.value }}</span>
+                  <template v-if="item.isAction">
+                    <span
+                      :class="[
+                        'inline-block rounded px-1.5 py-px text-[10px] font-bold uppercase tracking-wide',
+                        item.value === 'CREATE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                        item.value === 'DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                        item.value === 'EDIT'   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                                                  'bg-zinc-100 text-zinc-600'
+                      ]"
+                    >{{ item.value }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="shrink-0 text-zinc-400">{{ item.label }}:</span>
+                    <span class="truncate max-w-[180px] text-zinc-700 dark:text-zinc-300">{{ item.value }}</span>
+                  </template>
                 </div>
                 <span v-if="!summaryFor(row).length" class="text-xs text-zinc-300">—</span>
               </div>
