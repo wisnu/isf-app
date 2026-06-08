@@ -107,12 +107,26 @@ function nextPage() { if (page.value < totalPages.value) { page.value++; loadBan
 // ── Submissions ───────────────────────────────────────────────────────────────
 
 const submissions = ref<BankSubmission[]>([])
+const submittingDraftId = shallowRef<number | null>(null)
 
 async function loadSubmissions() {
   try {
     const res = await api.get<{ rows: BankSubmission[] }>('/api/otorisasi/my-submissions/?entity_type=bank')
     submissions.value = res.rows ?? []
   } catch { /* silent */ }
+}
+
+async function submitDraft(id: number) {
+  submittingDraftId.value = id
+  try {
+    await api.post(`/api/otorisasi/submission/${id}/submit`, {})
+    toast.success('Submission dikirim untuk otorisasi')
+    await loadSubmissions()
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : 'Gagal submit')
+  } finally {
+    submittingDraftId.value = null
+  }
 }
 
 // ── Lookup data ───────────────────────────────────────────────────────────────
@@ -385,6 +399,14 @@ onMounted(() => {
           <span class="font-semibold truncate flex-1">{{ (sub.payload as any).account_name ?? '—' }}</span>
           <span v-if="(sub.payload as any).account_no" class="font-mono text-muted">{{ (sub.payload as any).account_no }}</span>
           <StatusBadge :status="sub.status" />
+          <button
+            v-if="sub.status === 'DRAFT'"
+            class="rounded border border-primary px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary hover:text-white transition disabled:opacity-50 shrink-0"
+            :disabled="submittingDraftId === sub.id"
+            @click="submitDraft(sub.id)"
+          >
+            {{ submittingDraftId === sub.id ? '...' : 'Submit' }}
+          </button>
         </div>
       </div>
     </div>
