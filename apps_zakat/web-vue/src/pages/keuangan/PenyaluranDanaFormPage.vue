@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
+import AmountInput from '@/components/ui/AmountInput.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
@@ -50,8 +51,15 @@ interface ItemRow {
 }
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const auth = useAuthStore()
+
+const editId = computed(() => {
+  const p = route.params.id
+  return p ? Number(p) : null
+})
+const isEditMode = computed(() => editId.value !== null)
 
 // ── Form header ──────────────────────────────────────────────────────────────
 const actualDate = shallowRef(new Date().toISOString().slice(0, 10))
@@ -173,6 +181,48 @@ function validate(): string | null {
   return null
 }
 
+async function loadSubmission(id: number) {
+  try {
+    const res = await api.get<{ id: number; payload: Record<string, any> }>(
+      `/api/otorisasi/submission/${id}`,
+    )
+    const p = res.payload
+    if (p.actual_date) actualDate.value = p.actual_date
+    if (p.reference_no != null) referenceNo.value = p.reference_no ?? ''
+    if (p.description != null) description.value = p.description ?? ''
+    if (p.paid_to != null) paidTo.value = p.paid_to ?? ''
+    if (p.payment_type) {
+      paymentType.value = p.payment_type
+      await loadRekening()
+    }
+    if (p.payment_account_no != null) {
+      paymentAccountNo.value = p.payment_account_no
+      if (p.payment_account_no) await onBankSelected(p.payment_account_no)
+    }
+    if (p.fund_account_no != null) fundAccountNo.value = p.fund_account_no
+    if (p.product_branch_code) productBranchCode.value = p.product_branch_code
+    if (p.rate != null) rate.value = p.rate
+    if (p.currency_code) currencyCode.value = p.currency_code
+    if (Array.isArray(p.items)) {
+      items.value = p.items.map((i: any) => ({
+        _id: _idCtr++,
+        product_id: i.product_id,
+        product_name: '',
+        account_no: i.account_no ?? '',
+        fund_entity: i.fund_entity ?? 2,
+        ashnaf: i.ashnaf ?? 'L',
+        amount: i.amount,
+        description: i.description ?? '',
+        dist_item_account: i.dist_item_account ?? null,
+        distribution_category: i.distribution_category ?? null,
+      }))
+    }
+  } catch (e: unknown) {
+    errorMsg.value = e instanceof Error ? e.message : String(e)
+    toast.error('Gagal memuat data submission')
+  }
+}
+
 async function submit() {
   const validErr = validate()
   if (validErr) {
@@ -182,34 +232,42 @@ async function submit() {
   loading.value = true
   errorMsg.value = null
   try {
-    const payload = {
+    const innerPayload = {
       actual_date: actualDate.value,
       reference_no: referenceNo.value || null,
       description: description.value,
       paid_to: paidTo.value || null,
-      received_from: receivedFrom.value || null,
       payment_type: paymentType.value,
       payment_account_no: paymentAccountNo.value,
-      rate: rate.value,
-      currency_code: currencyCode.value,
       fund_account_no: fundAccountNo.value,
       product_branch_code: productBranchCode.value,
+      rate: rate.value,
+      currency_code: currencyCode.value,
       items: items.value.map((i) => ({
         product_id: i.product_id,
         account_no: i.account_no,
-        ashnaf: i.fund_entity === 1 ? i.ashnaf : 'L',
         amount: i.amount,
         description: i.description || description.value,
         fund_entity: i.fund_entity,
+        ashnaf: i.fund_entity === 1 ? i.ashnaf : 'L',
         dist_item_account: i.dist_item_account,
         distribution_category: i.distribution_category,
       })),
     }
-    const result = await api.post<{ transaction_id: number; transaction_no: string }>(
-      '/api/penyaluran/',
-      payload,
-    )
-    toast.success(`Transaksi ${result.transaction_no} berhasil dibuat`)
+
+    if (isEditMode.value && editId.value !== null) {
+      await api.put(`/api/otorisasi/submission/${editId.value}`, {
+        payload: innerPayload,
+      })
+      toast.success('Draft penyaluran diperbarui.')
+    } else {
+      await api.post('/api/otorisasi/submission/', {
+        entity_type: 'penyaluran',
+        module: 'keuangan',
+        payload: innerPayload,
+      })
+      toast.success('Draft penyaluran dibuat. Klik Submit di halaman daftar untuk mengotorisasi.')
+    }
     router.push({ name: 'keuangan-transaksi-penyaluran' })
   } catch (e: unknown) {
     errorMsg.value = e instanceof Error ? e.message : String(e)
@@ -227,9 +285,12 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  loadLookups()
-  loadRekening()
+onMounted(async () => {
+  await loadLookups()
+  await loadRekening()
+  if (isEditMode.value && editId.value !== null) {
+    await loadSubmission(editId.value)
+  }
   window.addEventListener('keydown', onKeydown)
 })
 
@@ -244,7 +305,9 @@ onUnmounted(() => {
 
     <!-- Page header -->
     <header class="mb-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold tracking-tight">Input Penyaluran Dana</h1>
+      <h1 class="text-2xl font-bold tracking-tight">
+        {{ isEditMode ? 'Edit Draft Penyaluran Dana' : 'Input Penyaluran Dana' }}
+      </h1>
       <Button variant="ghost" :disabled="loading" @click="router.back()">Kembali</Button>
     </header>
 
@@ -383,7 +446,7 @@ onUnmounted(() => {
         <div class="flex gap-3">
           <Button variant="ghost" class="flex-1" :disabled="loading" @click="router.back()">Batal</Button>
           <Button class="flex-1" :disabled="loading || items.length === 0" @click="submit">
-            {{ loading ? 'Menyimpan...' : 'Simpan Transaksi' }}
+            {{ loading ? 'Menyimpan...' : isEditMode ? 'Update Draft' : 'Simpan Draft' }}
           </Button>
         </div>
       </div>
@@ -455,12 +518,9 @@ onUnmounted(() => {
 
               <!-- Jumlah -->
               <div>
-                <input
-                  v-model.number="item.amount"
-                  type="number"
-                  min="1"
-                  placeholder="0"
-                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                <AmountInput
+                  :model-value="item.amount"
+                  @update:model-value="item.amount = $event"
                 />
               </div>
 
