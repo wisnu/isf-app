@@ -88,6 +88,16 @@ const productOptions = ref<ProductOption[]>([])
 const ashnafOptions = ref<AshnafOption[]>([])
 const fundAccountOptions = ref<FundAccountOption[]>([])
 
+// Limit info
+const nilaiLimit = shallowRef<number>(0)
+const hasLimit = shallowRef<boolean>(false)
+const limitLoading = shallowRef<boolean>(false)
+
+const willBypass = computed(
+  () => hasLimit.value && totalAmount.value > 0 && totalAmount.value <= nilaiLimit.value,
+)
+const fmtRp = (n: number) => 'Rp ' + idr.format(n)
+
 const loading = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 
@@ -225,10 +235,7 @@ async function loadSubmission(id: number) {
 
 async function submit() {
   const validErr = validate()
-  if (validErr) {
-    toast.error(validErr)
-    return
-  }
+  if (validErr) { toast.error(validErr); return }
   loading.value = true
   errorMsg.value = null
   try {
@@ -255,18 +262,24 @@ async function submit() {
       })),
     }
 
+    let res: { status: string; bypassed_auth: boolean }
+
     if (isEditMode.value && editId.value !== null) {
-      await api.put(`/api/otorisasi/submission/${editId.value}`, {
-        payload: innerPayload,
-      })
-      toast.success('Draft penyaluran diperbarui.')
+      res = await api.put<{ status: string; bypassed_auth: boolean }>(
+        `/api/otorisasi/save-and-submit/${editId.value}`,
+        { payload: innerPayload },
+      )
     } else {
-      await api.post('/api/otorisasi/submission/', {
-        entity_type: 'penyaluran',
-        module: 'keuangan',
-        payload: innerPayload,
-      })
-      toast.success('Draft penyaluran dibuat. Klik Submit di halaman daftar untuk mengotorisasi.')
+      res = await api.post<{ status: string; bypassed_auth: boolean }>(
+        '/api/otorisasi/save-and-submit/',
+        { entity_type: 'penyaluran', module: 'keuangan', payload: innerPayload },
+      )
+    }
+
+    if (res.status === 'AUTHORIZED') {
+      toast.success('Transaksi berhasil — langsung efektif')
+    } else {
+      toast.success('Transaksi dikirim — menunggu otorisasi')
     }
     router.push({ name: 'keuangan-transaksi-penyaluran' })
   } catch (e: unknown) {
@@ -274,6 +287,22 @@ async function submit() {
     toast.error('Gagal menyimpan transaksi')
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchUserLimit() {
+  if (isEditMode.value) return
+  limitLoading.value = true
+  try {
+    const res = await api.get<{ nilai_limit: number; has_limit: boolean }>(
+      '/api/otorisasi/user-limit/?entity_type=penyaluran',
+    )
+    nilaiLimit.value = res.nilai_limit
+    hasLimit.value = res.has_limit
+  } catch {
+    // silent fail — limit info not critical for UX
+  } finally {
+    limitLoading.value = false
   }
 }
 
@@ -291,6 +320,7 @@ onMounted(async () => {
   if (isEditMode.value && editId.value !== null) {
     await loadSubmission(editId.value)
   }
+  fetchUserLimit()
   window.addEventListener('keydown', onKeydown)
 })
 
@@ -442,11 +472,36 @@ onUnmounted(() => {
           </div>
         </section>
 
+        <!-- Limit info -->
+        <div v-if="!isEditMode && items.length > 0" class="rounded border px-4 py-3 text-sm space-y-1">
+          <div class="flex justify-between font-medium">
+            <span class="text-zinc-500">Total transaksi</span>
+            <span>{{ fmtRp(totalAmount) }}</span>
+          </div>
+          <template v-if="!limitLoading">
+            <div v-if="hasLimit" class="flex justify-between text-xs text-zinc-400">
+              <span>Limit Anda</span>
+              <span>{{ fmtRp(nilaiLimit) }}</span>
+            </div>
+            <div :class="['flex items-center gap-1.5 text-xs font-medium mt-1',
+                          willBypass ? 'text-green-600' : 'text-amber-600']">
+              <span>{{ willBypass ? '✓' : 'ⓘ' }}</span>
+              <span>{{
+                willBypass
+                  ? 'Transaksi ini akan langsung efektif'
+                  : hasLimit
+                    ? 'Transaksi ini memerlukan otorisasi'
+                    : 'Semua transaksi memerlukan otorisasi'
+              }}</span>
+            </div>
+          </template>
+        </div>
+
         <!-- Action buttons (kiri bawah) -->
         <div class="flex gap-3">
           <Button variant="ghost" class="flex-1" :disabled="loading" @click="router.back()">Batal</Button>
           <Button class="flex-1" :disabled="loading || items.length === 0" @click="submit">
-            {{ loading ? 'Menyimpan...' : isEditMode ? 'Update Draft' : 'Simpan Draft' }}
+            {{ loading ? 'Menyimpan...' : isEditMode ? 'Update & Submit' : 'Simpan & Submit' }}
           </Button>
         </div>
       </div>
