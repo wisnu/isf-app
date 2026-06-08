@@ -26,6 +26,7 @@ interface PenghimpunanRow {
   channel_name: string | null
   inputer: string | null
   auth_status: string | null
+  auth_action: string | null
   branch_code: string | null
   donor_name: string | null
 }
@@ -164,14 +165,18 @@ async function deleteDraft(id: number) {
   }
 }
 
-function authLabel(status: string | null) {
-  // 'T' = Terotorisasi (legacy authorized state), 'A' = Authorized (new flow), 'P' = Pending
-  const map: Record<string, string> = { P: 'Pending', A: 'Terotorisasi', T: 'Terotorisasi' }
-  return status ? (map[status] ?? status) : '-'
+function authLabel(status: string | null, action: string | null) {
+  // authstatus: T=sudah otorisasi, F=belum otorisasi, P=pending (new flow)
+  // authaction: A=approve, R=reject
+  if (status === 'T' && action === 'R') return 'Ditolak'
+  if (status === 'T') return 'Disetujui'
+  if (status === 'F') return 'Belum Otorisasi'
+  return 'Pending'
 }
 
-function authClass(status: string | null) {
-  if (status === 'A' || status === 'T') return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+function authClass(status: string | null, action: string | null) {
+  if (status === 'T' && action === 'R') return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  if (status === 'T') return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
   return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
 }
 
@@ -343,8 +348,8 @@ onMounted(load)
             </td>
             <td class="px-4 py-2 text-right font-medium">{{ fmt(row.amount) }}</td>
             <td class="px-4 py-2 text-center">
-              <span :class="['rounded px-2 py-0.5 text-xs font-medium', authClass(row.auth_status)]">
-                {{ authLabel(row.auth_status) }}
+              <span :class="['rounded px-2 py-0.5 text-xs font-medium', authClass(row.auth_status, row.auth_action)]">
+                {{ authLabel(row.auth_status, row.auth_action) }}
               </span>
             </td>
             <td class="px-4 py-2 text-xs text-zinc-400">{{ row.inputer ?? '-' }}</td>

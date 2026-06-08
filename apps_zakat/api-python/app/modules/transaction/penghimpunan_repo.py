@@ -32,7 +32,7 @@ _LIST_SELECT = """
       t.description, CAST(t.amount AS float) AS amount,
       t.channelcode, t.channelaccountno,
       fa.accountname AS channel_name,
-      t.inputer, t.authstatus, t.branchcode,
+      t.inputer, t.authstatus, t.authaction, t.branchcode,
       t.donorname
     FROM transaction.transaction t
     LEFT JOIN transaction.financialaccount fa ON fa.accountno = t.channelaccountno
@@ -77,6 +77,7 @@ async def fetch_list(
             channel_name=r.get('channel_name'),
             inputer=r.get('inputer'),
             auth_status=r.get('authstatus'),
+            auth_action=r.get('authaction'),
             branch_code=r.get('branchcode'),
             donor_name=r.get('donorname'),
         )

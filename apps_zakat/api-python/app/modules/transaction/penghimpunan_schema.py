@@ -68,6 +68,7 @@ class PenghimpunanListRow(BaseModel):
     channel_name: str | None
     inputer: str | None
     auth_status: str | None
+    auth_action: str | None = None
     branch_code: str | None
     donor_name: str | None
 
