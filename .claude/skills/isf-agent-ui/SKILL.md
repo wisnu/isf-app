@@ -480,6 +480,150 @@ unstyled, struktur layout, UX pattern untuk enterprise admin.
 - Update label / teks di halaman existing
 - Menambah route baru dengan struktur identik dengan route lain
 
+## Sistem Otorisasi — Konvensi Wajib
+
+Setiap fitur input (transaksi + master data) di modul keuangan menggunakan sistem otorisasi terpusat.
+Data TIDAK langsung masuk tabel utama — semua disimpan di `otorisasi.submission` dulu.
+
+### Alur Form (Save → Submission, bukan langsung endpoint)
+
+Form input **tidak lagi** `POST /api/{entity}/` secara langsung. Gantinya:
+
+```typescript
+// Di PenghimpunanDanaFormPage.vue, PenyaluranDanaFormPage.vue, CoaPage.vue, dll
+await POST('/api/otorisasi/submission/', {
+  entity_type: 'penghimpunan',   // atau 'penyaluran' | 'coa' | 'kas' | 'bank' | 'upload_penghimpunan'
+  module: 'keuangan',
+  payload: {
+    // field form apa adanya — sesuai schema service masing-masing
+    actual_date: form.actualDate,
+    payment_type: form.paymentType,
+    items: form.items,
+    // ...
+  },
+})
+// Setelah save → redirect ke list page, toast: "Draft tersimpan. Klik Submit untuk mengotorisasi."
+```
+
+### Alur List Page (Gabung Submissions + Authorized)
+
+List page fetch DUA sumber secara paralel:
+
+```typescript
+const [subsRes, txRes] = await Promise.all([
+  GET('/api/otorisasi/my-submissions/', { entity_type: 'penghimpunan' }),
+  GET('/api/penghimpunan/', { begin, end, page, page_size }),
+])
+// subsRes.data → submission DRAFT/PENDING/REJECTED milik user ini
+// txRes.data   → record AUTHORIZED dari tabel utama
+```
+
+Gabungkan ke satu list. Setiap baris punya `source: 'submission' | 'transaction'` dan `status`.
+
+### StatusBadge — Komponen Wajib
+
+Gunakan `components/otorisasi/StatusBadge.vue` untuk badge status di semua list page:
+
+```vue
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
+
+<!-- status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' -->
+<StatusBadge :status="row.status" />
+```
+
+| Status | Warna | Aksi yang tersedia |
+|---|---|---|
+| `DRAFT` | Abu-abu | [Edit] [Submit] |
+| `PENDING` | Kuning | [Lihat] saja — tidak bisa edit |
+| `REJECTED` | Merah | [Revisi] [Hapus] + tooltip catatan |
+| `AUTHORIZED` | Hijau | Normal view — tidak ada aksi otorisasi |
+
+### Aksi Submit / Revisi / Hapus
+
+```typescript
+// Submit DRAFT → PENDING
+async function submitForAuth(submissionId: number) {
+  await POST(`/api/otorisasi/submission/${submissionId}/submit`, {})
+  toast.add({ severity: 'success', summary: 'Submitted', detail: 'Menunggu otorisasi', life: 3000 })
+  await loadAll()
+}
+
+// Revisi REJECTED → buka form dengan payload preloaded
+function editSubmission(submissionId: number) {
+  router.push({ name: `${routePrefix}-edit`, params: { id: submissionId } })
+}
+// Di form, detect mode edit via route.params.id, load: GET /api/otorisasi/submission/:id
+// Save: PUT /api/otorisasi/submission/:id { payload: {...} } → status kembali DRAFT
+
+// Hapus DRAFT atau REJECTED
+async function deleteSubmission(submissionId: number) {
+  await fetch(`/api/otorisasi/submission/${submissionId}`, { method: 'DELETE' })
+  // ← gunakan method DELETE dari lib/api/client jika tersedia
+  await loadAll()
+}
+```
+
+### OtorisasiPage — Halaman Otorisator
+
+Route: `/keuangan/monitoring/otorisasi`  
+Menu key: `keuangan.monitoring.otorisasi`  
+Komponen: `pages/keuangan/OtorisasiPage.vue`
+
+Fitur wajib:
+- Filter entity_type (Semua | Penghimpunan | Penyaluran | ...)
+- Checklist selection + bulk [Otorisasi (N)] [Tolak (N)]
+- Klik baris → `SubmissionDetailDrawer.vue` (slide dari kanan)
+- Drawer render payload generik (field key-value) + riwayat approval_log
+- Bulk reject wajib isi catatan sebelum konfirmasi
+
+```typescript
+// Load pending (otorisator)
+const res = await GET('/api/otorisasi/pending/', { module: 'keuangan', entity_type, page, page_size })
+
+// Approve satuan
+await POST(`/api/otorisasi/submission/${id}/approve`, { notes: notes || null })
+
+// Reject satuan (notes wajib)
+await POST(`/api/otorisasi/submission/${id}/reject`, { notes: rejectNotes })
+
+// Bulk approve
+await POST('/api/otorisasi/bulk/approve', { ids: selectedIds })
+
+// Bulk reject (notes wajib)
+await POST('/api/otorisasi/bulk/reject', { ids: selectedIds, notes: bulkRejectNotes })
+```
+
+### Sidebar — Section Monitoring dan Kontrol
+
+Section `Monitoring dan Kontrol` muncul di sidebar keuangan, **di atas** section Transaksi:
+
+```
+Keuangan
+  └─ Monitoring dan Kontrol
+       └─ Otorisasi     [badge: jumlah pending]
+       └─ Historikal    ← future, belum diimplementasi
+  └─ Transaksi
+       └─ Penghimpunan Dana
+       └─ Penyaluran Dana
+  └─ Master ...
+  └─ Laporan ...
+```
+
+Icon Otorisasi: `ShieldCheck` dari lucide-vue-next.
+
+### Entity Types yang Sudah Terdaftar (otorisasi.entity_config)
+
+| entity_type | module | Menu key inputer |
+|---|---|---|
+| `penghimpunan` | keuangan | `keuangan.transaksi.penghimpunan` |
+| `penyaluran` | keuangan | `keuangan.transaksi.penyaluran` |
+| `upload_penghimpunan` | keuangan | `keuangan.upload.penghimpunan` |
+| `coa` | keuangan | `keuangan.coa` |
+| `kas` | keuangan | `keuangan.kas` |
+| `bank` | keuangan | `keuangan.bank` |
+
+Jika menambah entity type baru → tambah row di `otorisasi.entity_config` (isf-agent-seed) dan dispatcher di `otorisasi/service.py` (isf-agent-python).
+
 ## Constraint
 
 - Tidak menyentuh backend (bff-api, api-python, report-api)
