@@ -15,6 +15,8 @@ async def create_submission(
                RETURNING id""",
             entity_type, module, branch_code, json.dumps(payload), submitted_by,
         )
+        if row is None:
+            raise RuntimeError("INSERT into otorisasi.submission returned no row")
         return int(row['id'])
 
 
@@ -81,6 +83,8 @@ async def insert_approval_log(
                VALUES ($1, $2, $3, $4, $5) RETURNING id""",
             submission_id, level, authorizer_id, status, notes,
         )
+        if row is None:
+            raise RuntimeError("INSERT into otorisasi.approval_log returned no row")
         return int(row['id'])
 
 

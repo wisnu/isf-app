@@ -22,4 +22,8 @@ async def db_pool():
     os.environ.setdefault("DATABASE_URL", _DSN)
     pool = await _db.init_pool()
     yield pool
+    # Cleanup: delete test data
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM otorisasi.approval_log")
+        await conn.execute("DELETE FROM otorisasi.submission")
     await _db.close_pool()
