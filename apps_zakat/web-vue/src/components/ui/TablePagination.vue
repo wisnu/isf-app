@@ -7,12 +7,17 @@ const props = defineProps<{
   total?: number
   loading?: boolean
   unit?: string
+  pageSize?: number
+  pageSizeOptions?: number[]
 }>()
 
 const emit = defineEmits<{
   prev: []
   next: []
+  'update:pageSize': [number]
 }>()
+
+const sizes = props.pageSizeOptions ?? [20, 50, 100]
 </script>
 
 <template>
@@ -20,6 +25,20 @@ const emit = defineEmits<{
     <span v-if="total !== undefined" class="text-[11px] text-muted tabular-nums">
       {{ total.toLocaleString('id-ID') }} {{ unit ?? 'baris' }}
     </span>
+
+    <!-- Rows per page selector -->
+    <div v-if="pageSize !== undefined" class="flex items-center gap-1.5 text-[11px] text-muted">
+      <span>Tampilkan</span>
+      <select
+        :value="pageSize"
+        class="rounded border border-border bg-surface px-1.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+        :disabled="loading"
+        @change="emit('update:pageSize', Number(($event.target as HTMLSelectElement).value))"
+      >
+        <option v-for="s in sizes" :key="s" :value="s">{{ s }}</option>
+      </select>
+    </div>
+
     <div class="flex items-center rounded-lg border border-border overflow-hidden text-[11px]">
       <button
         :disabled="page <= 1 || loading"

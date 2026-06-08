@@ -170,16 +170,17 @@ const filteredRows = computed(() => {
 })
 
 // ── Pagination client-side ─────────────────────────────────────────────────────
-const ROWS_PER_PAGE = 50
+const pageSize = shallowRef(20)
 const currentPage = shallowRef(1)
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / ROWS_PER_PAGE)))
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)))
 const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * ROWS_PER_PAGE
-  return filteredRows.value.slice(start, start + ROWS_PER_PAGE)
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
 })
 
 watch(filteredRows, () => { currentPage.value = 1 })
+watch(pageSize, () => { currentPage.value = 1 })
 
 // ── API ────────────────────────────────────────────────────────────────────────
 async function loadAll() {
@@ -401,18 +402,23 @@ onMounted(() => {
       </div>
 
       <!-- Pagination -->
-      <div
-        v-if="filteredRows.length > ROWS_PER_PAGE || (allRows.length && currentPage > 1)"
-        class="px-4 py-2 border-b border-border flex items-center justify-end"
-      >
+      <div class="px-4 py-2 border-b border-border flex items-center justify-between">
+        <span class="text-[11px] text-muted tabular-nums">
+          <template v-if="allRows.length">
+            {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredRows.length) }}
+            dari {{ filteredRows.length }} akun
+          </template>
+        </span>
         <TablePagination
           :page="currentPage"
           :total-pages="totalPages"
           :total="filteredRows.length"
+          :page-size="pageSize"
           :loading="loading"
           unit="akun"
           @prev="currentPage--"
           @next="currentPage++"
+          @update:page-size="pageSize = $event"
         />
       </div>
 

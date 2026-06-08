@@ -127,6 +127,41 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 
 > `py-1` pada td (bukan py-2) membuat baris lebih kompak.
 
+### Pagination — Selalu Sertakan Page Size Selector
+
+Default page size: **20**. Selalu tambahkan selector jumlah data (20/50/100) via `TablePagination`.
+
+**Server-side pagination (BankPage, laporan):**
+```typescript
+const pageSize = shallowRef(20)
+const page = shallowRef(1)
+
+function changePageSize(size: number) { pageSize.value = size; page.value = 1; load() }
+```
+```vue
+<TablePagination
+  :page="page" :total-pages="totalPages" :total="total"
+  :page-size="pageSize"
+  @prev="page > 1 && (page--, load())"
+  @next="page < totalPages && (page++, load())"
+  @update:page-size="changePageSize"
+/>
+```
+
+**Client-side pagination (CoaPage):**
+```typescript
+const pageSize = shallowRef(20)
+watch(pageSize, () => { currentPage.value = 1 })
+```
+```vue
+<TablePagination
+  :page="currentPage" :total-pages="totalPages" :total="filteredRows.length"
+  :page-size="pageSize"
+  @prev="currentPage--" @next="currentPage++"
+  @update:page-size="pageSize = $event"
+/>
+```
+
 ### Pagination SELALU di Atas
 
 JANGAN pernah pakai `:paginator="true"` di `<DataTable>`.

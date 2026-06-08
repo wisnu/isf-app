@@ -51,7 +51,7 @@ interface BankAccountDetail {
 interface SelectOption { value: string; label: string }
 
 const toast = useToast()
-const PAGE_SIZE = 25
+const pageSize = shallowRef(20)
 
 // ── List data ─────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ async function loadBankAccounts() {
   loading.value = true
   errorMsg.value = null
   try {
-    const params = new URLSearchParams({ page: String(page.value), page_size: String(PAGE_SIZE) })
+    const params = new URLSearchParams({ page: String(page.value), page_size: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('search', searchInput.value.trim())
     const res = await api.get<BankAccountList>(`/api/bank/accounts?${params}`)
     rows.value = res.rows
@@ -95,6 +95,7 @@ async function loadBankAccounts() {
 
 function prevPage() { if (page.value > 1) { page.value--; loadBankAccounts() } }
 function nextPage() { if (page.value < totalPages.value) { page.value++; loadBankAccounts() } }
+function changePageSize(size: number) { pageSize.value = size; page.value = 1; loadBankAccounts() }
 
 // ── Submissions ───────────────────────────────────────────────────────────────
 
@@ -387,7 +388,7 @@ onMounted(loadBankAccounts)
         <span class="text-[11px] text-muted tabular-nums">
           <template v-if="loading">Memuat...</template>
           <template v-else-if="totalRecords > 0">
-            {{ (page - 1) * PAGE_SIZE + 1 }}–{{ Math.min(page * PAGE_SIZE, totalRecords) }}
+            {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, totalRecords) }}
             dari {{ totalRecords }} rekening
           </template>
           <template v-else>Tidak ada rekening</template>
@@ -396,10 +397,12 @@ onMounted(loadBankAccounts)
           :page="page"
           :total-pages="totalPages"
           :total="totalRecords"
+          :page-size="pageSize"
           :loading="loading"
           unit="rekening"
           @prev="prevPage"
           @next="nextPage"
+          @update:page-size="changePageSize"
         />
       </div>
 
