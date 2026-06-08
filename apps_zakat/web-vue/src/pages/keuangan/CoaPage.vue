@@ -121,7 +121,6 @@ const statsData = shallowRef<{ total: number; by_type: Record<string, number> } 
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
-const compactMode = true
 
 // ── Filter state ───────────────────────────────────────────────────────────────
 const f = reactive({
@@ -448,10 +447,10 @@ onMounted(() => {
               :key="r.code"
               class="border-b border-border last:border-0 hover:bg-background/60"
             >
-              <td class="px-4 font-mono tabular-nums text-muted" :class="compactMode ? 'py-0.5' : 'py-1'">
+              <td class="px-4 font-mono tabular-nums text-muted" class="py-1">
                 {{ r.code }}
               </td>
-              <td class="px-4" :class="compactMode ? 'py-0.5' : 'py-1'">
+              <td class="px-4" class="py-1">
                 <div
                   class="flex items-center gap-1 leading-snug"
                   :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }"
@@ -461,15 +460,15 @@ onMounted(() => {
                   <span :class="!r.is_detail ? 'font-semibold' : ''">{{ r.name ?? '—' }}</span>
                 </div>
               </td>
-              <td class="px-4" :class="compactMode ? 'py-0.5' : 'py-1'">
+              <td class="px-4" class="py-1">
                 <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(r.type_label)]">
                   {{ r.type_label }}
                 </span>
               </td>
-              <td class="px-4 font-mono text-muted/60" :class="compactMode ? 'py-0.5' : 'py-1'">
+              <td class="px-4 font-mono text-muted/60" class="py-1">
                 {{ r.parent ?? '—' }}
               </td>
-              <td class="px-4 text-center" :class="compactMode ? 'py-0.5' : 'py-1'">
+              <td class="px-4 text-center" class="py-1">
                 <span v-if="r.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
                   <Check class="w-2 h-2" /> DETAIL
                 </span>
