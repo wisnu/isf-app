@@ -225,3 +225,10 @@ async def create_penyaluran(
             )
 
     return CreateResult(transaction_id=transaction_id, transaction_no=transaction_no)
+
+
+async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> int:
+    """Adapter untuk otorisasi dispatcher. Menerima dict payload, return transaction_id."""
+    req = PenyaluranCreate(**payload)
+    result = await create_penyaluran(req, user_id, branch_code)
+    return result.transaction_id

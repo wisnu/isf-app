@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from app.modules.admin.router import router as admin_router
 from app.modules.coa.router import router as coa_router
 from app.modules.identity.router import router as identity_router
+from app.modules.otorisasi.router import router as otorisasi_router
+from app.modules.otorisasi.service import _register_defaults
 from app.modules.transaction.router import router as transaction_router
 from app.modules.transaksi_histori.router import router as transaksi_histori_router
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
@@ -17,6 +19,7 @@ async def lifespan(app: FastAPI):
     isf_auth_pool = await init_isf_auth_pool()
     app.state.db_pool = pool
     app.state.isf_auth_pool = isf_auth_pool
+    _register_defaults()
     yield
     await close_pool()
 
@@ -38,5 +41,6 @@ async def ready() -> dict:
 app.include_router(admin_router, prefix="/api")
 app.include_router(coa_router, prefix="/api")
 app.include_router(identity_router, prefix="/api")
+app.include_router(otorisasi_router, prefix="/api")
 app.include_router(transaction_router, prefix="/api")
 app.include_router(transaksi_histori_router, prefix="/api")
