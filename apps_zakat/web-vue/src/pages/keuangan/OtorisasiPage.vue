@@ -6,7 +6,7 @@ import TablePagination from '@/components/ui/TablePagination.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
 import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
+import { dmyt } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 
 const toast = useToast()
@@ -351,7 +351,7 @@ function onRejected() { drawerOpen.value = false; load() }
             <td class="px-4 py-2 font-medium">{{ row.entity_label }}</td>
             <td class="px-4 py-2 text-zinc-600">{{ row.submitted_by }}</td>
             <td class="px-4 py-2 text-zinc-600">{{ row.branch_code }}</td>
-            <td class="px-4 py-2">{{ row.submitted_at ? dmy(row.submitted_at) : '—' }}</td>
+            <td class="px-4 py-2 text-xs">{{ row.submitted_at ? dmyt(row.submitted_at) : '—' }}</td>
             <td class="px-4 py-2">
               <div class="space-y-0.5">
                 <div
