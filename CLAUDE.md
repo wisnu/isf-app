@@ -2,6 +2,18 @@
 
 ## Active Skills
 
+### isf-architect — Wajib untuk fitur baru
+
+Sebelum memulai fitur baru, modul CRUD, laporan, approval workflow, atau migrasi
+fitur dari legacy apa pun, **selalu invoke `isf-architect`** terlebih dahulu.
+Skill ini menangani brainstorming, arsitektur multi-layer, urutan agent,
+penulisan specs + plan + E2E script.
+
+Jangan langsung menulis kode saat ada permintaan fitur baru atau migrasi legacy
+— invoke `isf-architect` dulu.
+
+### Vue / UI Skills
+
 For any Vue component, page, layout, or UI code in this project, use **both** skills:
 
 1. **`vue-primevue-zakat-ui`** (primary) — project-specific conventions, stack

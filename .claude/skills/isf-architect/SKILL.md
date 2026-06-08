@@ -108,6 +108,7 @@ stateDiagram-v2
    - **Laporan baru** → workflow 5 langkah (DB → Python → BFF → Seed → UI)
    - **CRUD module baru** → workflow 4 langkah (Python → BFF → Seed → UI)
    - **Approval workflow** → workflow 5 langkah (DB → Python → BFF → Seed → UI)
+   - **Migrasi dari legacy DAF** → baca kode legacy dulu via `isf-agent-legacy`, lalu tentukan workflow yang sesuai (biasanya CRUD atau Laporan)
    - **Fitur UI saja** → isf-agent-ui langsung
    - **Perbaikan bug** → agent sesuai layer yang rusak
 3. Jika tipe fitur belum jelas, tanya user dengan pilihan konkret.
