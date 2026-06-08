@@ -128,11 +128,11 @@ async def list_submissions(
 ) -> tuple[list[dict], int]:
     total_row = await fetch_one(
         """SELECT COUNT(*) AS n FROM otorisasi.submission s
-           WHERE ($1 IS NULL OR s.module = $1)
-             AND ($2 IS NULL OR s.entity_type = $2)
-             AND ($3 IS NULL OR s.status = $3)
-             AND ($4 IS NULL OR s.submitted_by = $4)
-             AND ($5 IS NULL OR $6 = 'all' OR s.branch_code = $5)""",
+           WHERE (CAST($1 AS text) IS NULL OR s.module = $1)
+             AND (CAST($2 AS text) IS NULL OR s.entity_type = $2)
+             AND (CAST($3 AS text) IS NULL OR s.status = $3)
+             AND (CAST($4 AS text) IS NULL OR s.submitted_by = $4)
+             AND (CAST($5 AS text) IS NULL OR $6 = 'all' OR s.branch_code = $5)""",
         module, entity_type, status, submitted_by, branch, branch_access,
     )
     total = int(total_row['n']) if total_row else 0
@@ -141,11 +141,11 @@ async def list_submissions(
         """SELECT s.*, ec.label AS entity_label, ec.level_required
            FROM otorisasi.submission s
            LEFT JOIN otorisasi.entity_config ec ON ec.entity_type = s.entity_type
-           WHERE ($1 IS NULL OR s.module = $1)
-             AND ($2 IS NULL OR s.entity_type = $2)
-             AND ($3 IS NULL OR s.status = $3)
-             AND ($4 IS NULL OR s.submitted_by = $4)
-             AND ($5 IS NULL OR $6 = 'all' OR s.branch_code = $5)
+           WHERE (CAST($1 AS text) IS NULL OR s.module = $1)
+             AND (CAST($2 AS text) IS NULL OR s.entity_type = $2)
+             AND (CAST($3 AS text) IS NULL OR s.status = $3)
+             AND (CAST($4 AS text) IS NULL OR s.submitted_by = $4)
+             AND (CAST($5 AS text) IS NULL OR $6 = 'all' OR s.branch_code = $5)
            ORDER BY s.created_at DESC
            LIMIT $7 OFFSET $8""",
         module, entity_type, status, submitted_by, branch, branch_access,

@@ -15,6 +15,8 @@ from app.routers.report import router as report_router
 from app.routers.tenants import router as tenants_router
 from app.routers.histori_transaksi import router as histori_transaksi_router
 from app.routers.penyaluran import router as penyaluran_router
+from app.routers.penghimpunan import router as penghimpunan_router
+from app.routers.otorisasi import router as otorisasi_router
 from app.routers.transaction import router as transaction_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
@@ -92,6 +94,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(transaction_router, prefix="/api")
     app.include_router(histori_transaksi_router, prefix="/api")
     app.include_router(penyaluran_router, prefix="/api")
+    app.include_router(penghimpunan_router, prefix="/api")
+    app.include_router(otorisasi_router, prefix="/api")
     return app
 
 
