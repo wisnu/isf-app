@@ -404,17 +404,69 @@ sequenceDiagram
 
 ## Test E2E
 
-[Curl commands untuk smoke test setelah deploy]
+Lihat script: `testing/e2e-<feature>.sh`
 ```
 
-Setelah plan selesai, commit kedua file:
+Selain plan.md, **wajib** buat script E2E di:
+```
+testing/e2e-<feature-slug>.sh
+```
+
+### Format testing/e2e-<feature>.sh
+
 ```bash
-git add docs/todos/YYYY-MM-DD-NNN-<feature>/
-git commit -m "[TAG] docs(<feature>): specs + plan <judul fitur>"
+#!/usr/bin/env bash
+# testing/e2e-<feature>.sh
+# E2E smoke tests untuk <Judul Fitur>
+# Jalankan saat stack zakat running (make run / podman-compose up)
+
+set -e
+BASE_BFF="http://localhost:7000"
+BASE_API="http://localhost:8000"
+TODAY=$(date +%Y-%m-%d)
+
+echo "=== E2E: <Judul Fitur> ==="
+
+# Login dan ambil session cookie
+echo ""
+echo "0. Login sebagai <USER> (<ROLE> role)"
+curl -sf -c /tmp/cookies-<feature>.txt "$BASE_BFF/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"<USER>","password":"test1234"}' | python3 -c "
+import json,sys; d=json.load(sys.stdin)
+assert d.get('data'), 'Login gagal'
+print('  OK — login berhasil')"
+
+echo ""
+echo "1. [bff-api] GET /api/<endpoint>"
+curl -sf -b /tmp/cookies-<feature>.txt "$BASE_BFF/api/<endpoint>" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+data=d.get('data',[])
+assert isinstance(data, list), 'Expected list'
+print('  OK —', len(data), 'rows')"
+
+# ... tambah test case sesuai endpoint yang dibuat
+
+echo ""
+echo "=== SEMUA TEST PASSED ==="
+```
+
+**Konvensi:**
+- Nama file: `testing/e2e-<feature-slug>.sh` — slug sama dengan folder `docs/todos/`
+- Test setiap endpoint yang dibuat (lookup, list, create, update jika ada)
+- Gunakan user dev yang sesuai role: `RAIS` (ACC/KEU), `HADI` (DIST/SPVDIST)
+- Cookie disimpan ke `/tmp/cookies-<feature>.txt`
+- Setiap assertion pakai `assert` di inline Python — jangan silent pass
+
+Setelah plan dan script selesai, commit ketiganya:
+```bash
+git add docs/todos/YYYY-MM-DD-NNN-<feature>/ testing/e2e-<feature>.sh
+git commit -m "[TAG] docs(<feature>): specs + plan + e2e script <judul fitur>"
 ```
 
 Kemudian tanya user:
-> "Plan sudah siap di `docs/todos/.../plan.md`. Mau saya mulai eksekusi Step 1 sekarang?"
+> "Plan dan E2E script sudah siap. Mau saya mulai eksekusi Step 1 sekarang?"
 
 ---
 
