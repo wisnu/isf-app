@@ -2,10 +2,12 @@
 import { Download, FileCheck, Upload } from 'lucide-vue-next'
 import { computed, ref, shallowRef } from 'vue'
 
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+import { useToast } from '@/lib/useToast'
 
 interface ParsedRow {
   row_no: number
@@ -32,10 +34,13 @@ interface ParsedRow {
   pesan: string
 }
 
+const toast = useToast()
+
 const phase = shallowRef<'idle' | 'preview' | 'submitted'>('idle')
 const selectedFile = ref<File | null>(null)
 const rows = ref<ParsedRow[]>([])
-const batchId = shallowRef<number | null>(null)
+const submissionId = shallowRef<number | null>(null)
+const submissionStatus = shallowRef<'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' | null>(null)
 const loading = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 
@@ -57,6 +62,8 @@ function resetUpload() {
   phase.value = 'idle'
   selectedFile.value = null
   rows.value = []
+  submissionId.value = null
+  submissionStatus.value = null
 }
 
 async function downloadTemplate() {
@@ -83,18 +90,33 @@ async function parseFile() {
   }
 }
 
-async function saveDraft() {
-  if (!selectedFile.value) return
+async function submitUntukOtorisasi() {
+  if (validRows.value.length === 0) return
   loading.value = true
   errorMsg.value = null
   try {
-    const form = new FormData()
-    form.append('file', selectedFile.value)
-    const result = await api.upload<{ batch_id: number }>('/api/transaction/upload/penghimpunan/draft', form)
-    batchId.value = result.batch_id
+    const result = await api.post<{ id: number; status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' }>(
+      '/api/otorisasi/submission/',
+      {
+        entity_type: 'upload_penghimpunan',
+        module: 'keuangan',
+        payload: {
+          filename: selectedFile.value?.name ?? null,
+          total_rows: rows.value.length,
+          valid_rows: validRows.value.length,
+          invalid_rows: rows.value.filter((r) => r.status === 'invalid').length,
+          total_amount: totalAmount.value,
+          rows: validRows.value,
+        },
+      },
+    )
+    submissionId.value = result.id
+    submissionStatus.value = result.status
     phase.value = 'submitted'
+    toast.success('Upload disubmit untuk otorisasi')
   } catch (e: unknown) {
     errorMsg.value = e instanceof Error ? e.message : String(e)
+    toast.error('Gagal mengirim submission')
   } finally {
     loading.value = false
   }
@@ -237,8 +259,8 @@ async function saveDraft() {
         </div>
 
         <div class="flex justify-end">
-          <Button :disabled="!canSave || loading" @click="saveDraft">
-            {{ loading ? 'Menyimpan...' : 'Simpan Draft' }}
+          <Button :disabled="!canSave || loading" @click="submitUntukOtorisasi">
+            {{ loading ? 'Mengirim...' : 'Submit untuk Otorisasi' }}
           </Button>
         </div>
       </template>
@@ -246,16 +268,16 @@ async function saveDraft() {
 
     <div v-if="phase === 'submitted'" class="flex flex-col items-center gap-4 py-12">
       <FileCheck class="h-12 w-12 text-green-600" />
-      <p class="text-lg font-medium">Draft disimpan (Batch #{{ batchId }})</p>
+      <p class="text-lg font-medium">Upload disubmit untuk otorisasi</p>
+      <div v-if="submissionId" class="flex items-center gap-2 text-sm text-muted">
+        <span>Submission #{{ submissionId }}</span>
+        <StatusBadge v-if="submissionStatus" :status="submissionStatus" />
+      </div>
       <p class="text-sm text-muted">
         Supervisor perlu mengotorisasi sebelum transaksi terbentuk.
       </p>
       <div class="flex gap-3">
-        <Button
-          variant="outline"
-          @click="resetUpload"
-          >Upload Lagi</Button
-        >
+        <Button variant="outline" @click="resetUpload">Upload Lagi</Button>
         <router-link to="/keuangan/upload/penghimpunan/list">
           <Button>Lihat Daftar Batch</Button>
         </router-link>
