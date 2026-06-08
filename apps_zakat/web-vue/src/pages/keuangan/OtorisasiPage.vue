@@ -121,7 +121,7 @@ function summaryFor(row: SubmissionRow): SummaryItem[] {
       items.push(
         p.account_name ? { label: 'Nama', value: p.account_name } : null,
         p.bank_account_no ? { label: 'No. Rek', value: p.bank_account_no } : null,
-        p.bank_code ? { label: 'Kode Bank', value: p.bank_code } : null,
+        (p.bank_name ?? p.bank_code) ? { label: 'Bank', value: p.bank_name ?? p.bank_code } : null,
         p.action ? { label: 'Aksi', value: String(p.action).toUpperCase() } : null,
       )
       break
