@@ -73,7 +73,8 @@ const groups: MenuGroup[] = [
         children: [
           { label: 'Chart of Accounts', to: '/keuangan/coa',  icon: BookOpen,  menu_key: 'keuangan.coa' },
           { label: 'Kas',               to: '/keuangan/kas',  icon: Banknote,  menu_key: 'keuangan.kas' },
-          { label: 'Bank',              to: '/keuangan/bank', icon: Landmark,  menu_key: 'keuangan.bank' },
+          { label: 'Bank',              to: '/keuangan/bank',      icon: Landmark,  menu_key: 'keuangan.bank' },
+          { label: 'Kas Kecil',        to: '/keuangan/kas-kecil', icon: Wallet,    menu_key: 'keuangan.kas_kecil' },
           { section: 'Monitoring dan Kontrol' },
           { label: 'Otorisasi',         to: '/keuangan/monitoring/otorisasi', icon: ShieldCheck, menu_key: 'keuangan.monitoring.otorisasi' },
           { label: 'Riwayat Submission', to: '/keuangan/monitoring/riwayat',   icon: ClipboardList, menu_key: 'keuangan.monitoring.riwayat' },
