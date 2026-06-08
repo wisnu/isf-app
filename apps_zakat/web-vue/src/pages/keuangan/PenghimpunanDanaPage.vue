@@ -188,8 +188,8 @@ onMounted(load)
   <div class="space-y-0">
     <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-2xl font-bold tracking-tight">Penghimpunan Dana</h1>
-      <Button @click="router.push({ name: 'keuangan-transaksi-penghimpunan-baru' })">
-        <ArrowUpCircle class="mr-2 h-4 w-4" />
+      <Button size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'keuangan-transaksi-penghimpunan-baru' })">
+        <ArrowUpCircle class="w-3.5 h-3.5" />
         Input Penghimpunan
       </Button>
     </header>
@@ -217,8 +217,8 @@ onMounted(load)
           @keyup.enter="() => { page = 1; load() }"
         />
       </div>
-      <Button variant="secondary" :disabled="loading" @click="() => { page = 1; load() }">
-        <Search class="mr-2 h-4 w-4" />
+      <Button size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="() => { page = 1; load() }">
+        <Search class="w-3.5 h-3.5" />
         {{ loading ? 'Memuat...' : 'Tampilkan' }}
       </Button>
     </div>
