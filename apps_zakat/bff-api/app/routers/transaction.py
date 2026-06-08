@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import httpx
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.services.auth import require_menu
-from app.services.proxy import get_api_python, post_api_python, post_multipart_api_python
+from app.services.proxy import get_api_python, post_multipart_api_python
+from app.shared.config import settings
 from app.shared.response import err
 
 router = APIRouter(prefix='/transaction', tags=['transaction'])
@@ -111,12 +113,11 @@ async def approve(
 ):
     user_id = request.session.get('user_id', '')
     branch_code = _branch_for_session(request)
-    downstream = await post_api_python(
-        f'/api/transaction/upload/penghimpunan/batches/{batch_id}/approve',
-        json_body={
+    url = f"{settings.api_python_base_url}/api/transaction/upload/penghimpunan/batches/{batch_id}/approve"
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        downstream = await client.post(url, json={
             'authorized_user': user_id,
             'branch_code': branch_code,
             'inputer': user_id,
-        },
-    )
+        })
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
