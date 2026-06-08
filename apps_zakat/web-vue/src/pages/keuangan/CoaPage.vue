@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Check, Download, FileText, Folder, Plus, RefreshCw, Search, X } from 'lucide-vue-next'
-import Column from 'primevue/column'
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
-import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
@@ -78,7 +77,7 @@ async function loadSubmissions() {
     )
     submissions.value = res.rows ?? []
   } catch {
-    // silent — submissions section is best-effort
+    // silent
   }
 }
 
@@ -89,10 +88,11 @@ async function submitNewCoa() {
   }
   submitting.value = true
   try {
-    await api.post('/api/otorisasi/submission/', {
+    await api.post('/api/otorisasi/save-and-submit/', {
       entity_type: 'coa',
       module: 'keuangan',
       payload: {
+        action: 'create',
         code: newCoa.code,
         name: newCoa.name,
         type_code: newCoa.type_code,
@@ -100,7 +100,7 @@ async function submitNewCoa() {
         is_detail: newCoa.is_detail,
       },
     })
-    toast.success('Permintaan tambah COA disubmit untuk otorisasi')
+    toast.success('Permintaan tambah COA dikirim untuk otorisasi')
     showAddModal.value = false
     newCoa.code = ''
     newCoa.name = ''
@@ -123,27 +123,20 @@ const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 const compactMode = shallowRef(true)
 
-// ── Filter state (manual — tidak pakai PrimeVue internal filter) ───────────
+// ── Filter state ───────────────────────────────────────────────────────────────
 const f = reactive({
   global: '',
-  code: '',
-  name: '',
   typeLabels: [] as string[],
-  parent: '',
   isDetail: null as boolean | null,
 })
 
 const hasActiveFilter = computed(
-  () => f.global !== '' || f.code !== '' || f.name !== '' ||
-        f.typeLabels.length > 0 || f.parent !== '' || f.isDetail !== null,
+  () => f.global !== '' || f.typeLabels.length > 0 || f.isDetail !== null,
 )
 
 function clearFilters() {
   f.global = ''
-  f.code = ''
-  f.name = ''
   f.typeLabels = []
-  f.parent = ''
   f.isDetail = null
 }
 
@@ -153,7 +146,7 @@ function toggleType(label: string) {
   else f.typeLabels.push(label)
 }
 
-// ── Client-side filtering ──────────────────────────────────────────────────
+// ── Client-side filtering ──────────────────────────────────────────────────────
 const filteredRows = computed(() => {
   let rows = allRows.value
 
@@ -165,21 +158,10 @@ const filteredRows = computed(() => {
     (r.parent ?? '').toLowerCase().includes(g),
   )
 
-  if (f.code) {
-    const q = f.code.toLowerCase()
-    rows = rows.filter(r => r.code.toLowerCase().startsWith(q))
-  }
-  if (f.name) {
-    const q = f.name.toLowerCase()
-    rows = rows.filter(r => (r.name ?? '').toLowerCase().includes(q))
-  }
   if (f.typeLabels.length) {
     rows = rows.filter(r => f.typeLabels.includes(r.type_label))
   }
-  if (f.parent) {
-    const q = f.parent.toLowerCase()
-    rows = rows.filter(r => (r.parent ?? '').toLowerCase().startsWith(q))
-  }
+
   if (f.isDetail !== null) {
     rows = rows.filter(r => r.is_detail === f.isDetail)
   }
@@ -187,7 +169,7 @@ const filteredRows = computed(() => {
   return rows
 })
 
-// ── Pagination manual ──────────────────────────────────────────────────────
+// ── Pagination client-side ─────────────────────────────────────────────────────
 const ROWS_PER_PAGE = 50
 const currentPage = shallowRef(1)
 
@@ -197,10 +179,9 @@ const pagedRows = computed(() => {
   return filteredRows.value.slice(start, start + ROWS_PER_PAGE)
 })
 
-// Reset ke hal 1 saat filter berubah
 watch(filteredRows, () => { currentPage.value = 1 })
 
-// ── API ────────────────────────────────────────────────────────────────────
+// ── API ────────────────────────────────────────────────────────────────────────
 async function loadAll() {
   loading.value = true
   errorMsg.value = null
@@ -239,22 +220,13 @@ onMounted(() => {
   loadAll()
   loadSubmissions()
 })
-
-// Tailwind class untuk filter inputs di popup
-const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted/60'
 </script>
 
 <template>
   <div class="space-y-4">
-    <!-- Header + actions -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-        <p class="text-sm text-muted">
-          Akun perkiraan dari <code class="text-[11px] bg-muted/20 px-1 rounded">transaction.account</code>
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
+    <!-- Header -->
+    <PageHeader title="Chart of Accounts" subtitle="Akun perkiraan dari transaction.account">
+      <template #actions>
         <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="loadAll">
           <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
           Reload
@@ -271,8 +243,8 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
           <Plus class="w-3.5 h-3.5" />
           Tambah Akun
         </Button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Stats ringkas -->
     <div v-if="statsData" class="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted">
@@ -371,9 +343,10 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
     <!-- Table card -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
 
-      <!-- Toolbar atas: Clear + compact + keyword search -->
-      <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
+      <!-- Toolbar: filter + search -->
+      <div class="px-4 py-2.5 border-b border-border flex flex-wrap items-center gap-3">
+        <!-- Clear + Compact -->
+        <div class="flex items-center gap-2 shrink-0">
           <Button
             variant="outline" size="sm" class="gap-1 h-7 text-[11px]"
             :disabled="!hasActiveFilter"
@@ -395,18 +368,53 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
             Compact
           </button>
         </div>
-        <div class="relative">
+
+        <!-- Type filter chips -->
+        <div class="flex items-center gap-1 flex-wrap">
+          <button
+            v-for="t in TYPE_OPTIONS"
+            :key="t.code"
+            type="button"
+            :class="[
+              'text-[10px] font-semibold uppercase px-1.5 py-px rounded border transition-colors cursor-pointer',
+              f.typeLabels.includes(t.label)
+                ? typeBadgeClass(t.label) + ' ring-1 ring-offset-1 ring-current'
+                : 'border-border text-muted/60 hover:border-muted',
+            ]"
+            @click="toggleType(t.label)"
+          >{{ t.label }}</button>
+        </div>
+
+        <!-- Sifat toggle -->
+        <div class="flex items-center rounded-lg border border-border overflow-hidden text-[11px] shrink-0">
+          <button
+            v-for="opt in [{ v: null, l: 'Semua' }, { v: true, l: 'Detail' }, { v: false, l: 'Grup' }]"
+            :key="String(opt.v)"
+            type="button"
+            :class="[
+              'px-2.5 py-1 transition-colors border-r border-border last:border-0',
+              f.isDetail === opt.v
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'text-muted hover:bg-background',
+            ]"
+            @click="f.isDetail = opt.v"
+          >{{ opt.l }}</button>
+        </div>
+
+        <!-- Global search -->
+        <div class="relative ml-auto">
           <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
           <input
             v-model="f.global"
-            placeholder="Keyword Search"
-            :class="[inputCls, 'pl-8 h-8 w-52']"
+            placeholder="Cari kode, nama, tipe…"
+            class="h-8 pl-8 pr-3 w-52 rounded-lg border border-border bg-surface text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
       </div>
 
-      <!-- Pagination di atas tabel (standard) -->
-      <div v-if="filteredRows.length > ROWS_PER_PAGE || (allRows.length && currentPage > 1)"
+      <!-- Pagination -->
+      <div
+        v-if="filteredRows.length > ROWS_PER_PAGE || (allRows.length && currentPage > 1)"
         class="px-4 py-2 border-b border-border flex items-center justify-end"
       >
         <TablePagination
@@ -420,109 +428,65 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
         />
       </div>
 
-      <!-- DataTable — hanya render, filtering + pagination sudah manual -->
-      <AppDataTable :value="pagedRows" :loading="loading" :compact="compactMode" filter-display="menu">
-
-        <Column field="code" header="Kode" style="width:110px;min-width:90px" :show-filter-match-modes="false">
-          <template #body="{ data: r }">
-            <span class="font-mono text-muted tabular-nums">{{ r.code }}</span>
-          </template>
-          <template #filter>
-            <input v-model="f.code" :class="inputCls" placeholder="Cari kode…" />
-          </template>
-        </Column>
-
-        <Column field="name" header="Nama Akun" :show-filter-match-modes="false">
-          <template #body="{ data: r }">
-            <div class="flex items-center gap-1 leading-snug"
-              :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }"
+      <!-- Native table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-[11px]">
+          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+            <tr>
+              <th class="px-4 py-2 font-medium text-left w-28">Kode</th>
+              <th class="px-4 py-2 font-medium text-left">Nama Akun</th>
+              <th class="px-4 py-2 font-medium text-left w-28">Tipe</th>
+              <th class="px-4 py-2 font-medium text-left w-24">Parent</th>
+              <th class="px-4 py-2 font-medium text-center w-20">Sifat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="5" class="px-4 py-8 text-center text-muted">Memuat...</td>
+            </tr>
+            <tr v-else-if="pagedRows.length === 0">
+              <td colspan="5" class="px-4 py-8 text-center text-muted italic">
+                Tidak ada akun yang cocok dengan filter.
+              </td>
+            </tr>
+            <tr
+              v-for="r in pagedRows"
+              :key="r.code"
+              class="border-b border-border last:border-0 hover:bg-background/60"
             >
-              <Folder v-if="!r.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
-              <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
-              <span :class="['text-[11px]', !r.is_detail && 'font-semibold']">{{ r.name ?? '—' }}</span>
-            </div>
-          </template>
-          <template #filter>
-            <input v-model="f.name" :class="inputCls" placeholder="Cari nama…" />
-          </template>
-        </Column>
-
-        <Column field="type_label" header="Tipe" style="width:110px;min-width:90px" :show-filter-match-modes="false">
-          <template #body="{ data: r }">
-            <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(r.type_label)]">
-              {{ r.type_label }}
-            </span>
-          </template>
-          <template #filter>
-            <div class="flex flex-col gap-1.5">
-              <label v-for="t in TYPE_OPTIONS" :key="t.code"
-                class="flex items-center gap-2 cursor-pointer py-0.5"
-              >
-                <input
-                  type="checkbox"
-                  class="rounded"
-                  :checked="f.typeLabels.includes(t.label)"
-                  @change="toggleType(t.label)"
-                />
-                <span :class="['px-1.5 py-px rounded text-[10px] font-semibold uppercase', typeBadgeClass(t.label)]">
-                  {{ t.label }}
+              <td class="px-4 font-mono tabular-nums text-muted" :class="compactMode ? 'py-0.5' : 'py-1'">
+                {{ r.code }}
+              </td>
+              <td class="px-4" :class="compactMode ? 'py-0.5' : 'py-1'">
+                <div
+                  class="flex items-center gap-1 leading-snug"
+                  :style="{ paddingLeft: Math.max(0, r.level ?? 0) * 14 + 'px' }"
+                >
+                  <Folder v-if="!r.is_detail" class="w-3 h-3 text-muted/40 shrink-0" />
+                  <FileText v-else class="w-3 h-3 text-muted/25 shrink-0" />
+                  <span :class="!r.is_detail ? 'font-semibold' : ''">{{ r.name ?? '—' }}</span>
+                </div>
+              </td>
+              <td class="px-4" :class="compactMode ? 'py-0.5' : 'py-1'">
+                <span :class="['inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-px rounded', typeBadgeClass(r.type_label)]">
+                  {{ r.type_label }}
                 </span>
-              </label>
-            </div>
-          </template>
-        </Column>
-
-        <Column field="parent" header="Parent" style="width:90px;min-width:80px" :show-filter-match-modes="false">
-          <template #body="{ data: r }">
-            <span class="font-mono text-muted/60">{{ r.parent ?? '—' }}</span>
-          </template>
-          <template #filter>
-            <input v-model="f.parent" :class="inputCls" placeholder="Kode parent…" />
-          </template>
-        </Column>
-
-        <Column field="is_detail" header="Sifat" style="width:90px;min-width:80px" :show-filter-match-modes="false"
-          :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold whitespace-nowrap' } }"
-        >
-          <template #body="{ data: r }">
-            <div class="flex justify-center">
-              <span v-if="r.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
-                <Check class="w-2 h-2" /> DETAIL
-              </span>
-              <span v-else class="inline-block text-[9px] font-medium px-1.5 py-px rounded bg-muted/10 text-muted border border-border">
-                GRUP
-              </span>
-            </div>
-          </template>
-          <template #filter>
-            <div class="flex flex-col gap-1">
-              <button v-for="opt in [{ v: null, l: 'Semua' }, { v: true, l: 'Detail' }, { v: false, l: 'Grup' }]"
-                :key="String(opt.v)"
-                type="button"
-                :class="[
-                  'text-[11px] px-2.5 py-0.5 rounded-full border text-left transition-colors',
-                  f.isDetail === opt.v
-                    ? 'bg-primary text-primary-foreground border-primary font-medium'
-                    : 'border-border text-muted hover:bg-background hover:text-foreground',
-                ]"
-                @click="f.isDetail = opt.v"
-              >
-                {{ opt.l }}
-              </button>
-            </div>
-          </template>
-        </Column>
-
-        <Column header="Aksi" style="width:50px;min-width:50px"
-          :pt="{ headerCell: { class: 'text-center px-3 py-1 font-semibold' } }"
-        >
-          <template #body>
-            <span class="flex justify-center text-[10px] text-muted/30">—</span>
-          </template>
-        </Column>
-
-        <template #empty>Tidak ada akun yang cocok dengan filter.</template>
-      </AppDataTable>
+              </td>
+              <td class="px-4 font-mono text-muted/60" :class="compactMode ? 'py-0.5' : 'py-1'">
+                {{ r.parent ?? '—' }}
+              </td>
+              <td class="px-4 text-center" :class="compactMode ? 'py-0.5' : 'py-1'">
+                <span v-if="r.is_detail" class="inline-flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-positive/10 text-positive border border-positive/20">
+                  <Check class="w-2 h-2" /> DETAIL
+                </span>
+                <span v-else class="inline-block text-[9px] font-medium px-1.5 py-px rounded bg-muted/10 text-muted border border-border">
+                  GRUP
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
