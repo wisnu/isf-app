@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShieldCheck } from 'lucide-vue-next'
+import { RefreshCw, ShieldCheck } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import TablePagination from '@/components/ui/TablePagination.vue'
@@ -240,6 +240,15 @@ function onRejected() { drawerOpen.value = false; load() }
         <ShieldCheck class="h-6 w-6 text-primary" />
         <h1 class="text-2xl font-bold tracking-tight">Otorisasi</h1>
       </div>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted hover:bg-background hover:text-foreground transition-colors disabled:opacity-40"
+        :disabled="loading"
+        @click="load()"
+      >
+        <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': loading }" />
+        Refresh
+      </button>
     </header>
 
     <!-- Toolbar: entity filter + contextual bulk actions -->
