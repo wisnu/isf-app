@@ -276,15 +276,15 @@ async function submitForm() {
       product_id: form.is_amil_account || !form.product_id ? null : Number(form.product_id),
       cash_code: form.cash_code.trim() || null,
     }
-    await api.post('/api/otorisasi/submission/', {
+    await api.post('/api/otorisasi/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload,
     })
     toast.success(
       drawerMode.value === 'create'
-        ? 'Permintaan tambah rekening disubmit untuk otorisasi'
-        : 'Permintaan ubah rekening disubmit untuk otorisasi',
+        ? 'Permintaan tambah rekening dikirim untuk otorisasi'
+        : 'Permintaan ubah rekening dikirim untuk otorisasi',
     )
     closeDrawer()
     await loadSubmissions()
@@ -305,12 +305,12 @@ const deleteSubmitting = shallowRef(false)
 async function confirmDelete(accountNo: string) {
   deleteSubmitting.value = true
   try {
-    await api.post('/api/otorisasi/submission/', {
+    await api.post('/api/otorisasi/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload: { action: 'delete', account_no: accountNo },
     })
-    toast.success('Permintaan hapus rekening disubmit untuk otorisasi')
+    toast.success('Permintaan hapus rekening dikirim untuk otorisasi')
     deletingAccountNo.value = null
     await loadSubmissions()
   } catch (e: unknown) {
