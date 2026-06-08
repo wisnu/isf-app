@@ -12,6 +12,9 @@ from app.modules.transaction.template import build_template
 from app.modules.transaction import penyaluran_repo as prp
 from app.modules.transaction import penyaluran_service as psvc
 from app.modules.transaction.penyaluran_schema import ASHNAF_LIST, PenyaluranCreate
+from app.modules.transaction import penghimpunan_repo as phrp
+from app.modules.transaction import penghimpunan_service as phsvc
+from app.modules.transaction.penghimpunan_schema import PenghimpunanCreate
 from app.shared.db import fetch_all, fetch_one
 from app.shared.response import err, ok
 
@@ -208,6 +211,104 @@ async def penyaluran_create(
 ):
     try:
         result = await psvc.create_penyaluran(req, user_id, branch_code)
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content=err('VALIDATION_ERROR', str(exc)))
+    except Exception as exc:
+        return JSONResponse(status_code=500, content=err('SERVER_ERROR', str(exc)))
+    return ok(result.model_dump())
+
+
+# ── Penghimpunan Dana (SD001) ─────────────────────────────────────────────────
+
+@router.get('/penghimpunan/lookup/rekening')
+async def penghimpunan_lookup_rekening(
+    type: str = Query(default='bank'),
+    branch: str | None = Query(default=None),
+):
+    type_map = {'bank': 'A', 'petty': 'P', 'cabang': 'R'}
+    rows = await prp.fetch_rekening(type_map.get(type, 'A'), branch)
+    return ok([r.model_dump() for r in rows])
+
+
+@router.get('/penghimpunan/lookup/produk')
+async def penghimpunan_lookup_produk(
+    branch_code: str = Query(...),
+    currency: str = Query(default='IDR'),
+):
+    rows = await prp.fetch_products(branch_code, currency)
+    return ok([r.model_dump() for r in rows])
+
+
+@router.get('/penghimpunan/lookup/donor')
+async def penghimpunan_lookup_donor(
+    q: str = Query(...),
+    branch: str | None = Query(default=None),
+):
+    rows = await phrp.search_donors(q, branch)
+    return ok(rows)
+
+
+@router.get('/penghimpunan/')
+async def penghimpunan_list(
+    begin: str = Query(...),
+    end: str = Query(...),
+    search: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=200),
+):
+    page_size = min(page_size, 200)
+    total, rows = await asyncio.gather(
+        phrp.count_list(begin, end, search, branch),
+        phrp.fetch_list(begin, end, search, branch, page, page_size),
+    )
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return ok({
+        'rows': [r.model_dump() for r in rows],
+        'pagination': {'page': page, 'limit': page_size, 'total': total, 'total_pages': total_pages},
+    })
+
+
+@router.get('/penghimpunan/{transaction_id}')
+async def penghimpunan_detail(transaction_id: int):
+    row = await fetch_one(
+        """SELECT t.transactionid, t.transactionno,
+              to_char(t.actualdate,'YYYY-MM-DD') AS actual_date,
+              t.description, CAST(t.amount AS float) AS amount, t.channelcode,
+              t.channelaccountno, fa.accountname AS channel_name,
+              t.inputer, t.authstatus, t.branchcode, t.journalno,
+              to_char(t.transactiondate,'YYYY-MM-DD') AS transaction_date,
+              t.referenceno, t.paidto, t.donorno, t.donorname,
+              t.rate, t.currencycode
+           FROM transaction.transaction t
+           LEFT JOIN transaction.financialaccount fa ON fa.accountno = t.channelaccountno
+           WHERE t.transactionid = $1 AND t.transactioncode = 'SD001'""",
+        transaction_id,
+    )
+    if not row:
+        return JSONResponse(status_code=404, content=err('NOT_FOUND', 'Transaksi tidak ditemukan'))
+    items = await fetch_all(
+        """SELECT ati.accounttitype, ati.accountno, ati.fundentity,
+                  CAST(ti.amount AS float) AS amount, ti.description,
+                  fa.accountname
+           FROM transaction.transactionitem ti
+           JOIN transaction.accounttransactionitem ati ON ati.transactionitemid = ti.transactionitemid
+           LEFT JOIN transaction.financialaccount fa ON fa.accountno = ati.accountno
+           WHERE ti.transactionid = $1
+           ORDER BY ti.transactionitemid""",
+        transaction_id,
+    )
+    return ok({**dict(row), 'items': [dict(i) for i in items]})
+
+
+@router.post('/penghimpunan/')
+async def penghimpunan_create(
+    req: PenghimpunanCreate,
+    branch_code: str = Query(default=''),
+    user_id: str = Query(default=''),
+):
+    try:
+        result = await phsvc.create_penghimpunan(req, user_id, branch_code)
     except ValueError as exc:
         return JSONResponse(status_code=422, content=err('VALIDATION_ERROR', str(exc)))
     except Exception as exc:
