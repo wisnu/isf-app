@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json as _json
 from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -8,13 +9,18 @@ from . import repo, service
 
 
 def _serialize(obj: dict) -> dict:
-    """Convert datetime/date objects in a dict to ISO strings for JSON serialization."""
+    """Convert datetime/date to ISO strings; parse payload JSONB string to dict."""
     result = {}
     for k, v in obj.items():
         if isinstance(v, datetime):
             result[k] = v.isoformat()
         elif isinstance(v, date):
             result[k] = v.isoformat()
+        elif k == 'payload' and isinstance(v, str):
+            try:
+                result[k] = _json.loads(v)
+            except Exception:
+                result[k] = v
         else:
             result[k] = v
     return result

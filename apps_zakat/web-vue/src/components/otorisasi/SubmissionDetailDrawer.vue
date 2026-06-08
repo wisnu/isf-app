@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { X, CheckCircle, XCircle } from 'lucide-vue-next'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
@@ -73,14 +73,25 @@ async function reject() {
   }
 }
 
+const parsedPayload = computed<Record<string, any>>(() => {
+  const raw = props.submission?.payload
+  if (!raw) return {}
+  if (typeof raw === 'string') { try { return JSON.parse(raw) } catch { return {} } }
+  return raw as Record<string, any>
+})
+
 function formatPayload(payload: Record<string, any>): { label: string; value: string }[] {
+  const p = typeof payload === 'string'
+    ? (() => { try { return JSON.parse(payload) } catch { return {} } })()
+    : (payload ?? {})
   const skip = ['items']
-  return Object.entries(payload)
+  return Object.entries(p)
     .filter(([k]) => !skip.includes(k))
     .map(([k, v]) => ({
       label: k.replace(/_/g, ' '),
-      value: typeof v === 'object' ? JSON.stringify(v) : String(v ?? '—'),
+      value: v === null ? 'null' : typeof v === 'object' ? JSON.stringify(v) : String(v ?? '—'),
     }))
+    .filter(f => f.value !== 'null' && f.value !== 'undefined')
 }
 </script>
 
@@ -89,7 +100,7 @@ function formatPayload(payload: Record<string, any>): { label: string; value: st
     <Transition name="drawer">
       <div v-if="open && submission" class="fixed inset-0 z-50 flex justify-end">
         <div class="absolute inset-0 bg-black/30" @click="emit('close')" />
-        <div class="relative w-full max-w-lg bg-white shadow-xl flex flex-col h-full overflow-y-auto">
+        <div class="relative w-full max-w-2xl bg-white shadow-xl flex flex-col h-full overflow-y-auto">
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b">
             <div>
@@ -126,18 +137,19 @@ function formatPayload(payload: Record<string, any>): { label: string; value: st
           <!-- Payload -->
           <div class="px-6 py-4 border-b">
             <p class="text-xs font-medium text-gray-500 uppercase mb-3">Data Input</p>
-            <dl class="space-y-2 text-sm">
+            <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
               <div v-for="field in formatPayload(submission.payload)" :key="field.label"
-                   class="flex justify-between gap-4">
-                <dt class="text-gray-500 capitalize">{{ field.label }}</dt>
-                <dd class="font-medium text-right">{{ field.value }}</dd>
+                   class="flex flex-col">
+                <dt class="text-xs text-gray-400 capitalize">{{ field.label }}</dt>
+                <dd class="font-medium text-gray-800">{{ field.value }}</dd>
               </div>
             </dl>
-            <div v-if="submission.payload.items?.length" class="mt-3">
-              <p class="text-xs font-medium text-gray-500 uppercase mb-2">Item ({{ submission.payload.items.length }})</p>
-              <div v-for="(item, i) in submission.payload.items" :key="i"
-                   class="text-xs bg-gray-50 rounded px-2 py-1 mb-1">
-                {{ item.product_name || item.product_id }} — Rp {{ item.amount?.toLocaleString('id-ID') }}
+            <div v-if="parsedPayload.items?.length" class="mt-4">
+              <p class="text-xs font-medium text-gray-500 uppercase mb-2">Item ({{ parsedPayload.items.length }})</p>
+              <div v-for="(item, i) in parsedPayload.items" :key="i"
+                   class="flex justify-between text-xs bg-gray-50 rounded px-3 py-1.5 mb-1">
+                <span>{{ item.product_name || item.product_id || `Item ${i + 1}` }}</span>
+                <span class="font-medium">Rp {{ item.amount?.toLocaleString('id-ID') }}</span>
               </div>
             </div>
           </div>

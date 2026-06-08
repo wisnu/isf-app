@@ -64,8 +64,21 @@ const PAYMENT_LABEL: Record<string, string> = {
 
 type SummaryItem = { label: string; value: string }
 
+function parsePayload(payload: unknown): Record<string, any> {
+  if (typeof payload === 'string') {
+    try { return JSON.parse(payload) } catch { return {} }
+  }
+  return (payload as Record<string, any>) ?? {}
+}
+
+function rowTotal(row: SubmissionRow): string {
+  const items: any[] = parsePayload(row.payload).items ?? []
+  const total = items.reduce((s, i) => s + (i.amount ?? 0), 0)
+  return total > 0 ? fmt(total) : '—'
+}
+
 function summaryFor(row: SubmissionRow): SummaryItem[] {
-  const p = row.payload
+  const p = parsePayload(row.payload)
   const items: (SummaryItem | null)[] = []
 
   switch (row.entity_type) {
@@ -353,12 +366,7 @@ function onRejected() { drawerOpen.value = false; load() }
                 <span v-if="!summaryFor(row).length" class="text-xs text-zinc-300">—</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-right font-medium">
-              <template v-if="row.payload?.items?.length">
-                {{ fmt(row.payload.items.reduce((s: number, i: any) => s + (i.amount ?? 0), 0)) }}
-              </template>
-              <template v-else>—</template>
-            </td>
+            <td class="px-4 py-2 text-right font-medium">{{ rowTotal(row) }}</td>
             <td class="px-4 py-2 text-center text-xs text-zinc-500">
               {{ row.level_current }}/{{ row.level_required }}
             </td>
