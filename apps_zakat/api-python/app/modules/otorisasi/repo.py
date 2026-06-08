@@ -177,6 +177,25 @@ async def list_entity_configs(module: str | None = None) -> list[dict]:
     )
 
 
+async def set_processing(submission_id: int) -> None:
+    async with get_pool().acquire() as conn:
+        await conn.execute(
+            "UPDATE otorisasi.submission SET status='PROCESSING', updated_at=NOW() WHERE id=$1",
+            submission_id,
+        )
+
+
+async def revert_to_pending_with_error(submission_id: int, error_msg: str) -> None:
+    async with get_pool().acquire() as conn:
+        await conn.execute(
+            """UPDATE otorisasi.submission
+               SET status='PENDING', dispatch_error=$2, updated_at=NOW()
+               WHERE id=$1""",
+            submission_id,
+            error_msg,
+        )
+
+
 async def get_user_limit(user_id: str, transaction_code: str) -> float:
     """Return nilai_limit user untuk transaction_code. 0.0 jika belum diset atau tidak ditemukan."""
     row = await fetch_one(

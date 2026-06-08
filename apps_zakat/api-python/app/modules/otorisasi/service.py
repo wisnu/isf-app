@@ -45,10 +45,14 @@ async def submit_for_auth(submission_id: int, user_id: str) -> dict:
     return {'id': submission_id, 'status': 'PENDING'}
 
 
-async def approve(
-    submission_id: int, authorizer_id: str,
-    branch_access: str = 'single', notes: str | None = None,
+async def start_approve(
+    submission_id: int,
+    authorizer_id: str,
+    branch_access: str = 'single',
+    notes: str | None = None,
 ) -> dict:
+    """Validate, log approval, set PROCESSING jika dispatcher ada. Returns dict dengan 'needs_dispatch' flag.
+    Tidak memanggil dispatcher — caller (router) yang menjadwalkan BackgroundTask."""
     sub = await repo.get_submission(submission_id)
     if not sub:
         raise HTTPException(404, 'Submission tidak ditemukan')
@@ -62,18 +66,43 @@ async def approve(
 
     if level >= level_required:
         dispatcher = _DISPATCHERS.get(sub['entity_type'])
-        result_entity_id = None
         if dispatcher:
-            result_entity_id = await dispatcher(
-                payload=dict(sub['payload']),
-                user_id=sub['submitted_by'],
-                branch_code=sub['branch_code'],
-            )
-        await repo.authorize_submission(submission_id, result_entity_id)
-        return {'id': submission_id, 'status': 'AUTHORIZED', 'result_entity_id': result_entity_id}
+            await repo.set_processing(submission_id)
+            return {
+                'id': submission_id,
+                'status': 'PROCESSING',
+                'needs_dispatch': True,
+                'entity_type': sub['entity_type'],
+                'payload': dict(sub['payload']),
+                'submitted_by': sub['submitted_by'],
+                'branch_code': sub['branch_code'],
+            }
+        else:
+            await repo.authorize_submission(submission_id, None)
+            return {'id': submission_id, 'status': 'AUTHORIZED', 'needs_dispatch': False}
 
     await repo.advance_level(submission_id, level + 1)
-    return {'id': submission_id, 'status': 'PENDING', 'level_current': level + 1}
+    return {'id': submission_id, 'status': 'PENDING', 'needs_dispatch': False, 'level_current': level + 1}
+
+
+async def execute_dispatch(
+    submission_id: int,
+    entity_type: str,
+    payload: dict,
+    submitted_by: str,
+    branch_code: str,
+) -> None:
+    """Background task: panggil dispatcher → AUTHORIZED. Jika gagal → revert ke PENDING + catat error."""
+    try:
+        dispatcher = _DISPATCHERS[entity_type]
+        result_entity_id = await dispatcher(
+            payload=payload,
+            user_id=submitted_by,
+            branch_code=branch_code,
+        )
+        await repo.authorize_submission(submission_id, result_entity_id)
+    except Exception as exc:
+        await repo.revert_to_pending_with_error(submission_id, str(exc)[:500])
 
 
 async def reject(submission_id: int, authorizer_id: str, notes: str) -> dict:
@@ -88,12 +117,13 @@ async def reject(submission_id: int, authorizer_id: str, notes: str) -> dict:
 
 
 async def bulk_approve(ids: list[int], authorizer_id: str, branch_access: str) -> list[dict]:
+    """Returns list of start_approve results. Router menjadwalkan BackgroundTask untuk setiap needs_dispatch=True."""
     results = []
     for sid in ids:
         try:
-            results.append(await approve(sid, authorizer_id, branch_access))
+            results.append(await start_approve(sid, authorizer_id, branch_access))
         except HTTPException as e:
-            results.append({'id': sid, 'error': e.detail})
+            results.append({'id': sid, 'error': e.detail, 'needs_dispatch': False})
     return results
 
 

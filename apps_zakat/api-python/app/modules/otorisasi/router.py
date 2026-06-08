@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json as _json
 from datetime import datetime, date
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from fastapi.responses import JSONResponse
 from app.shared.response import ok, err
 from .schema import SubmissionIn, UpdatePayloadIn, ApproveIn, RejectIn, BulkApproveIn, BulkRejectIn, SaveAndSubmitIn, UpdateAndSubmitIn
@@ -115,13 +115,24 @@ async def list_submissions(
 
 @router.post('/submission/{submission_id}/approve')
 async def approve_submission(
-    submission_id: int, body: ApproveIn,
+    submission_id: int,
+    body: ApproveIn,
+    background_tasks: BackgroundTasks,
     authorizer_id: str = Query(...),
     branch_access: str = Query('single'),
 ):
     try:
-        result = await service.approve(submission_id, authorizer_id, branch_access, body.notes)
-        return JSONResponse(ok(result))
+        result = await service.start_approve(submission_id, authorizer_id, branch_access, body.notes)
+        if result.get('needs_dispatch'):
+            background_tasks.add_task(
+                service.execute_dispatch,
+                result['id'],
+                result['entity_type'],
+                result['payload'],
+                result['submitted_by'],
+                result['branch_code'],
+            )
+        return JSONResponse(ok({'id': result['id'], 'status': result['status']}))
     except HTTPException as e:
         return JSONResponse(err('ERROR', e.detail), status_code=e.status_code)
 
@@ -136,9 +147,29 @@ async def reject_submission(submission_id: int, body: RejectIn, authorizer_id: s
 
 
 @router.post('/bulk/approve')
-async def bulk_approve(body: BulkApproveIn, authorizer_id: str = Query(...), branch_access: str = Query('single')):
+async def bulk_approve(
+    body: BulkApproveIn,
+    background_tasks: BackgroundTasks,
+    authorizer_id: str = Query(...),
+    branch_access: str = Query('single'),
+):
     results = await service.bulk_approve(body.ids, authorizer_id, branch_access)
-    return JSONResponse(ok(results))
+    for r in results:
+        if r.get('needs_dispatch'):
+            background_tasks.add_task(
+                service.execute_dispatch,
+                r['id'],
+                r['entity_type'],
+                r['payload'],
+                r['submitted_by'],
+                r['branch_code'],
+            )
+    clean = [
+        {'id': r['id'], 'status': r.get('status', 'ERROR'),
+         **({'error': r['error']} if 'error' in r else {})}
+        for r in results
+    ]
+    return JSONResponse(ok(clean))
 
 
 @router.post('/bulk/reject')
