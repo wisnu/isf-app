@@ -297,6 +297,57 @@ async def submit_submission(
 
 
 # ---------------------------------------------------------------------------
+# Limit Transaksi endpoints
+# ---------------------------------------------------------------------------
+
+@router.post('/save-and-submit/')
+async def save_and_submit(request: Request):
+    """Simpan submission baru + cek limit + dispatch atau PENDING."""
+    body = await request.json()
+    entity_type = body.get('entity_type', '')
+    menu_key = _ENTITY_MENU.get(entity_type, _MENU_MONITORING)
+    await require_menu(menu_key)(request)
+    s = _session(request)
+    params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
+    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/"
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(url, json=body, params=params)
+    return JSONResponse(status_code=resp.status_code, content=resp.json())
+
+
+@router.put('/save-and-submit/{submission_id}')
+async def update_and_submit(submission_id: int, request: Request):
+    """Update submission REJECTED + cek limit + dispatch atau PENDING."""
+    detail = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    if detail.status_code != 200:
+        return JSONResponse(status_code=detail.status_code, content=detail.json())
+    entity_type = (detail.json().get('data') or {}).get('entity_type', '')
+    await _check_dynamic_menu(request, entity_type)
+    s = _session(request)
+    body = await request.json()
+    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/{submission_id}"
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.put(url, json=body, params={'user_id': s['user_id']})
+    return JSONResponse(status_code=resp.status_code, content=resp.json())
+
+
+@router.get('/user-limit/')
+async def get_user_limit(
+    request: Request,
+    entity_type: str = Query(...),
+):
+    """Return limit user untuk entity_type."""
+    menu_key = _ENTITY_MENU.get(entity_type, _MENU_MONITORING)
+    await require_menu(menu_key)(request)
+    s = _session(request)
+    downstream = await get_api_python(
+        '/api/otorisasi/user-limit/',
+        params={'user_id': s['user_id'], 'entity_type': entity_type},
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+# ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
 
