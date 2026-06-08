@@ -1,4 +1,4 @@
-CREATE TABLE otorisasi.entity_config (
+CREATE TABLE IF NOT EXISTS otorisasi.entity_config (
     entity_type    VARCHAR(50)  PRIMARY KEY,
     module         VARCHAR(50)  NOT NULL,
     level_required INTEGER      NOT NULL DEFAULT 1,
