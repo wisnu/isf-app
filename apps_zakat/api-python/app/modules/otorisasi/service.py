@@ -13,9 +13,11 @@ def register_dispatcher(entity_type: str, fn) -> None:
 def _register_defaults() -> None:
     """Dipanggil di app startup untuk daftarkan semua dispatcher."""
     from app.modules.transaction import penghimpunan_service, penyaluran_service
+    from app.modules.bank import service as bank_service
     register_dispatcher('penghimpunan', penghimpunan_service.create_from_payload)
     register_dispatcher('penyaluran', penyaluran_service.create_from_payload)
-    # coa, kas, bank dispatcher ditambahkan saat modul master tersedia
+    register_dispatcher('bank', bank_service.create_from_payload)
+    # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
 async def save_draft(
