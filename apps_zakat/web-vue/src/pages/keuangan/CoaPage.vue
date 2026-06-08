@@ -121,7 +121,7 @@ const statsData = shallowRef<{ total: number; by_type: Record<string, number> } 
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
-const compactMode = shallowRef(true)
+const compactMode = true
 
 // ── Filter state ───────────────────────────────────────────────────────────────
 const f = reactive({
@@ -345,7 +345,7 @@ onMounted(() => {
 
       <!-- Toolbar: filter + search -->
       <div class="px-4 py-2.5 border-b border-border flex flex-wrap items-center gap-3">
-        <!-- Clear + Compact -->
+        <!-- Clear filter -->
         <div class="flex items-center gap-2 shrink-0">
           <Button
             variant="outline" size="sm" class="gap-1 h-7 text-[11px]"
@@ -355,18 +355,6 @@ onMounted(() => {
             <X class="w-3 h-3" />
             Clear
           </Button>
-          <button
-            type="button"
-            :class="[
-              'text-[11px] px-2.5 py-0.5 rounded-lg border transition-colors',
-              compactMode
-                ? 'bg-primary/10 border-primary text-primary font-medium'
-                : 'border-border text-muted hover:bg-background hover:text-foreground',
-            ]"
-            @click="compactMode = !compactMode"
-          >
-            Compact
-          </button>
         </div>
 
         <!-- Type filter chips -->
