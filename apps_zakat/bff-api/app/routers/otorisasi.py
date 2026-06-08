@@ -205,13 +205,33 @@ async def my_submissions(
 
 
 @router.get('/submission/{submission_id}')
-async def get_submission(
-    submission_id: int,
-    _: str = Depends(require_menu(_MENU_MONITORING)),
-):
-    """Get submission detail. Monitoring menu — otorisator sees all; frontend gates inputer."""
+async def get_submission(submission_id: int, request: Request):
+    """Get submission detail.
+    Accessible by otorisator (monitoring menu) OR inputer (entity's own menu).
+    Fetch first, then check — entity_type is needed to resolve inputer's menu key.
+    """
     downstream = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
-    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+    entity_type = (downstream.json().get('data') or {}).get('entity_type', '')
+
+    # Allow if user has monitoring menu (otorisator)
+    try:
+        await require_menu(_MENU_MONITORING)(request)
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    except AppHTTPError:
+        pass
+
+    # Fallback: allow if user has entity's own menu (inputer editing their draft)
+    try:
+        await _check_dynamic_menu(request, entity_type)
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    except AppHTTPError:
+        return JSONResponse(
+            status_code=403,
+            content=err('MENU_DENIED', f"Menu '{entity_type}' tidak diizinkan"),
+        )
 
 
 @router.put('/submission/{submission_id}')
