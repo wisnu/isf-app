@@ -429,8 +429,10 @@ async def approve_batch(batch_id: int, authorized_user: str, branch_code: str,
         )
         if not batch_row:
             raise LookupError(f'Batch {batch_id} tidak ditemukan')
-        if (batch_row['authstatus'] or 'P') == 'A':
+        if batch_row['authstatus'] == 'A':
             raise ValueError('Batch sudah pernah diotorisasi')
+        if batch_row['authstatus'] == 'Q':
+            raise ValueError('Batch sedang dalam proses otorisasi')
 
         items = await conn.fetch(
             """SELECT * FROM transaction.batchuploaditem
@@ -476,3 +478,18 @@ async def approve_batch(batch_id: int, authorized_user: str, branch_code: str,
             )
 
     return committed
+
+
+async def approve_batch_background(
+    batch_id: int,
+    authorized_user: str,
+    branch_code: str,
+    inputer: str,
+) -> None:
+    """Background task wrapper untuk approve_batch.
+    Memanggil approve_batch() dan menangani error dengan set authstatus='F'."""
+    from app.modules.transaction.repository import set_batch_failed
+    try:
+        await approve_batch(batch_id, authorized_user, branch_code, inputer)
+    except Exception:
+        await set_batch_failed(batch_id)

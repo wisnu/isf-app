@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.shared.db import fetch_all, fetch_one, get_pool
+from app.shared.db import execute, fetch_all, fetch_one, get_pool
 
 
 async def get_bank_accounts() -> set[str]:
@@ -117,6 +117,30 @@ async def get_batch(batch_id: int) -> dict | None:
                   authorizeduser
            FROM transaction.batchupload
            WHERE batchid = $1""",
+        batch_id,
+    )
+
+
+async def get_batch_header(batch_id: int) -> dict | None:
+    """Ambil header batch untuk validasi cepat sebelum approve."""
+    return await fetch_one(
+        "SELECT batchid, authstatus FROM transaction.batchupload WHERE batchid = $1",
+        batch_id,
+    )
+
+
+async def set_batch_processing(batch_id: int) -> None:
+    """Set authstatus='Q' (processing/queued) sebelum background task dimulai."""
+    await execute(
+        "UPDATE transaction.batchupload SET authstatus = 'Q' WHERE batchid = $1",
+        batch_id,
+    )
+
+
+async def set_batch_failed(batch_id: int) -> None:
+    """Set authstatus='F' (failed) jika background task gagal."""
+    await execute(
+        "UPDATE transaction.batchupload SET authstatus = 'F' WHERE batchid = $1",
         batch_id,
     )
 

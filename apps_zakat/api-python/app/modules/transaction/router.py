@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Query, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from app.modules.transaction import service
-from app.modules.transaction.commit import approve_batch
+from app.modules.transaction.commit import approve_batch_background
+from app.modules.transaction import repository as txrepo
 from app.modules.transaction.template import build_template
 from app.modules.transaction import penyaluran_repo as prp
 from app.modules.transaction import penyaluran_service as psvc
@@ -99,20 +100,21 @@ async def batch_detail_endpoint(batch_id: int):
 
 
 @router.post('/upload/penghimpunan/batches/{batch_id}/approve')
-async def approve_endpoint(batch_id: int, req: ApproveRequest):
-    try:
-        committed = await approve_batch(
-            batch_id, req.authorized_user, req.branch_code, req.inputer
-        )
-    except LookupError as exc:
-        return JSONResponse(status_code=404, content=err('NOT_FOUND', str(exc)))
-    except ValueError as exc:
-        if 'sudah pernah' in str(exc):
-            return JSONResponse(status_code=409, content=err('ALREADY_APPROVED', str(exc)))
-        return JSONResponse(status_code=400, content=err('APPROVE_ERROR', str(exc)))
-    except Exception as exc:
-        return JSONResponse(status_code=500, content=err('SERVER_ERROR', str(exc)))
-    return ok({'batch_id': batch_id, 'total_committed': committed})
+async def approve_endpoint(batch_id: int, req: ApproveRequest, background_tasks: BackgroundTasks):
+    batch = await txrepo.get_batch_header(batch_id)
+    if not batch:
+        return JSONResponse(status_code=404, content=err('NOT_FOUND', f'Batch {batch_id} tidak ditemukan'))
+    status = batch['authstatus'] or 'P'
+    if status == 'A':
+        return JSONResponse(status_code=409, content=err('ALREADY_APPROVED', 'Batch sudah pernah diotorisasi'))
+    if status == 'Q':
+        return JSONResponse(status_code=409, content=err('ALREADY_PROCESSING', 'Batch sedang dalam proses otorisasi'))
+    await txrepo.set_batch_processing(batch_id)
+    background_tasks.add_task(
+        approve_batch_background,
+        batch_id, req.authorized_user, req.branch_code, req.inputer,
+    )
+    return ok({'batch_id': batch_id, 'status': 'PROCESSING'})
 
 
 # ── Penyaluran Dana (DD001) ───────────────────────────────────────────────────
