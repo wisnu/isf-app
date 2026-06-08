@@ -552,24 +552,50 @@ unstyled, struktur layout, UX pattern untuk enterprise admin.
 Setiap fitur input (transaksi + master data) di modul keuangan menggunakan sistem otorisasi terpusat.
 Data TIDAK langsung masuk tabel utama — semua disimpan di `otorisasi.submission` dulu.
 
-### Alur Form (Save → Submission, bukan langsung endpoint)
+### Dua Jenis Alur — Pilih yang Tepat
 
-Form input **tidak lagi** `POST /api/{entity}/` secara langsung. Gantinya:
+| Jenis | Entity type | Endpoint | Perilaku |
+|---|---|---|---|
+| **Master data** | `bank`, `coa`, `kas` | `POST /api/otorisasi/save-and-submit/` | Langsung **PENDING** — tanpa cek limit |
+| **Transaksi** | `penghimpunan`, `penyaluran`, `upload_penghimpunan` | `POST /api/otorisasi/save-and-submit/` | Cek limit user: jika ≤ limit → **AUTHORIZED** otomatis; jika > limit → **PENDING** untuk supervisor |
+
+> ⚠️ **JANGAN gunakan** `POST /api/otorisasi/submission/` — endpoint itu hanya buat **DRAFT** yang tidak muncul di halaman Otorisasi.
+
+**Tidak ada alur input → DRAFT → Submit.** Semua form langsung ke PENDING (atau AUTHORIZED) satu klik.
+
+### Alur Master Data (bank, coa, kas)
 
 ```typescript
-// Di PenghimpunanDanaFormPage.vue, PenyaluranDanaFormPage.vue, CoaPage.vue, dll
-await POST('/api/otorisasi/submission/', {
-  entity_type: 'penghimpunan',   // atau 'penyaluran' | 'coa' | 'kas' | 'bank' | 'upload_penghimpunan'
+// Form simpan → langsung PENDING untuk supervisor approve
+await api.post('/api/otorisasi/save-and-submit/', {
+  entity_type: 'bank',  // atau 'coa' | 'kas'
   module: 'keuangan',
   payload: {
-    // field form apa adanya — sesuai schema service masing-masing
-    actual_date: form.actualDate,
-    payment_type: form.paymentType,
-    items: form.items,
-    // ...
+    action: 'create',   // wajib: 'create' | 'edit' | 'delete'
+    account_name: form.account_name,
+    // ...semua field form
   },
 })
-// Setelah save → redirect ke list page, toast: "Draft tersimpan. Klik Submit untuk mengotorisasi."
+toast.success('Dikirim untuk otorisasi')
+closeModal()
+await loadList()  // refresh list
+```
+
+### Alur Transaksi (penghimpunan, penyaluran)
+
+```typescript
+// save-and-submit dengan limit check:
+// - total ≤ nilai_limit user  → AUTHORIZED otomatis (bypass otorisasi)
+// - total > nilai_limit user  → PENDING (harus approve supervisor)
+const res = await api.post<{ submission_id: number; status: string; bypassed_auth: boolean }>(
+  '/api/otorisasi/save-and-submit/',
+  { entity_type: 'penghimpunan', module: 'keuangan', payload: { items: [...], ... } }
+)
+if (res.status === 'AUTHORIZED') {
+  toast.success('Transaksi berhasil diotorisasi otomatis')
+} else {
+  toast.success('Transaksi dikirim — menunggu otorisasi supervisor')
+}
 ```
 
 ### Alur List Page (Gabung Submissions + Authorized)
