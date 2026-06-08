@@ -31,16 +31,20 @@ watch(() => props.modelValue, (v) => {
 
 function onInput(e: Event) {
   const inp = e.target as HTMLInputElement
+  const isDeleting = ((e as InputEvent).inputType ?? '').startsWith('delete')
   let val = inp.value
 
-  // Auto-insert dash setelah digit ke-2 dan ke-4 saat mengetik maju
-  const digits = val.replace(/\D/g, '')
-  if (digits.length === 2 && val === digits) {
-    val = digits + '-'
-    inp.value = val
-  } else if (digits.length === 4 && val.replace(/-/g, '') === digits) {
-    val = `${digits.slice(0, 2)}-${digits.slice(2)}-`
-    inp.value = val
+  // Auto-insert dash setelah digit ke-2 dan ke-4 — hanya saat mengetik maju,
+  // tidak saat menghapus agar dash tidak "bounce back" saat backspace.
+  if (!isDeleting) {
+    const digits = val.replace(/\D/g, '')
+    if (digits.length === 2 && val === digits) {
+      val = digits + '-'
+      inp.value = val
+    } else if (digits.length === 4 && val.replace(/-/g, '') === digits) {
+      val = `${digits.slice(0, 2)}-${digits.slice(2)}-`
+      inp.value = val
+    }
   }
 
   text.value = val
