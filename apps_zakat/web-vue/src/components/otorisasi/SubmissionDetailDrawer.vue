@@ -229,12 +229,12 @@ const hasDesc   = computed(() => items.value.some(i => i.description))
 <template>
   <Teleport to="body">
     <Transition name="drawer">
-      <div v-if="open && submission" class="fixed inset-0 z-50 flex justify-end">
+      <div v-if="open && submission" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/40" @click="emit('close')" />
 
         <!-- Panel -->
-        <div class="relative flex flex-col h-full w-full max-w-2xl bg-white shadow-2xl">
+        <div class="relative flex flex-col w-full max-w-2xl max-h-[90vh] rounded-xl bg-white shadow-2xl">
 
           <!-- ── Header (sticky) ──────────────────────────────────────── -->
           <div class="shrink-0 border-b bg-white px-6 py-4">
@@ -418,6 +418,6 @@ const hasDesc   = computed(() => items.value.some(i => i.description))
 </template>
 
 <style scoped>
-.drawer-enter-active, .drawer-leave-active { transition: transform 0.25s ease; }
-.drawer-enter-from, .drawer-leave-to { transform: translateX(100%); }
+.drawer-enter-active, .drawer-leave-active { transition: opacity 0.2s ease; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; }
 </style>
