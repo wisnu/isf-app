@@ -58,6 +58,64 @@ const entityTypes = [
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
 
+const PAYMENT_LABEL: Record<string, string> = {
+  K: 'Kas Kecil', C: 'Kas Cabang', B: 'Bank', A: 'Aset/GL',
+}
+
+type SummaryItem = { label: string; value: string }
+
+function summaryFor(row: SubmissionRow): SummaryItem[] {
+  const p = row.payload
+  const items: (SummaryItem | null)[] = []
+
+  switch (row.entity_type) {
+    case 'penghimpunan':
+      items.push(
+        p.donor_name ? { label: 'Donatur', value: p.donor_name } : null,
+        p.payment_type ? { label: 'Bayar', value: PAYMENT_LABEL[p.payment_type] ?? p.payment_type } : null,
+        p.items?.length ? { label: 'Item', value: `${p.items.length} produk` } : null,
+      )
+      break
+    case 'penyaluran':
+      items.push(
+        p.description ? { label: 'Ket', value: p.description } : null,
+        p.payment_type ? { label: 'Bayar', value: PAYMENT_LABEL[p.payment_type] ?? p.payment_type } : null,
+        p.items?.length ? { label: 'Item', value: `${p.items.length} produk` } : null,
+      )
+      break
+    case 'upload_penghimpunan':
+      items.push(
+        p.filename ? { label: 'File', value: p.filename } : null,
+        (p.total_rows ?? p.rows?.length) != null
+          ? { label: 'Baris', value: String(p.total_rows ?? p.rows?.length) }
+          : null,
+        p.total_amount != null ? { label: 'Total', value: fmt(p.total_amount) } : null,
+      )
+      break
+    case 'coa':
+      items.push(
+        p.account_no ? { label: 'Kode', value: p.account_no } : null,
+        p.account_name ? { label: 'Nama', value: p.account_name } : null,
+        p.account_type ? { label: 'Tipe', value: p.account_type } : null,
+      )
+      break
+    case 'kas':
+      items.push(
+        (p.account_name ?? p.name ?? p.code) ? { label: 'Nama', value: p.account_name ?? p.name ?? p.code } : null,
+      )
+      break
+    case 'bank':
+      items.push(
+        p.bank_name ? { label: 'Bank', value: p.bank_name } : null,
+        p.account_number ? { label: 'No. Rek', value: p.account_number } : null,
+        p.account_holder ? { label: 'A/N', value: p.account_holder } : null,
+      )
+      break
+  }
+
+  return items.filter((x): x is SummaryItem => x !== null)
+}
+
 const selectedRows = computed(() => rows.value.filter(r => selectedIds.value.has(r.id)))
 const allSelected = computed(() => rows.value.length > 0 && rows.value.every(r => selectedIds.value.has(r.id)))
 const someSelected = computed(() => selectedIds.value.size > 0 && !allSelected.value)
@@ -249,6 +307,7 @@ function onRejected() { drawerOpen.value = false; load() }
             <th class="px-4 py-2 text-left">Inputer</th>
             <th class="px-4 py-2 text-left">Cabang</th>
             <th class="px-4 py-2 text-left">Disubmit</th>
+            <th class="px-4 py-2 text-left">Ringkasan</th>
             <th class="px-4 py-2 text-right">Total</th>
             <th class="px-4 py-2 text-center">Level</th>
             <th class="px-4 py-2 text-center">Status</th>
@@ -257,10 +316,10 @@ function onRejected() { drawerOpen.value = false; load() }
         </thead>
         <tbody>
           <tr v-if="loading && !rows.length">
-            <td colspan="9" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
+            <td colspan="10" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
           </tr>
           <tr v-else-if="hasLoaded && rows.length === 0">
-            <td colspan="9" class="px-4 py-8 text-center text-zinc-400">
+            <td colspan="10" class="px-4 py-8 text-center text-zinc-400">
               Tidak ada submission pending.
             </td>
           </tr>
@@ -281,6 +340,19 @@ function onRejected() { drawerOpen.value = false; load() }
             <td class="px-4 py-2 text-zinc-600">{{ row.submitted_by }}</td>
             <td class="px-4 py-2 text-zinc-600">{{ row.branch_code }}</td>
             <td class="px-4 py-2">{{ row.submitted_at ? dmy(row.submitted_at) : '—' }}</td>
+            <td class="px-4 py-2">
+              <div class="space-y-0.5">
+                <div
+                  v-for="item in summaryFor(row)"
+                  :key="item.label"
+                  class="flex items-baseline gap-1 text-xs"
+                >
+                  <span class="shrink-0 text-zinc-400">{{ item.label }}:</span>
+                  <span class="truncate max-w-[180px] text-zinc-700 dark:text-zinc-300">{{ item.value }}</span>
+                </div>
+                <span v-if="!summaryFor(row).length" class="text-xs text-zinc-300">—</span>
+              </div>
+            </td>
             <td class="px-4 py-2 text-right font-medium">
               <template v-if="row.payload?.items?.length">
                 {{ fmt(row.payload.items.reduce((s: number, i: any) => s + (i.amount ?? 0), 0)) }}
