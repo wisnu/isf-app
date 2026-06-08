@@ -29,3 +29,13 @@ class BulkApproveIn(BaseModel):
 class BulkRejectIn(BaseModel):
     ids: list[int]
     notes: str
+
+
+class SaveAndSubmitIn(BaseModel):
+    entity_type: str
+    module: str
+    payload: dict[str, Any]
+
+
+class UpdateAndSubmitIn(BaseModel):
+    payload: dict[str, Any]

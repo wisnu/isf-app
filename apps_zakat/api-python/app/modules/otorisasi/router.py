@@ -4,7 +4,7 @@ from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from app.shared.response import ok, err
-from .schema import SubmissionIn, UpdatePayloadIn, ApproveIn, RejectIn, BulkApproveIn, BulkRejectIn
+from .schema import SubmissionIn, UpdatePayloadIn, ApproveIn, RejectIn, BulkApproveIn, BulkRejectIn, SaveAndSubmitIn, UpdateAndSubmitIn
 from . import repo, service
 
 
@@ -148,3 +148,44 @@ async def bulk_reject(body: BulkRejectIn, authorizer_id: str = Query(...)):
 async def get_entity_configs(module: str | None = Query(None)):
     configs = await repo.list_entity_configs(module)
     return JSONResponse(ok([dict(c) for c in configs]))
+
+
+@router.post('/save-and-submit/')
+async def save_and_submit_endpoint(
+    body: SaveAndSubmitIn,
+    user_id: str = Query(...),
+    branch_code: str = Query(...),
+):
+    try:
+        result = await service.save_and_submit(
+            body.entity_type, body.module, body.payload, user_id, branch_code,
+        )
+        return JSONResponse(ok(result))
+    except HTTPException as e:
+        return JSONResponse(err('ERROR', e.detail), status_code=e.status_code)
+
+
+@router.put('/save-and-submit/{submission_id}')
+async def update_and_submit_endpoint(
+    submission_id: int,
+    body: UpdateAndSubmitIn,
+    user_id: str = Query(...),
+):
+    try:
+        result = await service.update_and_submit(submission_id, body.payload, user_id)
+        return JSONResponse(ok(result))
+    except HTTPException as e:
+        return JSONResponse(err('ERROR', e.detail), status_code=e.status_code)
+
+
+@router.get('/user-limit/')
+async def get_user_limit_endpoint(
+    user_id: str = Query(...),
+    entity_type: str = Query(...),
+):
+    nilai_limit = await service.get_user_limit_for_entity(user_id, entity_type)
+    return JSONResponse(ok({
+        'entity_type': entity_type,
+        'nilai_limit': nilai_limit,
+        'has_limit': nilai_limit > 0,
+    }))
