@@ -3,11 +3,13 @@ import { Check, Download, FileText, Folder, Plus, RefreshCw, Search, X } from 'l
 import Column from 'primevue/column'
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api, ApiError } from '@/lib/api/client'
+import { useToast } from '@/lib/useToast'
 
 interface CoaRow {
   code: string
@@ -45,6 +47,72 @@ const TYPE_BADGE: Record<string, string> = {
 
 function typeBadgeClass(label: string) {
   return TYPE_BADGE[label] ?? 'bg-background text-muted border border-border'
+}
+
+interface CoaSubmission {
+  id: number
+  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED'
+  submitted_by: string | null
+  submitted_at: string | null
+  payload: {
+    code?: string
+    name?: string
+    type_code?: string
+    parent?: string | null
+    is_detail?: boolean
+  }
+}
+
+const toast = useToast()
+
+// ── Submissions (otorisasi) ────────────────────────────────────────────────────
+const submissions = ref<CoaSubmission[]>([])
+const showAddModal = shallowRef(false)
+const submitting = shallowRef(false)
+const newCoa = reactive({ code: '', name: '', type_code: 'A', parent: '', is_detail: true })
+
+async function loadSubmissions() {
+  try {
+    const res = await api.get<{ rows: CoaSubmission[] }>(
+      '/api/otorisasi/my-submissions/?entity_type=coa',
+    )
+    submissions.value = res.rows ?? []
+  } catch {
+    // silent — submissions section is best-effort
+  }
+}
+
+async function submitNewCoa() {
+  if (!newCoa.code || !newCoa.name) {
+    toast.error('Kode dan nama akun wajib diisi')
+    return
+  }
+  submitting.value = true
+  try {
+    await api.post('/api/otorisasi/submission/', {
+      entity_type: 'coa',
+      module: 'keuangan',
+      payload: {
+        code: newCoa.code,
+        name: newCoa.name,
+        type_code: newCoa.type_code,
+        parent: newCoa.parent || null,
+        is_detail: newCoa.is_detail,
+      },
+    })
+    toast.success('Permintaan tambah COA disubmit untuk otorisasi')
+    showAddModal.value = false
+    newCoa.code = ''
+    newCoa.name = ''
+    newCoa.type_code = 'A'
+    newCoa.parent = ''
+    newCoa.is_detail = true
+    await loadSubmissions()
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : 'Gagal mengirim submission')
+  } finally {
+    submitting.value = false
+  }
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -167,7 +235,10 @@ async function exportXlsx() {
   }
 }
 
-onMounted(loadAll)
+onMounted(() => {
+  loadAll()
+  loadSubmissions()
+})
 
 // Tailwind class untuk filter inputs di popup
 const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted/60'
@@ -196,7 +267,7 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
           <Download class="w-3.5 h-3.5" :class="{ 'animate-pulse': exporting }" />
           {{ exporting ? 'Mengekspor…' : 'Export Excel' }}
         </Button>
-        <Button size="sm" class="gap-1.5 h-8 text-xs" disabled>
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="showAddModal = true">
           <Plus class="w-3.5 h-3.5" />
           Tambah Akun
         </Button>
@@ -214,6 +285,88 @@ const inputCls = 'w-full rounded-lg border border-border bg-surface px-2 py-1.5 
     <Alert v-if="errorMsg" variant="destructive" class="py-2 text-xs">
       <strong>Error:</strong> {{ errorMsg }}
     </Alert>
+
+    <!-- Pending submissions -->
+    <div v-if="submissions.length > 0" class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 p-3">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        Permintaan Tambah Akun ({{ submissions.length }})
+      </p>
+      <div class="space-y-1">
+        <div
+          v-for="sub in submissions"
+          :key="sub.id"
+          class="flex items-center gap-3 rounded bg-white dark:bg-zinc-900 px-3 py-1.5 text-[11px] border border-border"
+        >
+          <span class="font-mono text-muted">#{{ sub.id }}</span>
+          <span class="font-semibold">{{ sub.payload.code }}</span>
+          <span class="text-muted truncate flex-1">{{ sub.payload.name }}</span>
+          <StatusBadge :status="sub.status" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Add COA modal -->
+    <Teleport to="body">
+      <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl">
+          <h2 class="mb-4 text-base font-semibold">Permintaan Tambah Akun COA</h2>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium">Kode Akun <span class="text-red-500">*</span></label>
+                <input
+                  v-model="newCoa.code"
+                  placeholder="mis. 110101"
+                  class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium">Tipe</label>
+                <select
+                  v-model="newCoa.type_code"
+                  class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option v-for="t in TYPE_OPTIONS" :key="t.code" :value="t.code">{{ t.label }}</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium">Nama Akun <span class="text-red-500">*</span></label>
+              <input
+                v-model="newCoa.name"
+                placeholder="Nama akun perkiraan"
+                class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium">Kode Parent</label>
+                <input
+                  v-model="newCoa.parent"
+                  placeholder="Opsional"
+                  class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div class="flex items-end gap-2 pb-0.5">
+                <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
+                  <input type="checkbox" v-model="newCoa.is_detail" class="rounded" />
+                  Akun Detail
+                </label>
+              </div>
+            </div>
+          </div>
+          <p class="mt-3 text-[10px] text-muted">
+            Permintaan ini akan disubmit ke sistem otorisasi. Akun baru aktif setelah disetujui supervisor.
+          </p>
+          <div class="mt-4 flex justify-end gap-2">
+            <Button variant="outline" size="sm" :disabled="submitting" @click="showAddModal = false">Batal</Button>
+            <Button size="sm" :disabled="submitting" @click="submitNewCoa">
+              {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Table card -->
     <div class="rounded-xl border border-border bg-surface overflow-hidden">

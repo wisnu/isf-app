@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { Banknote, Plus } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
 
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import { api } from '@/lib/api/client'
 import { formatDate, formatIdr } from '@/lib/format'
+import { useToast } from '@/lib/useToast'
 
 interface KasAccount {
   id: string
@@ -71,6 +74,60 @@ const stats = computed(() => ({
   totalAccounts: accounts.length,
   active: accounts.filter((a) => a.active).length,
 }))
+
+interface KasSubmission {
+  id: number
+  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED'
+  payload: { code?: string; name?: string; holder?: string }
+}
+
+const toast = useToast()
+const submissions = ref<KasSubmission[]>([])
+const showAddModal = shallowRef(false)
+const submitting = shallowRef(false)
+const newKas = reactive({ code: '', name: '', holder: '' })
+
+async function loadSubmissions() {
+  try {
+    const res = await api.get<{ rows: KasSubmission[] }>(
+      '/api/otorisasi/my-submissions/?entity_type=kas',
+    )
+    submissions.value = res.rows ?? []
+  } catch {
+    // silent
+  }
+}
+
+async function submitNewKas() {
+  if (!newKas.code || !newKas.name) {
+    toast.error('Kode dan nama kas wajib diisi')
+    return
+  }
+  submitting.value = true
+  try {
+    await api.post('/api/otorisasi/submission/', {
+      entity_type: 'kas',
+      module: 'keuangan',
+      payload: {
+        code: newKas.code,
+        name: newKas.name,
+        holder: newKas.holder || null,
+      },
+    })
+    toast.success('Permintaan tambah kas disubmit untuk otorisasi')
+    showAddModal.value = false
+    newKas.code = ''
+    newKas.name = ''
+    newKas.holder = ''
+    await loadSubmissions()
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : 'Gagal mengirim submission')
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(loadSubmissions)
 </script>
 
 <template>
@@ -82,7 +139,7 @@ const stats = computed(() => ({
           Daftar brankas/kas fisik beserta saldo, pemegang, dan tanggal mutasi terakhir.
         </p>
       </div>
-      <Button class="gap-1.5" disabled title="Tersedia pada Fase 2">
+      <Button class="gap-1.5" @click="showAddModal = true">
         <Plus class="w-4 h-4" />
         Tambah Kas
       </Button>
@@ -94,6 +151,69 @@ const stats = computed(() => ({
         keuangan di Fase 2.
       </span>
     </Alert>
+
+    <!-- Pending submissions -->
+    <div v-if="submissions.length > 0" class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 p-3">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        Permintaan Tambah Kas ({{ submissions.length }})
+      </p>
+      <div class="space-y-1">
+        <div
+          v-for="sub in submissions"
+          :key="sub.id"
+          class="flex items-center gap-3 rounded bg-white dark:bg-zinc-900 px-3 py-1.5 text-[11px] border border-border"
+        >
+          <span class="font-mono text-muted">#{{ sub.id }}</span>
+          <span class="font-semibold">{{ sub.payload.code }}</span>
+          <span class="text-muted truncate flex-1">{{ sub.payload.name }}</span>
+          <StatusBadge :status="sub.status" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Kas modal -->
+    <Teleport to="body">
+      <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-xl">
+          <h2 class="mb-4 text-base font-semibold">Permintaan Tambah Kas</h2>
+          <div class="space-y-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium">Kode Kas <span class="text-red-500">*</span></label>
+              <input
+                v-model="newKas.code"
+                placeholder="mis. 1-1600"
+                class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium">Nama Kas <span class="text-red-500">*</span></label>
+              <input
+                v-model="newKas.name"
+                placeholder="Nama kas / brankas"
+                class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium">Pemegang Kas</label>
+              <input
+                v-model="newKas.holder"
+                placeholder="Nama pemegang (opsional)"
+                class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+          <p class="mt-3 text-[10px] text-muted">
+            Permintaan ini disubmit ke sistem otorisasi. Kas aktif setelah disetujui supervisor.
+          </p>
+          <div class="mt-4 flex justify-end gap-2">
+            <Button variant="outline" size="sm" :disabled="submitting" @click="showAddModal = false">Batal</Button>
+            <Button size="sm" :disabled="submitting" @click="submitNewKas">
+              {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <Card>
