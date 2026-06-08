@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
-import Column from 'primevue/column'
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
-import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
@@ -405,105 +403,84 @@ onMounted(loadBankAccounts)
         />
       </div>
 
-      <!-- DataTable -->
-      <AppDataTable :value="rows" :loading="loading" :compact="true">
-        <Column field="account_no" header="Kode Rekening" style="width:120px;min-width:100px">
-          <template #body="{ data: r }">
-            <span class="font-mono text-xs text-muted tabular-nums">{{ r.account_no }}</span>
-          </template>
-        </Column>
-
-        <Column field="account_name" header="Nama Rekening">
-          <template #body="{ data: r }">
-            <span class="text-[11px]">{{ r.account_name ?? '—' }}</span>
-          </template>
-        </Column>
-
-        <Column field="bank_name" header="Nama Bank" style="width:130px;min-width:100px">
-          <template #body="{ data: r }">
-            <span class="text-[11px]">{{ r.bank_name ?? '—' }}</span>
-          </template>
-        </Column>
-
-        <Column field="bank_account_no" header="No Rekening Bank" style="width:150px;min-width:120px">
-          <template #body="{ data: r }">
-            <span class="font-mono text-xs text-muted tabular-nums">{{ r.bank_account_no ?? '—' }}</span>
-          </template>
-        </Column>
-
-        <Column field="branch_code" header="Cabang" style="width:80px;min-width:60px">
-          <template #body="{ data: r }">
-            <span class="text-[11px] text-muted">{{ r.branch_code ?? '—' }}</span>
-          </template>
-        </Column>
-
-        <Column field="currency_code" header="Valuta" style="width:70px;min-width:60px">
-          <template #body="{ data: r }">
-            <span class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              {{ r.currency_code ?? '—' }}
-            </span>
-          </template>
-        </Column>
-
-        <Column
-          field="balance"
-          header="Saldo"
-          style="width:150px;min-width:120px"
-          :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }"
-        >
-          <template #body="{ data: r }">
-            <div class="text-right tabular-nums text-[11px]">
-              <template v-if="r.currency_code === 'IDR'">
-                {{ r.balance != null ? formatIdr(r.balance) : '—' }}
-              </template>
-              <template v-else>
-                {{ r.balance != null ? r.balance.toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '—' }}
-              </template>
-            </div>
-          </template>
-        </Column>
-
-        <Column field="status" header="Status" style="width:80px;min-width:70px">
-          <template #body="{ data: r }">
-            <span
-              v-if="r.status === 'A'"
-              class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-[11px]">
+          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+            <tr>
+              <th class="px-4 py-2 font-medium text-left">Kode Rekening</th>
+              <th class="px-4 py-2 font-medium text-left">Nama Rekening</th>
+              <th class="px-4 py-2 font-medium text-left">Nama Bank</th>
+              <th class="px-4 py-2 font-medium text-left">No Rekening Bank</th>
+              <th class="px-4 py-2 font-medium text-left">Cabang</th>
+              <th class="px-4 py-2 font-medium text-left">Valuta</th>
+              <th class="px-4 py-2 font-medium text-right">Saldo</th>
+              <th class="px-4 py-2 font-medium text-center">Status</th>
+              <th class="px-4 py-2 font-medium text-left">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="9" class="px-4 py-8 text-center text-muted">Memuat...</td>
+            </tr>
+            <tr v-else-if="rows.length === 0">
+              <td colspan="9" class="px-4 py-8 text-center text-muted italic">Tidak ada rekening bank yang ditemukan.</td>
+            </tr>
+            <tr
+              v-for="r in rows"
+              :key="r.account_no"
+              class="border-b border-border last:border-0 hover:bg-background/60"
             >
-              Aktif
-            </span>
-            <span
-              v-else
-              class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-            >
-              Non-aktif
-            </span>
-          </template>
-        </Column>
-
-        <!-- Aksi -->
-        <Column header="Aksi" style="width:100px;min-width:90px">
-          <template #body="{ data: r }">
-            <div class="flex items-center gap-1">
-              <button
-                class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition inline-flex items-center gap-0.5"
-                @click="openEdit(r.account_no)"
-              >
-                <Pencil class="w-2.5 h-2.5" />
-                Edit
-              </button>
-              <button
-                class="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 transition inline-flex items-center gap-0.5"
-                @click="openDelete(r.account_no)"
-              >
-                <Trash2 class="w-2.5 h-2.5" />
-                Hapus
-              </button>
-            </div>
-          </template>
-        </Column>
-
-        <template #empty>Tidak ada rekening bank yang ditemukan.</template>
-      </AppDataTable>
+              <td class="px-4 py-1 font-mono tabular-nums whitespace-nowrap text-muted">{{ r.account_no }}</td>
+              <td class="px-4 py-1">{{ r.account_name ?? '—' }}</td>
+              <td class="px-4 py-1">{{ r.bank_name ?? '—' }}</td>
+              <td class="px-4 py-1 font-mono tabular-nums whitespace-nowrap text-muted">{{ r.bank_account_no ?? '—' }}</td>
+              <td class="px-4 py-1 text-muted">{{ r.branch_code ?? '—' }}</td>
+              <td class="px-4 py-1">
+                <span class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                  {{ r.currency_code ?? '—' }}
+                </span>
+              </td>
+              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap font-medium">
+                <template v-if="r.currency_code === 'IDR'">
+                  {{ r.balance != null ? formatIdr(r.balance) : '—' }}
+                </template>
+                <template v-else>
+                  {{ r.balance != null ? r.balance.toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '—' }}
+                </template>
+              </td>
+              <td class="px-4 py-1 text-center">
+                <span
+                  v-if="r.status === 'A'"
+                  class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                >Aktif</span>
+                <span
+                  v-else
+                  class="inline-block text-[10px] font-semibold px-1.5 py-px rounded bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                >Non-aktif</span>
+              </td>
+              <td class="px-4 py-1">
+                <div class="flex items-center gap-1">
+                  <button
+                    class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition inline-flex items-center gap-0.5"
+                    @click="openEdit(r.account_no)"
+                  >
+                    <Pencil class="w-2.5 h-2.5" />
+                    Edit
+                  </button>
+                  <button
+                    class="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 transition inline-flex items-center gap-0.5"
+                    @click="openDelete(r.account_no)"
+                  >
+                    <Trash2 class="w-2.5 h-2.5" />
+                    Hapus
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Form Drawer -->
