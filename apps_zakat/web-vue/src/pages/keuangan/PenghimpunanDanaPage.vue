@@ -165,13 +165,13 @@ async function deleteDraft(id: number) {
 }
 
 function authLabel(status: string | null) {
-  const map: Record<string, string> = { P: 'Pending', A: 'Disetujui', T: 'Ditolak' }
+  // 'T' = Terotorisasi (legacy authorized state), 'A' = Authorized (new flow), 'P' = Pending
+  const map: Record<string, string> = { P: 'Pending', A: 'Terotorisasi', T: 'Terotorisasi' }
   return status ? (map[status] ?? status) : '-'
 }
 
 function authClass(status: string | null) {
-  if (status === 'A') return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-  if (status === 'T') return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  if (status === 'A' || status === 'T') return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
   return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
 }
 
