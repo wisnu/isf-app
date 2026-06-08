@@ -563,6 +563,41 @@ Data TIDAK langsung masuk tabel utama — semua disimpan di `otorisasi.submissio
 
 **Tidak ada alur input → DRAFT → Submit.** Semua form langsung ke PENDING (atau AUTHORIZED) satu klik.
 
+### Lookup — Selalu Sertakan Nama + Kode di Payload
+
+> ⚠️ **WAJIB untuk semua form** — saat payload mengandung kode lookup (bank, cabang, akun GL, produk, dll),
+> **selalu sertakan nama/label-nya juga**. Supervisor yang melihat di halaman Otorisasi tidak akan tahu
+> arti kode `001` atau `110101` tanpa deskripsi.
+
+```typescript
+// BENAR — kode + nama
+const payload = {
+  bank_code: form.bank_code,
+  bank_name: lookupBanks.find(b => b.value === form.bank_code)?.label ?? form.bank_code,
+  branch_code: form.branch_code,
+  branch_name: lookupBranches.find(b => b.value === form.branch_code)?.label ?? form.branch_code,
+  account_interface: form.account_interface,
+  account_interface_name: lookupGlAccounts.find(a => a.value === form.account_interface)?.label ?? form.account_interface,
+  product_id: form.product_id ? Number(form.product_id) : null,
+  product_name: lookupProducts.find(p => p.value === form.product_id)?.label ?? null,
+  // ...
+}
+
+// SALAH — hanya kode, tidak bisa dibaca di otorisasi
+const payload = {
+  bank_code: form.bank_code,   // supervisor lihat "001", tidak tahu artinya apa
+  branch_code: form.branch_code,
+}
+```
+
+**Berlaku untuk semua input form** yang punya SearchSelect/dropdown lookup — penghimpunan, penyaluran, bank, kas, coa, dll.
+
+Di `SubmissionDetailDrawer.vue`, tampilkan nama dengan fallback ke kode:
+```typescript
+{ label: 'Bank', value: v(p.value.bank_name ?? p.value.bank_code) },
+{ label: 'Cabang', value: v(p.value.branch_name ?? p.value.branch_code) },
+```
+
 ### Alur Master Data (bank, coa, kas)
 
 ```typescript
@@ -573,7 +608,9 @@ await api.post('/api/otorisasi/save-and-submit/', {
   payload: {
     action: 'create',   // wajib: 'create' | 'edit' | 'delete'
     account_name: form.account_name,
-    // ...semua field form
+    bank_code: form.bank_code,
+    bank_name: lookupBanks.find(b => b.value === form.bank_code)?.label ?? form.bank_code,
+    // ...semua field form + nama dari lookup
   },
 })
 toast.success('Dikirim untuk otorisasi')
@@ -589,7 +626,16 @@ await loadList()  // refresh list
 // - total > nilai_limit user  → PENDING (harus approve supervisor)
 const res = await api.post<{ submission_id: number; status: string; bypassed_auth: boolean }>(
   '/api/otorisasi/save-and-submit/',
-  { entity_type: 'penghimpunan', module: 'keuangan', payload: { items: [...], ... } }
+  {
+    entity_type: 'penghimpunan',
+    module: 'keuangan',
+    payload: {
+      items: [...],
+      // sertakan nama lookup di setiap item juga
+      branch_code: form.branch_code,
+      branch_name: lookupBranches.find(b => b.value === form.branch_code)?.label ?? form.branch_code,
+    }
+  }
 )
 if (res.status === 'AUTHORIZED') {
   toast.success('Transaksi berhasil diotorisasi otomatis')
