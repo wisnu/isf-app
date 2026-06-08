@@ -243,17 +243,19 @@ async function confirmDelete() {
   <div class="p-6 space-y-3">
     <PageHeader title="Histori Transaksi">
       <template #actions>
-        <Button :disabled="loading" @click="search">
-          <Search class="mr-1 h-3.5 w-3.5" />
+        <Button size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="search">
+          <Search class="w-3.5 h-3.5" />
           {{ loading ? 'Memuat...' : 'Tampilkan' }}
         </Button>
         <Button
           v-if="hasLoaded && rows.length"
           variant="outline"
+          size="sm"
+          class="gap-1.5 h-8 text-xs"
           :disabled="exporting"
           @click="exportXlsx"
         >
-          <Download class="mr-1 h-3.5 w-3.5" />
+          <Download class="w-3.5 h-3.5" />
           {{ exporting ? 'Mengekspor...' : 'Export XLSX' }}
         </Button>
       </template>

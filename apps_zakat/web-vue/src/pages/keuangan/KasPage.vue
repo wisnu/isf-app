@@ -111,15 +111,15 @@ async function submitNewKas() {
 
 <template>
   <div class="space-y-6">
-    <header class="flex flex-wrap items-start justify-between gap-3">
+    <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Manajemen Kas</h1>
         <p class="text-sm text-muted">
           Daftar brankas/kas fisik beserta saldo, pemegang, dan tanggal mutasi terakhir.
         </p>
       </div>
-      <Button class="gap-1.5" @click="showAddModal = true">
-        <Plus class="w-4 h-4" />
+      <Button size="sm" class="gap-1.5 h-8 text-xs" @click="showAddModal = true">
+        <Plus class="w-3.5 h-3.5" />
         Tambah Kas
       </Button>
     </header>

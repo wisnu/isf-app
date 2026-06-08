@@ -7,10 +7,10 @@ defineProps<{
 </script>
 
 <template>
-  <header class="flex flex-wrap items-center justify-between gap-2">
+  <header class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-lg font-bold tracking-tight">{{ title }}</h1>
+        <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
         <slot name="status">
           <span v-if="statusCode" class="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
             <span class="w-1.5 h-1.5 rounded-full bg-positive shrink-0"></span>

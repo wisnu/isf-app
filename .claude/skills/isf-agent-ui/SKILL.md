@@ -50,6 +50,50 @@ Semua HTTP hanya melalui `VITE_API_BASE_URL` yang mengarah ke bff-api.
 
 Jangan install UI library baru. Gunakan yang ada di `components/ui/` terlebih dahulu.
 
+### Page Header & Button — Standar CoaPage
+
+Semua halaman list/CRUD HARUS menggunakan standar ini (acuan: `CoaPage.vue`):
+
+**Header wrapper:**
+```vue
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Judul Halaman</h1>
+    <p class="text-sm text-muted">Deskripsi singkat</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <!-- action buttons di sini -->
+  </div>
+</div>
+```
+
+**Button header (action buttons):**
+```vue
+<!-- Primary action -->
+<Button size="sm" class="gap-1.5 h-8 text-xs" @click="...">
+  <Plus class="w-3.5 h-3.5" />
+  Tambah Data
+</Button>
+
+<!-- Secondary action -->
+<Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" @click="...">
+  <Download class="w-3.5 h-3.5" />
+  Export Excel
+</Button>
+
+<!-- Reload/Refresh -->
+<Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="reload">
+  <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+  Reload
+</Button>
+```
+
+**Aturan wajib:**
+- `items-center` BUKAN `items-start` pada flex wrapper header
+- Button selalu `size="sm"` + `class="gap-1.5 h-8 text-xs"`
+- Icon dalam button selalu `w-3.5 h-3.5`
+- `PageHeader` component menggunakan `text-2xl font-bold` untuk h1
+
 ### Pagination SELALU di Atas
 
 JANGAN pernah pakai `:paginator="true"` di `<DataTable>`.
