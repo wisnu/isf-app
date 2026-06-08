@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ArrowDownCircle,
+  ArrowUpCircle,
   BarChart3,
   Banknote,
   BookOpen,
@@ -13,6 +14,7 @@ import {
   LayoutDashboard,
   PieChart,
   Settings,
+  ShieldCheck,
   TrendingUp,
   Upload,
   Users,
@@ -68,8 +70,11 @@ const groups: MenuGroup[] = [
           { label: 'Chart of Accounts', to: '/keuangan/coa', icon: BookOpen },
           { label: 'Kas', to: '/keuangan/kas', icon: Banknote },
           { label: 'Bank', to: '/keuangan/bank', icon: Landmark },
+          { section: 'Monitoring dan Kontrol' },
+          { label: 'Otorisasi', to: '/keuangan/monitoring/otorisasi', icon: ShieldCheck },
           { section: 'Transaksi' },
           { label: 'Histori Transaksi', to: '/keuangan/transaksi/histori', icon: Clock },
+          { label: 'Input Penghimpunan Dana', to: '/keuangan/transaksi/penghimpunan', icon: ArrowUpCircle },
           { label: 'Input Penyaluran Dana', to: '/keuangan/transaksi/penyaluran', icon: ArrowDownCircle },
           { section: 'Upload' },
           { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan', icon: Upload },
