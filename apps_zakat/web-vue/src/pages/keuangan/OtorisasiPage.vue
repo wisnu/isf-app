@@ -243,19 +243,18 @@ function onRejected() { drawerOpen.value = false; load() }
 
     <!-- Toolbar: entity filter + contextual bulk actions -->
     <div class="flex flex-wrap items-center gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
-      <!-- Entity type filter chips -->
-      <div class="flex flex-wrap gap-1.5">
-        <button
-          v-for="et in entityTypes"
-          :key="String(et.value)"
-          :class="[
-            'rounded border px-3 py-1 text-xs font-medium transition',
-            filterEntityType === et.value
-              ? 'border-primary bg-primary text-white'
-              : 'border-zinc-300 bg-white text-zinc-600 hover:border-primary hover:text-primary dark:bg-zinc-800',
-          ]"
-          @click="filterEntityType = et.value; page = 1; load()"
-        >{{ et.label }}</button>
+      <!-- Entity type filter dropdown -->
+      <div>
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Jenis Input</label>
+        <select
+          v-model="filterEntityType"
+          class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+          @change="page = 1; load()"
+        >
+          <option v-for="et in entityTypes" :key="String(et.value)" :value="et.value">
+            {{ et.label }}
+          </option>
+        </select>
       </div>
 
       <!-- Bulk actions (contextual — only when rows selected) -->
