@@ -224,7 +224,7 @@ const sections = computed<Section[]>(() => {
         { label: 'Cabang',  value: v(p.value.branch_name ?? (p.value.branch_code ? `${p.value.branch_code} — ${branchMap.value[p.value.branch_code] ?? p.value.branch_code}` : null)) },
         { label: 'Valuta',        value: v(p.value.currency_code) },
         { label: 'GL Interface',  value: v(p.value.account_interface) },
-        { label: 'Tgl Buka',      value: v(p.value.opening_date) },
+        { label: 'Tgl Buka',      value: p.value.opening_date ? dmy(p.value.opening_date) : '—' },
         { label: 'Rek. Amil',     value: p.value.is_amil_account === true ? 'Ya' : p.value.is_amil_account === false ? 'Tidak' : '—' },
       ].filter(f => f.value !== '—'),
     }]
