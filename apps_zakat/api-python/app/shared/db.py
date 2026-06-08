@@ -52,6 +52,12 @@ async def fetch_one(query: str, *args: Any) -> dict | None:
         return dict(row) if row else None
 
 
+async def execute(query: str, *args: Any) -> None:
+    """Execute DML (INSERT/UPDATE/DELETE) without expecting a result row."""
+    async with get_pool().acquire() as conn:
+        await conn.execute(query, *args)
+
+
 async def ping() -> bool:
     """Quick health probe — SELECT 1."""
     try:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from app.modules.bank.schema import (
     BankAccountDetail,
     BankAccountList,
@@ -11,7 +13,7 @@ from app.modules.bank.schema import (
     Pagination,
     ProductLookupItem,
 )
-from app.shared.db import fetch_all, fetch_one
+from app.shared.db import execute, fetch_all, fetch_one
 
 
 # ── List ──────────────────────────────────────────────────────────────────────
@@ -255,6 +257,15 @@ async def get_lookup_products(search: str | None = None) -> list[ProductLookupIt
 
 # ── Otorisasi dispatcher ──────────────────────────────────────────────────────
 
+def _parse_date(val: str | None) -> date | None:
+    if not val:
+        return None
+    try:
+        return date.fromisoformat(str(val)[:10])
+    except (ValueError, TypeError):
+        return None
+
+
 async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> str:
     action = payload.get("action", "create")
 
@@ -271,8 +282,7 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
 
         is_amil = "T" if payload.get("is_amil_account") else "F"
 
-        # financialaccount: accountname, branchcode, currencycode, status, balance, openingdate
-        await fetch_one(
+        await execute(
             """
             INSERT INTO transaction.financialaccount
                 (accountno, accountname, branchcode, currencycode,
@@ -283,11 +293,10 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
             payload.get("account_name", ""),
             payload.get("branch_code", branch_code),
             payload.get("currency_code", "IDR"),
-            payload.get("opening_date") or None,
+            _parse_date(payload.get("opening_date")),
         )
 
-        # cashaccount: bank-specific fields
-        await fetch_one(
+        await execute(
             """
             INSERT INTO transaction.cashaccount
                 (accountno, bankname, bankaccountno, accountcurrency, cashaccounttype,
@@ -304,7 +313,7 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
             payload.get("product_id") or None,
             is_amil,
         )
-        return account_no
+        return None  # result_entity_id hanya untuk transaksi (integer); bank pakai accountno (varchar)
 
     elif action == "edit":
         account_no = payload["account_no"]
@@ -316,7 +325,7 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
         bank_name = (bank_row or {}).get("bankshortname") or payload.get("bank_code", "")
         is_amil = "T" if payload.get("is_amil_account") else "F"
 
-        await fetch_one(
+        await execute(
             """
             UPDATE transaction.financialaccount SET
                 accountname  = $1,
@@ -328,11 +337,11 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
             payload.get("account_name", ""),
             payload.get("branch_code", branch_code),
             payload.get("currency_code", "IDR"),
-            payload.get("opening_date") or None,
+            _parse_date(payload.get("opening_date")),
             account_no,
         )
 
-        await fetch_one(
+        await execute(
             """
             UPDATE transaction.cashaccount SET
                 bankname         = $1,
@@ -355,19 +364,19 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
             is_amil,
             account_no,
         )
-        return account_no
+        return None  # edit tidak menghasilkan entity baru
 
     elif action == "delete":
         account_no = payload["account_no"]
-        await fetch_one(
+        await execute(
             "DELETE FROM transaction.cashaccount WHERE accountno = $1",
             account_no,
         )
-        await fetch_one(
+        await execute(
             "DELETE FROM transaction.financialaccount WHERE accountno = $1",
             account_no,
         )
-        return account_no
+        return None  # delete tidak menghasilkan entity baru
 
     else:
         raise ValueError(f"Unknown action: {action}")
