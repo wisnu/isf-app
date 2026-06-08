@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RefreshCw, ShieldCheck } from 'lucide-vue-next'
-import { computed, onMounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
@@ -197,6 +197,26 @@ async function load() {
 }
 
 onMounted(load)
+
+// Auto-refresh setiap 5s saat ada submission PROCESSING
+const hasProcessing = computed(() => rows.value.some(r => r.status === 'PROCESSING'))
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+watch(hasProcessing, (val) => {
+  if (val && !refreshTimer) {
+    refreshTimer = setInterval(() => load(), 5000)
+  } else if (!val && refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+})
 
 async function openDetail(row: SubmissionRow) {
   try {

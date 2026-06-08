@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { List } from 'lucide-vue-next'
-import { ref, shallowRef } from 'vue'
+import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -34,8 +34,38 @@ const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
 
 function statusChip(s: string) {
-  return s === 'A' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+  if (s === 'A') return 'bg-green-100 text-green-800'
+  if (s === 'Q') return 'bg-amber-100 text-amber-700'
+  if (s === 'F') return 'bg-red-100 text-red-700'
+  return 'bg-yellow-100 text-yellow-800'
 }
+
+function statusLabel(s: string) {
+  if (s === 'A') return 'Approved'
+  if (s === 'Q') return 'Diproses'
+  if (s === 'F') return 'Gagal'
+  return 'Pending'
+}
+
+// Auto-refresh setiap 5s saat ada batch dengan authstatus 'Q'
+const hasProcessingBatch = computed(() => batches.value.some(b => b.authstatus === 'Q'))
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+watch(hasProcessingBatch, (val) => {
+  if (val && !refreshTimer) {
+    refreshTimer = setInterval(() => load(), 5000)
+  } else if (!val && refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+})
 
 async function load() {
   loading.value = true
@@ -118,11 +148,16 @@ async function load() {
             <td class="px-3 py-1">
               <span
                 :class="[
-                  'rounded px-1.5 py-0.5 text-[10px] font-medium uppercase',
+                  'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase',
                   statusChip(b.authstatus),
                 ]"
-                >{{ b.authstatus === 'A' ? 'Approved' : 'Pending' }}</span
               >
+                <span
+                  v-if="b.authstatus === 'Q'"
+                  class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"
+                />
+                {{ statusLabel(b.authstatus) }}
+              </span>
             </td>
           </tr>
         </tbody>
