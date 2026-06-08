@@ -299,6 +299,24 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/PenyaluranDanaFormPage.vue'),
       meta: { title: 'Input Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
     },
+    {
+      path: '/keuangan/transaksi/penghimpunan',
+      name: 'keuangan-transaksi-penghimpunan',
+      component: () => import('@/pages/keuangan/PenghimpunanDanaPage.vue'),
+      meta: { title: 'Penghimpunan Dana', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/penghimpunan/baru',
+      name: 'keuangan-transaksi-penghimpunan-baru',
+      component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
+      meta: { title: 'Input Penghimpunan Dana', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
+    },
+    {
+      path: '/keuangan/monitoring/otorisasi',
+      name: 'keuangan-monitoring-otorisasi',
+      component: () => import('@/pages/keuangan/OtorisasiPage.vue'),
+      meta: { title: 'Otorisasi', menu_key: 'keuangan.monitoring.otorisasi' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })

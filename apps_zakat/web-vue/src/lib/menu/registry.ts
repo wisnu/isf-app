@@ -30,8 +30,10 @@ export const MENU_KEYS = [
   'keuangan.report.upz',
   'keuangan.transaksi.histori',
   'keuangan.transaksi.penyaluran',
+  'keuangan.transaksi.penghimpunan',
   'keuangan.upload.penghimpunan',
   'keuangan.upload.penghimpunan.approve',
+  'keuangan.monitoring.otorisasi',
   'admin.role_menu',
   'admin.users',
 ] as const
