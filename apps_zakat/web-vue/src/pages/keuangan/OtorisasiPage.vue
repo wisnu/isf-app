@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { ShieldCheck } from 'lucide-vue-next'
+import { computed, onMounted, ref, shallowRef } from 'vue'
+
+import TablePagination from '@/components/ui/TablePagination.vue'
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
+import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Paginator from 'primevue/paginator'
-import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
-import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
 
 const toast = useToast()
 
@@ -32,15 +31,17 @@ interface ListResponse {
 }
 
 const rows = ref<SubmissionRow[]>([])
-const total = ref(0)
-const page = ref(0)
-const pageSize = ref(25)
-const loading = ref(false)
-const selectedRows = ref<SubmissionRow[]>([])
-const filterEntityType = ref<string | null>(null)
+const total = shallowRef(0)
+const totalPages = shallowRef(1)
+const page = shallowRef(1)
+const pageSize = shallowRef(25)
+const loading = shallowRef(false)
+const hasLoaded = shallowRef(false)
+const selectedIds = ref(new Set<number>())
+const filterEntityType = shallowRef<string | null>(null)
 const drawerOpen = ref(false)
 const drawerSubmission = ref<SubmissionRow | null>(null)
-const bulkLoading = ref(false)
+const bulkLoading = shallowRef(false)
 const bulkRejectNotes = ref('')
 const showBulkRejectInput = ref(false)
 
@@ -48,23 +49,59 @@ const entityTypes = [
   { label: 'Semua', value: null },
   { label: 'Penghimpunan', value: 'penghimpunan' },
   { label: 'Penyaluran', value: 'penyaluran' },
-  { label: 'Upload Penghimpunan', value: 'upload_penghimpunan' },
-  { label: 'Master COA', value: 'coa' },
-  { label: 'Master Kas', value: 'kas' },
-  { label: 'Master Bank', value: 'bank' },
+  { label: 'Upload', value: 'upload_penghimpunan' },
+  { label: 'COA', value: 'coa' },
+  { label: 'Kas', value: 'kas' },
+  { label: 'Bank', value: 'bank' },
 ]
+
+const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
+const fmt = (n: number) => idr.format(n)
+
+const selectedRows = computed(() => rows.value.filter(r => selectedIds.value.has(r.id)))
+const allSelected = computed(() => rows.value.length > 0 && rows.value.every(r => selectedIds.value.has(r.id)))
+const someSelected = computed(() => selectedIds.value.size > 0 && !allSelected.value)
+
+const showCount = computed(() => {
+  const from = (page.value - 1) * pageSize.value + 1
+  const to = Math.min(page.value * pageSize.value, total.value)
+  return total.value > 0 ? `Showing ${from}–${to} of ${total.value} submission` : 'Tidak ada submission pending'
+})
+
+function toggleAll() {
+  if (allSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(rows.value.map(r => r.id))
+  }
+}
+
+function toggleRow(id: number) {
+  const next = new Set(selectedIds.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  selectedIds.value = next
+}
+
+function goto(target: number) {
+  page.value = Math.min(Math.max(1, target), totalPages.value || 1)
+  load()
+}
 
 async function load() {
   loading.value = true
+  selectedIds.value = new Set()
+  showBulkRejectInput.value = false
   try {
     const params = new URLSearchParams({
-      page: String(page.value + 1),
+      page: String(page.value),
       page_size: String(pageSize.value),
     })
     if (filterEntityType.value) params.set('entity_type', filterEntityType.value)
     const res = await api.get<ListResponse>(`/api/otorisasi/pending/?${params}`)
     rows.value = res.rows
     total.value = res.pagination.total
+    totalPages.value = res.pagination.total_pages
+    hasLoaded.value = true
   } catch {
     toast.error('Gagal memuat data')
   } finally {
@@ -96,13 +133,11 @@ async function bulkApprove() {
     } else {
       toast.success(`${ids.length} submission diotorisasi`)
     }
-    selectedRows.value = []
     await load()
   } catch {
     toast.error('Bulk approve gagal')
   } finally {
     bulkLoading.value = false
-    showBulkRejectInput.value = false
   }
 }
 
@@ -113,9 +148,7 @@ async function bulkReject() {
   try {
     await api.post('/api/otorisasi/bulk/reject', { ids, notes: bulkRejectNotes.value })
     toast.warning(`${ids.length} submission ditolak`)
-    selectedRows.value = []
     bulkRejectNotes.value = ''
-    showBulkRejectInput.value = false
     await load()
   } catch {
     toast.error('Bulk reject gagal')
@@ -124,95 +157,151 @@ async function bulkReject() {
   }
 }
 
-function onPageChange(e: { page: number; rows: number }) {
-  page.value = e.page
-  pageSize.value = e.rows
-  load()
-}
-
-function onApproved() { load() }
-function onRejected() { load() }
+function onApproved() { drawerOpen.value = false; load() }
+function onRejected() { drawerOpen.value = false; load() }
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-4">
-    <div class="flex items-center gap-2">
-      <ShieldCheck class="w-5 h-5 text-blue-600" />
-      <h1 class="text-xl font-semibold text-gray-800">Otorisasi</h1>
-    </div>
-
-    <!-- Filter entity type -->
-    <div class="flex gap-2 flex-wrap">
-      <button v-for="et in entityTypes" :key="String(et.value)"
-              @click="filterEntityType = et.value; page = 0; load()"
-              :class="['px-3 py-1.5 rounded text-sm border transition',
-                       filterEntityType === et.value
-                         ? 'bg-blue-600 text-white border-blue-600'
-                         : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400']">
-        {{ et.label }}
-      </button>
-    </div>
-
-    <!-- Bulk actions bar -->
-    <div v-if="selectedRows.length"
-         class="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded px-4 py-2 flex-wrap">
-      <span class="text-sm text-blue-700 font-medium">{{ selectedRows.length }} dipilih</span>
-      <button @click="bulkApprove" :disabled="bulkLoading"
-              class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50">
-        Otorisasi ({{ selectedRows.length }})
-      </button>
-      <button @click="showBulkRejectInput = !showBulkRejectInput"
-              class="px-3 py-1 border border-red-500 text-red-600 text-sm rounded hover:bg-red-50">
-        Tolak ({{ selectedRows.length }})
-      </button>
-      <div v-if="showBulkRejectInput" class="flex gap-2 flex-1 min-w-0">
-        <input v-model="bulkRejectNotes" placeholder="Alasan penolakan"
-               class="flex-1 border rounded px-2 py-1 text-sm min-w-0" />
-        <button @click="bulkReject" :disabled="!bulkRejectNotes.trim() || bulkLoading"
-                class="px-3 py-1 bg-red-600 text-white text-sm rounded disabled:opacity-50 shrink-0">
-          Konfirmasi
-        </button>
+  <div class="space-y-0">
+    <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <ShieldCheck class="h-6 w-6 text-primary" />
+        <h1 class="text-2xl font-bold tracking-tight">Otorisasi</h1>
       </div>
+    </header>
+
+    <!-- Toolbar: entity filter + contextual bulk actions -->
+    <div class="flex flex-wrap items-center gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+      <!-- Entity type filter chips -->
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="et in entityTypes"
+          :key="String(et.value)"
+          :class="[
+            'rounded border px-3 py-1 text-xs font-medium transition',
+            filterEntityType === et.value
+              ? 'border-primary bg-primary text-white'
+              : 'border-zinc-300 bg-white text-zinc-600 hover:border-primary hover:text-primary dark:bg-zinc-800',
+          ]"
+          @click="filterEntityType = et.value; page = 1; load()"
+        >{{ et.label }}</button>
+      </div>
+
+      <!-- Bulk actions (contextual — only when rows selected) -->
+      <template v-if="selectedRows.length">
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <span class="text-xs font-medium text-zinc-500">{{ selectedRows.length }} dipilih</span>
+          <button
+            class="rounded border border-green-600 px-3 py-1 text-xs font-medium text-green-700 hover:bg-green-50 transition disabled:opacity-50"
+            :disabled="bulkLoading"
+            @click="bulkApprove"
+          >Otorisasi ({{ selectedRows.length }})</button>
+          <button
+            class="rounded border border-red-400 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+            @click="showBulkRejectInput = !showBulkRejectInput"
+          >Tolak ({{ selectedRows.length }})</button>
+          <template v-if="showBulkRejectInput">
+            <input
+              v-model="bulkRejectNotes"
+              placeholder="Alasan penolakan"
+              class="h-7 rounded border px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary dark:bg-zinc-800"
+            />
+            <button
+              class="rounded border border-red-600 bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 transition disabled:opacity-50"
+              :disabled="!bulkRejectNotes.trim() || bulkLoading"
+              @click="bulkReject"
+            >Konfirmasi</button>
+          </template>
+        </div>
+      </template>
     </div>
 
-    <!-- Pagination (top) -->
-    <div class="border rounded-t bg-white px-4 py-2 flex items-center justify-between">
-      <span class="text-sm text-gray-500">
-        Menampilkan {{ total === 0 ? 0 : page * pageSize + 1 }}–{{ Math.min((page + 1) * pageSize, total) }} dari {{ total }} submission
+    <!-- Pagination TOP -->
+    <div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
+      <span class="text-xs text-zinc-500">
+        {{ hasLoaded ? showCount : 'Memuat...' }}
       </span>
-      <Paginator :rows="pageSize" :totalRecords="total" :first="page * pageSize"
-                 @page="onPageChange" :rowsPerPageOptions="[25, 50]" class="text-sm" />
+      <TablePagination
+        v-if="hasLoaded && totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        :total="total"
+        :page-size="pageSize"
+        @goto="goto"
+      />
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto border border-t-0 rounded-b">
-      <DataTable :value="rows" v-model:selection="selectedRows" dataKey="id"
-                 :loading="loading" class="w-full" selectionMode="multiple">
-        <Column selectionMode="multiple" headerStyle="width: 3rem" />
-        <Column field="entity_label" header="Jenis" />
-        <Column field="submitted_by" header="Inputer" />
-        <Column field="branch_code" header="Cabang" />
-        <Column header="Disubmit">
-          <template #body="{ data }">{{ data.submitted_at ? dmy(data.submitted_at) : '—' }}</template>
-        </Column>
-        <Column header="Total">
-          <template #body="{ data }">
-            <span v-if="data.payload?.items?.length">
-              Rp {{ data.payload.items.reduce((s: number, i: any) => s + (i.amount || 0), 0).toLocaleString('id-ID') }}
-            </span>
-            <span v-else>—</span>
-          </template>
-        </Column>
-        <Column header="Level">
-          <template #body="{ data }">{{ data.level_current }}/{{ data.level_required }}</template>
-        </Column>
-        <Column header="Aksi">
-          <template #body="{ data }">
-            <button @click="openDetail(data)"
-                    class="text-blue-600 text-sm hover:underline">Lihat Detail</button>
-          </template>
-        </Column>
-      </DataTable>
+    <div class="overflow-x-auto rounded-b border">
+      <table class="w-full text-sm">
+        <thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+          <tr>
+            <th class="w-10 px-4 py-2 text-left">
+              <input
+                type="checkbox"
+                :checked="allSelected"
+                :indeterminate="someSelected"
+                class="cursor-pointer rounded border-zinc-300"
+                @change="toggleAll"
+              />
+            </th>
+            <th class="px-4 py-2 text-left">Jenis</th>
+            <th class="px-4 py-2 text-left">Inputer</th>
+            <th class="px-4 py-2 text-left">Cabang</th>
+            <th class="px-4 py-2 text-left">Disubmit</th>
+            <th class="px-4 py-2 text-right">Total</th>
+            <th class="px-4 py-2 text-center">Level</th>
+            <th class="px-4 py-2 text-center">Status</th>
+            <th class="px-4 py-2 text-left">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading && !rows.length">
+            <td colspan="9" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
+          </tr>
+          <tr v-else-if="hasLoaded && rows.length === 0">
+            <td colspan="9" class="px-4 py-8 text-center text-zinc-400">
+              Tidak ada submission pending.
+            </td>
+          </tr>
+          <tr
+            v-for="row in rows"
+            :key="row.id"
+            class="border-t hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            <td class="px-4 py-2">
+              <input
+                type="checkbox"
+                :checked="selectedIds.has(row.id)"
+                class="cursor-pointer rounded border-zinc-300"
+                @change="toggleRow(row.id)"
+              />
+            </td>
+            <td class="px-4 py-2 font-medium">{{ row.entity_label }}</td>
+            <td class="px-4 py-2 text-zinc-600">{{ row.submitted_by }}</td>
+            <td class="px-4 py-2 text-zinc-600">{{ row.branch_code }}</td>
+            <td class="px-4 py-2">{{ row.submitted_at ? dmy(row.submitted_at) : '—' }}</td>
+            <td class="px-4 py-2 text-right font-medium">
+              <template v-if="row.payload?.items?.length">
+                {{ fmt(row.payload.items.reduce((s: number, i: any) => s + (i.amount ?? 0), 0)) }}
+              </template>
+              <template v-else>—</template>
+            </td>
+            <td class="px-4 py-2 text-center text-xs text-zinc-500">
+              {{ row.level_current }}/{{ row.level_required }}
+            </td>
+            <td class="px-4 py-2 text-center">
+              <StatusBadge :status="(row.status as any)" />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                class="text-xs font-medium text-primary hover:underline"
+                @click="openDetail(row)"
+              >Lihat Detail</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Detail Drawer -->

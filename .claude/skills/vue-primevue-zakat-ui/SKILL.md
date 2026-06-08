@@ -83,6 +83,20 @@ Never install new UI libraries. Use what exists in `components/ui/` first.
 
 Default rows per page: **25**. Always lazy mode — all data is server-side.
 
+> ⚠️ `v-model:first` requires a **writable ref or writable computed** — never an inline expression like `(page - 1) * pageSize`. That causes a Vite compile error: *"v-model value must be a valid JavaScript member expression"*.
+
+```ts
+// correct — writable computed bridges page ↔ first offset
+const first = computed({
+  get: () => (page.value - 1) * pageSize.value,
+  set: (val: number) => { page.value = Math.floor(val / pageSize.value) + 1 },
+})
+// then in template: v-model:first="first"
+
+// wrong — inline expression not writable
+// v-model:first="(page - 1) * pageSize"   ← compile error
+```
+
 ---
 
 ## #3 Rule — Table 3-Part Layout
@@ -129,6 +143,7 @@ Before building anything new, check `components/ui/` for:
 | Need | Component |
 |---|---|
 | Any date input | `DateField.vue` |
+| Currency / amount input (with thousand separator) | `AmountInput.vue` — `v-model` = `number \| null`, displays `1.500.000` format |
 | Long dropdown / combobox | `SearchSelect.vue` (keyboard nav + clear) |
 | Pagination display | `TablePagination.vue` |
 | Modal / dialog | `Modal.vue` |
@@ -389,13 +404,175 @@ All files use **TypeScript** (`.ts`, `<script setup lang="ts">`).
 
 | Feature | PrimeVue Component |
 |---|---|
-| Data listing | DataTable, Column, Paginator |
+| Report/laporan data listing (with sorting) | DataTable, Column |
 | Multi-step workflow | Steps / Stepper |
 | Overlays | Dialog, OverlayPanel |
 | Confirmations | ConfirmDialog + useConfirm() |
 | File upload | FileUpload |
 
+> ⚠️ **DataTable untuk laporan saja.** Transaction list pages (Penyaluran, Penghimpunan, Otorisasi) menggunakan **native `<table>`** — bukan PrimeVue DataTable.
+
 All other UI (buttons, inputs, cards) → use `components/ui/` instead of PrimeVue.
+
+---
+
+## #13 Rule — Transaction List Page Pattern (Standar Wajib)
+
+> Referensi implementasi: `PenyaluranDanaPage.vue`. Semua list page transaksi keuangan wajib mengikuti pola ini.
+
+### Struktur
+
+```
+space-y-0                          ← tidak ada gap antar bagian (border menyambung)
+  <header>                         ← Title kiri bold + Action button kanan
+  <Alert v-if="errorMsg">
+
+  <!-- Toolbar (filter card) -->
+  rounded-t border bg-white px-4 py-3
+
+  <!-- Count + pagination bar -->
+  border-x bg-white px-4 py-2
+    text-xs text-zinc-500           ← "Showing X–Y of Z records" atau "Tidak ada data"
+    + "(+ N draft/pending)" in yellow
+    TablePagination (bukan PrimeVue Paginator)
+
+  <!-- Table -->
+  overflow-x-auto rounded-b border
+    <table class="w-full text-sm">
+      <thead bg-zinc-50 text-xs font-semibold uppercase text-zinc-500>
+      <tbody>
+        submission rows: border-t bg-amber-50/40
+        transaction rows: cursor-pointer border-t hover:bg-zinc-50
+```
+
+### State wajib
+
+```typescript
+const page = shallowRef(1)          // 1-based
+const pageSize = shallowRef(25)
+const totalPages = shallowRef(1)
+const hasLoaded = shallowRef(false)  // false sampai load() pertama selesai
+const actionLoading = shallowRef<number | null>(null)  // ID submission yg sedang diproses
+
+function goto(target: number) {
+  page.value = Math.min(Math.max(1, target), totalPages.value || 1)
+  load()
+}
+```
+
+### Toolbar standar (transaksi dengan filter tanggal)
+
+```vue
+<div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+  <div class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-zinc-500">Dari</label>
+      <DateField v-model="begin" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-zinc-500">Sampai</label>
+      <DateField v-model="end" />
+    </div>
+  </div>
+  <div>
+    <label class="mb-1 block text-xs font-medium text-zinc-500">No. Transaksi</label>
+    <input v-model="search" placeholder="Cari no. transaksi..."
+           class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+           @keyup.enter="() => { page = 1; load() }" />
+  </div>
+  <Button variant="secondary" :disabled="loading" @click="() => { page = 1; load() }">
+    <Search class="mr-2 h-4 w-4" />
+    {{ loading ? 'Memuat...' : 'Tampilkan' }}
+  </Button>
+</div>
+```
+
+### Count bar standar
+
+```vue
+<div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
+  <span class="text-xs text-zinc-500">
+    {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
+    <span v-if="subRows.length" class="ml-2 text-yellow-600">(+ {{ subRows.length }} draft/pending)</span>
+  </span>
+  <TablePagination
+    v-if="hasLoaded && totalPages > 1"
+    :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize"
+    @goto="goto"
+  />
+</div>
+```
+
+### Table header standar
+
+```vue
+<thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+  <tr>
+    <th class="px-4 py-2 text-left">No. Transaksi / Draft</th>
+    <th class="px-4 py-2 text-left">Tanggal</th>
+    <!-- kolom per fitur -->
+    <th class="px-4 py-2 text-right">Jumlah</th>
+    <th class="px-4 py-2 text-center">Status</th>
+    <th class="px-4 py-2 text-left">Aksi</th>
+  </tr>
+</thead>
+```
+
+### Submission row standar (amber tint, draft label)
+
+```vue
+<tr class="border-t bg-amber-50/40 dark:bg-amber-900/10">
+  <td class="px-4 py-2 font-mono text-xs text-zinc-400">Draft #{{ row.id }}</td>
+  <!-- ... -->
+  <td class="px-4 py-2 text-center"><StatusBadge :status="row.status" /></td>
+  <td class="px-4 py-2">
+    <!-- DRAFT: Submit + Edit -->
+    <template v-if="row.status === 'DRAFT'">
+      <button class="rounded border border-primary px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary hover:text-white transition disabled:opacity-50"
+              :disabled="actionLoading === row.id" @click="submitDraft(row.id)">Submit</button>
+      <button class="rounded border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-50"
+              :disabled="actionLoading === row.id" @click="editDraft(row.id)">Edit</button>
+    </template>
+    <!-- PENDING: read-only -->
+    <template v-else-if="row.status === 'PENDING'">
+      <span class="text-xs text-zinc-500">Menunggu otorisasi</span>
+    </template>
+    <!-- REJECTED: Revisi + Hapus + tooltip -->
+    <template v-else-if="row.status === 'REJECTED'">
+      <button class="rounded border border-amber-500 px-2 py-0.5 text-xs font-medium text-amber-600 hover:bg-amber-50 transition disabled:opacity-50"
+              :disabled="actionLoading === row.id" @click="editDraft(row.id)">Revisi</button>
+      <button class="rounded border border-red-400 px-2 py-0.5 text-xs font-medium text-red-500 hover:bg-red-50 transition disabled:opacity-50"
+              :disabled="actionLoading === row.id" @click="deleteDraft(row.id)">Hapus</button>
+      <span v-if="row.rejection_notes" :title="row.rejection_notes"
+            class="cursor-help text-xs text-red-400 underline decoration-dotted">Alasan</span>
+    </template>
+  </td>
+</tr>
+```
+
+### Transaction row standar (hover, clickable ke detail)
+
+```vue
+<tr class="cursor-pointer border-t hover:bg-zinc-50 dark:hover:bg-zinc-800" @click="openDetail(row)">
+  <td class="px-4 py-2 font-mono text-xs">{{ row.transaction_no ?? '-' }}</td>
+  <!-- ... -->
+</tr>
+```
+
+### Empty states
+
+```vue
+<tr v-if="!hasLoaded">
+  <td :colspan="8" class="px-4 py-8 text-center text-zinc-400">
+    Pilih tanggal dan klik Tampilkan untuk melihat data.
+  </td>
+</tr>
+<tr v-else-if="mergedRows.length === 0">
+  <td :colspan="8" class="px-4 py-8 text-center text-zinc-400">
+    Tidak ada transaksi dalam periode ini.
+  </td>
+</tr>
+```
 
 ---
 

@@ -510,15 +510,98 @@ await POST('/api/otorisasi/submission/', {
 List page fetch DUA sumber secara paralel:
 
 ```typescript
-const [subsRes, txRes] = await Promise.all([
-  GET('/api/otorisasi/my-submissions/', { entity_type: 'penghimpunan' }),
-  GET('/api/penghimpunan/', { begin, end, page, page_size }),
+const [txRes, subRes] = await Promise.all([
+  api.get<ListResponse>(`/api/penghimpunan/?${params}`).catch(() => ({ rows: [], pagination: { ... } })),
+  api.get<{ rows: any[] }>('/api/otorisasi/my-submissions/?entity_type=penghimpunan').catch(() => ({ rows: [] })),
 ])
-// subsRes.data → submission DRAFT/PENDING/REJECTED milik user ini
-// txRes.data   → record AUTHORIZED dari tabel utama
+// txRes.rows   → record AUTHORIZED dari tabel utama (setelah diotorisasi)
+// subRes.rows  → submission DRAFT/PENDING/REJECTED milik user ini
 ```
 
-Gabungkan ke satu list. Setiap baris punya `source: 'submission' | 'transaction'` dan `status`.
+Gabungkan dengan submissions di atas: `mergedRows = [...subRows, ...txRows]`.
+Setiap baris punya `_rowKind: 'submission' | 'transaction'` untuk membedakan render.
+
+### Standar Visual List Page (Transaction List Pattern)
+
+> ⚠️ **Wajib** — semua list page transaksi keuangan HARUS mengikuti pola ini, termasuk PenyaluranDana, PenghimpunanDana, dan OtorisasiPage.
+>
+> **Referensi:** `PenyaluranDanaPage.vue` adalah implementasi standar. Selalu ikuti strukturnya.
+
+**Struktur template wajib:**
+
+```
+┌─────────────────────────────────────────────┐
+│ <header>  Title kiri, Action button kanan   │  ← mb-4
+├─────────────────────────────────────────────┤
+│ TOOLBAR  rounded-t border bg-white px-4 py-3│  ← filter, search, Tampilkan btn
+├─────────────────────────────────────────────┤
+│ COUNT BAR  border-x bg-white px-4 py-2      │  ← "Showing X–Y of Z" + TablePagination
+├─────────────────────────────────────────────┤
+│ <table class="w-full text-sm">              │  ← overflow-x-auto rounded-b border
+│  <thead bg-zinc-50 uppercase text-xs>       │
+│  <tbody> submission rows (bg-amber-50/40)   │
+│           transaction rows (hover:bg-zinc-50)│
+└─────────────────────────────────────────────┘
+```
+
+**Kelas CSS standar:**
+```vue
+<!-- Toolbar (filter card) -->
+<div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+
+<!-- Count + pagination bar -->
+<div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
+  <span class="text-xs text-zinc-500">
+    {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
+    <span v-if="subRows.length" class="ml-2 text-yellow-600">(+ {{ subRows.length }} draft/pending)</span>
+  </span>
+  <TablePagination v-if="hasLoaded && totalPages > 1" ... @goto="goto" />
+</div>
+
+<!-- Table wrapper -->
+<div class="overflow-x-auto rounded-b border">
+  <table class="w-full text-sm">
+    <thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+
+<!-- Submission rows: amber tint -->
+<tr class="border-t bg-amber-50/40 dark:bg-amber-900/10">
+
+<!-- Transaction rows: hover highlight -->
+<tr class="cursor-pointer border-t hover:bg-zinc-50 dark:hover:bg-zinc-800">
+```
+
+**Jangan gunakan PrimeVue DataTable untuk transaction list page.** Gunakan native `<table>`. DataTable hanya untuk laporan/report yang butuh sorting bawaan atau fitur headless kompleks.
+
+**Pagination:** gunakan `TablePagination` component (bukan PrimeVue Paginator) + `shallowRef` untuk state:
+```typescript
+const page = shallowRef(1)
+const totalPages = shallowRef(1)
+const hasLoaded = shallowRef(false)
+
+function goto(target: number) {
+  page.value = Math.min(Math.max(1, target), totalPages.value || 1)
+  load()
+}
+```
+
+**Action buttons submission rows** (inline kecil, bukan Button component):
+```vue
+<!-- DRAFT -->
+<button class="rounded border border-primary px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary hover:text-white transition disabled:opacity-50">Submit</button>
+<button class="rounded border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-50">Edit</button>
+
+<!-- PENDING -->
+<span class="text-xs text-zinc-500">Menunggu otorisasi</span>
+
+<!-- REJECTED -->
+<button class="rounded border border-amber-500 px-2 py-0.5 text-xs font-medium text-amber-600 hover:bg-amber-50 transition disabled:opacity-50">Revisi</button>
+<button class="rounded border border-red-400 px-2 py-0.5 text-xs font-medium text-red-500 hover:bg-red-50 transition disabled:opacity-50">Hapus</button>
+<span v-if="row.rejection_notes" :title="row.rejection_notes" class="cursor-help text-xs text-red-400 underline decoration-dotted">Alasan</span>
+```
+
+**Header submission column:** `font-mono text-xs text-zinc-400` → `Draft #{{ row.id }}`
+
+**Format angka:** gunakan `Intl.NumberFormat('id-ID')` tanpa prefix "Rp" di kolom Jumlah (tambah "Rp" hanya di tooltip atau ringkasan jika perlu).
 
 ### StatusBadge — Komponen Wajib
 
