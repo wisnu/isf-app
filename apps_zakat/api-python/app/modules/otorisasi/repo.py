@@ -169,3 +169,20 @@ async def list_entity_configs(module: str | None = None) -> list[dict]:
     return await fetch_all(
         "SELECT * FROM otorisasi.entity_config ORDER BY module, entity_type",
     )
+
+
+async def get_user_limit(user_id: str, transaction_code: str) -> float:
+    """Return nilai_limit user untuk transaction_code. 0.0 jika belum diset atau tidak ditemukan."""
+    row = await fetch_one(
+        """SELECT lt.nilai_limit
+           FROM enterprise.limittransaksi lt
+           JOIN transaction.transactiontype tt
+             ON tt.jenis_limit = lt.jenis_limit
+           WHERE lt.id_user = UPPER($1)
+             AND tt.transactioncode = $2
+           LIMIT 1""",
+        user_id, transaction_code,
+    )
+    if not row or not row['nilai_limit']:
+        return 0.0
+    return float(row['nilai_limit'])

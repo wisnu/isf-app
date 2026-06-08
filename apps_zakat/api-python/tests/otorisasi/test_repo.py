@@ -43,3 +43,24 @@ async def test_submit_and_reject_flow():
     assert len(log) == 1
     assert log[0]['status'] == 'REJECTED'
     assert log[0]['notes'] == 'Jumlah tidak sesuai'
+
+
+@pytest.mark.asyncio
+async def test_get_user_limit_no_limit():
+    # RAIS has nilai_limit=0 → return 0.0
+    result = await repo.get_user_limit('RAIS', 'DD001')
+    assert isinstance(result, float)
+    assert result == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_user_limit_unknown_user():
+    result = await repo.get_user_limit('NONEXISTENT_USER_XYZ', 'DD001')
+    assert result == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_user_limit_no_jenis_limit_mapping():
+    # No jenis_limit mapping for this tx code → return 0.0
+    result = await repo.get_user_limit('RAIS', 'COA999')
+    assert result == 0.0
