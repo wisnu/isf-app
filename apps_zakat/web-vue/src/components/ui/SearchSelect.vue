@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ChevronDown, X } from 'lucide-vue-next'
-import { computed, nextTick, shallowRef, useTemplateRef } from 'vue'
+import { computed, nextTick, onUnmounted, shallowRef, useTemplateRef } from 'vue'
 
 // Combobox dropdown yang bisa diketik untuk search. Bind value via v-model.
+// Dropdown di-teleport ke body dengan position:fixed agar tidak terpotong
+// oleh parent yang punya overflow:hidden/auto (mis. modal dengan scroll).
 interface Option { value: string; label: string }
 const props = defineProps<{
   modelValue: string
@@ -15,7 +17,29 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>()
 const open = shallowRef(false)
 const query = shallowRef('')
 const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
+const wrapEl = useTemplateRef<HTMLDivElement>('wrapEl')
 const activeIdx = shallowRef(0)
+
+// posisi dropdown (fixed, relatif terhadap viewport)
+const dropStyle = shallowRef<{ top: string; left: string; width: string }>({
+  top: '0px', left: '0px', width: '200px',
+})
+
+function calcDropPosition() {
+  const el = wrapEl.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const spaceBelow = window.innerHeight - rect.bottom
+  const dropH = Math.min(288, items.value.length * 36 + 8) // max-h-72 = 288px
+  const top = spaceBelow >= dropH
+    ? rect.bottom + 4
+    : rect.top - dropH - 4
+  dropStyle.value = {
+    top: `${top}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  }
+}
 
 const selectedLabel = computed(() => {
   if (!props.modelValue) return props.allLabel ?? ''
@@ -35,6 +59,7 @@ function openList() {
   open.value = true
   query.value = ''
   activeIdx.value = 0
+  nextTick(calcDropPosition)
 }
 function pick(v: string) {
   emit('update:modelValue', v)
@@ -43,15 +68,17 @@ function pick(v: string) {
 }
 function onInput(e: Event) {
   query.value = (e.target as HTMLInputElement).value
-  open.value = true
+  if (!open.value) {
+    open.value = true
+    nextTick(calcDropPosition)
+  }
   activeIdx.value = 0
 }
 function onBlur() {
-  // tunda agar mousedown opsi sempat ter-handle
   setTimeout(() => { open.value = false }, 150)
 }
 function move(d: number) {
-  if (!open.value) { open.value = true; return }
+  if (!open.value) { open.value = true; nextTick(calcDropPosition); return }
   const n = items.value.length
   if (!n) return
   activeIdx.value = (activeIdx.value + d + n) % n
@@ -65,10 +92,19 @@ async function clearSel() {
   await nextTick()
   inputEl.value?.focus()
 }
+
+// tutup dropdown saat scroll/resize
+function closeOnScroll() { if (open.value) open.value = false }
+window.addEventListener('scroll', closeOnScroll, true)
+window.addEventListener('resize', closeOnScroll)
+onUnmounted(() => {
+  window.removeEventListener('scroll', closeOnScroll, true)
+  window.removeEventListener('resize', closeOnScroll)
+})
 </script>
 
 <template>
-  <div class="relative">
+  <div ref="wrapEl" class="relative">
     <input
       ref="inputEl"
       :value="open ? query : selectedLabel"
@@ -95,22 +131,26 @@ async function clearSel() {
     </button>
     <ChevronDown class="absolute right-2 top-2.5 w-4 h-4 text-muted pointer-events-none" />
 
-    <ul
-      v-if="open"
-      class="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-border bg-surface shadow-lg text-sm"
-    >
-      <li
-        v-for="(o, i) in items"
-        :key="o.value || '__all__'"
-        class="px-3 py-1.5 cursor-pointer"
-        :class="[
-          i === activeIdx ? 'bg-primary/10 text-primary' : 'hover:bg-background',
-          o.value === modelValue && i !== activeIdx ? 'font-medium' : '',
-        ]"
-        @mousedown.prevent="pick(o.value)"
-        @mousemove="activeIdx = i"
-      >{{ o.label }}</li>
-      <li v-if="!items.length" class="px-3 py-1.5 text-muted italic">Tidak ada hasil</li>
-    </ul>
+    <!-- Dropdown di-teleport ke body agar tidak terpotong overflow modal -->
+    <Teleport to="body">
+      <ul
+        v-if="open"
+        :style="dropStyle"
+        class="fixed z-[9998] max-h-72 overflow-auto rounded-lg border border-border bg-surface shadow-lg text-sm"
+      >
+        <li
+          v-for="(o, i) in items"
+          :key="o.value || '__all__'"
+          class="px-3 py-1.5 cursor-pointer"
+          :class="[
+            i === activeIdx ? 'bg-primary/10 text-primary' : 'hover:bg-background',
+            o.value === modelValue && i !== activeIdx ? 'font-medium' : '',
+          ]"
+          @mousedown.prevent="pick(o.value)"
+          @mousemove="activeIdx = i"
+        >{{ o.label }}</li>
+        <li v-if="!items.length" class="px-3 py-1.5 text-muted italic">Tidak ada hasil</li>
+      </ul>
+    </Teleport>
   </div>
 </template>
