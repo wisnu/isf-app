@@ -194,10 +194,16 @@ const sections = computed<Section[]>(() => {
     return [{
       title: 'Detail Rekening Bank',
       fields: [
-        { label: 'Bank',          value: v(p.value.bank_name) },
-        { label: 'No. Rekening',  value: v(p.value.account_number) },
-        { label: 'Atas Nama',     value: v(p.value.account_holder) },
-        { label: 'Cabang Bank',   value: v(p.value.branch) },
+        { label: 'Aksi',          value: v(p.value.action ? String(p.value.action).toUpperCase() : null) },
+        { label: 'Kode Rekening', value: v(p.value.account_no) },
+        { label: 'Nama Rekening', value: v(p.value.account_name) },
+        { label: 'No. Rekening',  value: v(p.value.bank_account_no) },
+        { label: 'Kode Bank',     value: v(p.value.bank_code) },
+        { label: 'Cabang',        value: v(p.value.branch_code) },
+        { label: 'Valuta',        value: v(p.value.currency_code) },
+        { label: 'GL Interface',  value: v(p.value.account_interface) },
+        { label: 'Tgl Buka',      value: v(p.value.opening_date) },
+        { label: 'Rek. Amil',     value: p.value.is_amil_account === true ? 'Ya' : p.value.is_amil_account === false ? 'Tidak' : '—' },
       ].filter(f => f.value !== '—'),
     }]
   }
