@@ -4,7 +4,9 @@ import { onMounted, shallowRef, ref } from 'vue'
 
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
+import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
 import { dmy, dmyt } from '@/lib/date'
@@ -167,22 +169,14 @@ onMounted(load)
 
 <template>
   <div class="space-y-4">
-    <!-- Header -->
-    <header class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <ClipboardList class="h-6 w-6 text-primary" />
-        <h1 class="text-2xl font-bold tracking-tight">Riwayat Submission</h1>
-      </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted hover:bg-background hover:text-foreground transition-colors disabled:opacity-40"
-        :disabled="loading"
-        @click="load()"
-      >
-        <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': loading }" />
-        Refresh
-      </button>
-    </header>
+    <PageHeader title="Riwayat Submission" subtitle="Daftar submission yang pernah Anda kirim">
+      <template #actions>
+        <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="load()">
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+          Refresh
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- Filter bar -->
     <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
@@ -251,16 +245,16 @@ onMounted(load)
     <!-- Table -->
     <div class="overflow-x-auto rounded-b border">
       <table class="w-full text-sm">
-        <thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
           <tr>
-            <th class="px-4 py-2 text-left">ID</th>
-            <th class="px-4 py-2 text-left">Jenis</th>
-            <th class="px-4 py-2 text-left">Operasi</th>
-            <th class="px-4 py-2 text-left">Ringkasan</th>
-            <th class="px-4 py-2 text-left">Disubmit</th>
-            <th class="px-4 py-2 text-center">Level</th>
-            <th class="px-4 py-2 text-center">Status</th>
-            <th class="px-4 py-2 text-left">Aksi</th>
+            <th class="px-4 py-2 font-medium text-left">ID</th>
+            <th class="px-4 py-2 font-medium text-left">Jenis</th>
+            <th class="px-4 py-2 font-medium text-left">Operasi</th>
+            <th class="px-4 py-2 font-medium text-left">Ringkasan</th>
+            <th class="px-4 py-2 font-medium text-left">Disubmit</th>
+            <th class="px-4 py-2 font-medium text-center">Level</th>
+            <th class="px-4 py-2 font-medium text-center">Status</th>
+            <th class="px-4 py-2 font-medium text-left">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -280,7 +274,7 @@ onMounted(load)
           <tr
             v-for="row in rows"
             :key="row.id"
-            class="cursor-pointer border-t hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            class="cursor-pointer border-b border-border last:border-0 hover:bg-background/60"
             @click="openDetail(row)"
           >
             <td class="px-4 py-2 font-mono text-xs text-zinc-400">#{{ row.id }}</td>

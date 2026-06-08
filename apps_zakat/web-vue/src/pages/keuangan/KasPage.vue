@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import { api } from '@/lib/api/client'
@@ -111,18 +112,14 @@ async function submitNewKas() {
 
 <template>
   <div class="space-y-6">
-    <header class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Manajemen Kas</h1>
-        <p class="text-sm text-muted">
-          Daftar brankas/kas fisik beserta saldo, pemegang, dan tanggal mutasi terakhir.
-        </p>
-      </div>
-      <Button size="sm" class="gap-1.5 h-8 text-xs" @click="showAddModal = true">
-        <Plus class="w-3.5 h-3.5" />
-        Tambah Kas
-      </Button>
-    </header>
+    <PageHeader title="Manajemen Kas" subtitle="Daftar brankas/kas fisik beserta saldo, pemegang, dan tanggal mutasi terakhir.">
+      <template #actions>
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="showAddModal = true">
+          <Plus class="w-3.5 h-3.5" />
+          Tambah Kas
+        </Button>
+      </template>
+    </PageHeader>
 
     <Alert>
       <span>

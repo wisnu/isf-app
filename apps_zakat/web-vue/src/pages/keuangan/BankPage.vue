@@ -5,6 +5,7 @@ import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import DateField from '@/components/ui/DateField.vue'
@@ -336,17 +337,14 @@ onMounted(loadBankAccounts)
 
 <template>
   <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Rekening Bank</h1>
-        <p class="text-sm text-muted">Daftar rekening bank milik LAZ</p>
-      </div>
-      <Button size="sm" class="gap-1.5 h-8 text-xs" @click="openCreate">
-        <Plus class="w-3.5 h-3.5" />
-        Tambah Rekening
-      </Button>
-    </div>
+    <PageHeader title="Rekening Bank" subtitle="Daftar rekening bank milik LAZ">
+      <template #actions>
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="openCreate">
+          <Plus class="w-3.5 h-3.5" />
+          Tambah Rekening
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- Stats cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

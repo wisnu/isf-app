@@ -2,10 +2,12 @@
 import { RefreshCw, ShieldCheck } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
+import Button from '@/components/ui/Button.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import SubmissionDetailDrawer from '@/components/otorisasi/SubmissionDetailDrawer.vue'
 import DateField from '@/components/ui/DateField.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import { api } from '@/lib/api/client'
 import { dmyt } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
@@ -248,21 +250,14 @@ function onRejected() { drawerOpen.value = false; load() }
 
 <template>
   <div class="space-y-0">
-    <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <ShieldCheck class="h-6 w-6 text-primary" />
-        <h1 class="text-2xl font-bold tracking-tight">Otorisasi</h1>
-      </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted hover:bg-background hover:text-foreground transition-colors disabled:opacity-40"
-        :disabled="loading"
-        @click="load()"
-      >
-        <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': loading }" />
-        Refresh
-      </button>
-    </header>
+    <PageHeader title="Otorisasi" subtitle="Daftar submission menunggu persetujuan">
+      <template #actions>
+        <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="load()">
+          <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+          Refresh
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- Toolbar: filter + bulk actions -->
     <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
@@ -336,8 +331,8 @@ function onRejected() { drawerOpen.value = false; load() }
 
     <!-- Table -->
     <div class="overflow-x-auto rounded-b border">
-      <table class="w-full text-sm">
-        <thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+      <table class="w-full text-[11px]">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
           <tr>
             <th class="w-10 px-4 py-2 text-left">
               <input
@@ -348,16 +343,16 @@ function onRejected() { drawerOpen.value = false; load() }
                 @change="toggleAll"
               />
             </th>
-            <th class="px-4 py-2 text-left">Jenis</th>
-            <th class="px-4 py-2 text-left">Inputer</th>
-            <th class="px-4 py-2 text-left">Cabang</th>
-            <th class="px-4 py-2 text-left">Disubmit</th>
-            <th class="px-4 py-2 text-left">Operasi</th>
-            <th class="px-4 py-2 text-left">Ringkasan</th>
+            <th class="px-4 py-2 font-medium text-left">Jenis</th>
+            <th class="px-4 py-2 font-medium text-left">Inputer</th>
+            <th class="px-4 py-2 font-medium text-left">Cabang</th>
+            <th class="px-4 py-2 font-medium text-left">Disubmit</th>
+            <th class="px-4 py-2 font-medium text-left">Operasi</th>
+            <th class="px-4 py-2 font-medium text-left">Ringkasan</th>
             <th class="px-4 py-2 text-right">Total</th>
             <th class="px-4 py-2 text-center">Level</th>
             <th class="px-4 py-2 text-center">Status</th>
-            <th class="px-4 py-2 text-left">Aksi</th>
+            <th class="px-4 py-2 font-medium text-left">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -372,7 +367,7 @@ function onRejected() { drawerOpen.value = false; load() }
           <tr
             v-for="row in rows"
             :key="row.id"
-            class="border-t hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            class="border-b border-border last:border-0 hover:bg-background/60"
           >
             <td class="px-4 py-2">
               <input

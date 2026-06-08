@@ -50,49 +50,82 @@ Semua HTTP hanya melalui `VITE_API_BASE_URL` yang mengarah ke bff-api.
 
 Jangan install UI library baru. Gunakan yang ada di `components/ui/` terlebih dahulu.
 
-### Page Header & Button — Standar CoaPage
+### Page Header — Wajib Gunakan `PageHeader` Component
 
-Semua halaman list/CRUD HARUS menggunakan standar ini (acuan: `CoaPage.vue`):
+> ⚠️ **JANGAN** tulis `<header>` atau `<div class="flex...justify-between">` sendiri.
+> Selalu gunakan `components/layout/PageHeader.vue` di semua halaman list dan CRUD.
 
-**Header wrapper:**
 ```vue
-<div class="flex flex-wrap items-center justify-between gap-3">
-  <div>
-    <h1 class="text-2xl font-bold tracking-tight">Judul Halaman</h1>
-    <p class="text-sm text-muted">Deskripsi singkat</p>
-  </div>
-  <div class="flex items-center gap-2">
-    <!-- action buttons di sini -->
-  </div>
+import PageHeader from '@/components/layout/PageHeader.vue'
+
+<!-- Wajib untuk semua halaman -->
+<PageHeader title="Nama Halaman" subtitle="Deskripsi singkat halaman ini">
+  <template #actions>
+    <Button size="sm" class="gap-1.5 h-8 text-xs" @click="...">
+      <Plus class="w-3.5 h-3.5" />
+      Tambah Data
+    </Button>
+    <Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="reload">
+      <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
+      Refresh
+    </Button>
+  </template>
+</PageHeader>
+```
+
+**Aturan button di header:**
+- Selalu `size="sm"` + `class="gap-1.5 h-8 text-xs"`
+- Icon dalam button selalu `w-3.5 h-3.5`
+- Primary action: variant default (hijau)
+- Secondary action: `variant="outline"`
+
+### Table — Standar KasPage
+
+> ⚠️ **Semua native `<table>`** harus menggunakan standar berikut (acuan: `KasPage.vue`).
+> JANGAN pakai `bg-zinc-50` pada thead, `text-sm` pada table, atau `hover:bg-zinc-50` pada baris.
+
+```vue
+<!-- Container tabel -->
+<div class="overflow-x-auto rounded-lg border border-border">
+  <table class="w-full text-[11px]">
+    <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+      <tr>
+        <th class="px-4 py-2 font-medium text-left">Kolom</th>
+        <th class="px-4 py-2 font-medium text-right">Angka</th>
+        <th class="px-4 py-2 font-medium text-center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Baris data normal -->
+      <tr class="border-b border-border last:border-0 hover:bg-background/60">
+        <td class="px-4 py-1 text-[11px]">...</td>
+      </tr>
+      <!-- Baris submission/draft: amber tint -->
+      <tr class="border-b border-border bg-amber-50/40 dark:bg-amber-900/10">
+        <td class="px-4 py-1 text-[11px]">...</td>
+      </tr>
+      <!-- Baris non-aktif/disabled -->
+      <tr class="border-b border-border last:border-0 hover:bg-background/60 opacity-60">
+        <td class="px-4 py-1 text-[11px]">...</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 ```
 
-**Button header (action buttons):**
-```vue
-<!-- Primary action -->
-<Button size="sm" class="gap-1.5 h-8 text-xs" @click="...">
-  <Plus class="w-3.5 h-3.5" />
-  Tambah Data
-</Button>
+**Standar:**
 
-<!-- Secondary action -->
-<Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" @click="...">
-  <Download class="w-3.5 h-3.5" />
-  Export Excel
-</Button>
+| Elemen | Class |
+|---|---|
+| `<table>` | `w-full text-[11px]` |
+| `<thead>` | `text-[10px] text-muted uppercase tracking-widest border-b border-border` |
+| `<th>` | `px-4 py-2 font-medium text-left` (atau text-right/text-center) |
+| `<tr>` data | `border-b border-border last:border-0 hover:bg-background/60` |
+| `<tr>` draft/amber | `border-b border-border bg-amber-50/40 dark:bg-amber-900/10` |
+| `<tr>` non-aktif | tambah `opacity-60` |
+| `<td>` | `px-4 py-1 text-[11px]` |
 
-<!-- Reload/Refresh -->
-<Button variant="outline" size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="reload">
-  <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
-  Reload
-</Button>
-```
-
-**Aturan wajib:**
-- `items-center` BUKAN `items-start` pada flex wrapper header
-- Button selalu `size="sm"` + `class="gap-1.5 h-8 text-xs"`
-- Icon dalam button selalu `w-3.5 h-3.5`
-- `PageHeader` component menggunakan `text-2xl font-bold` untuk h1
+> `py-1` pada td (bukan py-2) membuat baris lebih kompak.
 
 ### Pagination SELALU di Atas
 

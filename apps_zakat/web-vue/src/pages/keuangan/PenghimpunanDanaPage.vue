@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
@@ -186,13 +187,14 @@ onMounted(load)
 
 <template>
   <div class="space-y-0">
-    <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-2xl font-bold tracking-tight">Penghimpunan Dana</h1>
-      <Button size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'keuangan-transaksi-penghimpunan-baru' })">
-        <ArrowUpCircle class="w-3.5 h-3.5" />
-        Input Penghimpunan
-      </Button>
-    </header>
+    <PageHeader title="Penghimpunan Dana" subtitle="Daftar transaksi penerimaan ZIS">
+      <template #actions>
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'keuangan-transaksi-penghimpunan-baru' })">
+          <ArrowUpCircle class="w-3.5 h-3.5" />
+          Input Penghimpunan
+        </Button>
+      </template>
+    </PageHeader>
 
     <Alert v-if="errorMsg" variant="destructive" class="mb-3">{{ errorMsg }}</Alert>
 
@@ -241,17 +243,17 @@ onMounted(load)
 
     <!-- Table -->
     <div class="overflow-x-auto rounded-b border">
-      <table class="w-full text-sm">
-        <thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+      <table class="w-full text-[11px]">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
           <tr>
-            <th class="px-4 py-2 text-left">No. Transaksi / Draft</th>
-            <th class="px-4 py-2 text-left">Tanggal</th>
-            <th class="px-4 py-2 text-left">Donatur</th>
-            <th class="px-4 py-2 text-left">Keterangan</th>
-            <th class="px-4 py-2 text-left">Jenis Bayar</th>
-            <th class="px-4 py-2 text-right">Jumlah</th>
-            <th class="px-4 py-2 text-center">Status</th>
-            <th class="px-4 py-2 text-left">Aksi</th>
+            <th class="px-4 py-2 font-medium text-left">No. Transaksi / Draft</th>
+            <th class="px-4 py-2 font-medium text-left">Tanggal</th>
+            <th class="px-4 py-2 font-medium text-left">Donatur</th>
+            <th class="px-4 py-2 font-medium text-left">Keterangan</th>
+            <th class="px-4 py-2 font-medium text-left">Jenis Bayar</th>
+            <th class="px-4 py-2 font-medium text-right">Jumlah</th>
+            <th class="px-4 py-2 font-medium text-center">Status</th>
+            <th class="px-4 py-2 font-medium text-left">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -270,7 +272,7 @@ onMounted(load)
           <tr
             v-for="row in subRows"
             :key="`sub-${row.id}`"
-            class="border-t bg-amber-50/40 dark:bg-amber-900/10"
+            class="border-b border-border bg-amber-50/40 dark:bg-amber-900/10"
           >
             <td class="px-4 py-2 font-mono text-xs text-zinc-400">Draft #{{ row.id }}</td>
             <td class="px-4 py-2">{{ dmy(row.actual_date) }}</td>
@@ -325,7 +327,7 @@ onMounted(load)
           <tr
             v-for="row in txRows"
             :key="`tx-${row.transaction_id}`"
-            class="cursor-pointer border-t hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            class="cursor-pointer border-b border-border last:border-0 hover:bg-background/60"
             @click="openDetail(row)"
           >
             <td class="px-4 py-2 font-mono text-xs">{{ row.transaction_no ?? '-' }}</td>
