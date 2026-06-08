@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { CheckCircle, XCircle, X } from 'lucide-vue-next'
 import { api } from '@/lib/api/client'
-import { dmyt } from '@/lib/date'
+import { dmyt, dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 
@@ -74,74 +74,150 @@ async function reject() {
   }
 }
 
-// ── Payload parsing ────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const parsedPayload = computed<Record<string, any>>(() => {
+const p = computed<Record<string, any>>(() => {
   const raw = props.submission?.payload
   if (!raw) return {}
   if (typeof raw === 'string') { try { return JSON.parse(raw) } catch { return {} } }
   return raw as Record<string, any>
 })
 
-const PAYMENT_LABEL: Record<string, string> = {
+const PAYMENT: Record<string, string> = {
   K: 'Kas Kecil', C: 'Kas Cabang', B: 'Bank', A: 'Aset/GL',
 }
-
-const FIELD_LABEL: Record<string, string> = {
-  actual_date: 'Tanggal',
-  reference_no: 'No. Referensi',
-  description: 'Keterangan',
-  paid_to: 'Dibayarkan Kepada',
-  payment_type: 'Jenis Bayar',
-  payment_account_no: 'Rekening Bayar',
-  fund_account_no: 'Sumber Dana',
-  product_branch_code: 'Cabang Produk',
-  rate: 'Kurs',
-  currency_code: 'Mata Uang',
-  donor_name: 'Donatur',
-  donor_no: 'No. Donatur',
-  account_no: 'No. Rekening',
-  account_name: 'Nama Rekening',
-  bank_name: 'Bank',
-  account_number: 'No. Rekening',
-  account_holder: 'Atas Nama',
+const ASHNAF: Record<string, string> = {
+  F: 'Fakir', M: 'Miskin', A: 'Amil', R: 'Riqab',
+  G: 'Gharimin', S: 'Sabilillah', I: 'Ibnu Sabil', L: 'Lainnya',
 }
-
-const SKIP_FIELDS = new Set(['items', 'donor_id', 'marketer_id', 'sponsor_id', 'volunteer_id', 'asset_code', 'asset_currency'])
-
-function formatValue(key: string, value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—'
-  if (key === 'payment_type') return PAYMENT_LABEL[String(value)] ?? String(value)
-  if (key === 'actual_date') {
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value))
-    return m ? `${m[3]}-${m[2]}-${m[1]}` : String(value)
-  }
-  if (key === 'rate' && Number(value) === 1) return 'IDR 1 : 1'
-  if (typeof value === 'number') return value.toLocaleString('id-ID')
-  if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak'
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
+const FUND_ENTITY: Record<number, string> = {
+  1: 'Zakat', 2: 'Infaq', 3: 'Wakaf', 4: 'Amil', 5: 'Non-Halal',
 }
-
-const mainFields = computed(() =>
-  Object.entries(parsedPayload.value)
-    .filter(([k, v]) => !SKIP_FIELDS.has(k) && v !== null && v !== undefined && v !== '')
-    .map(([k, v]) => ({ key: k, label: FIELD_LABEL[k] ?? k.replace(/_/g, ' '), value: formatValue(k, v) }))
-)
-
-const items = computed<any[]>(() => parsedPayload.value.items ?? [])
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
-const fmtRp = (n: number) => 'Rp ' + idr.format(n)
+const fmtRp = (n: number | string | undefined) => 'Rp ' + idr.format(Number(n) || 0)
+const v = (val: unknown, fallback = '—') =>
+  val === null || val === undefined || val === '' ? fallback : String(val)
 
+const items = computed<any[]>(() => p.value.items ?? [])
 const totalAmount = computed(() =>
   items.value.reduce((s, i) => s + (Number(i.amount) || 0), 0)
 )
 
-const ASHNAF_LABEL: Record<string, string> = {
-  F: 'Fakir', M: 'Miskin', A: 'Amil', R: 'Riqab',
-  G: 'Gharimin', S: 'Sabilillah', I: 'Ibnu Sabil', L: 'Lainnya',
-}
+// ── Per entity_type sections ──────────────────────────────────────────────────
+
+type FieldRow = { label: string; value: string; wide?: boolean }
+type Section = { title: string; fields: FieldRow[] }
+
+const sections = computed<Section[]>(() => {
+  const et = props.submission?.entity_type
+  if (!et || !p.value) return []
+
+  if (et === 'penghimpunan') {
+    const secs: Section[] = []
+    if (p.value.donor_name || p.value.donor_no) {
+      secs.push({
+        title: 'Informasi Donatur',
+        fields: [
+          { label: 'Nama Donatur', value: v(p.value.donor_name) },
+          { label: 'No. Donatur',  value: v(p.value.donor_no) },
+        ],
+      })
+    }
+    secs.push({
+      title: 'Detail Transaksi',
+      fields: [
+        { label: 'Tanggal',        value: dmy(p.value.actual_date) },
+        { label: 'Jenis Bayar',    value: PAYMENT[p.value.payment_type] ?? v(p.value.payment_type) },
+        { label: 'Rekening',       value: v(p.value.payment_account_no) },
+        { label: 'No. Referensi',  value: v(p.value.reference_no) },
+        { label: 'Keterangan',     value: v(p.value.description), wide: true },
+        { label: 'Mata Uang',      value: v(p.value.currency_code) },
+        { label: 'Cabang Produk',  value: v(p.value.product_branch_code) },
+      ].filter(f => f.value !== '—'),
+    })
+    return secs
+  }
+
+  if (et === 'penyaluran') {
+    return [{
+      title: 'Detail Transaksi',
+      fields: [
+        { label: 'Tanggal',        value: dmy(p.value.actual_date) },
+        { label: 'Jenis Bayar',    value: PAYMENT[p.value.payment_type] ?? v(p.value.payment_type) },
+        { label: 'Rekening Bayar', value: v(p.value.payment_account_no) },
+        { label: 'Sumber Dana',    value: v(p.value.fund_account_no) },
+        { label: 'No. Referensi',  value: v(p.value.reference_no) },
+        { label: 'Keterangan',     value: v(p.value.description), wide: true },
+        { label: 'Dibayarkan Kpd', value: v(p.value.paid_to) },
+        { label: 'Cabang Produk',  value: v(p.value.product_branch_code) },
+      ].filter(f => f.value !== '—'),
+    }]
+  }
+
+  if (et === 'upload_penghimpunan') {
+    return [{
+      title: 'Info Upload',
+      fields: [
+        { label: 'File',         value: v(p.value.filename) },
+        { label: 'Total Baris',  value: v(p.value.total_rows ?? p.value.rows?.length) },
+        { label: 'Total Jumlah', value: p.value.total_amount != null ? fmtRp(p.value.total_amount) : '—' },
+        { label: 'Cabang',       value: v(p.value.branch_code) },
+      ].filter(f => f.value !== '—'),
+    }]
+  }
+
+  if (et === 'coa') {
+    return [{
+      title: 'Detail Akun',
+      fields: [
+        { label: 'Kode Akun',   value: v(p.value.account_no) },
+        { label: 'Nama Akun',   value: v(p.value.account_name) },
+        { label: 'Tipe',        value: v(p.value.account_type) },
+        { label: 'Parent',      value: v(p.value.parent_no) },
+        { label: 'Level Akhir', value: p.value.is_detail ? 'Ya' : 'Tidak' },
+      ].filter(f => f.value !== '—'),
+    }]
+  }
+
+  if (et === 'kas') {
+    return [{
+      title: 'Detail Kas',
+      fields: [
+        { label: 'Nama',  value: v(p.value.account_name ?? p.value.name) },
+        { label: 'Kode',  value: v(p.value.code ?? p.value.account_no) },
+      ].filter(f => f.value !== '—'),
+    }]
+  }
+
+  if (et === 'bank') {
+    return [{
+      title: 'Detail Rekening Bank',
+      fields: [
+        { label: 'Bank',          value: v(p.value.bank_name) },
+        { label: 'No. Rekening',  value: v(p.value.account_number) },
+        { label: 'Atas Nama',     value: v(p.value.account_holder) },
+        { label: 'Cabang Bank',   value: v(p.value.branch) },
+      ].filter(f => f.value !== '—'),
+    }]
+  }
+
+  // Fallback: generic key-value
+  return [{
+    title: 'Data Input',
+    fields: Object.entries(p.value)
+      .filter(([k, v]) => k !== 'items' && v !== null && v !== undefined && v !== '')
+      .map(([k, v]) => ({
+        label: k.replace(/_/g, ' '),
+        value: typeof v === 'object' ? JSON.stringify(v) : String(v),
+      })),
+  }]
+})
+
+// Items table columns per entity
+const hasAshnaf = computed(() => items.value.some(i => i.ashnaf && i.ashnaf !== 'L'))
+const hasAmil   = computed(() => items.value.some(i => i.percentage_of_amil != null && i.percentage_of_amil > 0))
+const hasDesc   = computed(() => items.value.some(i => i.description))
 </script>
 
 <template>
@@ -158,15 +234,13 @@ const ASHNAF_LABEL: Record<string, string> = {
           <div class="shrink-0 border-b bg-white px-6 py-4">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
                     {{ submission.entity_label }}
                   </span>
                   <StatusBadge :status="(submission.status as any)" />
                 </div>
-                <h2 class="text-lg font-bold text-zinc-900">
-                  Submission #{{ submission.id }}
-                </h2>
+                <h2 class="text-lg font-bold text-zinc-900">Submission #{{ submission.id }}</h2>
               </div>
               <button @click="emit('close')"
                       class="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition">
@@ -174,7 +248,7 @@ const ASHNAF_LABEL: Record<string, string> = {
               </button>
             </div>
 
-            <!-- Meta info — 4 kolom -->
+            <!-- Meta: 4 kolom -->
             <div class="mt-3 grid grid-cols-4 gap-3 rounded-lg bg-zinc-50 px-4 py-3 text-xs">
               <div>
                 <p class="text-zinc-400 mb-0.5">Inputer</p>
@@ -184,33 +258,34 @@ const ASHNAF_LABEL: Record<string, string> = {
                 <p class="text-zinc-400 mb-0.5">Cabang</p>
                 <p class="font-semibold text-zinc-800">{{ submission.branch_code }}</p>
               </div>
-              <div>
+              <div class="col-span-2">
                 <p class="text-zinc-400 mb-0.5">Disubmit</p>
-                <p class="font-semibold text-zinc-800">{{ submission.submitted_at ? dmyt(submission.submitted_at) : '—' }}</p>
-              </div>
-              <div>
-                <p class="text-zinc-400 mb-0.5">Level</p>
-                <p class="font-semibold text-zinc-800">{{ submission.level_current }}/{{ submission.level_required }}</p>
+                <p class="font-semibold text-zinc-800">
+                  {{ submission.submitted_at ? dmyt(submission.submitted_at) : '—' }}
+                </p>
               </div>
             </div>
           </div>
 
-          <!-- ── Scrollable content ───────────────────────────────────── -->
-          <div class="flex-1 overflow-y-auto">
+          <!-- ── Scrollable body ──────────────────────────────────────── -->
+          <div class="flex-1 overflow-y-auto divide-y divide-zinc-100">
 
-            <!-- Data Input -->
-            <div class="px-6 py-5 border-b">
-              <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-3">Data Input</p>
+            <!-- Sections (entity-specific fields) -->
+            <div v-for="sec in sections" :key="sec.title" class="px-6 py-5">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+                {{ sec.title }}
+              </p>
               <dl class="grid grid-cols-2 gap-x-8 gap-y-3">
-                <div v-for="f in mainFields" :key="f.key">
+                <div v-for="f in sec.fields" :key="f.label"
+                     :class="f.wide ? 'col-span-2' : ''">
                   <dt class="text-[11px] text-zinc-400 capitalize mb-0.5">{{ f.label }}</dt>
                   <dd class="text-sm font-medium text-zinc-800 break-words">{{ f.value }}</dd>
                 </div>
               </dl>
             </div>
 
-            <!-- Items -->
-            <div v-if="items.length" class="px-6 py-5 border-b">
+            <!-- Items (penghimpunan / penyaluran) -->
+            <div v-if="items.length" class="px-6 py-5">
               <div class="flex items-center justify-between mb-3">
                 <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                   Item Transaksi ({{ items.length }})
@@ -219,39 +294,51 @@ const ASHNAF_LABEL: Record<string, string> = {
               </div>
               <div class="overflow-x-auto rounded-lg border border-zinc-100">
                 <table class="w-full text-xs">
-                  <thead class="bg-zinc-50 text-zinc-400 font-semibold uppercase">
+                  <thead class="bg-zinc-50 text-zinc-400 font-semibold">
                     <tr>
-                      <th class="px-3 py-2 text-left w-8">#</th>
-                      <th class="px-3 py-2 text-left">Produk</th>
+                      <th class="px-3 py-2 text-left w-7">#</th>
+                      <th class="px-3 py-2 text-left">Produk / Rekening</th>
+                      <th v-if="submission.entity_type === 'penghimpunan'" class="px-3 py-2 text-left">Jenis Dana</th>
+                      <th v-if="hasAshnaf" class="px-3 py-2 text-left">Ashnaf</th>
+                      <th v-if="hasAmil" class="px-3 py-2 text-right">% Amil</th>
                       <th class="px-3 py-2 text-right">Jumlah</th>
-                      <th v-if="items.some(i => i.ashnaf)" class="px-3 py-2 text-left">Ashnaf</th>
-                      <th v-if="items.some(i => i.description)" class="px-3 py-2 text-left">Keterangan</th>
+                      <th v-if="hasDesc" class="px-3 py-2 text-left">Ket.</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(item, i) in items" :key="i"
-                        class="border-t border-zinc-100 hover:bg-zinc-50">
+                        class="border-t border-zinc-100 hover:bg-zinc-50/60">
                       <td class="px-3 py-2 text-zinc-400">{{ i + 1 }}</td>
-                      <td class="px-3 py-2 text-zinc-700">
-                        {{ item.product_name || `#${item.product_id}` || '—' }}
-                        <span v-if="item.account_no" class="block text-zinc-400 font-normal">{{ item.account_no }}</span>
+                      <td class="px-3 py-2">
+                        <p class="font-medium text-zinc-800">
+                          {{ item.product_name || `Produk #${item.product_id}` }}
+                        </p>
+                        <p v-if="item.account_no" class="text-zinc-400">{{ item.account_no }}</p>
                       </td>
-                      <td class="px-3 py-2 text-right font-semibold text-zinc-800">
-                        {{ fmtRp(Number(item.amount) || 0) }}
+                      <td v-if="submission.entity_type === 'penghimpunan'" class="px-3 py-2 text-zinc-500">
+                        {{ FUND_ENTITY[item.fund_entity] ?? item.fund_entity ?? '—' }}
                       </td>
-                      <td v-if="items.some(i => i.ashnaf)" class="px-3 py-2 text-zinc-500">
-                        {{ item.ashnaf ? (ASHNAF_LABEL[item.ashnaf] ?? item.ashnaf) : '—' }}
+                      <td v-if="hasAshnaf" class="px-3 py-2 text-zinc-500">
+                        {{ item.ashnaf ? (ASHNAF[item.ashnaf] ?? item.ashnaf) : '—' }}
                       </td>
-                      <td v-if="items.some(i => i.description)" class="px-3 py-2 text-zinc-500 max-w-[180px] truncate">
+                      <td v-if="hasAmil" class="px-3 py-2 text-right text-zinc-500">
+                        {{ item.percentage_of_amil ? item.percentage_of_amil + '%' : '—' }}
+                      </td>
+                      <td class="px-3 py-2 text-right font-semibold text-zinc-800 whitespace-nowrap">
+                        {{ fmtRp(item.amount) }}
+                      </td>
+                      <td v-if="hasDesc" class="px-3 py-2 text-zinc-500 max-w-[140px] truncate">
                         {{ item.description || '—' }}
                       </td>
                     </tr>
-                    <!-- Subtotal row -->
+                    <!-- Total row -->
                     <tr class="border-t-2 border-zinc-200 bg-zinc-50">
-                      <td colspan="2" class="px-3 py-2 text-right text-zinc-500 font-medium">Total</td>
-                      <td class="px-3 py-2 text-right font-bold text-zinc-900">{{ fmtRp(totalAmount) }}</td>
-                      <td v-if="items.some(i => i.ashnaf)" />
-                      <td v-if="items.some(i => i.description)" />
+                      <td :colspan="2 + (submission.entity_type === 'penghimpunan' ? 1 : 0) + (hasAshnaf ? 1 : 0) + (hasAmil ? 1 : 0)"
+                          class="px-3 py-2.5 text-right text-xs font-semibold text-zinc-500">Total</td>
+                      <td class="px-3 py-2.5 text-right text-sm font-bold text-zinc-900 whitespace-nowrap">
+                        {{ fmtRp(totalAmount) }}
+                      </td>
+                      <td v-if="hasDesc" />
                     </tr>
                   </tbody>
                 </table>
@@ -260,29 +347,34 @@ const ASHNAF_LABEL: Record<string, string> = {
 
             <!-- Approval Log -->
             <div v-if="submission.approval_log?.length" class="px-6 py-5">
-              <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-3">Riwayat Otorisasi</p>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+                Riwayat Otorisasi
+              </p>
               <div class="space-y-2">
                 <div v-for="log in submission.approval_log" :key="log.level"
-                     class="flex items-start gap-3 rounded-lg border px-4 py-3 text-sm"
-                     :class="log.status === 'APPROVED' ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'">
+                     class="flex items-start gap-3 rounded-lg border px-4 py-3"
+                     :class="log.status === 'APPROVED'
+                       ? 'border-green-100 bg-green-50'
+                       : 'border-red-100 bg-red-50'">
                   <span class="mt-0.5 shrink-0"
                         :class="log.status === 'APPROVED' ? 'text-green-500' : 'text-red-500'">
                     <CheckCircle v-if="log.status === 'APPROVED'" class="w-4 h-4" />
                     <XCircle v-else class="w-4 h-4" />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="flex items-center justify-between gap-2">
-                      <p class="font-medium text-zinc-800">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                      <p class="text-sm font-medium text-zinc-800">
                         {{ log.authorizer_id === 'SYSTEM_AUTO' ? 'Sistem (dalam limit)' : log.authorizer_id }}
                         <span class="ml-1 text-xs text-zinc-400 font-normal">· Level {{ log.level }}</span>
                       </p>
-                      <span class="shrink-0 text-xs text-zinc-400">{{ dmyt(log.logged_at) }}</span>
+                      <span class="text-xs text-zinc-400 shrink-0">{{ dmyt(log.logged_at) }}</span>
                     </div>
                     <p v-if="log.notes" class="mt-0.5 text-xs text-zinc-600">{{ log.notes }}</p>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
 
           <!-- ── Actions (sticky bottom) ─────────────────────────────── -->
