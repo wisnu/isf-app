@@ -167,6 +167,7 @@ const drawerMode = shallowRef<'create' | 'edit'>('create')
 const drawerLoading = shallowRef(false)
 const editingAccountNo = shallowRef<string | null>(null)
 const submitting = shallowRef(false)
+const formError = shallowRef<string | null>(null)
 
 const form = reactive({
   account_name: '',
@@ -232,6 +233,7 @@ async function openEdit(accountNo: string) {
 function closeDrawer() {
   drawerOpen.value = false
   editingAccountNo.value = null
+  formError.value = null
 }
 
 watch(() => form.is_amil_account, (val) => {
@@ -250,8 +252,13 @@ function validateForm(): string | null {
 }
 
 async function submitForm() {
-  const err = validateForm()
-  if (err) { toast.error(err); return }
+  formError.value = null
+  const validationErr = validateForm()
+  if (validationErr) {
+    formError.value = validationErr
+    toast.error(validationErr)
+    return
+  }
 
   submitting.value = true
   try {
@@ -282,7 +289,9 @@ async function submitForm() {
     closeDrawer()
     await loadSubmissions()
   } catch (e: unknown) {
-    toast.error(e instanceof Error ? e.message : 'Gagal mengirim submission')
+    const msg = e instanceof Error ? e.message : 'Gagal mengirim submission'
+    formError.value = msg
+    toast.error(msg)
   } finally {
     submitting.value = false
   }
@@ -691,13 +700,21 @@ onMounted(() => {
               </div>
 
               <!-- Drawer footer -->
-              <div class="border-t border-border px-5 py-3 flex justify-end gap-2">
-                <Button variant="outline" size="sm" :disabled="submitting" @click="closeDrawer">
-                  Batal
-                </Button>
-                <Button size="sm" :disabled="submitting || drawerLoading" @click="submitForm">
-                  {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
-                </Button>
+              <div class="border-t border-border px-5 py-3 space-y-2">
+                <div
+                  v-if="formError"
+                  class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/10 dark:border-red-800 dark:text-red-400"
+                >
+                  {{ formError }}
+                </div>
+                <div class="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" :disabled="submitting" @click="closeDrawer">
+                    Batal
+                  </Button>
+                  <Button size="sm" :disabled="submitting || drawerLoading" @click="submitForm">
+                    {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
+                  </Button>
+                </div>
               </div>
             </div>
           </Transition>
