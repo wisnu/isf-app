@@ -3,7 +3,6 @@ import { Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
 import Column from 'primevue/column'
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
-import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -48,12 +47,6 @@ interface BankAccountDetail {
   product_id: number | null
   cash_code: string | null
   status: string | null
-}
-
-interface BankSubmission {
-  id: number
-  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED'
-  payload: Record<string, unknown>
 }
 
 interface SelectOption { value: string; label: string }
@@ -106,14 +99,6 @@ function nextPage() { if (page.value < totalPages.value) { page.value++; loadBan
 
 // ── Submissions ───────────────────────────────────────────────────────────────
 
-const submissions = ref<BankSubmission[]>([])
-
-async function loadSubmissions() {
-  try {
-    const res = await api.get<{ rows: BankSubmission[] }>('/api/otorisasi/my-submissions/?entity_type=bank')
-    submissions.value = res.rows ?? []
-  } catch { /* silent */ }
-}
 
 // ── Lookup data ───────────────────────────────────────────────────────────────
 
@@ -289,7 +274,6 @@ async function submitForm() {
         : 'Permintaan ubah rekening dikirim untuk otorisasi',
     )
     closeDrawer()
-    await loadSubmissions()
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Gagal mengirim submission'
     formError.value = msg
@@ -338,7 +322,6 @@ async function submitDelete() {
     })
     toast.success('Permintaan hapus rekening dikirim untuk otorisasi')
     closeDrawer()
-    await loadSubmissions()
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Gagal mengirim permintaan hapus'
     formError.value = msg
@@ -348,10 +331,7 @@ async function submitDelete() {
   }
 }
 
-onMounted(() => {
-  loadBankAccounts()
-  loadSubmissions()
-})
+onMounted(loadBankAccounts)
 </script>
 
 <template>
@@ -390,31 +370,6 @@ onMounted(() => {
       class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
     >
       <strong>Error:</strong> {{ errorMsg }}
-    </div>
-
-    <!-- Pending submissions -->
-    <div
-      v-if="submissions.length > 0"
-      class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 p-3"
-    >
-      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-        Permintaan Rekening Bank ({{ submissions.length }})
-      </p>
-      <div class="space-y-1">
-        <div
-          v-for="sub in submissions"
-          :key="sub.id"
-          class="flex items-center gap-3 rounded bg-white dark:bg-zinc-900 px-3 py-1.5 text-[11px] border border-border"
-        >
-          <span class="font-mono text-muted">#{{ sub.id }}</span>
-          <span class="text-[10px] uppercase tracking-wide px-1 py-px rounded bg-zinc-100 text-zinc-500 dark:bg-zinc-800">
-            {{ (sub.payload as any).action ?? 'create' }}
-          </span>
-          <span class="font-semibold truncate flex-1">{{ (sub.payload as any).account_name ?? '—' }}</span>
-          <span v-if="(sub.payload as any).account_no" class="font-mono text-muted">{{ (sub.payload as any).account_no }}</span>
-          <StatusBadge :status="sub.status" />
-        </div>
-      </div>
     </div>
 
     <!-- 3-part table layout -->

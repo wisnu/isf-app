@@ -2,7 +2,6 @@
 import { Banknote, Plus } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
 
-import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -75,28 +74,11 @@ const stats = computed(() => ({
   active: accounts.filter((a) => a.active).length,
 }))
 
-interface KasSubmission {
-  id: number
-  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED'
-  payload: { code?: string; name?: string; holder?: string }
-}
 
 const toast = useToast()
-const submissions = ref<KasSubmission[]>([])
 const showAddModal = shallowRef(false)
 const submitting = shallowRef(false)
 const newKas = reactive({ code: '', name: '', holder: '' })
-
-async function loadSubmissions() {
-  try {
-    const res = await api.get<{ rows: KasSubmission[] }>(
-      '/api/otorisasi/my-submissions/?entity_type=kas',
-    )
-    submissions.value = res.rows ?? []
-  } catch {
-    // silent
-  }
-}
 
 async function submitNewKas() {
   if (!newKas.code || !newKas.name) {
@@ -119,15 +101,12 @@ async function submitNewKas() {
     newKas.code = ''
     newKas.name = ''
     newKas.holder = ''
-    await loadSubmissions()
   } catch (e: unknown) {
     toast.error(e instanceof Error ? e.message : 'Gagal mengirim submission')
   } finally {
     submitting.value = false
   }
 }
-
-onMounted(loadSubmissions)
 </script>
 
 <template>
@@ -151,25 +130,6 @@ onMounted(loadSubmissions)
         keuangan di Fase 2.
       </span>
     </Alert>
-
-    <!-- Pending submissions -->
-    <div v-if="submissions.length > 0" class="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 p-3">
-      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-        Permintaan Tambah Kas ({{ submissions.length }})
-      </p>
-      <div class="space-y-1">
-        <div
-          v-for="sub in submissions"
-          :key="sub.id"
-          class="flex items-center gap-3 rounded bg-white dark:bg-zinc-900 px-3 py-1.5 text-[11px] border border-border"
-        >
-          <span class="font-mono text-muted">#{{ sub.id }}</span>
-          <span class="font-semibold">{{ sub.payload.code }}</span>
-          <span class="text-muted truncate flex-1">{{ sub.payload.name }}</span>
-          <StatusBadge :status="sub.status" />
-        </div>
-      </div>
-    </div>
 
     <!-- Add Kas modal -->
     <Teleport to="body">
