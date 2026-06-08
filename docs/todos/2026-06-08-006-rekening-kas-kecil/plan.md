@@ -2,7 +2,7 @@
 
 **Tanggal:** 2026-06-08  
 **Berdasarkan Specs:** `docs/todos/2026-06-08-006-rekening-kas-kecil/specs.md`  
-**Status:** In Progress
+**Status:** ✅ Selesai — E2E 10/10 PASSED
 
 ---
 
@@ -17,18 +17,18 @@ Menggunakan tabel `cashaccount` + `financialaccount` dengan discriminator `casha
 
 | # | File | Aksi | Agent | Status |
 |---|------|------|-------|--------|
-| 1 | `apps_zakat/api-python/app/modules/kas_kecil/schema.py` | CREATE | isf-agent-python | ⏳ Pending |
-| 2 | `apps_zakat/api-python/app/modules/kas_kecil/service.py` | CREATE | isf-agent-python | ⏳ Pending |
-| 3 | `apps_zakat/api-python/app/modules/kas_kecil/router.py` | CREATE | isf-agent-python | ⏳ Pending |
-| 4 | `apps_zakat/api-python/app/modules/kas_kecil/__init__.py` | CREATE | isf-agent-python | ⏳ Pending |
-| 5 | `apps_zakat/api-python/app/main.py` | MODIFY | isf-agent-python | ⏳ Pending |
-| 6 | `apps_zakat/bff-api/app/routers/kas_kecil.py` | CREATE | isf-agent-bff | ⏳ Pending |
-| 7 | `apps_zakat/bff-api/app/main.py` | MODIFY | isf-agent-bff | ⏳ Pending |
-| 8 | `infra/db/migrations/seed/seed-menu-kas-kecil.sql` | CREATE | isf-agent-seed | ⏳ Pending |
-| 9 | `apps_zakat/web-vue/src/lib/menu/registry.ts` | MODIFY | isf-agent-seed | ⏳ Pending |
-| 10 | `apps_zakat/web-vue/src/pages/keuangan/KasKecilPage.vue` | CREATE | isf-agent-ui | ⏳ Pending |
-| 11 | `apps_zakat/web-vue/src/router/index.ts` | MODIFY | isf-agent-ui | ⏳ Pending |
-| 12 | `apps_zakat/web-vue/src/components/AppSidebar.vue` | MODIFY | isf-agent-ui | ⏳ Pending |
+| 1 | `apps_zakat/api-python/app/modules/kas_kecil/schema.py` | CREATE | isf-agent-python | ✅ Done |
+| 2 | `apps_zakat/api-python/app/modules/kas_kecil/service.py` | CREATE | isf-agent-python | ✅ Done |
+| 3 | `apps_zakat/api-python/app/modules/kas_kecil/router.py` | CREATE | isf-agent-python | ✅ Done |
+| 4 | `apps_zakat/api-python/app/modules/kas_kecil/__init__.py` | CREATE | isf-agent-python | ✅ Done |
+| 5 | `apps_zakat/api-python/app/main.py` | MODIFY | isf-agent-python | ✅ Done |
+| 6 | `apps_zakat/bff-api/app/routers/kas_kecil.py` | CREATE | isf-agent-bff | ✅ Done |
+| 7 | `apps_zakat/bff-api/app/main.py` | MODIFY | isf-agent-bff | ✅ Done |
+| 8 | `infra/db/migrations/seed/seed-menu-kas-kecil.sql` | CREATE | isf-agent-seed | ✅ Done |
+| 9 | `apps_zakat/web-vue/src/lib/menu/registry.ts` | MODIFY | isf-agent-seed | ✅ Done |
+| 10 | `apps_zakat/web-vue/src/pages/keuangan/KasKecilPage.vue` | CREATE | isf-agent-ui | ✅ Done |
+| 11 | `apps_zakat/web-vue/src/router/index.ts` | MODIFY | isf-agent-ui | ✅ Done |
+| 12 | `apps_zakat/web-vue/src/components/AppSidebar.vue` | MODIFY | isf-agent-ui | ✅ Done |
 
 ---
 
@@ -36,10 +36,10 @@ Menggunakan tabel `cashaccount` + `financialaccount` dengan discriminator `casha
 
 | # | Langkah | Status |
 |---|---------|--------|
-| A | Apply seed SQL ke isf_auth_zakat: `PGPASSWORD=solusi psql -U transaction -p 5432 -h localhost -d isf_auth_zakat -f infra/db/migrations/seed/seed-menu-kas-kecil.sql` | ⏳ Pending |
-| B | Restart container api-python dan bff-api zakat | ⏳ Pending |
-| C | User logout + login ulang di browser | ⏳ Pending |
-| D | Jalankan E2E script: `bash testing/e2e-rekening-kas-kecil.sh` | ⏳ Pending |
+| A | Apply seed SQL ke isf_auth_zakat | ✅ Done (applied saat step 3) |
+| B | Restart container api-python dan bff-api zakat | ✅ Done |
+| C | User logout + login ulang di browser | ⏳ Pending (lakukan manual) |
+| D | Jalankan E2E script: `bash testing/e2e-rekening-kas-kecil.sh` | ✅ Done — 10/10 PASSED |
 
 ---
 
