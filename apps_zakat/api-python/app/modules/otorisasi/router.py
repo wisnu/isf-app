@@ -1,9 +1,23 @@
 from __future__ import annotations
+from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from app.shared.response import ok, err
 from .schema import SubmissionIn, UpdatePayloadIn, ApproveIn, RejectIn, BulkApproveIn, BulkRejectIn
 from . import repo, service
+
+
+def _serialize(obj: dict) -> dict:
+    """Convert datetime/date objects in a dict to ISO strings for JSON serialization."""
+    result = {}
+    for k, v in obj.items():
+        if isinstance(v, datetime):
+            result[k] = v.isoformat()
+        elif isinstance(v, date):
+            result[k] = v.isoformat()
+        else:
+            result[k] = v
+    return result
 
 router = APIRouter(prefix='/otorisasi', tags=['otorisasi'])
 
@@ -27,8 +41,8 @@ async def get_submission(submission_id: int):
     if not sub:
         return JSONResponse(err('NOT_FOUND', 'Submission tidak ditemukan'), status_code=404)
     log = await repo.get_approval_log(submission_id)
-    data = dict(sub)
-    data['approval_log'] = [dict(l) for l in log]
+    data = _serialize(dict(sub))
+    data['approval_log'] = [_serialize(dict(l)) for l in log]
     return JSONResponse(ok(data))
 
 
@@ -84,7 +98,7 @@ async def list_submissions(
         page=page, page_size=page_size,
     )
     return JSONResponse({
-        'data': [dict(r) for r in rows],
+        'data': [_serialize(dict(r)) for r in rows],
         'pagination': {'page': page, 'limit': page_size, 'total': total, 'total_pages': -(-total // page_size)},
         'meta': {'request_id': ''},
     })
