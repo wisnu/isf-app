@@ -127,39 +127,70 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 
 > `py-1` pada td (bukan py-2) membuat baris lebih kompak.
 
-### Pagination — Selalu Sertakan Page Size Selector
+### Pagination — Wajib Page Size Selector, Default 20
 
-Default page size: **20**. Selalu tambahkan selector jumlah data (20/50/100) via `TablePagination`.
+> ⚠️ **WAJIB** — semua halaman dengan tabel berpaginasi HARUS menyertakan selector jumlah data.
+> Default **20**. Opsi: 20, 50, 100. Jangan hardcode `page_size` sebagai angka tetap.
 
-**Server-side pagination (BankPage, laporan):**
+**Server-side pagination** (data dari API per request — BankPage, Penghimpunan, Penyaluran, Otorisasi, Riwayat, Histori):
 ```typescript
 const pageSize = shallowRef(20)
 const page = shallowRef(1)
 
-function changePageSize(size: number) { pageSize.value = size; page.value = 1; load() }
+function goto(target: number) {
+  page.value = Math.min(Math.max(1, target), totalPages.value)
+  load()
+}
+// Di fungsi load():
+params.set('page', String(page.value))
+params.set('page_size', String(pageSize.value))
 ```
 ```vue
 <TablePagination
-  :page="page" :total-pages="totalPages" :total="total"
+  :page="page"
+  :total-pages="totalPages"
+  :total="total"
   :page-size="pageSize"
-  @prev="page > 1 && (page--, load())"
-  @next="page < totalPages && (page++, load())"
-  @update:page-size="changePageSize"
+  :loading="loading"
+  @prev="goto(page - 1)"
+  @next="goto(page + 1)"
+  @update:page-size="pageSize = $event; goto(1)"
 />
 ```
 
-**Client-side pagination (CoaPage):**
+**Client-side pagination** (semua data sudah di memory — CoaPage):
 ```typescript
 const pageSize = shallowRef(20)
+const currentPage = shallowRef(1)
 watch(pageSize, () => { currentPage.value = 1 })
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)))
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
+})
 ```
 ```vue
 <TablePagination
-  :page="currentPage" :total-pages="totalPages" :total="filteredRows.length"
+  :page="currentPage"
+  :total-pages="totalPages"
+  :total="filteredRows.length"
   :page-size="pageSize"
-  @prev="currentPage--" @next="currentPage++"
+  @prev="currentPage--"
+  @next="currentPage++"
   @update:page-size="pageSize = $event"
 />
+```
+
+**Tampilkan "X–Y dari Z"** di sebelah kiri pagination bar:
+```vue
+<div class="flex items-center justify-between px-4 py-2 border-b border-border">
+  <span class="text-[11px] text-muted tabular-nums">
+    {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, total) }}
+    dari {{ total }} rekening
+  </span>
+  <TablePagination ... />
+</div>
 ```
 
 ### Pagination SELALU di Atas
