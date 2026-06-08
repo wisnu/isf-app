@@ -103,8 +103,7 @@ stateDiagram-v2
 **Goal:** Pahami apa yang ingin dibangun.
 
 **Langkah:**
-1. Baca `docs/AGENTS_OVERVIEW.md` untuk memahami coordination map terkini.
-2. Identifikasi tipe fitur dari permintaan user:
+1. Identifikasi tipe fitur dari permintaan user:
    - **Laporan baru** → workflow 5 langkah (DB → Python → BFF → Seed → UI)
    - **CRUD module baru** → workflow 4 langkah (Python → BFF → Seed → UI)
    - **Approval workflow** → workflow 5 langkah (DB → Python → BFF → Seed → UI)
@@ -526,7 +525,17 @@ flowchart TD
 
 ---
 
-## Referensi: Agent Domain Boundaries
+## Referensi: 5 Agent — Scope & Port
+
+| Agent | Owns | Port |
+|---|---|---|
+| `isf-agent-ui` | `apps_{portal}/web-vue/src/` — Vue 3 SPA | :5173 / :5174 |
+| `isf-agent-bff` | `apps_{portal}/bff-api/app/` — auth, proxy, gating | :7000 / :7001 |
+| `isf-agent-python` | `apps_{portal}/api-python/` + `report-api/` | :8000/:8010 |
+| `isf-agent-db` | `infra/db/migrations/dwh/` + isf_auth schema | — |
+| `isf-agent-seed` | `infra/db/migrations/seed/` | — |
+
+### Domain Boundaries
 
 | Agent | Scope | Tidak Boleh |
 |---|---|---|
@@ -535,6 +544,19 @@ flowchart TD
 | `isf-agent-python` | `apps_{portal}/api-python/` + `report-api/` | Tulis Vue, ubah BFF routes |
 | `isf-agent-db` | `infra/db/migrations/dwh/` + isf_auth schema | Tulis kode aplikasi |
 | `isf-agent-seed` | `infra/db/migrations/seed/` | Ubah kode, buat migrations DDL |
+
+### Who Talks to Who
+
+Komunikasi antar agent selalu satu arah — downstream konfirmasi ke upstream sebelum lanjut:
+
+```
+isf-agent-ui     → konfirmasi endpoint ke isf-agent-bff sebelum wiring API calls
+isf-agent-bff    → konfirmasi downstream endpoint ke isf-agent-python
+isf-agent-python → minta DWH view dari isf-agent-db sebelum build report
+isf-agent-db     → notifikasi isf-agent-python saat view siap
+isf-agent-seed   → notifikasi isf-agent-ui saat menu key di-seed (tambah ke MENU_KEYS)
+isf-agent-bff    → gunakan menu key dari isf-agent-seed di require_menu()
+```
 
 ---
 
@@ -568,6 +590,38 @@ Escalate ke Sonnet jika:
 - BFF: auth flow change, OAuth, session shape change
 - DB: legacy query 5+ JOIN, schema isf_auth baru
 - Seed: audit 3-way consistency, hierarki menu besar
+
+### Estimasi Penghematan per Workflow
+
+```
+Tambah laporan baru (5 agent):
+  Tanpa routing:  5× Sonnet  = 100% biaya
+  Dengan routing: 2× Sonnet + 3× Haiku ≈ 46% biaya  →  hemat ~54%
+
+Tambah CRUD module (4 agent):
+  Tanpa routing:  4× Sonnet  = 100% biaya
+  Dengan routing: 2× Sonnet + 2× Haiku ≈ 51% biaya  →  hemat ~49%
+
+Tambah menu key saja (seed + bff + ui):
+  Tanpa routing:  3× Sonnet  = 100% biaya
+  Dengan routing: 1× Sonnet + 2× Haiku ≈ 40% biaya  →  hemat ~60%
+```
+
+> Haiku ~20× lebih murah per token dari Sonnet. Untuk task templated (seed, BFF route,
+> DWH view standar) kualitasnya setara Sonnet.
+
+---
+
+## Referensi: Contract Boundary — OpenAPI
+
+Kontrak API bersama ada di:
+```
+packages/api-contract/openapi.yaml   ← source of truth
+packages/api-client-ts/generated/    ← TypeScript client (belum fully dipakai)
+```
+
+Saat `isf-agent-python` membuat endpoint baru, update `openapi.yaml`.
+`isf-agent-ui` bisa referensikan untuk konfirmasi request/response shape.
 
 ---
 
