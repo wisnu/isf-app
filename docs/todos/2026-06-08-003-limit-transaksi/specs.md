@@ -97,7 +97,8 @@ SELECT lt.nilai_limit
 
 | Method | Path | Query | Keterangan |
 |---|---|---|---|
-| `POST` | `/api/otorisasi/save-and-submit/` | `?user_id=&branch_code=` | Atomic: simpan + cek limit + decide |
+| `POST` | `/api/otorisasi/save-and-submit/` | `?user_id=&branch_code=` | Baru: simpan + cek limit + decide |
+| `PUT` | `/api/otorisasi/save-and-submit/{id}` | `?user_id=` | Edit REJECTED: update payload + cek limit + decide |
 | `GET` | `/api/otorisasi/user-limit/` | `?user_id=&entity_type=` | Fetch limit user untuk display di form |
 
 ### bff-api — endpoint baru
@@ -105,11 +106,12 @@ SELECT lt.nilai_limit
 | Method | Path | Menu Key | Keterangan |
 |---|---|---|---|
 | `POST` | `/api/otorisasi/save-and-submit/` | entity's menu_key | Proxy ke api-python |
+| `PUT` | `/api/otorisasi/save-and-submit/{id}` | entity's menu_key | Proxy edit mode |
 | `GET` | `/api/otorisasi/user-limit/` | entity's menu_key | Proxy, `?entity_type=` |
 
 ### Request/Response `save-and-submit`
 
-**Request body:**
+**POST (baru):**
 ```json
 {
   "entity_type": "penyaluran",
@@ -118,7 +120,9 @@ SELECT lt.nilai_limit
 }
 ```
 
-**Response:**
+**PUT (edit REJECTED) body:** `{ "payload": { ...updated fields... } }` — tidak perlu `entity_type`/`module`, diambil dari submission existing.
+
+**Response (sama untuk POST dan PUT):**
 ```json
 {
   "data": {
