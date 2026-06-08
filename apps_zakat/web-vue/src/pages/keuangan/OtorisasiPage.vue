@@ -331,6 +331,7 @@ function onRejected() { drawerOpen.value = false; load() }
             <th class="px-4 py-2 text-left">Inputer</th>
             <th class="px-4 py-2 text-left">Cabang</th>
             <th class="px-4 py-2 text-left">Disubmit</th>
+            <th class="px-4 py-2 text-left">Operasi</th>
             <th class="px-4 py-2 text-left">Ringkasan</th>
             <th class="px-4 py-2 text-right">Total</th>
             <th class="px-4 py-2 text-center">Level</th>
@@ -340,10 +341,10 @@ function onRejected() { drawerOpen.value = false; load() }
         </thead>
         <tbody>
           <tr v-if="loading && !rows.length">
-            <td colspan="10" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
+            <td colspan="11" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
           </tr>
           <tr v-else-if="hasLoaded && rows.length === 0">
-            <td colspan="10" class="px-4 py-8 text-center text-zinc-400">
+            <td colspan="11" class="px-4 py-8 text-center text-zinc-400">
               Tidak ada submission pending.
             </td>
           </tr>
@@ -364,30 +365,33 @@ function onRejected() { drawerOpen.value = false; load() }
             <td class="px-4 py-2 text-zinc-600">{{ row.submitted_by }}</td>
             <td class="px-4 py-2 text-zinc-600">{{ row.branch_code }}</td>
             <td class="px-4 py-2 text-xs">{{ row.submitted_at ? dmyt(row.submitted_at) : '—' }}</td>
+            <!-- Kolom Operasi: CREATE / EDIT / DELETE -->
+            <td class="px-4 py-2">
+              <template v-if="parsePayload(row.payload).action">
+                <span
+                  :class="[
+                    'inline-block rounded px-1.5 py-px text-[10px] font-bold uppercase tracking-wide',
+                    parsePayload(row.payload).action === 'create' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                    parsePayload(row.payload).action === 'delete' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                    parsePayload(row.payload).action === 'edit'   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                                                                    'bg-zinc-100 text-zinc-600'
+                  ]"
+                >{{ String(parsePayload(row.payload).action).toUpperCase() }}</span>
+              </template>
+              <span v-else class="text-xs text-zinc-300">—</span>
+            </td>
+            <!-- Kolom Ringkasan: detail tanpa action -->
             <td class="px-4 py-2">
               <div class="space-y-0.5">
                 <div
-                  v-for="item in summaryFor(row)"
+                  v-for="item in summaryFor(row).filter(i => !i.isAction)"
                   :key="item.label"
                   class="flex items-baseline gap-1 text-xs"
                 >
-                  <template v-if="item.isAction">
-                    <span
-                      :class="[
-                        'inline-block rounded px-1.5 py-px text-[10px] font-bold uppercase tracking-wide',
-                        item.value === 'CREATE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                        item.value === 'DELETE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                        item.value === 'EDIT'   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                                                  'bg-zinc-100 text-zinc-600'
-                      ]"
-                    >{{ item.value }}</span>
-                  </template>
-                  <template v-else>
-                    <span class="shrink-0 text-zinc-400">{{ item.label }}:</span>
-                    <span class="truncate max-w-[180px] text-zinc-700 dark:text-zinc-300">{{ item.value }}</span>
-                  </template>
+                  <span class="shrink-0 text-zinc-400">{{ item.label }}:</span>
+                  <span class="truncate max-w-[180px] text-zinc-700 dark:text-zinc-300">{{ item.value }}</span>
                 </div>
-                <span v-if="!summaryFor(row).length" class="text-xs text-zinc-300">—</span>
+                <span v-if="!summaryFor(row).filter(i => !i.isAction).length" class="text-xs text-zinc-300">—</span>
               </div>
             </td>
             <td class="px-4 py-2 text-right font-medium">{{ rowTotal(row) }}</td>
