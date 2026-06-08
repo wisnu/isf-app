@@ -290,15 +290,82 @@ Jangan pernah pakai `alert()`, `confirm()`, atau `console.log` di komponen.
 
 ```ts
 const auth = useAuthStore()
-// auth store: user, roles[], menus[], branches[], primary_branch, branch_access, active_tenant_id
-const canView = computed(() => auth.menus.includes(MENU_KEYS.KEUANGAN_COA))
+// auth store exposes:
+// auth.menus[]       — menu key strings yang diizinkan untuk user ini
+// auth.hasMenu(key)  — helper function, returns boolean
+// auth.roles[]       — role codes user
+// auth.branch_access — 'all' | 'single'
+
+// Gunakan auth.hasMenu() untuk cek akses menu
+const canOtorisasi = computed(() => auth.hasMenu('keuangan.monitoring.otorisasi'))
 ```
 
 ```vue
 <!-- v-if ONLY — jangan pernah CSS display:none -->
+<Button v-if="auth.hasMenu('keuangan.monitoring.otorisasi')" label="Otorisasi" />
 <Button v-if="auth.roles.includes('admin')" label="Hapus" />
-<Button v-if="canView" label="Export" />
 ```
+
+### Sidebar — Konvensi Visibility Menu
+
+Setiap item di `AppSidebar.vue` HARUS punya `menu_key` sesuai registry. Item tanpa `menu_key` selalu ditampilkan (unrestricted).
+
+**Pola `MenuItem` interface:**
+```typescript
+interface MenuItem {
+  label?: string
+  to?: string
+  icon?: FunctionalComponent
+  disabled?: boolean
+  badge?: string
+  menu_key?: MenuKey | string  // ← wajib untuk item yang perlu RBAC
+  children?: MenuItem[]
+  section?: string
+}
+```
+
+**Fungsi filter yang dipakai di AppSidebar:**
+```typescript
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
+
+function hasMenu(key: string | undefined): boolean {
+  if (!key) return true
+  return auth.hasMenu(key as MenuKey)
+}
+
+// Filter children + hilangkan section heading yang kosong
+function visibleChildren(children: MenuItem[]): MenuItem[] {
+  const out: MenuItem[] = []
+  let pendingSection: MenuItem | null = null
+  for (const child of children) {
+    if (child.section) {
+      pendingSection = child
+    } else if (!child.menu_key || hasMenu(child.menu_key)) {
+      if (pendingSection) { out.push(pendingSection); pendingSection = null }
+      out.push(child)
+    }
+  }
+  return out
+}
+
+// Parent hanya muncul jika ada child yang visible
+function hasVisibleChildren(item: MenuItem): boolean {
+  if (!item.children) return !item.disabled
+  return visibleChildren(item.children).some(c => !c.section)
+}
+```
+
+Di template:
+```vue
+<!-- Parent item -->
+<div v-if="hasVisibleChildren(item)" ...>
+  ...
+  <!-- Children — selalu pakai visibleChildren(), bukan item.children langsung -->
+  <template v-for="child in visibleChildren(item.children)" ...>
+```
+
+**Aturan:** Saat menambah item sidebar baru, selalu sertakan `menu_key` yang sudah terdaftar di `lib/menu/registry.ts`. Jika menu key belum ada di registry, tambahkan dulu sebelum menambah item sidebar.
 
 ### Dashboard Widget Independence
 

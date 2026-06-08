@@ -269,19 +269,37 @@ Never use `alert()`, `confirm()`, or `console.log` in components.
 ## #10 Rule — Role-Based UI
 
 ```ts
-// stores/auth.ts exposes:
-// user, roles[], menus[], branches[], active_tenant_id
 const auth = useAuthStore()
+// auth.hasMenu(key)  — preferred: returns boolean, key dari registry.ts
+// auth.menus[]       — raw array menu key strings
+// auth.roles[]       — role codes
+// auth.branch_access — 'all' | 'single'
 
-// check menu access
-const canViewLaporan = computed(() => auth.menus.includes(MENU_KEYS.KEUANGAN_LAPORAN_KAS))
+// Gunakan auth.hasMenu() — lebih eksplisit dari auth.menus.includes()
+const canOtorisasi = computed(() => auth.hasMenu('keuangan.monitoring.otorisasi'))
 ```
 
 ```vue
-<!-- v-if only — never CSS display:none -->
+<!-- v-if ONLY — jangan pernah CSS display:none -->
+<Button v-if="auth.hasMenu('keuangan.monitoring.otorisasi')" label="Otorisasi" />
 <Button v-if="auth.roles.includes('admin')" label="Hapus" />
-<Button v-if="canViewLaporan" label="Export" />
 ```
+
+### Sidebar: item HARUS punya menu_key — disembunyikan jika tidak ada akses
+
+Setiap item di `AppSidebar.vue` wajib punya `menu_key`. Item tanpa `menu_key` selalu muncul.
+
+```typescript
+// MenuItem interface di AppSidebar.vue
+{ label: 'Otorisasi', to: '/keuangan/monitoring/otorisasi', icon: ShieldCheck, menu_key: 'keuangan.monitoring.otorisasi' }
+```
+
+Sidebar menggunakan `visibleChildren()` untuk filter item berdasarkan `auth.hasMenu()`:
+- Item dengan `menu_key` yang tidak ada di `auth.menus[]` → **disembunyikan**
+- Section heading (Monitoring, Transaksi, dll) → **disembunyikan otomatis** jika tidak ada item visible di bawahnya
+- Parent item (Keuangan, Laporan) → **disembunyikan** jika semua children tersembunyi
+
+Saat menambah menu baru: daftarkan `menu_key` di `lib/menu/registry.ts` terlebih dahulu.
 
 ---
 
