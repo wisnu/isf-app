@@ -40,6 +40,28 @@ const rejectNotes = ref('')
 const showRejectForm = ref(false)
 const loading = ref(false)
 
+// ── Lookup resolver (untuk kode → nama saat payload tidak menyertakan nama) ──
+const bankMap = ref<Record<string, string>>({})
+const branchMap = ref<Record<string, string>>({})
+let lookupLoaded = false
+
+async function loadBankLookups() {
+  if (lookupLoaded) return
+  try {
+    const [banks, branches] = await Promise.all([
+      api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/bank/lookup/banks'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/bank/lookup/branches'),
+    ])
+    for (const b of banks.data ?? []) bankMap.value[b.bank_code] = b.bank_short_name ?? b.bank_name ?? b.bank_code
+    for (const b of branches.data ?? []) branchMap.value[b.branch_code] = b.branch_name ?? b.branch_code
+    lookupLoaded = true
+  } catch { /* silent */ }
+}
+
+watch(() => props.submission, (sub) => {
+  if (sub?.entity_type === 'bank') loadBankLookups()
+}, { immediate: true })
+
 watch(() => props.open, (val) => {
   if (!val) { rejectNotes.value = ''; showRejectForm.value = false }
 })
@@ -198,8 +220,8 @@ const sections = computed<Section[]>(() => {
         { label: 'Kode Rekening', value: v(p.value.account_no) },
         { label: 'Nama Rekening', value: v(p.value.account_name) },
         { label: 'No. Rekening',  value: v(p.value.bank_account_no) },
-        { label: 'Bank',          value: v(p.value.bank_name ?? p.value.bank_code) },
-        { label: 'Cabang',        value: v(p.value.branch_name ?? p.value.branch_code) },
+        { label: 'Bank',    value: v(p.value.bank_name ?? (p.value.bank_code ? `${p.value.bank_code} — ${bankMap.value[p.value.bank_code] ?? p.value.bank_code}` : null)) },
+        { label: 'Cabang',  value: v(p.value.branch_name ?? (p.value.branch_code ? `${p.value.branch_code} — ${branchMap.value[p.value.branch_code] ?? p.value.branch_code}` : null)) },
         { label: 'Valuta',        value: v(p.value.currency_code) },
         { label: 'GL Interface',  value: v(p.value.account_interface) },
         { label: 'Tgl Buka',      value: v(p.value.opening_date) },
