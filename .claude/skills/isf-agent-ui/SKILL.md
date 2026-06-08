@@ -563,6 +563,62 @@ Data TIDAK langsung masuk tabel utama — semua disimpan di `otorisasi.submissio
 
 **Tidak ada alur input → DRAFT → Submit.** Semua form langsung ke PENDING (atau AUTHORIZED) satu klik.
 
+### Delete — Tampilkan Form Read-Only, Bukan Inline Confirm
+
+> ⚠️ **JANGAN** pakai inline confirm di list (tombol "Hapus? Ya/Batal" di baris tabel).
+> Selalu buka modal/form yang **menampilkan data yang akan dihapus** dalam mode read-only,
+> lalu user klik "Hapus & Submit Otorisasi" untuk konfirmasi.
+
+**Alasan:** User perlu melihat detail lengkap data sebelum memutuskan hapus.
+Inline confirm hanya menampilkan kode — terlalu rawan salah klik.
+
+```typescript
+// BENAR — buka modal read-only berisi data lengkap
+async function openDelete(accountNo: string) {
+  deleteTargetNo.value = accountNo
+  // load detail dari API
+  const res = await api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`)
+  deleteTarget.value = res
+  modalMode.value = 'delete'
+  modalOpen.value = true
+}
+
+// Di modal delete mode: tampilkan semua field read-only + judul "Konfirmasi Hapus"
+// Tombol footer: [Batal] [Hapus & Submit Otorisasi (merah)]
+async function submitDelete() {
+  await api.post('/api/otorisasi/save-and-submit/', {
+    entity_type: 'bank',
+    module: 'keuangan',
+    payload: { action: 'delete', account_no: deleteTarget.value.account_no },
+  })
+  toast.success('Permintaan hapus dikirim untuk otorisasi')
+  closeModal()
+}
+
+// SALAH — jangan pakai inline confirm di list
+// <button @click="deletingAccountNo = r.account_no">Hapus</button>
+// <button @click="confirmDelete(r.account_no)">Ya</button>
+```
+
+**Pola modal delete:**
+```
+┌─────────────────────────────────────────────────────┐
+│  ⚠ Konfirmasi Hapus Rekening Bank      [X]          │
+│  Periksa data berikut sebelum menghapus             │
+├─────────────────────────────────────────────────────┤
+│  [semua field read-only — sama persis dengan form]  │
+│  Nama Rekening : ZAKAT FITRAH                       │
+│  No. Rekening  : 0700001170385                      │
+│  Nama Bank     : Mandiri                            │
+│  ...                                                │
+├─────────────────────────────────────────────────────┤
+│  ⚠ Data ini akan dihapus setelah disetujui          │
+│                [Batal]  [Hapus & Otorisasi]         │
+└─────────────────────────────────────────────────────┘
+```
+
+Tombol "Hapus & Otorisasi" pakai warna merah (`variant="destructive"` atau class `bg-red-600`).
+
 ### Lookup — Selalu Sertakan Nama + Kode di Payload
 
 > ⚠️ **WAJIB untuk semua form** — saat payload mengandung kode lookup (bank, cabang, akun GL, produk, dll),

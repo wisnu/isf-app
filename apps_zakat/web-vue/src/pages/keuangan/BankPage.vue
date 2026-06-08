@@ -163,7 +163,7 @@ async function loadLookups() {
 // ── Drawer state ──────────────────────────────────────────────────────────────
 
 const modalOpen = shallowRef(false)
-const drawerMode = shallowRef<'create' | 'edit'>('create')
+const drawerMode = shallowRef<'create' | 'edit' | 'delete'>('create')
 const drawerLoading = shallowRef(false)
 const editingAccountNo = shallowRef<string | null>(null)
 const submitting = shallowRef(false)
@@ -299,26 +299,52 @@ async function submitForm() {
   }
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
+// ── Delete — buka modal read-only berisi data lengkap ────────────────────────
 
-const deletingAccountNo = shallowRef<string | null>(null)
-const deleteSubmitting = shallowRef(false)
+async function openDelete(accountNo: string) {
+  drawerMode.value = 'delete'
+  editingAccountNo.value = accountNo
+  resetForm()
+  modalOpen.value = true
+  drawerLoading.value = true
+  await loadLookups()
+  try {
+    const res = await api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`)
+    form.account_name = res.account_name ?? ''
+    form.bank_account_no = res.bank_account_no ?? ''
+    form.bank_code = res.bank_code ?? ''
+    form.branch_code = res.branch_code ?? ''
+    form.currency_code = res.currency_code ?? ''
+    form.account_interface = res.account_interface ?? ''
+    form.opening_date = res.opening_date ?? ''
+    form.is_amil_account = res.is_amil_account ?? false
+    form.product_id = res.product_id != null ? String(res.product_id) : ''
+    form.cash_code = res.cash_code ?? ''
+  } catch {
+    toast.error('Gagal memuat detail rekening')
+    modalOpen.value = false
+  } finally {
+    drawerLoading.value = false
+  }
+}
 
-async function confirmDelete(accountNo: string) {
-  deleteSubmitting.value = true
+async function submitDelete() {
+  submitting.value = true
   try {
     await api.post('/api/otorisasi/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
-      payload: { action: 'delete', account_no: accountNo },
+      payload: { action: 'delete', account_no: editingAccountNo.value },
     })
     toast.success('Permintaan hapus rekening dikirim untuk otorisasi')
-    deletingAccountNo.value = null
+    closeDrawer()
     await loadSubmissions()
   } catch (e: unknown) {
-    toast.error(e instanceof Error ? e.message : 'Gagal mengirim permintaan hapus')
+    const msg = e instanceof Error ? e.message : 'Gagal mengirim permintaan hapus'
+    formError.value = msg
+    toast.error(msg)
   } finally {
-    deleteSubmitting.value = false
+    submitting.value = false
   }
 }
 
@@ -502,37 +528,23 @@ onMounted(() => {
         </Column>
 
         <!-- Aksi -->
-        <Column header="Aksi" style="width:110px;min-width:100px">
+        <Column header="Aksi" style="width:100px;min-width:90px">
           <template #body="{ data: r }">
             <div class="flex items-center gap-1">
-              <template v-if="deletingAccountNo === r.account_no">
-                <span class="text-[10px] text-red-600 font-medium mr-1">Hapus?</span>
-                <button
-                  class="rounded border border-red-400 px-1.5 py-0.5 text-[10px] font-medium text-red-600 hover:bg-red-50 transition disabled:opacity-50"
-                  :disabled="deleteSubmitting"
-                  @click="confirmDelete(r.account_no)"
-                >Ya</button>
-                <button
-                  class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition"
-                  @click="deletingAccountNo = null"
-                >Batal</button>
-              </template>
-              <template v-else>
-                <button
-                  class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition inline-flex items-center gap-0.5"
-                  @click="openEdit(r.account_no)"
-                >
-                  <Pencil class="w-2.5 h-2.5" />
-                  Edit
-                </button>
-                <button
-                  class="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 transition inline-flex items-center gap-0.5"
-                  @click="deletingAccountNo = r.account_no"
-                >
-                  <Trash2 class="w-2.5 h-2.5" />
-                  Hapus
-                </button>
-              </template>
+              <button
+                class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition inline-flex items-center gap-0.5"
+                @click="openEdit(r.account_no)"
+              >
+                <Pencil class="w-2.5 h-2.5" />
+                Edit
+              </button>
+              <button
+                class="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 transition inline-flex items-center gap-0.5"
+                @click="openDelete(r.account_no)"
+              >
+                <Trash2 class="w-2.5 h-2.5" />
+                Hapus
+              </button>
             </div>
           </template>
         </Column>
@@ -552,10 +564,14 @@ onMounted(() => {
           <!-- Modal header -->
           <div class="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
             <div>
-              <h2 class="text-base font-semibold">
-                {{ drawerMode === 'create' ? 'Tambah Rekening Bank' : `Edit Rekening — ${editingAccountNo}` }}
+              <h2 class="text-base font-semibold" :class="drawerMode === 'delete' ? 'text-red-700' : ''">
+                {{ drawerMode === 'create' ? 'Tambah Rekening Bank'
+                 : drawerMode === 'edit'   ? `Edit Rekening — ${editingAccountNo}`
+                 :                           `Konfirmasi Hapus — ${editingAccountNo}` }}
               </h2>
-              <p class="text-[11px] text-muted mt-0.5">Permintaan akan diproses melalui otorisasi</p>
+              <p class="text-[11px] mt-0.5" :class="drawerMode === 'delete' ? 'text-red-500' : 'text-muted'">
+                {{ drawerMode === 'delete' ? 'Periksa data berikut sebelum menghapus' : 'Permintaan akan diproses melalui otorisasi' }}
+              </p>
             </div>
             <button
               type="button"
@@ -575,7 +591,7 @@ onMounted(() => {
           </div>
 
           <!-- Form body -->
-          <div v-else class="overflow-y-auto px-6 py-5 space-y-4">
+          <div v-else class="overflow-y-auto px-6 py-5 space-y-4" :class="{ 'pointer-events-none select-none': drawerMode === 'delete' }">
             <!-- Baris 1: Nama Rekening + No Rekening Bank -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -696,7 +712,14 @@ onMounted(() => {
               </div>
             </div>
 
-            <p class="text-[10px] text-muted">
+            <!-- Warning delete mode -->
+            <div
+              v-if="drawerMode === 'delete'"
+              class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-400"
+            >
+              ⚠ Data rekening ini akan dihapus setelah disetujui supervisor. Tindakan tidak dapat dibatalkan.
+            </div>
+            <p v-else class="text-[10px] text-muted">
               Permintaan ini akan masuk sistem otorisasi. Rekening aktif setelah disetujui supervisor.
             </p>
           </div>
@@ -713,7 +736,17 @@ onMounted(() => {
               <Button variant="outline" size="sm" :disabled="submitting" @click="closeDrawer">
                 Batal
               </Button>
-              <Button size="sm" :disabled="submitting || drawerLoading" @click="submitForm">
+              <!-- Delete mode: tombol merah + fungsi berbeda -->
+              <button
+                v-if="drawerMode === 'delete'"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                :disabled="submitting || drawerLoading"
+                @click="submitDelete"
+              >
+                {{ submitting ? 'Mengirim...' : 'Hapus & Submit Otorisasi' }}
+              </button>
+              <Button v-else size="sm" :disabled="submitting || drawerLoading" @click="submitForm">
                 {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
               </Button>
             </div>
