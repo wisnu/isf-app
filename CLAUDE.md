@@ -285,6 +285,113 @@ List Uang Muka, Realisasi Memo, Piutang Realisasi.
 
 ---
 
+## Otorisasi System (Maker-Checker Workflow)
+
+**Schema:** `otorisasi` di business DB (`mziss_laz` / `mziss_wakaf`)
+**Files:** `apps_{portal}/api-python/app/modules/otorisasi/`
+**Menu key:** `keuangan.monitoring.otorisasi`
+
+### Konsep
+
+Semua transaksi keuangan dan master data sensitif **tidak langsung masuk tabel utama**.
+Data disimpan dulu di `otorisasi.submission` dengan status DRAFT/PENDING, lalu dieksekusi
+ke tabel target setelah disetujui supervisor (maker-checker).
+
+### Status Lifecycle
+
+```
+DRAFT → PENDING → PROCESSING → AUTHORIZED
+                              ↘ PENDING (dispatcher gagal, + dispatch_error)
+              ↘ REJECTED → DRAFT (revisi)
+```
+
+| Status | Keterangan |
+|---|---|
+| `DRAFT` | Belum disubmit — inputer masih bisa edit/hapus |
+| `PENDING` | Sudah disubmit — menunggu approval supervisor |
+| `PROCESSING` | Supervisor sudah approve, **dispatcher sedang berjalan di background** |
+| `AUTHORIZED` | Dispatcher selesai — transaksi sudah masuk tabel target |
+| `REJECTED` | Ditolak supervisor — inputer bisa revisi → kembali DRAFT |
+
+### Async Dispatch — BackgroundTasks Pattern
+
+Sejak `005_add_processing_status.sql`, approval endpoint **tidak lagi blocking**.
+Ketika supervisor meng-approve, endpoint segera mengembalikan `PROCESSING`,
+lalu FastAPI BackgroundTask menjalankan dispatcher setelah response dikirim.
+
+```
+POST /approve → set PROCESSING → return { status: "PROCESSING" }  ← < 1s
+                                 ↓ background
+                              dispatcher() → INSERT transaksi
+                              UPDATE status = 'AUTHORIZED'
+```
+
+Ini penting untuk operasi berat: upload batch 50+ item, penghimpunan besar, dsb.
+Jika dispatcher gagal → status kembali ke `PENDING` + `dispatch_error` terisi.
+
+**Kolom penting di `otorisasi.submission`:**
+- `payload JSONB` — full data submission
+- `status` — lifecycle state (lihat di atas)
+- `dispatch_error VARCHAR(500)` — pesan error jika dispatcher gagal
+- `result_entity_id` — ID entitas yang dibuat setelah AUTHORIZED
+
+### Dua Jalur Submit
+
+| Jalur | Endpoint | Kapan | Hasil |
+|---|---|---|---|
+| **Save-and-submit** | `POST /api/otorisasi/save-and-submit/` | Inputer submit form | Langsung cek limit — jika ≤ limit → AUTHORIZED otomatis; jika > limit → PENDING |
+| **Approve** | `POST /api/otorisasi/submission/{id}/approve` | Supervisor approve | PROCESSING (lalu background → AUTHORIZED) |
+
+> ⚠️ JANGAN pakai `POST /api/otorisasi/submission/` (hanya DRAFT, tidak muncul di Otorisasi).
+> Selalu pakai `save-and-submit` agar langsung PENDING.
+
+### Entity Types & Dispatcher Registry
+
+Setiap entity type punya dispatcher yang dipanggil saat AUTHORIZED:
+
+| entity_type | Dispatcher | Apa yang dilakukan saat AUTHORIZED |
+|---|---|---|
+| `penghimpunan` | `penghimpunan_service.create_from_payload` | INSERT transaksi + jurnal + balance update |
+| `penyaluran` | `penyaluran_service.create_from_payload` | INSERT transaksi + jurnal + balance update |
+| `bank` | `bank_service.create_from_payload` | INSERT/UPDATE/DELETE cashaccount + financialaccount |
+| `coa` | *(belum ada)* | — |
+| `kas` | *(belum ada)* | — |
+
+Dispatcher didaftarkan di `otorisasi/service.py:_register_defaults()` saat app startup.
+
+**Upload batch penghimpunan** punya jalur terpisah — tidak melalui `otorisasi.submission`.
+Endpoint: `POST /api/transaction/upload/penghimpunan/batches/{id}/approve`
+Background task: `commit.approve_batch_background()` → set authstatus='A'
+Status batch: `'P'`=pending, `'Q'`=processing, `'A'`=authorized, `'F'`=failed
+
+### Menambah Entity Type Baru
+
+1. Daftarkan dispatcher di `otorisasi/service.py:_register_defaults()`
+2. Tambah row ke `otorisasi.entity_config` (via isf-agent-seed)
+3. Tambah `ENTITY_TRANSACTION_CODE` jika perlu limit check
+
+### UI — Halaman Otorisasi
+
+- Route: `/keuangan/monitoring/otorisasi` — `OtorisasiPage.vue`
+- Komponen badge: `components/otorisasi/StatusBadge.vue`
+- **Auto-refresh 5 detik** aktif selama ada rows dengan status `PROCESSING`
+- Bulk approve: centang multiple rows → tombol "Otorisasi (N)"
+- Detail: klik baris → `SubmissionDetailDrawer.vue` (slide dari kanan)
+
+### Recovery Manual (jika server restart saat PROCESSING)
+
+```sql
+-- Reset submission stuck di PROCESSING
+UPDATE otorisasi.submission
+SET status = 'PENDING', dispatch_error = 'Manual reset — server restart'
+WHERE status = 'PROCESSING';
+
+-- Reset batch stuck di processing ('Q')
+UPDATE transaction.batchupload SET authstatus = 'P' WHERE authstatus = 'Q';
+```
+
+---
+
 ## Commit Convention
 
 **Mandatory format:**
