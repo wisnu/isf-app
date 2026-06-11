@@ -1,8 +1,0 @@
-[ETL] migration 007 — drop stale unique indexes superseded by 004/006
-
-Migrations 004 dan 006 menambahkan fund_entity ke grain dm_fund_monthly,
-dm_dist_monthly, dan fact_fundraising_monthly, tapi lupa drop index lama
-(tanpa fund_entity). ETL gagal UniqueViolationError jika satu account/product
-punya > 1 fund_entity dalam periode sama. Drop 3 stale indexes.
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
