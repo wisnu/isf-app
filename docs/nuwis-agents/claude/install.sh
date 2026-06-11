@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# install.sh — Install nuwis-* agents, skills, commands ke .claude/
-# Usage: bash docs/nuwis-agents/install.sh [--update] [--dry-run]
+# install.sh — Install nuwis-* agents, skills, commands ke .claude/ (Claude Code)
+# Usage: bash docs/nuwis-agents/claude/install.sh [--update] [--dry-run]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 DRY_RUN=0
 UPDATE=0
 
@@ -15,7 +15,7 @@ for arg in "$@"; do
   esac
 done
 
-echo "nuwis-* Install"
+echo "nuwis-* Install (Claude Code)"
 echo "  Source : $SCRIPT_DIR"
 echo "  Target : $PROJECT_ROOT/.claude/"
 [ $DRY_RUN -eq 1 ] && echo "  Mode   : DRY RUN (tidak ada yang diinstall)"
@@ -24,7 +24,8 @@ echo ""
 copy_file() {
   local src="$1"
   local dst="$2"
-  local name="$(basename "$src")"
+  local name
+  name="$(basename "$src")"
 
   if [ $DRY_RUN -eq 1 ]; then
     echo "  [dry] $dst"
@@ -32,7 +33,7 @@ copy_file() {
   fi
 
   if [ -f "$dst" ] && [ $UPDATE -eq 0 ]; then
-    echo "  ⚠ skip  $name (sudah ada, gunakan --update untuk overwrite)"
+    echo "  skip  $name (sudah ada, gunakan --update untuk overwrite)"
   else
     cp "$src" "$dst"
     echo "  ✓ $name"
@@ -69,7 +70,7 @@ if [ $DRY_RUN -eq 0 ]; then
   echo "  2. Test: /nuwis-analyze KasHarian"
   echo ""
   echo "Untuk update setelah template berubah:"
-  echo "  bash docs/nuwis-agents/install.sh --update"
+  echo "  bash docs/nuwis-agents/claude/install.sh --update"
 else
   echo "Dry run selesai — jalankan tanpa --dry-run untuk install."
 fi

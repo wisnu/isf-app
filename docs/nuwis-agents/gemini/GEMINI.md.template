@@ -1,0 +1,120 @@
+# isf-app ZISWAF — Agent Instructions for Gemini CLI
+#
+# Template manual — edit sesuai kebutuhan, atau auto-generate dengan:
+#   bash docs/nuwis-agents/gemini/install.sh
+#
+# Gemini CLI membaca file ini sebagai GEMINI.md di project root.
+# Skills di-load on-demand via `activate_skill` tool.
+# Untuk Claude Code, gunakan CLAUDE.md. Untuk Codex, gunakan AGENTS.md.
+
+## Project Context
+
+**App**: isf-app — ZISWAF Platform (Zakat + Wakaf)
+**Services**: web-vue (Vue 3), bff-api (BFF), api-python (business logic), report-api (laporan)
+
+2 portals × 2 databases:
+
+| Portal | Business DB    | Auth DB           | Web  | BFF  |
+|--------|---------------|-------------------|------|------|
+| Zakat  | `mziss_laz`   | `isf_auth_zakat`  | 5173 | 7000 |
+| Wakaf  | `mziss_wakaf` | `isf_auth_wakaf`  | 5174 | 7001 |
+
+DB credentials: `transaction:solusi`
+Frontend ONLY calls bff-api (`VITE_API_BASE_URL`). Never call api-python/report-api directly.
+
+---
+
+## Non-Negotiable Rules
+
+1. **Pagination on top** — `<Paginator>` standalone above `<DataTable>`, default 25 rows
+2. **TypeScript + `<script setup lang="ts">`** — no Options API, no `.js` in `src/`
+3. **API via `lib/api/client.ts` only** — `GET()/POST()/blob()`; never raw `fetch()`/axios
+4. **Dates** — `DateField.vue` for input (v-model = ISO), `dmy()` from `lib/date.ts` for display
+5. **Report pages** — NO data on mount; fetch only when user clicks "Tampilkan"
+6. **Menu keys** — all in `lib/menu/registry.ts`; every route needs `meta.menu_key`
+7. **Async feedback** — `loading=true` → success toast → error toast → `finally` reset loading
+8. **Role UI via `v-if`** — check `auth.menus[]`; never CSS `display:none`
+9. **Existing components first** — check `components/ui/` before creating new
+10. **Portal isolation** — never cross-apply zakat seed/migration to wakaf
+
+---
+
+## Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Framework | Vue 3.5 + Vite 5 + TypeScript |
+| Components | PrimeVue 4.5 unstyled + reka-ui |
+| Styling | Tailwind CSS 4.0 |
+| State | Pinia 2.2 |
+| Routing | Vue Router 4.4 (named routes only) |
+| Icons | Lucide (NOT PrimeIcons) |
+| HTTP | `lib/api/client.ts` custom fetch wrapper |
+
+---
+
+## Available Skills (activate via `activate_skill` tool)
+
+Skills di-load on-demand. Aktifkan dengan `activate_skill("<skill-name>")` sebelum task terkait.
+
+| Skill name | Kapan diaktifkan |
+|---|---|
+| `nuwis-vue-isf` | Sebelum menulis Vue component/page |
+| `nuwis-fastapi-isf` | Sebelum menulis api-python module |
+| `nuwis-bff-proxy` | Sebelum menulis BFF routes |
+| `nuwis-pg-migration` | Sebelum menulis DB migration |
+| `nuwis-seed-sql` | Sebelum menulis seed SQL |
+| `nuwis-e2e-script` | Sebelum menulis E2E test script |
+| `nuwis-parity-check` | Sebelum validasi legacy vs baru |
+| `nuwis-daf-reader` | Sebelum membaca legacy DAF code |
+| `nuwis-mkdocs-isf` | Sebelum menulis MkDocs dokumentasi |
+
+---
+
+## Workflow: Fitur Baru (7 Layers)
+
+Untuk fitur baru, ikuti urutan layer ini. Tanyakan portal (zakat/wakaf/keduanya) dulu.
+
+1. **Specs + Plan** — Buat `docs/todos/YYYY-MM-DD-NNN-{slug}/specs.md` + `plan.md`. Tunggu konfirmasi user sebelum implementasi.
+2. **DB** (jika tabel baru / laporan) — `infra/db/migrations/V{NNN}__{nama}.sql`, DWH view jika laporan
+3. **Python API** — `apps_{portal}/api-python/app/modules/{domain}/` — router, service, schema
+4. **BFF** — `apps_{portal}/bff-api/app/routers/{domain}.py` — proxy + auth decorator
+5. **Seed** — `infra/db/migrations/seed/{slug}-seed.sql` — menu + role_menu. Konfirmasi menu_key sebelum UI.
+6. **UI** — `apps_{portal}/web-vue/src/pages/{domain}/{Nama}Page.vue` — Vue 3, ikuti skill `nuwis-vue-isf`
+7. **Test** — `testing/e2e-{slug}.sh` — curl-based E2E script
+
+Layer 2+3 bisa paralel jika tidak ada dependency. Konfirmasi menu_key dari seed sebelum mulai UI.
+
+---
+
+## Workflow: Migrasi Legacy
+
+```
+Baca docs/legacy-apps/{modul}/*.{mnu,svr,dfr}
+  → aktifkan skill nuwis-daf-reader
+  → buat MIGRATION_ANALYSIS (dialog, fields, logic, discriminators)
+  → buat specs.md + plan.md
+  → tunggu konfirmasi
+  → jalankan 7-layer workflow di atas
+  → aktifkan skill nuwis-parity-check untuk validasi
+```
+
+---
+
+## Workflow: Tambah Laporan
+
+```
+1. aktifkan skill nuwis-pg-migration → buat dwh.v_{nama} di infra/db/migrations/dwh/
+2. aktifkan skill nuwis-fastapi-isf → buat report-api module (service + router + export)
+3. aktifkan skill nuwis-bff-proxy → tambah stream_report_api route di BFF
+4. aktifkan skill nuwis-seed-sql → seed menu + role_menu
+5. aktifkan skill nuwis-vue-isf → buat LaporanXPage.vue (no auto-load, DateField, dmy())
+```
+
+---
+
+## Commit Convention
+
+Format: `[TAG] type(scope): subject`
+- Active tags: UX, DASHBOARD, PENYALURAN, ETL, DWH, DOCS, RECOVERY, AUTH-PG
+- Type: feat / fix / chore / docs / refactor

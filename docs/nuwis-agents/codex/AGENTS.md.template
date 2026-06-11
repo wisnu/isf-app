@@ -1,0 +1,128 @@
+# isf-app ZISWAF — Agent Instructions for Codex CLI
+#
+# Template manual — edit sesuai kebutuhan, atau auto-generate dengan:
+#   bash docs/nuwis-agents/install-codex.sh
+#
+# Format @file/path: Codex akan membaca file tersebut secara langsung.
+# Gunakan --refs-only jika ingin AGENTS.md tetap kecil.
+
+## Project Context
+
+**App**: isf-app — ZISWAF Platform (Zakat + Wakaf)
+**Service**: web-vue (Vue 3), bff-api (BFF), api-python (business logic), report-api (laporan)
+
+2 portals × 2 databases:
+
+| Portal | Business DB    | Auth DB           | Web  | BFF  |
+|--------|---------------|-------------------|------|------|
+| Zakat  | `mziss_laz`   | `isf_auth_zakat`  | 5173 | 7000 |
+| Wakaf  | `mziss_wakaf` | `isf_auth_wakaf`  | 5174 | 7001 |
+
+DB credentials: `transaction:solusi`
+Frontend ONLY calls bff-api (`VITE_API_BASE_URL`). Never call api-python/report-api directly from browser.
+
+---
+
+## Non-Negotiable Rules
+
+1. **Pagination on top** — `<Paginator>` standalone above `<DataTable>`, default 25 rows, never `:paginator="true"`
+2. **TypeScript + `<script setup lang="ts">`** — no Options API, no `.js` in `src/`
+3. **API via `lib/api/client.ts` only** — `GET()/POST()/blob()`; never raw `fetch()`/axios
+4. **Dates** — `DateField.vue` for input (v-model = ISO), `dmy()` from `lib/date.ts` for display
+5. **Report pages** — NO data on mount; only fetch when user clicks "Tampilkan"
+6. **Menu keys** — all in `lib/menu/registry.ts`; every route needs `meta.menu_key`
+7. **Async feedback** — `loading=true` → success toast → error toast → `finally` reset loading
+8. **Role UI via `v-if`** — check `auth.menus[]`; never CSS `display:none`
+9. **Existing components first** — check `components/ui/` before creating new
+10. **Portal isolation** — never cross-apply zakat seed/migration to wakaf
+
+---
+
+## Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Framework | Vue 3.5 + Vite 5 + TypeScript |
+| Components | PrimeVue 4.5 unstyled + reka-ui |
+| Styling | Tailwind CSS 4.0 |
+| State | Pinia 2.2 |
+| Routing | Vue Router 4.4 (named routes only) |
+| Icons | Lucide (NOT PrimeIcons) |
+| HTTP | `lib/api/client.ts` custom fetch wrapper |
+
+---
+
+## Workflow: Fitur Baru (7 Layers, Sequential)
+
+@docs/nuwis-agents/agents/nuwis-architect.md
+
+Builder instructions:
+- @docs/nuwis-agents/agents/nuwis-python-builder.md
+- @docs/nuwis-agents/agents/nuwis-bff-builder.md
+- @docs/nuwis-agents/agents/nuwis-db-migrator.md
+- @docs/nuwis-agents/agents/nuwis-seed-gen.md
+- @docs/nuwis-agents/agents/nuwis-ui-builder.md
+- @docs/nuwis-agents/agents/nuwis-test-gen.md
+
+---
+
+## Workflow: Migrasi Legacy
+
+@docs/nuwis-agents/agents/nuwis-legacy-reader.md
+@docs/nuwis-agents/agents/nuwis-schema-analyst.md
+@docs/nuwis-agents/agents/nuwis-validator.md
+
+---
+
+## Domain Conventions
+
+Vue ISF conventions:
+@docs/nuwis-agents/skills/nuwis-skill-vue-isf.md
+
+FastAPI ISF conventions:
+@docs/nuwis-agents/skills/nuwis-skill-fastapi-isf.md
+
+BFF proxy conventions:
+@docs/nuwis-agents/skills/nuwis-skill-bff-proxy.md
+
+DB migration conventions:
+@docs/nuwis-agents/skills/nuwis-skill-pg-migration.md
+
+Seed SQL conventions:
+@docs/nuwis-agents/skills/nuwis-skill-seed-sql.md
+
+E2E test conventions:
+@docs/nuwis-agents/skills/nuwis-skill-e2e-script.md
+
+Parity check (legacy vs new):
+@docs/nuwis-agents/skills/nuwis-skill-parity-check.md
+
+---
+
+## Commit Convention
+
+Format: `[TAG] type(scope): subject`
+Active tags: UX, DASHBOARD, PENYALURAN, ETL, DWH, DOCS, RECOVERY, AUTH-PG
+Type: feat / fix / chore / docs / refactor
+
+---
+
+## Common Task Prompts
+
+### Build fitur baru
+```
+Build fitur [NamaFitur] untuk portal [zakat|wakaf], tipe [CRUD|Report|Approval].
+Ikuti 7-layer workflow dari nuwis-architect. Mulai dengan specs + plan, tunggu konfirmasi.
+```
+
+### Migrasi legacy
+```
+Migrasi modul [NamaModul] dari docs/legacy-apps/[path].
+Baca file legacy dulu, analisis dialog + logic, buat specs.md + plan.md di docs/todos/, tunggu konfirmasi.
+```
+
+### Tambah laporan
+```
+Tambah laporan [NamaLaporan] untuk portal [zakat|wakaf].
+5-step: DWH view → report-api module → BFF stream route → Vue page → seed menu.
+```
