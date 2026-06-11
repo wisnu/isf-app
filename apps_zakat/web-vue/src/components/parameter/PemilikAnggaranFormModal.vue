@@ -129,10 +129,10 @@ async function submit() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="w-full max-w-md bg-background rounded-xl shadow-xl border border-border">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-2xl bg-background rounded-xl shadow-xl border border-border flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-sm font-semibold">
           {{ mode === 'create' ? 'Tambah Pemilik Anggaran' : 'Ubah Pemilik Anggaran' }}
         </h2>
@@ -142,37 +142,38 @@ async function submit() {
       </div>
 
       <!-- Form -->
-      <div class="px-5 py-4 space-y-4">
-        <!-- Kode -->
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Kode Pemilik *</label>
-          <input
-            v-model="form.ownercode"
-            :disabled="mode === 'edit'"
-            type="text"
-            maxlength="10"
-            class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="mis. PRD"
-          />
-        </div>
+      <div class="px-6 py-5 space-y-4 overflow-y-auto">
+        <!-- Kode + Nama -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium">Kode Pemilik <span class="text-red-500">*</span></label>
+            <input
+              v-model="form.ownercode"
+              :disabled="mode === 'edit'"
+              type="text"
+              maxlength="10"
+              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="mis. PRD"
+            />
+          </div>
 
-        <!-- Nama -->
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Nama Pemilik *</label>
-          <input
-            v-model="form.ownername"
-            type="text"
-            maxlength="100"
-            class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            placeholder="Nama lengkap pemilik anggaran"
-          />
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium">Nama Pemilik <span class="text-red-500">*</span></label>
+            <input
+              v-model="form.ownername"
+              type="text"
+              maxlength="100"
+              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+              placeholder="Nama lengkap pemilik anggaran"
+            />
+          </div>
         </div>
 
         <!-- Tipe (is_detail) -->
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Tipe *</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Tipe <span class="text-red-500">*</span></label>
           <div class="flex gap-4">
-            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
                 v-model="form.is_detail"
                 type="radio"
@@ -182,7 +183,7 @@ async function submit() {
               />
               Induk (Grup)
             </label>
-            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
                 v-model="form.is_detail"
                 type="radio"
@@ -193,13 +194,13 @@ async function submit() {
               Detail (Leaf)
             </label>
           </div>
-          <p v-if="mode === 'edit'" class="text-xs text-muted-foreground mt-1">Tipe tidak dapat diubah setelah tersimpan</p>
+          <p v-if="mode === 'edit'" class="text-xs text-muted-foreground">Tipe tidak dapat diubah setelah tersimpan</p>
         </div>
 
         <!-- Parent -->
-        <div v-if="form.is_detail === 'T'">
-          <label class="block text-xs font-medium text-muted-foreground mb-1">
-            Pemilik Induk *
+        <div v-if="form.is_detail === 'T'" class="flex flex-col gap-1">
+          <label class="text-xs font-medium">
+            Pemilik Induk <span class="text-red-500">*</span>
           </label>
           <SearchSelect
             v-model="form.parentownerid"
@@ -208,15 +209,15 @@ async function submit() {
             placeholder="Pilih pemilik induk..."
             class="disabled:opacity-50"
           />
-          <p v-if="mode === 'edit'" class="text-xs text-muted-foreground mt-1">Induk tidak dapat diubah setelah tersimpan</p>
+          <p v-if="mode === 'edit'" class="text-xs text-muted-foreground">Induk tidak dapat diubah setelah tersimpan</p>
         </div>
 
         <!-- Status -->
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Status</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Status</label>
           <select
             v-model="form.status"
-            class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="A">Aktif</option>
             <option value="N">Tidak Aktif</option>
@@ -233,10 +234,10 @@ async function submit() {
       </div>
 
       <!-- Footer -->
-      <div class="flex justify-end gap-2 px-5 py-4 border-t border-border">
+      <div class="flex justify-end gap-2 px-6 py-3 border-t border-border shrink-0">
         <Button variant="outline" size="sm" @click="emit('close')">Batal</Button>
         <Button size="sm" :disabled="submitting" @click="submit">
-          {{ submitting ? 'Menyimpan…' : 'Simpan' }}
+          {{ submitting ? 'Menyimpan...' : 'Simpan' }}
         </Button>
       </div>
     </div>

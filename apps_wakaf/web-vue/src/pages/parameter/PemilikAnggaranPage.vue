@@ -96,77 +96,113 @@ onMounted(loadData)
       </template>
     </PageHeader>
 
-    <div class="flex items-center gap-2">
-      <div class="relative flex-1 max-w-xs">
-        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-        <input
-          v-model="searchInput"
-          type="text"
-          placeholder="Cari kode / nama..."
-          class="w-full h-8 pl-8 pr-8 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-        />
-        <button v-if="searchInput" class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" @click="searchInput = ''">
-          <X class="w-3 h-3" />
-        </button>
+    <!-- Error -->
+    <div v-if="errorMsg" class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">{{ errorMsg }}</div>
+
+    <!-- Card: Toolbar + Pagination + Table -->
+    <div class="rounded-xl border border-border bg-surface overflow-hidden">
+
+      <!-- Toolbar -->
+      <div class="px-4 py-2.5 border-b border-border flex items-center gap-3">
+        <div class="relative flex-1 max-w-xs">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            v-model="searchInput"
+            type="text"
+            placeholder="Cari kode / nama..."
+            class="w-full h-8 pl-8 pr-8 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button v-if="searchInput" class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" @click="searchInput = ''">
+            <X class="w-3 h-3" />
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div v-if="errorMsg" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ errorMsg }}</div>
+      <!-- Pagination (SELALU di atas tabel) -->
+      <div class="px-4 py-2 border-b border-border flex items-center justify-between">
+        <span class="text-[11px] text-muted tabular-nums">
+          <template v-if="loading">Memuat...</template>
+          <template v-else-if="totalRec > 0">
+            {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, totalRec) }} dari {{ totalRec }} pemilik
+          </template>
+          <template v-else>Tidak ada data</template>
+        </span>
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="totalRec"
+          :page-size="pageSize"
+          @prev="prevPage"
+          @next="nextPage"
+          @update:page-size="changePageSize"
+        />
+      </div>
 
-    <TablePagination
-      :page="page" :total-pages="totalPages" :total-records="totalRec" :page-size="pageSize"
-      @prev="prevPage" @next="nextPage" @change-size="changePageSize"
-    />
-
-    <div class="rounded-b-lg border border-border overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-          <tr>
-            <th class="px-4 py-2.5 text-left font-medium">Kode</th>
-            <th class="px-4 py-2.5 text-left font-medium">Nama Pemilik</th>
-            <th class="px-4 py-2.5 text-center font-medium">Level</th>
-            <th class="px-4 py-2.5 text-center font-medium">Tipe</th>
-            <th class="px-4 py-2.5 text-center font-medium">Status</th>
-            <th class="px-4 py-2.5 text-right font-medium">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr v-if="loading"><td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat data…</td></tr>
-          <tr v-else-if="rows.length === 0"><td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Tidak ada data</td></tr>
-          <tr v-for="row in rows" :key="row.ownerid" class="hover:bg-muted/30 transition-colors">
-            <td class="px-4 py-2.5 font-mono text-xs">{{ row.ownercode }}</td>
-            <td class="px-4 py-2.5">
-              <span v-if="row.level > 1" class="inline-block mr-1" :style="{ marginLeft: `${(row.level - 1) * 12}px` }">↳</span>
-              {{ row.ownername }}
-            </td>
-            <td class="px-4 py-2.5 text-center tabular-nums text-xs text-muted-foreground">{{ row.level }}</td>
-            <td class="px-4 py-2.5 text-center">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                :class="row.is_detail === 'T' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'">
-                {{ row.is_detail === 'T' ? 'Detail' : 'Induk' }}
-              </span>
-            </td>
-            <td class="px-4 py-2.5 text-center">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                :class="row.status === 'A' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">
-                {{ row.status === 'A' ? 'Aktif' : 'Tidak Aktif' }}
-              </span>
-            </td>
-            <td class="px-4 py-2.5">
-              <div class="flex items-center justify-end gap-1">
-                <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.ubah')"
-                  class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground" @click="openEdit(row)">
-                  <Pencil class="w-3.5 h-3.5" />
-                </button>
-                <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.hapus')"
-                  class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600" @click="openDelete(row)">
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-[11px]">
+          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+            <tr>
+              <th class="px-4 py-2 text-left font-medium">Kode</th>
+              <th class="px-4 py-2 text-left font-medium">Nama Pemilik</th>
+              <th class="px-4 py-2 text-center font-medium">Level</th>
+              <th class="px-4 py-2 text-center font-medium">Tipe</th>
+              <th class="px-4 py-2 text-center font-medium">Status</th>
+              <th class="px-4 py-2 text-right font-medium w-20">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr v-if="loading">
+              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
+            </tr>
+            <tr v-else-if="rows.length === 0">
+              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs italic">Tidak ada pemilik anggaran yang ditemukan.</td>
+            </tr>
+            <tr v-for="row in rows" :key="row.ownerid" class="border-b border-border last:border-0 hover:bg-background/60">
+              <td class="px-4 py-1 font-mono">{{ row.ownercode }}</td>
+              <td class="px-4 py-1">
+                <span v-if="row.level > 1" class="inline-block mr-1 text-muted-foreground" :style="{ marginLeft: `${(row.level - 1) * 12}px` }">↳</span>
+                {{ row.ownername }}
+              </td>
+              <td class="px-4 py-1 text-center tabular-nums text-muted-foreground">{{ row.level }}</td>
+              <td class="px-4 py-1 text-center">
+                <span
+                  class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold"
+                  :class="row.is_detail === 'T'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+                >
+                  {{ row.is_detail === 'T' ? 'Detail' : 'Induk' }}
+                </span>
+              </td>
+              <td class="px-4 py-1 text-center">
+                <span
+                  class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold"
+                  :class="row.status === 'A'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'"
+                >
+                  {{ row.status === 'A' ? 'Aktif' : 'Tidak Aktif' }}
+                </span>
+              </td>
+              <td class="px-4 py-1">
+                <div class="flex items-center justify-end gap-1">
+                  <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.ubah')"
+                    class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title="Ubah" @click="openEdit(row)">
+                    <Pencil class="w-3.5 h-3.5" />
+                  </button>
+                  <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.hapus')"
+                    class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                    title="Hapus" @click="openDelete(row)">
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <PemilikAnggaranFormModal v-if="formOpen" :mode="modalMode" :initial-data="selectedRow"

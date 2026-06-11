@@ -101,48 +101,51 @@ async function submit() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="w-full max-w-md bg-background rounded-xl shadow-xl border border-border">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-2xl bg-background rounded-xl shadow-xl border border-border flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-sm font-semibold">{{ mode === 'create' ? 'Tambah Pemilik Anggaran' : 'Ubah Pemilik Anggaran' }}</h2>
         <button class="text-muted-foreground hover:text-foreground" @click="emit('close')"><X class="w-4 h-4" /></button>
       </div>
 
-      <div class="px-5 py-4 space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Kode Pemilik *</label>
-          <input v-model="form.ownercode" :disabled="mode === 'edit'" type="text" maxlength="10"
-            class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase disabled:opacity-50"
-            placeholder="mis. PRD" />
+      <div class="px-6 py-5 space-y-4 overflow-y-auto">
+        <!-- Kode + Nama -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium">Kode Pemilik <span class="text-red-500">*</span></label>
+            <input v-model="form.ownercode" :disabled="mode === 'edit'" type="text" maxlength="10"
+              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="mis. PRD" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium">Nama Pemilik <span class="text-red-500">*</span></label>
+            <input v-model="form.ownername" type="text" maxlength="100"
+              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+              placeholder="Nama lengkap pemilik anggaran" />
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Nama Pemilik *</label>
-          <input v-model="form.ownername" type="text" maxlength="100"
-            class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            placeholder="Nama lengkap pemilik anggaran" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Tipe *</label>
+        <!-- Tipe -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Tipe <span class="text-red-500">*</span></label>
           <div class="flex gap-4">
-            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input v-model="form.is_detail" type="radio" value="F" :disabled="mode === 'edit'" /> Induk (Grup)
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+              <input v-model="form.is_detail" type="radio" value="F" :disabled="mode === 'edit'" class="disabled:cursor-not-allowed" /> Induk (Grup)
             </label>
-            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input v-model="form.is_detail" type="radio" value="T" :disabled="mode === 'edit'" /> Detail (Leaf)
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+              <input v-model="form.is_detail" type="radio" value="T" :disabled="mode === 'edit'" class="disabled:cursor-not-allowed" /> Detail (Leaf)
             </label>
           </div>
         </div>
 
-        <div v-if="form.is_detail === 'T'">
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Pemilik Induk *</label>
-          <SearchSelect v-model="form.parentownerid" :options="parentOpts" :disabled="mode === 'edit'" placeholder="Pilih pemilik induk..." />
+        <div v-if="form.is_detail === 'T'" class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Pemilik Induk <span class="text-red-500">*</span></label>
+          <SearchSelect v-model="form.parentownerid" :options="parentOpts" :disabled="mode === 'edit'" placeholder="Pilih pemilik induk..." class="disabled:opacity-50" />
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Status</label>
-          <select v-model="form.status" class="w-full h-8 px-3 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Status</label>
+          <select v-model="form.status" class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring">
             <option value="A">Aktif</option>
             <option value="N">Tidak Aktif</option>
           </select>
@@ -151,9 +154,9 @@ async function submit() {
         <div v-if="formError" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ formError }}</div>
       </div>
 
-      <div class="flex justify-end gap-2 px-5 py-4 border-t border-border">
+      <div class="flex justify-end gap-2 px-6 py-3 border-t border-border shrink-0">
         <Button variant="outline" size="sm" @click="emit('close')">Batal</Button>
-        <Button size="sm" :disabled="submitting" @click="submit">{{ submitting ? 'Menyimpan…' : 'Simpan' }}</Button>
+        <Button size="sm" :disabled="submitting" @click="submit">{{ submitting ? 'Menyimpan...' : 'Simpan' }}</Button>
       </div>
     </div>
   </div>

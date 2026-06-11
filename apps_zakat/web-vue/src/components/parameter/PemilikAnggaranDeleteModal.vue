@@ -48,10 +48,10 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-sm bg-background rounded-xl shadow-xl border border-border">
       <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border">
         <h2 class="text-sm font-semibold text-red-600 flex items-center gap-1.5">
           <AlertTriangle class="w-4 h-4" />
           Hapus Pemilik Anggaran
@@ -62,7 +62,7 @@ async function confirmDelete() {
       </div>
 
       <!-- Data preview -->
-      <div class="px-5 py-4 space-y-3">
+      <div class="px-6 py-5 space-y-3">
         <p class="text-xs text-muted-foreground">Data berikut akan dihapus:</p>
         <dl class="space-y-1.5 text-sm">
           <div class="flex gap-3">
@@ -99,7 +99,7 @@ async function confirmDelete() {
       </div>
 
       <!-- Footer -->
-      <div class="flex justify-end gap-2 px-5 py-4 border-t border-border">
+      <div class="flex justify-end gap-2 px-6 py-3 border-t border-border">
         <Button variant="outline" size="sm" @click="emit('close')">Batal</Button>
         <Button
           size="sm"
