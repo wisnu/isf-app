@@ -27,110 +27,199 @@ apps_{portal}/web-vue/src/
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { GET } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from 'primevue/usetoast'
+import { Plus, Pencil, Search, Trash2, X } from 'lucide-vue-next'
+import { onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
-const toast = useToast()
+import Button from '@/components/ui/Button.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import { api, ApiError } from '@/lib/api/client'
+import { useToast } from '@/lib/useToast'
+import { useAuthStore } from '@/stores/auth'
+import type { MenuKey } from '@/lib/menu/registry'
 
-// Pagination state
-const page = ref(1)
-const limit = ref(25)
-const total = ref(0)
+interface {Row} {
+  id: number
+  // ... fields
+}
 
-// Data
-const rows = ref<{Row}[]>([])
-const loading = ref(false)
+interface ListResponse {
+  rows: {Row}[]
+  pagination: { page: number; limit: number; total: number; total_pages: number }
+}
 
-// Filters
-const search = ref('')
+const toast   = useToast()
+const auth    = useAuthStore()
 
-async function load() {
+const rows       = ref<{Row}[]>([])
+const loading    = shallowRef(false)
+const errorMsg   = shallowRef<string | null>(null)
+const page       = shallowRef(1)
+const totalPages = shallowRef(1)
+const totalRec   = shallowRef(0)
+const pageSize   = shallowRef(25)
+const searchInput = ref('')
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchInput, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; loadData() }, 300)
+})
+
+async function loadData() {
   loading.value = true
+  errorMsg.value = null
   try {
-    const res = await GET<{ rows: {Row}[]; pagination: any }>(
-      '/api/{domain}/{resource}',
-      { page: page.value, limit: limit.value, search: search.value }
-    )
-    rows.value = res.rows
-    total.value = res.pagination.total
-  } catch {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Gagal memuat data', life: 3000 })
+    const params = new URLSearchParams({ page: String(page.value), limit: String(pageSize.value) })
+    if (searchInput.value.trim()) params.set('q', searchInput.value.trim())
+    const res = await api.get<ListResponse>(`/api/{domain}/{resource}?${params}`)
+    rows.value       = res.rows
+    totalRec.value   = res.pagination.total
+    totalPages.value = res.pagination.total_pages
+  } catch (e) {
+    errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat data'
   } finally {
     loading.value = false
   }
 }
 
-function onPageChange(event: { page: number; rows: number }) {
-  page.value = event.page + 1
-  limit.value = event.rows
-  load()
-}
+onMounted(loadData)
 
-onMounted(load)
+// Modal state
+const showForm   = shallowRef(false)
+const formMode   = shallowRef<'create' | 'edit'>('create')
+const showDelete = shallowRef(false)
+const selected   = ref<{Row} | null>(null)
+
+function openAdd() { formMode.value = 'create'; selected.value = null; showForm.value = true }
+function openEdit(row: {Row}) { formMode.value = 'edit'; selected.value = row; showForm.value = true }
+function openDelete(row: {Row}) { selected.value = row; showDelete.value = true }
+
+function onSaved()   { showForm.value = false;   loadData() }
+function onDeleted() { showDelete.value = false; loadData() }
 </script>
 
 <template>
-  <div class="space-y-0">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-3 px-4 py-3 bg-white border border-b-0 rounded-t-lg">
-      <div class="flex items-center gap-2">
-        <Input v-model="search" placeholder="Cari..." class="w-64" @keyup.enter="load" />
+  <div class="space-y-4">
+    <PageHeader title="{Judul Halaman}" subtitle="{Deskripsi singkat}" />
+
+    <!-- Error message -->
+    <div v-if="errorMsg" class="flex items-center gap-2 rounded-lg border border-red-200
+                                bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700">
+      {{ errorMsg }}
+    </div>
+
+    <!-- Card: Toolbar + Pagination + Table (satu card bersambung) -->
+    <div class="rounded-xl border border-border bg-surface overflow-hidden">
+
+      <!-- Toolbar -->
+      <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
+        <div class="relative flex-1 max-w-xs">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            v-model="searchInput"
+            placeholder="Cari..."
+            class="h-8 w-full rounded pl-8 pr-3 text-xs border border-border bg-background
+                   focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <Button
+          v-if="auth.hasMenu('{menu.tambah}' as MenuKey)"
+          size="sm"
+          @click="openAdd"
+        >
+          <Plus class="w-3.5 h-3.5 mr-1" /> Tambah
+        </Button>
       </div>
-      <Button @click="openAdd">
-        <PlusIcon class="w-4 h-4 mr-1" /> Tambah
-      </Button>
+
+      <!-- Pagination (SELALU di atas tabel) -->
+      <div class="px-4 py-2 border-b border-border flex items-center justify-between">
+        <span class="text-[11px] text-muted tabular-nums">
+          <template v-if="loading">Memuat...</template>
+          <template v-else-if="totalRec > 0">
+            {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, totalRec) }} dari {{ totalRec }} data
+          </template>
+          <template v-else>Tidak ada data</template>
+        </span>
+        <TablePagination
+          :page="page"
+          :total-pages="totalPages"
+          :total="totalRec"
+          :page-size="pageSize"
+          @prev="page > 1 && (page--, loadData())"
+          @next="page < totalPages && (page++, loadData())"
+          @update:page-size="(s) => { pageSize = s; page = 1; loadData() }"
+        />
+      </div>
+
+      <!-- Tabel (TIDAK pakai DataTable PrimeVue dengan paginator) -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+            <tr>
+              <th class="px-4 py-2 text-left font-medium">{Kolom 1}</th>
+              <th class="px-4 py-2 text-left font-medium">{Kolom 2}</th>
+              <th class="px-4 py-2 text-right font-medium w-24">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr v-if="loading">
+              <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
+            </tr>
+            <tr v-else-if="!rows.length">
+              <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
+                Tidak ada data yang ditemukan.
+              </td>
+            </tr>
+            <tr
+              v-for="row in rows"
+              :key="row.id"
+              class="hover:bg-muted/30 transition-colors"
+            >
+              <td class="px-4 py-1 text-xs">{{ row.{field1} }}</td>
+              <td class="px-4 py-1 text-xs">{{ row.{field2} }}</td>
+              <td class="px-4 py-1 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    v-if="auth.hasMenu('{menu.ubah}' as MenuKey)"
+                    class="p-1 rounded hover:bg-muted transition-colors"
+                    title="Edit"
+                    @click="openEdit(row)"
+                  >
+                    <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                  <button
+                    v-if="auth.hasMenu('{menu.hapus}' as MenuKey)"
+                    class="p-1 rounded hover:bg-muted transition-colors"
+                    title="Hapus"
+                    @click="openDelete(row)"
+                  >
+                    <Trash2 class="w-3.5 h-3.5 text-red-500" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Pagination (SELALU DI ATAS) -->
-    <div class="flex items-center justify-between px-4 py-2 bg-white border border-b-0">
-      <span class="text-sm text-muted-foreground">
-        Menampilkan {{ (page - 1) * limit + 1 }}–{{ Math.min(page * limit, total) }} dari {{ total }} data
-      </span>
-      <Paginator
-        :rows="limit"
-        :totalRecords="total"
-        :rowsPerPageOptions="[25, 50, 100]"
-        @page="onPageChange"
-      />
-    </div>
+    <!-- Form Modal (Tambah/Edit) -->
+    <{Nama}FormModal
+      v-if="showForm"
+      :mode="formMode"
+      :data="selected"
+      @close="showForm = false"
+      @saved="onSaved"
+    />
 
-    <!-- DataTable (TIDAK pakai :paginator="true") -->
-    <DataTable
-      :value="rows"
-      :loading="loading"
-      class="border rounded-b-lg overflow-hidden"
-    >
-      <Column field="{field1}" header="{Header1}" />
-      <Column field="tanggal" header="Tanggal">
-        <template #body="{ data }">{{ dmy(data.tanggal) }}</template>
-      </Column>
-      <Column header="Aksi" style="width: 100px">
-        <template #body="{ data }">
-          <div class="flex gap-1">
-            <Button variant="ghost" size="sm" @click="openEdit(data)">
-              <PencilIcon class="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" @click="openDelete(data)">
-              <TrashIcon class="w-4 h-4 text-destructive" />
-            </Button>
-          </div>
-        </template>
-      </Column>
-    </DataTable>
+    <!-- Delete Modal -->
+    <{Nama}DeleteModal
+      v-if="showDelete && selected"
+      :data="selected"
+      @close="showDelete = false"
+      @deleted="onDeleted"
+    />
   </div>
-
-  <!-- Form Modal (Tambah/Edit) -->
-  <Modal v-model:visible="formVisible" :header="formMode === 'add' ? 'Tambah {Nama}' : 'Edit {Nama}'">
-    <!-- form fields -->
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <Button variant="outline" @click="formVisible = false">Batal</Button>
-        <Button :loading="saving" @click="save">Simpan</Button>
-      </div>
-    </template>
-  </Modal>
 </template>
 ```
 
@@ -339,12 +428,40 @@ try {
 
 ## Daftar Checks Sebelum Selesai
 
-- [ ] Paginator standalone di atas DataTable (bukan :paginator="true")
+### Struktur & Layout
+- [ ] Toolbar + Pagination + Table dalam satu `rounded-xl border overflow-hidden` card
+- [ ] Pagination di ATAS tabel, bukan di bawah
+- [ ] Info string `"X–Y dari Z data"` di sebelah kiri TablePagination
+- [ ] Default page size 25
+
+### Table
+- [ ] Header: `text-[10px] py-2` (BUKAN `text-xs py-2.5`)
+- [ ] Data row: `py-1 text-xs` (BUKAN `py-2.5`)
+- [ ] Loading row: colspan full + `py-8 text-center text-xs`
+- [ ] Empty row: colspan full + `py-8 text-center text-xs italic`
+
+### Badge & Warna
+- [ ] Status Aktif: `bg-emerald-100 text-emerald-700` (BUKAN `bg-green-*`)
+- [ ] Status Non-Aktif: `bg-zinc-100 text-zinc-500` (BUKAN `bg-gray-*`)
+- [ ] Badge padding: `px-1.5 py-px text-[10px] font-semibold`
+
+### Modal
+- [ ] Overlay: `bg-black/40` (BUKAN `/50`)
+- [ ] CRUD form: `max-w-2xl`; delete/konfirmasi: `max-w-sm`
+- [ ] Header padding: `px-6 py-4`; Body: `px-6 py-5`; Footer: `px-6 py-3`
+- [ ] Input: `h-9 rounded-lg px-2.5 text-xs`
+- [ ] Field pairs responsive: `grid grid-cols-1 sm:grid-cols-2 gap-4`
+
+### Permission
+- [ ] Tombol tambah/edit/hapus: `v-if="auth.hasMenu('...')"` (BUKAN CSS hide)
+- [ ] Gunakan string menu key literal (atau MENU_KEYS constant)
+
+### Umum
 - [ ] Semua date display pakai `dmy()`
 - [ ] Semua date input pakai `DateField.vue`
-- [ ] HTTP pakai `GET/POST/blob` dari `lib/api/client`
+- [ ] HTTP pakai `api.get/api.post` dari `lib/api/client`
 - [ ] Icons dari `lucide-vue-next`
-- [ ] Loading/success/error toast pada setiap async operation
+- [ ] Loading + success toast + error toast pada setiap async operation
 - [ ] Route terdaftar di `router/index.ts` dengan `meta.menu_key`
 - [ ] Menu key terdaftar di `lib/menu/registry.ts`
 - [ ] Report page: tidak auto-load, tampilkan state kosong dulu

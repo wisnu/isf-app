@@ -1,0 +1,435 @@
+# Skill: nuwis-skill-vue-isf
+## Konvensi Vue 3 Spesifik isf-app
+
+Skill ini mencakup konvensi proyek yang **override** semua panduan Vue generik.
+Sumber kebenaran akhir adalah CLAUDE.md project. Gunakan skill ini sebagai
+quick reference saat menulis halaman untuk isf-app.
+
+---
+
+## Stack yang Digunakan
+
+| Layer | Tool | Catatan |
+|---|---|---|
+| Framework | Vue 3.5 + TypeScript | Selalu `<script setup lang="ts">` |
+| Components | PrimeVue 4 **unstyled** | Tidak ada default PrimeVue styles |
+| Primitives | reka-ui + `components/ui/` | Buttons, inputs, alerts, badges |
+| Styling | Tailwind CSS 4.0 | Layout + semua visual styling |
+| Icons | `lucide-vue-next` | BUKAN PrimeIcons |
+| HTTP | `lib/api/client.ts` | BUKAN fetch/axios langsung |
+| Date | `lib/date.ts` `dmy()` | BUKAN Intl/dayjs inline |
+| State | Pinia 2.2 | Tidak perlu store global — gunakan `ref` lokal jika cukup |
+
+---
+
+## Rule 1: Pagination Selalu di Atas — Dalam Satu Card
+
+Toolbar, pagination, dan tabel **wajib dibungkus dalam satu card bersambung**
+(`rounded-xl border overflow-hidden`). Tidak boleh berdiri sendiri.
+
+```vue
+<!-- BENAR — satu card container: -->
+<div class="rounded-xl border border-border bg-surface overflow-hidden">
+
+  <!-- Toolbar: search + action buttons -->
+  <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
+    <div class="relative flex-1 max-w-xs">
+      <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      <input
+        v-model="searchInput"
+        placeholder="Cari..."
+        class="h-8 w-full rounded pl-8 pr-3 text-xs border border-border bg-background
+               focus:outline-none focus:ring-1 focus:ring-ring"
+      />
+    </div>
+    <Button v-if="auth.hasMenu(MENU_KEYS.TAMBAH_KEY)" size="sm" @click="openAdd">
+      <Plus class="w-3.5 h-3.5 mr-1" /> Tambah
+    </Button>
+  </div>
+
+  <!-- Pagination: SELALU di atas tabel, bukan di bawah -->
+  <div class="px-4 py-2 border-b border-border flex items-center justify-between">
+    <span class="text-[11px] text-muted tabular-nums">
+      <template v-if="loading">Memuat...</template>
+      <template v-else-if="totalRec > 0">
+        {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, totalRec) }} dari {{ totalRec }} data
+      </template>
+      <template v-else>Tidak ada data</template>
+    </span>
+    <TablePagination
+      :page="page"
+      :total-pages="totalPages"
+      :total="totalRec"
+      :page-size="pageSize"
+      @prev="page > 1 && (page--, loadData())"
+      @next="page < totalPages && (page++, loadData())"
+      @update:page-size="(s) => { pageSize = s; page = 1; loadData() }"
+    />
+  </div>
+
+  <!-- Tabel: TIDAK pakai :paginator="true" -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+        <tr>
+          <th class="px-4 py-2 text-left font-medium">Kolom 1</th>
+          <th class="px-4 py-2 text-left font-medium">Kolom 2</th>
+          <th class="px-4 py-2 text-right font-medium w-24">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <tr v-if="loading">
+          <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
+        </tr>
+        <tr v-else-if="!rows.length">
+          <td colspan="3" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
+            Tidak ada data yang ditemukan.
+          </td>
+        </tr>
+        <tr v-for="row in rows" :key="row.id" class="hover:bg-muted/30 transition-colors">
+          <td class="px-4 py-1 text-xs">{{ row.kolom1 }}</td>
+          <td class="px-4 py-1 text-xs">{{ row.kolom2 }}</td>
+          <td class="px-4 py-1 text-right">
+            <!-- action buttons -->
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+```
+
+Default rows per page: **25**.
+
+---
+
+## Rule 2: Date Input dan Display
+
+```vue
+<!-- INPUT — selalu DateField.vue, v-model = ISO string (YYYY-MM-DD) -->
+<DateField v-model="tanggal" />
+<!-- tanggal.value = "2026-01-15" (ISO, bukan localized) -->
+
+<!-- DISPLAY — selalu dmy() wrapper -->
+<template #body="{ data }">{{ dmy(data.tanggal) }}</template>
+<!-- Output: "15-01-2026" -->
+
+<!-- JANGAN inline format: -->
+{{ new Date(data.tanggal).toLocaleDateString() }}  <!-- SALAH -->
+{{ data.tanggal.split('-').reverse().join('-') }}   <!-- SALAH -->
+```
+
+```typescript
+import { dmy } from '@/lib/date'
+import DateField from '@/components/ui/DateField.vue'
+```
+
+---
+
+## Rule 3: HTTP Client
+
+```typescript
+// BENAR:
+import { GET, POST, blob } from '@/lib/api/client'
+
+const res = await GET<{ rows: Item[]; pagination: Pagination }>(
+  '/api/keuangan/kas',
+  { page: 1, limit: 25 }
+)
+// res langsung berisi payload.data (client.ts sudah unwrap)
+
+// POST
+await POST('/api/keuangan/kas', { tanggal: '2026-01-15', jumlah: 100000 })
+
+// Download file
+const b = await blob('/api/keuangan/laporan/kas/export', { tgl_awal, tgl_akhir })
+downloadBlob(b, 'laporan-kas.xlsx')
+
+// JANGAN:
+const res = await fetch('/api/...')
+import axios from 'axios'
+```
+
+---
+
+## Rule 4: Async Feedback Wajib
+
+```typescript
+// Pattern wajib — semua async operation:
+const loading = ref(false)
+
+async function save() {
+  loading.value = true
+  try {
+    await POST('/api/...', payload.value)
+    toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Data disimpan', life: 3000 })
+    formVisible.value = false
+    await load()  // refresh list
+  } catch (e) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Gagal menyimpan data', life: 3000 })
+  } finally {
+    loading.value = false  // HARUS di finally
+  }
+}
+```
+
+---
+
+## Rule 5: Icons
+
+```vue
+<!-- BENAR — Lucide icons: -->
+<script setup>
+import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, ChevronRightIcon } from 'lucide-vue-next'
+</script>
+<template>
+  <Button><PlusIcon class="w-4 h-4 mr-1" /> Tambah</Button>
+</template>
+
+<!-- SALAH — PrimeIcons tidak dipakai: -->
+<Button icon="pi pi-plus" />
+<i class="pi pi-search" />
+```
+
+---
+
+## Rule 6: Komponen UI yang Sudah Ada
+
+Cek `components/ui/` sebelum buat komponen baru:
+
+| Komponen | Import | Gunakan untuk |
+|---|---|---|
+| `Button` | `@/components/ui/Button.vue` | Semua tombol |
+| `Input` | `@/components/ui/Input.vue` | Text input |
+| `Card` | `@/components/ui/Card.vue` | Container card |
+| `Alert` | `@/components/ui/Alert.vue` | Error/warning messages |
+| `DateField` | `@/components/ui/DateField.vue` | Semua date input |
+| `SearchSelect` | `@/components/ui/SearchSelect.vue` | Dropdown dengan search (combobox) |
+| `Modal` | `@/components/ui/Modal.vue` | Dialog/modal |
+| `TablePagination` | `@/components/ui/TablePagination.vue` | Pagination display wrapper |
+
+---
+
+## Rule 9: Badge Status — Warna Standar
+
+Gunakan palet yang konsisten untuk badge status di seluruh halaman:
+
+```vue
+<!-- Status Aktif / Non-aktif -->
+<span
+  class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold"
+  :class="row.status === 'A'
+    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'"
+>
+  {{ row.status === 'A' ? 'Aktif' : 'Tidak Aktif' }}
+</span>
+
+<!-- Tipe Induk/Detail (contoh is_detail) -->
+<span
+  class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold"
+  :class="row.is_detail === 'F'
+    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'"
+>
+  {{ row.is_detail === 'F' ? 'Induk' : 'Detail' }}
+</span>
+```
+
+**Palet badge yang dipakai proyek ini:**
+
+| Nilai | Background | Text | Konteks |
+|---|---|---|---|
+| Aktif / Active | `bg-emerald-100` | `text-emerald-700` | status='A' |
+| Non-Aktif | `bg-zinc-100` | `text-zinc-500` | status='N' |
+| Induk / Group | `bg-blue-100` | `text-blue-700` | is_detail='F' |
+| Detail / Leaf | `bg-amber-100` | `text-amber-700` | is_detail='T' |
+| Pending | `bg-yellow-100` | `text-yellow-700` | status=PENDING |
+| Authorized | `bg-emerald-100` | `text-emerald-700` | status=AUTHORIZED |
+| Rejected | `bg-red-100` | `text-red-700` | status=REJECTED |
+
+> **Jangan** gunakan `green`/`gray` — selalu `emerald`/`zinc`.
+
+---
+
+## Rule 10: Modal — Ukuran & Padding Standar
+
+```vue
+<!-- BENAR — struktur modal CRUD: -->
+<div class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+  <div class="bg-background rounded-xl shadow-xl flex flex-col max-h-[90vh] w-full max-w-2xl">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+      <h2 class="text-sm font-semibold">Judul Modal</h2>
+      <button @click="$emit('close')" class="text-muted-foreground hover:text-foreground">
+        <X class="w-4 h-4" />
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-6 py-5 overflow-y-auto space-y-4">
+      <!-- fields — grid 2 kolom di desktop: -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium">Label <span class="text-red-500">*</span></label>
+          <input class="h-9 w-full rounded-lg px-2.5 text-xs border border-border
+                         bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-2 px-6 py-3 border-t border-border shrink-0">
+      <Button variant="outline" size="sm" @click="$emit('close')">Batal</Button>
+      <Button size="sm" :disabled="loading" @click="submit">
+        {{ loading ? 'Menyimpan...' : 'Simpan' }}
+      </Button>
+    </div>
+
+  </div>
+</div>
+```
+
+**Standar modal:**
+- Overlay: `bg-black/40` (bukan `/50`)
+- Lebar: `max-w-2xl` untuk form CRUD, `max-w-sm` untuk konfirmasi/delete
+- Padding header: `px-6 py-4`
+- Padding body: `px-6 py-5`
+- Padding footer: `px-6 py-3`
+- Input: `h-9 rounded-lg px-2.5 text-xs`
+- Field pairs: `grid grid-cols-1 sm:grid-cols-2 gap-4`
+
+---
+
+## Rule 11: Tabel — Padding & Typography Standar
+
+```vue
+<table class="w-full text-sm">
+  <!-- Header: text-[10px], py-2, font-medium -->
+  <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+    <tr>
+      <th class="px-4 py-2 text-left font-medium">Label</th>
+      <th class="px-4 py-2 text-right font-medium w-24">Aksi</th>
+    </tr>
+  </thead>
+  <!-- Rows: py-1, text-xs -->
+  <tbody class="divide-y divide-border">
+    <tr class="hover:bg-muted/30 transition-colors">
+      <td class="px-4 py-1 text-xs">nilai</td>
+      <td class="px-4 py-1 text-right">
+        <!-- action buttons -->
+      </td>
+    </tr>
+  </tbody>
+</table>
+```
+
+**Standar tabel:**
+- Header: `text-[10px] py-2` — BUKAN `text-xs py-2.5`
+- Data row: `py-1 text-xs` — BUKAN `py-2.5`
+- Row hover: `hover:bg-muted/30 transition-colors`
+- Loading/empty colspan selalu full + `py-8 text-center text-muted-foreground text-xs`
+
+---
+
+## Rule 7: Report Page — Tidak Auto-Load
+
+```vue
+<script setup>
+// BENAR — report page tidak auto-load:
+const hasData = ref(false)  // false sampai user klik Tampilkan
+const rows = ref([])
+
+async function tampilkan() {
+  // load data hanya saat user klik
+  loading.value = true
+  try {
+    const res = await GET('/api/.../laporan', { tgl_awal, tgl_akhir })
+    rows.value = res.rows
+    hasData.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
+// TIDAK ada onMounted(load) untuk report page
+</script>
+
+<template>
+  <!-- State kosong sebelum user klik: -->
+  <div v-if="!hasData" class="flex items-center justify-center h-48 text-muted-foreground">
+    Pilih periode dan klik "Tampilkan" untuk melihat laporan
+  </div>
+
+  <!-- Export disabled sampai ada data: -->
+  <Button :disabled="!hasData" @click="exportXlsx">Export Excel</Button>
+```
+
+---
+
+## Rule 8: Role-Based UI
+
+```vue
+<script setup>
+import { useAuthStore } from '@/stores/auth'
+import { MENU_KEYS } from '@/lib/menu/registry'
+
+const auth = useAuthStore()
+</script>
+
+<template>
+  <!-- BENAR — v-if dari auth store: -->
+  <Button v-if="auth.menus.includes(MENU_KEYS.keuangan.transaksi.tambah)">
+    Tambah
+  </Button>
+
+  <!-- SALAH — CSS hide: -->
+  <Button :style="{ display: canAdd ? 'block' : 'none' }">  <!-- JANGAN -->
+
+  <!-- SALAH — computed dari role: -->
+  <Button v-if="auth.roles.includes('ADMIN')">  <!-- Gunakan menus[], bukan roles[] -->
+</template>
+```
+
+---
+
+## API Response Shape
+
+`lib/api/client.ts` sudah unwrap `payload.data` otomatis:
+
+```typescript
+// Backend return: { data: { rows: [...], pagination: {...} }, meta: {...} }
+// client.ts extracting: res = payload.data
+// Jadi di component kamu terima langsung:
+const res = await GET<{ rows: Item[]; pagination: Pagination }>('/api/...')
+res.rows       // ← langsung available
+res.pagination // ← langsung available
+
+// Single object:
+const item = await GET<Item>('/api/.../1')
+item.id  // ← langsung available
+```
+
+---
+
+## TypeScript: Type Definitions
+
+```typescript
+// Define interface untuk rows:
+interface {Resource}Row {
+  id: number
+  tanggal: string   // ISO YYYY-MM-DD (tampilkan dengan dmy())
+  jumlah: number
+  keterangan?: string
+}
+
+// Pagination interface (sudah ada di project):
+interface Pagination {
+  page: number
+  limit: number
+  total: number
+  total_pages: number
+}
+```
