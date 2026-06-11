@@ -2,15 +2,19 @@
 
 ## Active Skills
 
-### isf-architect — Wajib untuk fitur baru
+### nuwis-* — Wajib untuk fitur baru & migrasi
 
-Sebelum memulai fitur baru, modul CRUD, laporan, approval workflow, atau migrasi
-fitur dari legacy apa pun, **selalu invoke `isf-architect`** terlebih dahulu.
-Skill ini menangani brainstorming, arsitektur multi-layer, urutan agent,
-penulisan specs + plan + E2E script.
+| Situasi | Command / Agent |
+|---|---|
+| Fitur baru (CRUD, laporan, approval workflow) | `/nuwis-build <nama>` |
+| Migrasi dari legacy DAF | `/nuwis-migrate <modul> [--portal=zakat\|wakaf]` |
+| Analisis codebase / legacy sebelum mulai | `/nuwis-analyze <modul>` |
+| Generate specs + plan + ADR | `/nuwis-doc <fitur>` |
+| Verifikasi implementasi (E2E + parity) | `/nuwis-verify <fitur-slug> [--portal=zakat\|wakaf]` |
+| Panduan operator MkDocs | `/nuwis-userguide <fitur>` |
 
 Jangan langsung menulis kode saat ada permintaan fitur baru atau migrasi legacy
-— invoke `isf-architect` dulu.
+— gunakan command di atas atau agent `nuwis-architect` terlebih dahulu.
 
 ### Vue / UI Skills
 
@@ -367,7 +371,7 @@ Status batch: `'P'`=pending, `'Q'`=processing, `'A'`=authorized, `'F'`=failed
 ### Menambah Entity Type Baru
 
 1. Daftarkan dispatcher di `otorisasi/service.py:_register_defaults()`
-2. Tambah row ke `otorisasi.entity_config` (via isf-agent-seed)
+2. Tambah row ke `otorisasi.entity_config` (via `nuwis-seed-gen`)
 3. Tambah `ENTITY_TRANSACTION_CODE` jika perlu limit check
 
 ### UI — Halaman Otorisasi
@@ -449,21 +453,43 @@ podman-compose -f docker-compose.wakaf.yml up -d   # → http://localhost:5174
 
 ## Subagent Skills (untuk Workflow)
 
-Gunakan sebagai `agentType` di Workflow scripts atau `Agent` tool:
+### Agents — gunakan sebagai `subagent_type` di `Agent` tool atau Workflow scripts
 
-| Skill | Domain | Path scope |
+| agentType | Model | Domain | Path scope |
+|---|---|---|---|
+| `nuwis-architect` | sonnet | Orchestrator: fitur baru + migrasi | semua layer |
+| `nuwis-ui-builder` | haiku | Vue 3 frontend | `apps_{portal}/web-vue/src/` |
+| `nuwis-bff-builder` | haiku | BFF-API gateway | `apps_{portal}/bff-api/app/` |
+| `nuwis-python-builder` | haiku | Business API + report-api | `apps_{portal}/api-python/` + `report-api/` |
+| `nuwis-db-migrator` | haiku | DB migrations + DWH views | `infra/db/migrations/` |
+| `nuwis-seed-gen` | haiku | Seed SQL menu + role_menu | `infra/db/migrations/seed/` |
+| `nuwis-legacy-reader` | sonnet† | Baca & analisis kode DAF legacy | `docs/legacy-apps/{modul}/` |
+| `nuwis-schema-analyst` | sonnet | Analisis schema PostgreSQL + DWH | business DB |
+| `nuwis-test-gen` | haiku | E2E curl scripts + pytest | `testing/` |
+| `nuwis-validator` | sonnet | Parity check legacy vs baru | semua layer |
+| `nuwis-doc-gen` | haiku | specs.md + plan.md + ADR | `docs/` |
+| `nuwis-userguide` | haiku | Panduan operator MkDocs | `docs/panduan/` |
+
+† escalate ke opus untuk modul >5 dialog atau logika akuntansi kompleks
+
+### Skills — reference docs dibaca oleh agents (atau via Skill tool)
+
+| Skill | Dipakai oleh | Konten |
 |---|---|---|
-| `isf-agent-ui` | Vue 3 frontend | `apps_{portal}/web-vue/src/` |
-| `isf-agent-bff` | BFF-API gateway | `apps_{portal}/bff-api/app/` |
-| `isf-agent-python` | Business API + report-api | `apps_{portal}/api-python/` + `report-api/` |
-| `isf-agent-db` | DB migrations + DWH views | `infra/db/migrations/` |
-| `isf-agent-seed` | DB seeding (menu, user, config) | `infra/db/migrations/seed/` |
-| `isf-agent-legacy` | Baca & analisis legacy DAF code | `docs/legacy-apps/{modul}/` |
+| `nuwis-skill-vue-isf` | ui-builder | Konvensi Vue 3 spesifik isf-app |
+| `nuwis-skill-bff-proxy` | bff-builder | Pola BFF-API routes + proxy |
+| `nuwis-skill-fastapi-isf` | python-builder | Pola FastAPI api-python |
+| `nuwis-skill-pg-migration` | db-migrator | Pola migration PostgreSQL |
+| `nuwis-skill-seed-sql` | seed-gen | Pola seed SQL menu & role_menu |
+| `nuwis-skill-daf-reader` | legacy-reader | Panduan baca kode legacy DAF |
+| `nuwis-skill-parity-check` | validator | Metodologi validasi parity |
+| `nuwis-skill-e2e-script` | test-gen | Pola E2E smoke test script |
+| `nuwis-skill-mkdocs-isf` | userguide | Template MkDocs panduan operator |
 
 ```js
 // Contoh di Workflow script
-const ui = await agent("Buat MuzakkiPage", { agentType: 'isf-agent-ui', model: 'haiku' })
-const bff = await agent("Tambah endpoint /api/muzakki", { agentType: 'isf-agent-bff', model: 'haiku' })
+const ui = await agent("Buat MuzakkiPage", { agentType: 'nuwis-ui-builder', model: 'haiku' })
+const bff = await agent("Tambah endpoint /api/muzakki", { agentType: 'nuwis-bff-builder', model: 'haiku' })
 ```
 
 ---
