@@ -30,8 +30,8 @@ const props = defineProps<{
           :side-offset="6"
           :class="
             cn(
-              'z-50 rounded-md border border-border bg-surface px-3 py-2 shadow-md',
-              'text-foreground text-xs max-w-sm',
+              'z-50 rounded-md bg-zinc-800 dark:bg-zinc-700 px-2.5 py-1.5 shadow-md',
+              'text-white text-[11px] font-medium max-w-xs',
               'data-[state=delayed-open]:animate-in data-[state=closed]:animate-out',
               props.contentClass,
             )

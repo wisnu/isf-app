@@ -5,6 +5,7 @@ import { onMounted, ref, shallowRef, watch } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
+import Tooltip from '@/components/ui/Tooltip.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -187,16 +188,28 @@ onMounted(loadData)
               </td>
               <td class="px-4 py-1">
                 <div class="flex items-center justify-end gap-1">
-                  <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.ubah')"
-                    class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    title="Ubah" @click="openEdit(row)">
-                    <Pencil class="w-3.5 h-3.5" />
-                  </button>
-                  <button v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.hapus')"
-                    class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-                    title="Hapus" @click="openDelete(row)">
-                    <Trash2 class="w-3.5 h-3.5" />
-                  </button>
+                  <Tooltip v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.ubah')" side="top">
+                    <template #trigger>
+                      <button
+                        class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        @click="openEdit(row)"
+                      >
+                        <Pencil class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
+                    Ubah
+                  </Tooltip>
+                  <Tooltip v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.hapus')" side="top">
+                    <template #trigger>
+                      <button
+                        class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                        @click="openDelete(row)"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
+                    Hapus
+                  </Tooltip>
                 </div>
               </td>
             </tr>
