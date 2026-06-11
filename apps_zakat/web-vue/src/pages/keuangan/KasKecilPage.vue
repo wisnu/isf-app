@@ -9,6 +9,7 @@ import CardContent from '@/components/ui/CardContent.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
+import Tooltip from '@/components/ui/Tooltip.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { formatIdr } from '@/lib/format'
@@ -411,20 +412,28 @@ onMounted(loadAccounts)
               </td>
               <td class="px-4 py-1">
                 <div class="flex items-center gap-1">
-                  <button
-                    class="rounded border border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 hover:bg-zinc-100 transition inline-flex items-center gap-0.5"
-                    @click="openEdit(r.account_no)"
-                  >
-                    <Pencil class="w-2.5 h-2.5" />
-                    Edit
-                  </button>
-                  <button
-                    class="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 transition inline-flex items-center gap-0.5"
-                    @click="openDelete(r.account_no)"
-                  >
-                    <Trash2 class="w-2.5 h-2.5" />
+                  <Tooltip side="top">
+                    <template #trigger>
+                      <button
+                        class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        @click="openEdit(r.account_no)"
+                      >
+                        <Pencil class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
+                    Ubah
+                  </Tooltip>
+                  <Tooltip side="top">
+                    <template #trigger>
+                      <button
+                        class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                        @click="openDelete(r.account_no)"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
                     Hapus
-                  </button>
+                  </Tooltip>
                 </div>
               </td>
             </tr>
