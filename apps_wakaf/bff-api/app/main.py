@@ -13,6 +13,7 @@ from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.report import router as report_router
 from app.routers.tenants import router as tenants_router
+from app.routers.parameter import router as parameter_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -86,6 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(report_router, prefix="/api")
     app.include_router(coa_router, prefix="/api")
     app.include_router(admin_router, prefix="/api")
+    app.include_router(parameter_router, prefix="/api")
     return app
 
 

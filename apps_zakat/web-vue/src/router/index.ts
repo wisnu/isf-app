@@ -341,6 +341,12 @@ const router = createRouter({
       component: () => import('@/pages/keuangan/RiwayatSubmissionPage.vue'),
       meta: { title: 'Riwayat Submission', menu_key: 'keuangan.monitoring.riwayat' as MenuKey },
     },
+    {
+      path: '/parameter/pemilik-anggaran',
+      name: 'parameter-pemilik-anggaran',
+      component: () => import('@/pages/parameter/PemilikAnggaranPage.vue'),
+      meta: { title: 'Pemilik Anggaran', menu_key: 'keuangan.parameter.pemilik-anggaran' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })

@@ -13,6 +13,10 @@ export const MENU_KEYS = [
   'keuangan.report.cash_monthly',
   'admin.role_menu',
   'admin.users',
+  'keuangan.parameter.pemilik-anggaran',
+  'keuangan.parameter.pemilik-anggaran.tambah',
+  'keuangan.parameter.pemilik-anggaran.ubah',
+  'keuangan.parameter.pemilik-anggaran.hapus',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]

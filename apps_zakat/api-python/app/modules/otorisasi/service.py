@@ -17,6 +17,8 @@ def _register_defaults() -> None:
     register_dispatcher('penghimpunan', penghimpunan_service.create_from_payload)
     register_dispatcher('penyaluran', penyaluran_service.create_from_payload)
     register_dispatcher('bank', bank_service.create_from_payload)
+    from app.modules.parameter import service as parameter_service
+    register_dispatcher('budget_owner', parameter_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 

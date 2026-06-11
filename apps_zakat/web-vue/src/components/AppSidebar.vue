@@ -122,6 +122,13 @@ const groups: MenuGroup[] = [
           { label: 'List Transaksi UPZ',              to: '/keuangan/laporan/upz',               icon: FileText,  menu_key: 'keuangan.report.upz' },
         ],
       },
+      {
+        label: 'Parameter',
+        icon: Settings,
+        children: [
+          { label: 'Pemilik Anggaran', to: '/parameter/pemilik-anggaran', icon: Users, menu_key: 'keuangan.parameter.pemilik-anggaran' },
+        ],
+      },
       { label: 'Program',      icon: HandCoins,  disabled: true, badge: 'Fase 3' },
       { label: 'Penghimpunan', icon: TrendingUp, disabled: true, badge: 'Fase 3' },
     ],

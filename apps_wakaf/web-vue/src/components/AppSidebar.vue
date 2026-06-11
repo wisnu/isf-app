@@ -69,6 +69,13 @@ const groups: MenuGroup[] = [
         ],
       },
       {
+        label: 'Parameter',
+        icon: Settings,
+        children: [
+          { label: 'Pemilik Anggaran', to: '/parameter/pemilik-anggaran', icon: Users, menu_key: 'keuangan.parameter.pemilik-anggaran' },
+        ],
+      },
+      {
         label: 'Laporan',
         icon: FileText,
         children: [

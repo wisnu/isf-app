@@ -123,6 +123,12 @@ const router = createRouter({
       component: () => import('@/pages/profile/PasswordPage.vue'),
       meta: { title: 'Ganti Password' },
     },
+    {
+      path: '/parameter/pemilik-anggaran',
+      name: 'parameter-pemilik-anggaran',
+      component: () => import('@/pages/parameter/PemilikAnggaranPage.vue'),
+      meta: { title: 'Pemilik Anggaran', menu_key: 'keuangan.parameter.pemilik-anggaran' as MenuKey },
+    },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
 })
