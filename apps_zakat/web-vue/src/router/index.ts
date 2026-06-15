@@ -67,6 +67,18 @@ const router = createRouter({
       meta: { title: 'Inquiry Anggaran', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
     },
     {
+      path: '/keuangan/anggaran/inquiry/owner/:owner_id',
+      name: 'keuangan-anggaran-inquiry-owner',
+      component: () => import('@/pages/keuangan/BudgetInquiryOwnerPage.vue'),
+      meta: { title: 'Detail Anggaran Pemilik', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
+    },
+    {
+      path: '/keuangan/anggaran/inquiry/budget/:budget_id/transaksi',
+      name: 'keuangan-anggaran-inquiry-transaksi',
+      component: () => import('@/pages/keuangan/BudgetInquiryTransaksiPage.vue'),
+      meta: { title: 'Riwayat Transaksi Anggaran', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
+    },
+    {
       path: '/keuangan/laporan/jurnal-harian',
       name: 'keuangan-laporan-jurnal-harian',
       component: () => import('@/pages/keuangan/LaporanJurnalHarianPage.vue'),
