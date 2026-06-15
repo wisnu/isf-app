@@ -90,9 +90,12 @@ const groups: MenuGroup[] = [
           { label: 'Histori Transaksi',     to: '/keuangan/transaksi/histori',     icon: Clock,           menu_key: 'keuangan.transaksi.histori' },
           { label: 'Input Penghimpunan Dana', to: '/keuangan/transaksi/penghimpunan', icon: ArrowUpCircle, menu_key: 'keuangan.transaksi.penghimpunan' },
           { label: 'Input Penyaluran Dana',   to: '/keuangan/transaksi/penyaluran',  icon: ArrowDownCircle, menu_key: 'keuangan.transaksi.penyaluran' },
+          { label: 'Penyerahan Uang Muka',   to: '/keuangan/transaksi/uang-muka-penyerahan', icon: HandCoins, menu_key: 'keuangan.transaksi.uang-muka-penyerahan' },
           { section: 'Upload' },
           { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan',      icon: Upload,          menu_key: 'keuangan.upload.penghimpunan' },
           { label: 'Otorisasi Upload',    to: '/keuangan/upload/penghimpunan/list', icon: ClipboardCheck,  menu_key: 'keuangan.upload.penghimpunan.approve' },
+          { label: 'Upload ZIS Rutin',    to: '/keuangan/upload/zis-rutin',         icon: Upload,          menu_key: 'keuangan.upload.zis-rutin' },
+          { label: 'Daftar Upload ZIS',   to: '/keuangan/upload/zis-rutin-list',    icon: ClipboardCheck,  menu_key: 'keuangan.upload.zis-rutin-list' },
         ],
       },
       {

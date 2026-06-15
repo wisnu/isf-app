@@ -19,6 +19,14 @@ def _register_defaults() -> None:
     register_dispatcher('bank', bank_service.create_from_payload)
     from app.modules.parameter import service as parameter_service
     register_dispatcher('budget_owner', parameter_service.create_from_payload)
+    # HC ZIS dispatchers
+    from app.modules.transaksi import hc_zis_commit
+    register_dispatcher('hc_zis_upload', hc_zis_commit.create_from_payload)
+    register_dispatcher('hc_zis_delete', hc_zis_commit.delete_from_payload)
+    register_dispatcher('hc_zis_update_date', hc_zis_commit.update_date_from_payload)
+    # Uang Muka dispatcher
+    from app.modules.transaksi import uang_muka_service
+    register_dispatcher('uang_muka', uang_muka_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
@@ -143,6 +151,7 @@ ENTITY_TRANSACTION_CODE: dict[str, str] = {
     'penghimpunan':        'SD001',
     'penyaluran':          'DD001',
     'upload_penghimpunan': 'SDULBA',
+    'uang_muka':           'KK',
 }
 
 

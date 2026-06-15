@@ -312,6 +312,18 @@ const router = createRouter({
       meta: { title: 'Detail Batch', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
     },
     {
+      path: '/keuangan/upload/zis-rutin',
+      name: 'keuangan-upload-zis-rutin',
+      component: () => import('@/pages/keuangan/UploadHCZisPage.vue'),
+      meta: { title: 'Upload ZIS Rutin', menu_key: 'keuangan.upload.zis-rutin' as MenuKey },
+    },
+    {
+      path: '/keuangan/upload/zis-rutin-list',
+      name: 'keuangan-upload-zis-rutin-list',
+      component: () => import('@/pages/keuangan/UploadHCZisListPage.vue'),
+      meta: { title: 'Daftar Upload ZIS Rutin', menu_key: 'keuangan.upload.zis-rutin-list' as MenuKey },
+    },
+    {
       path: '/keuangan/transaksi/histori',
       name: 'keuangan-transaksi-histori',
       component: () => import('@/pages/keuangan/HistoriTransaksiPage.vue'),
@@ -358,6 +370,12 @@ const router = createRouter({
       name: 'keuangan-transaksi-penghimpunan-edit',
       component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
       meta: { title: 'Edit Draft Penghimpunan', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/uang-muka-penyerahan',
+      name: 'keuangan-transaksi-uang-muka-penyerahan',
+      component: () => import('@/pages/keuangan/UangMukaPenyerahanPage.vue'),
+      meta: { title: 'Penyerahan Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-penyerahan' as MenuKey },
     },
     {
       path: '/keuangan/monitoring/otorisasi',
