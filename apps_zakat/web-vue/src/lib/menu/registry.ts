@@ -7,6 +7,9 @@ export const MENU_KEYS = [
   'keuangan.kas',
   'keuangan.bank',
   'keuangan.kas_kecil',
+  'keuangan.anggaran.import',
+  'keuangan.anggaran.revisi',
+  'keuangan.anggaran.inquiry',
   'keuangan.report.journal_daily',
   'keuangan.report.general_transaction',
   'keuangan.report.cash_daily',
@@ -42,6 +45,9 @@ export const MENU_KEYS = [
   'keuangan.parameter.pemilik-anggaran.tambah',
   'keuangan.parameter.pemilik-anggaran.ubah',
   'keuangan.parameter.pemilik-anggaran.hapus',
+  'keuangan.parameter.anggaran.pemilik',
+  'keuangan.parameter.anggaran.item',
+  'keuangan.parameter.anggaran.periode',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]

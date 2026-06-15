@@ -16,19 +16,19 @@ import { useToast } from '@/lib/useToast'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface BudgetOwner { owner_id: string; owner_name: string }
-interface Period { period_id: number; period_name: string }
+interface Period { period_id: number; period_value: number }
 interface BudgetItem {
-  budget_id: string
+  budget_id: number
   budget_code: string
-  budget_group: string
-  budget_detail: string
-  budget_amount: number
-  realization_amount: number | null
+  item_group: string
+  item_name: string
+  amount: number
+  realization: number | null
 }
 
 interface BudgetList {
   rows: BudgetItem[]
-  pagination: { page: number; page_size: number; total: number; total_pages: number }
+  pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
 interface SelectOption { value: string; label: string }
@@ -59,9 +59,9 @@ const selectedItem = ref<BudgetItem | null>(null)
 
 const form = reactive({
   budget_code: '',
-  budget_group: '',
-  budget_detail: '',
-  budget_amount: 0,
+  item_group: '',
+  item_name: '',
+  amount: 0,
 })
 
 // ── Lookup data ───────────────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ async function loadPeriods() {
     const res = await api.get<{ data: Period[] }>(`/api/budget/periods/${selectedOwner.value}`)
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
-      label: p.period_name,
+      label: String(p.period_value),
     }))
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat periode')
@@ -139,9 +139,9 @@ watch(selectedPeriod, () => {
 
 function resetForm() {
   form.budget_code = ''
-  form.budget_group = ''
-  form.budget_detail = ''
-  form.budget_amount = 0
+  form.item_group = ''
+  form.item_name = ''
+  form.amount = 0
 }
 
 function openCreate() {
@@ -155,9 +155,9 @@ function openEdit(item: BudgetItem) {
   modalMode.value = 'edit'
   selectedItem.value = item
   form.budget_code = item.budget_code
-  form.budget_group = item.budget_group
-  form.budget_detail = item.budget_detail
-  form.budget_amount = item.budget_amount
+  form.item_group = item.item_group
+  form.item_name = item.item_name
+  form.amount = item.amount
   modalOpen.value = true
 }
 
@@ -165,9 +165,9 @@ function openDelete(item: BudgetItem) {
   modalMode.value = 'delete'
   selectedItem.value = item
   form.budget_code = item.budget_code
-  form.budget_group = item.budget_group
-  form.budget_detail = item.budget_detail
-  form.budget_amount = item.budget_amount
+  form.item_group = item.item_group
+  form.item_name = item.item_name
+  form.amount = item.amount
   modalOpen.value = true
 }
 
@@ -184,38 +184,37 @@ async function submitForm() {
     toast.error('Kode Budget wajib diisi')
     return
   }
-  if (!form.budget_group.trim()) {
+  if (!form.item_group.trim()) {
     toast.error('Kelompok Kegiatan wajib diisi')
     return
   }
-  if (!form.budget_detail.trim()) {
+  if (!form.item_name.trim()) {
     toast.error('Rincian Kebutuhan wajib diisi')
     return
   }
-  if (form.budget_amount <= 0) {
+  if (form.amount <= 0) {
     toast.error('Nilai Anggaran harus lebih dari 0')
     return
   }
 
   const isCreate = modalMode.value === 'create'
-  const loading_submit = shallowRef(false)
-  loading_submit.value = true
+  loading.value = true
 
   try {
     const payload = {
-      action: isCreate ? 'create' : 'edit',
-      ...(isCreate ? {} : { budget_id: selectedItem.value?.budget_id }),
+      owner_id: Number(selectedOwner.value),
+      period_id: Number(selectedPeriod.value),
       budget_code: form.budget_code.trim(),
-      budget_group: form.budget_group.trim(),
-      budget_detail: form.budget_detail.trim(),
-      budget_amount: form.budget_amount,
+      item_group: form.item_group.trim(),
+      item_name: form.item_name.trim(),
+      amount: form.amount,
     }
 
-    await api.post('/api/otorisasi/save-and-submit/', {
-      entity_type: 'budget',
-      module: 'keuangan',
-      payload,
-    })
+    if (isCreate) {
+      await api.post('/api/budget/', payload)
+    } else {
+      await api.put(`/api/budget/${selectedItem.value?.budget_id}`, payload)
+    }
 
     toast.success(
       isCreate
@@ -227,28 +226,22 @@ async function submitForm() {
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal menyimpan anggaran')
   } finally {
-    loading_submit.value = false
+    loading.value = false
   }
 }
 
 async function submitDelete() {
-  const loading_submit = shallowRef(false)
-  loading_submit.value = true
+  loading.value = true
 
   try {
-    await api.post('/api/otorisasi/save-and-submit/', {
-      entity_type: 'budget',
-      module: 'keuangan',
-      payload: { action: 'delete', budget_id: selectedItem.value?.budget_id },
-    })
-
-    toast.success('Permintaan hapus anggaran dikirim untuk otorisasi.')
+    await api.delete(`/api/budget/${selectedItem.value?.budget_id}`)
+    toast.success('Anggaran berhasil dihapus.')
     closeModal()
     loadBudgets()
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal menghapus anggaran')
   } finally {
-    loading_submit.value = false
+    loading.value = false
   }
 }
 
@@ -266,7 +259,7 @@ async function submitRevision() {
 
   const items = rows.value
     .filter((r) => changedItems.value.has(r.budget_id))
-    .map((r) => ({ budget_id: r.budget_id, amount: r.budget_amount }))
+    .map((r) => ({ budget_id: r.budget_id, amount: r.amount }))
 
   loading.value = true
   try {
@@ -391,17 +384,17 @@ onMounted(loadOwners)
               </tr>
               <tr v-for="row in rows" :key="row.budget_id" class="hover:bg-muted/30">
                 <td class="px-4 py-1 text-xs font-mono">{{ row.budget_code }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.budget_group }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.budget_detail }}</td>
+                <td class="px-4 py-1 text-xs">{{ row.item_group }}</td>
+                <td class="px-4 py-1 text-xs">{{ row.item_name }}</td>
                 <td class="px-4 py-1 text-right text-xs">
-                  {{ formatIdr(row.budget_amount) }}
+                  {{ formatIdr(row.amount) }}
                 </td>
                 <td class="px-4 py-1 text-right text-xs">
-                  {{ row.realization_amount ? formatIdr(row.realization_amount) : '—' }}
+                  {{ row.realization ? formatIdr(row.realization) : '—' }}
                 </td>
                 <td class="px-4 py-1 text-right text-xs font-medium">
                   {{
-                    formatIdr(row.budget_amount - (row.realization_amount ?? 0))
+                    formatIdr(row.amount - (row.realization ?? 0))
                   }}
                 </td>
                 <td class="px-4 py-1 text-right">
@@ -495,7 +488,7 @@ onMounted(loadOwners)
                   Kelompok Kegiatan <span class="text-red-500">*</span>
                 </label>
                 <input
-                  v-model="form.budget_group"
+                  v-model="form.item_group"
                   placeholder="mis. Program Zakat"
                   class="h-9 w-full rounded-lg border border-border px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -505,7 +498,7 @@ onMounted(loadOwners)
                   Rincian Kebutuhan <span class="text-red-500">*</span>
                 </label>
                 <input
-                  v-model="form.budget_detail"
+                  v-model="form.item_name"
                   placeholder="mis. Operasional Kantor"
                   class="h-9 w-full rounded-lg border border-border px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -517,7 +510,7 @@ onMounted(loadOwners)
                 Nilai Anggaran <span class="text-red-500">*</span>
               </label>
               <input
-                v-model.number="form.budget_amount"
+                v-model.number="form.amount"
                 type="number"
                 placeholder="0"
                 class="h-9 w-full rounded-lg border border-border px-2.5 text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-primary"
@@ -532,15 +525,15 @@ onMounted(loadOwners)
             </div>
             <div>
               <p class="text-xs text-muted">Kelompok Kegiatan</p>
-              <p class="text-sm font-medium">{{ form.budget_group }}</p>
+              <p class="text-sm font-medium">{{ form.item_group }}</p>
             </div>
             <div>
               <p class="text-xs text-muted">Rincian Kebutuhan</p>
-              <p class="text-sm font-medium">{{ form.budget_detail }}</p>
+              <p class="text-sm font-medium">{{ form.item_name }}</p>
             </div>
             <div>
               <p class="text-xs text-muted">Nilai Anggaran</p>
-              <p class="text-sm font-medium">{{ formatIdr(form.budget_amount) }}</p>
+              <p class="text-sm font-medium">{{ formatIdr(form.amount) }}</p>
             </div>
             <div class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-400">
               ⚠ Data anggaran ini akan dihapus setelah disetujui supervisor. Tindakan tidak dapat dibatalkan.

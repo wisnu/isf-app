@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.modules.admin.router import router as admin_router
 from app.modules.bank.router import router as bank_router
+from app.modules.budget.router import router as budget_router
 from app.modules.kas_kecil.router import router as kas_kecil_router
 from app.modules.coa.router import router as coa_router
 from app.modules.identity.router import router as identity_router
@@ -43,6 +44,7 @@ async def ready() -> dict:
 
 app.include_router(admin_router, prefix="/api")
 app.include_router(bank_router, prefix="/api")
+app.include_router(budget_router, prefix="/api")
 app.include_router(kas_kecil_router, prefix="/api")
 app.include_router(coa_router, prefix="/api")
 app.include_router(identity_router, prefix="/api")

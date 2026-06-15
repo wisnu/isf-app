@@ -16,24 +16,19 @@ import { useToast } from '@/lib/useToast'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface BudgetOwner { owner_id: string; owner_name: string }
-interface Period { period_id: number; period_name: string }
+interface Period { period_id: number; period_value: number }
 interface BudgetItem {
-  budget_id: string
+  budget_id: number
   budget_code: string
-  budget_group: string
-  budget_detail: string
-  budget_amount: number
-  realization_amount: number | null
+  item_group: string
+  item_name: string
+  amount: number
+  realization: number
 }
 
-interface BudgetInquiryResponse {
+interface BudgetListResponse {
   rows: BudgetItem[]
-  pagination: { page: number; page_size: number; total: number; total_pages: number }
-  summary: {
-    total_budget: number
-    total_realization: number
-    total_remaining: number
-  }
+  pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
 interface SelectOption { value: string; label: string }
@@ -65,6 +60,16 @@ const summary = ref({
   total_remaining: 0,
 })
 
+function computeSummary(items: BudgetItem[]) {
+  const total_budget = items.reduce((s, r) => s + (r.amount || 0), 0)
+  const total_realization = items.reduce((s, r) => s + (r.realization || 0), 0)
+  summary.value = {
+    total_budget,
+    total_realization,
+    total_remaining: total_budget - total_realization,
+  }
+}
+
 // ── Load lookups ──────────────────────────────────────────────────────────────
 
 async function loadOwners() {
@@ -89,7 +94,7 @@ async function loadPeriods() {
     const res = await api.get<{ data: Period[] }>(`/api/budget/periods/${selectedOwner.value}`)
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
-      label: p.period_name,
+      label: String(p.period_value),
     }))
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat periode')
@@ -114,11 +119,11 @@ async function tampilkan() {
       page: String(page.value),
       limit: String(pageSize.value),
     })
-    const res = await api.get<BudgetInquiryResponse>(`/api/budget/inquiry?${params}`)
-    rows.value = res.rows
-    totalRecords.value = res.pagination.total
-    totalPages.value = res.pagination.total_pages || 1
-    summary.value = res.summary
+    const res = await api.get<BudgetListResponse>(`/api/budget/?${params}`)
+    rows.value = res.rows ?? []
+    totalRecords.value = res.pagination?.total ?? 0
+    totalPages.value = res.pagination?.total_pages ?? 1
+    computeSummary(rows.value)
     hasData.value = true
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat inquiry anggaran')
@@ -137,8 +142,8 @@ async function exportXlsx() {
       owner_id: selectedOwner.value,
       period_id: selectedPeriod.value,
     })
-    const b = await blob(`/api/budget/inquiry/export?${params}`)
-    downloadBlob(b, `inquiry-anggaran-${new Date().toISOString().split('T')[0]}.xlsx`)
+    const b = await blob(`/api/budget/export?${params}`)
+    downloadBlob(b, `inquiry-anggaran.xlsx`)
     toast.success('File berhasil diunduh')
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal mengunduh file')
@@ -282,18 +287,16 @@ onMounted(loadOwners)
                   {{ (page - 1) * pageSize + idx + 1 }}
                 </td>
                 <td class="px-4 py-1 text-xs font-mono">{{ row.budget_code }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.budget_group }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.budget_detail }}</td>
+                <td class="px-4 py-1 text-xs">{{ row.item_group }}</td>
+                <td class="px-4 py-1 text-xs">{{ row.item_name }}</td>
                 <td class="px-4 py-1 text-right text-xs font-medium">
-                  {{ formatIdr(row.budget_amount) }}
+                  {{ formatIdr(row.amount) }}
                 </td>
                 <td class="px-4 py-1 text-right text-xs">
-                  {{ row.realization_amount ? formatIdr(row.realization_amount) : '—' }}
+                  {{ row.realization ? formatIdr(row.realization) : '—' }}
                 </td>
                 <td class="px-4 py-1 text-right text-xs font-medium">
-                  {{
-                    formatIdr(row.budget_amount - (row.realization_amount ?? 0))
-                  }}
+                  {{ formatIdr((row.amount ?? 0) - (row.realization ?? 0)) }}
                 </td>
               </tr>
             </tbody>

@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
 from app.routers.bank import router as bank_router
+from app.routers.budget import router as budget_router
 from app.routers.kas_kecil import router as kas_kecil_router
 from app.routers.auth_google import router as google_router
 from app.routers.coa import router as coa_router
@@ -93,6 +94,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dashboard_router, prefix="/api")
     app.include_router(report_router, prefix="/api")
     app.include_router(bank_router, prefix="/api")
+    app.include_router(budget_router, prefix="/api")
     app.include_router(kas_kecil_router, prefix="/api")
     app.include_router(coa_router, prefix="/api")
     app.include_router(admin_router, prefix="/api")
