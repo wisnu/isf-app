@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ArrowLeftRight,
   ArrowDownCircle,
   ArrowUpCircle,
   BarChart3,
@@ -93,6 +94,7 @@ const groups: MenuGroup[] = [
           { label: 'Input Penyaluran Dana',   to: '/keuangan/transaksi/penyaluran',  icon: ArrowDownCircle, menu_key: 'keuangan.transaksi.penyaluran' },
           { label: 'Penyerahan Uang Muka',    to: '/keuangan/transaksi/uang-muka-penyerahan',    icon: HandCoins, menu_key: 'keuangan.transaksi.uang-muka-penyerahan' },
           { label: 'Pengembalian Uang Muka', to: '/keuangan/transaksi/uang-muka-pengembalian', icon: RotateCcw,  menu_key: 'keuangan.transaksi.uang-muka-pengembalian' },
+          { label: 'Transfer Antar Rekening', to: '/keuangan/transaksi/transfer-antar-rekening', icon: ArrowLeftRight, menu_key: 'keuangan.transaksi.transfer-antar-rekening' },
           { section: 'Upload' },
           { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan',      icon: Upload,          menu_key: 'keuangan.upload.penghimpunan' },
           { label: 'Otorisasi Upload',    to: '/keuangan/upload/penghimpunan/list', icon: ClipboardCheck,  menu_key: 'keuangan.upload.penghimpunan.approve' },
