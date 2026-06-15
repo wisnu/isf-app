@@ -27,6 +27,8 @@ def _register_defaults() -> None:
     # Uang Muka dispatcher
     from app.modules.transaksi import uang_muka_service
     register_dispatcher('uang_muka', uang_muka_service.create_from_payload)
+    from app.modules.transaksi import uang_muka_pengembalian_service
+    register_dispatcher('uang_muka_pengembalian', uang_muka_pengembalian_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
