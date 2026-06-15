@@ -49,6 +49,24 @@ const router = createRouter({
       meta: { title: 'Manajemen Kas Kecil', menu_key: 'keuangan.kas_kecil' as MenuKey },
     },
     {
+      path: '/keuangan/anggaran/import',
+      name: 'keuangan-anggaran-import',
+      component: () => import('@/pages/keuangan/BudgetImportPage.vue'),
+      meta: { title: 'Buat Anggaran Baru', menu_key: 'keuangan.anggaran.import' as MenuKey },
+    },
+    {
+      path: '/keuangan/anggaran/revisi',
+      name: 'keuangan-anggaran-revisi',
+      component: () => import('@/pages/keuangan/BudgetRevisePage.vue'),
+      meta: { title: 'Revisi Anggaran', menu_key: 'keuangan.anggaran.revisi' as MenuKey },
+    },
+    {
+      path: '/keuangan/anggaran/inquiry',
+      name: 'keuangan-anggaran-inquiry',
+      component: () => import('@/pages/keuangan/BudgetInquiryPage.vue'),
+      meta: { title: 'Inquiry Anggaran', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
+    },
+    {
       path: '/keuangan/laporan/jurnal-harian',
       name: 'keuangan-laporan-jurnal-harian',
       component: () => import('@/pages/keuangan/LaporanJurnalHarianPage.vue'),
@@ -346,6 +364,18 @@ const router = createRouter({
       name: 'parameter-pemilik-anggaran',
       component: () => import('@/pages/parameter/PemilikAnggaranPage.vue'),
       meta: { title: 'Pemilik Anggaran', menu_key: 'keuangan.parameter.pemilik-anggaran' as MenuKey },
+    },
+    {
+      path: '/parameter/anggaran/item',
+      name: 'parameter-anggaran-item',
+      component: () => import('@/pages/parameter/BudgetItemPage.vue'),
+      meta: { title: 'Item Anggaran', menu_key: 'keuangan.parameter.anggaran.item' as MenuKey },
+    },
+    {
+      path: '/parameter/anggaran/periode',
+      name: 'parameter-anggaran-periode',
+      component: () => import('@/pages/parameter/BudgetPeriodPage.vue'),
+      meta: { title: 'Periode Anggaran', menu_key: 'keuangan.parameter.anggaran.periode' as MenuKey },
     },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],

@@ -49,7 +49,7 @@ async function uploadFormData<T>(path: string, formData: FormData): Promise<T> {
   return (payload as { data: T }).data
 }
 
-async function downloadBlob(path: string, suggestedFilename: string, params?: URLSearchParams): Promise<void> {
+async function fetchBlob(path: string, params?: URLSearchParams): Promise<Blob> {
   const fetchUrl = params ? `${BASE_URL}${path}?${params}` : `${BASE_URL}${path}`
   const response = await fetch(fetchUrl, { credentials: 'include' })
   if (!response.ok) {
@@ -64,12 +64,20 @@ async function downloadBlob(path: string, suggestedFilename: string, params?: UR
     }
     throw new ApiError(code, message, response.status)
   }
+  return response.blob()
+}
+
+async function downloadBlob(path: string, suggestedFilename: string, params?: URLSearchParams): Promise<void> {
+  const blob = await fetchBlob(path, params)
   // Prefer filename dari Content-Disposition kalau ada
+  const response = await fetch(
+    params ? `${BASE_URL}${path}?${params}` : `${BASE_URL}${path}`,
+    { credentials: 'include' }
+  )
   const disp = response.headers.get('Content-Disposition') ?? ''
   const match = /filename\s*=\s*"?([^";]+)"?/i.exec(disp)
   const filename = match?.[1] ?? suggestedFilename
 
-  const blob = await response.blob()
   const objectUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = objectUrl
@@ -91,5 +99,8 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   delete: <T>(path: string) => request<T>('DELETE', path),
   upload: <T>(path: string, formData: FormData) => uploadFormData<T>(path, formData),
+  uploadFormData,
   downloadBlob,
 }
+
+export { fetchBlob as blob }
