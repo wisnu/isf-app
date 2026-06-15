@@ -195,7 +195,7 @@ async def list_budgets(
         params["period_id"] = period_id
     if s["branch"]:
         params["branch_code"] = s["branch"]
-    downstream = await get_api_python("/api/budget/", params=params)
+    downstream = await get_api_python("/api/budget", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
