@@ -716,17 +716,18 @@ async def get_budget_transactions(
 
     if begin_date:
         params.append(begin_date)
-        conds.append(f"ti.actualdate >= CAST(${len(params)} AS DATE)")
+        conds.append(f"t.actualdate >= CAST(${len(params)} AS DATE)")
 
     if end_date:
         params.append(end_date)
-        conds.append(f"ti.actualdate <= CAST(${len(params)} AS DATE)")
+        conds.append(f"t.actualdate <= CAST(${len(params)} AS DATE)")
 
     where_clause = "WHERE " + " AND ".join(conds)
 
     total_row = await fetch_one(
         f"SELECT CAST(COUNT(*) AS INTEGER) AS c FROM transaction.budgettransaction bt "
         f"JOIN transaction.transactionitem ti ON ti.transactionitemid = bt.transactionitemid "
+        f"JOIN transaction.transaction t ON t.transactionid = ti.transactionid "
         f"{where_clause}",
         *params,
     )
@@ -739,18 +740,19 @@ async def get_budget_transactions(
         f"""
         SELECT
             bt.transactionitemid,
-            ti.actualdate,
-            ti.transactioncode,
-            ti.no_transaksi,
+            t.actualdate,
+            t.transactioncode,
+            t.transactionno AS no_transaksi,
             CASE WHEN bt.budgettranstype = 'A' THEN ti.amount ELSE 0 END AS realization_amount,
             CASE WHEN bt.budgettranstype != 'A' THEN ti.amount ELSE 0 END AS return_amount,
             bt.budgettranstype,
-            ti.reference_no,
-            ti.inputer
+            t.referenceno AS reference_no,
+            t.inputer
         FROM transaction.budgettransaction bt
         JOIN transaction.transactionitem ti ON ti.transactionitemid = bt.transactionitemid
+        JOIN transaction.transaction t ON t.transactionid = ti.transactionid
         {where_clause}
-        ORDER BY ti.actualdate DESC, ti.transactionitemid DESC
+        ORDER BY t.actualdate DESC, bt.transactionitemid DESC
         LIMIT ${p_limit} OFFSET ${p_offset}
         """,
         *(params + [limit, (page - 1) * limit]),
