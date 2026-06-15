@@ -305,13 +305,16 @@ onMounted(loadPeriods)
                   {{ row.total_budget > 0 ? ((row.total_realization / row.total_budget) * 100).toFixed(1) + '%' : '—' }}
                 </td>
                 <td class="px-4 py-1.5 text-center">
-                  <Tooltip content="Lihat Detail">
-                    <button
-                      class="p-1 rounded hover:bg-muted/50 text-muted hover:text-foreground transition-colors"
-                      @click="openOwnerDetail(row)"
-                    >
-                      <Eye class="w-3.5 h-3.5" />
-                    </button>
+                  <Tooltip side="top">
+                    <template #trigger>
+                      <button
+                        class="p-1 rounded hover:bg-muted/50 text-muted hover:text-foreground transition-colors"
+                        @click="openOwnerDetail(row)"
+                      >
+                        <Eye class="w-3.5 h-3.5" />
+                      </button>
+                    </template>
+                    Lihat Detail
                   </Tooltip>
                 </td>
               </tr>
@@ -400,13 +403,16 @@ onMounted(loadPeriods)
                         {{ formatIdr(row.amount - row.realization) }}
                       </td>
                       <td class="px-4 py-1.5 text-center">
-                        <Tooltip content="Lihat Transaksi">
-                          <button
-                            class="p-1 rounded hover:bg-muted/50 text-muted hover:text-foreground transition-colors"
-                            @click="openTransactions(row)"
-                          >
-                            <ChevronRight class="w-3.5 h-3.5" />
-                          </button>
+                        <Tooltip side="top">
+                          <template #trigger>
+                            <button
+                              class="p-1 rounded hover:bg-muted/50 text-muted hover:text-foreground transition-colors"
+                              @click="openTransactions(row)"
+                            >
+                              <ChevronRight class="w-3.5 h-3.5" />
+                            </button>
+                          </template>
+                          Lihat Transaksi
                         </Tooltip>
                       </td>
                     </tr>
