@@ -80,6 +80,8 @@ function goToTransaksi(row: BudgetDetailRow) {
       budget_code: row.budget_code,
       owner_name: ownerName,
       period_value: periodLabel,
+      item_group: row.item_group,
+      item_name: row.item_name,
     },
   })
 }

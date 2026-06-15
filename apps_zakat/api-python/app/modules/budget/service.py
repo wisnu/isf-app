@@ -716,11 +716,11 @@ async def get_budget_transactions(
 
     if begin_date:
         params.append(begin_date)
-        conds.append(f"t.actualdate >= CAST(${len(params)} AS DATE)")
+        conds.append(f"t.actualdate >= TO_DATE(${len(params)}, 'YYYY-MM-DD')")
 
     if end_date:
         params.append(end_date)
-        conds.append(f"t.actualdate <= CAST(${len(params)} AS DATE)")
+        conds.append(f"t.actualdate < TO_DATE(${len(params)}, 'YYYY-MM-DD') + INTERVAL '1 day'")
 
     where_clause = "WHERE " + " AND ".join(conds)
 
@@ -742,17 +742,20 @@ async def get_budget_transactions(
             bt.transactionitemid,
             t.actualdate,
             t.transactioncode,
-            t.transactionno AS no_transaksi,
+            tt.description      AS transaction_type_name,
+            t.transactionno     AS no_transaksi,
             CASE WHEN bt.budgettranstype = 'A' THEN ti.amount ELSE 0 END AS realization_amount,
             CASE WHEN bt.budgettranstype != 'A' THEN ti.amount ELSE 0 END AS return_amount,
             bt.budgettranstype,
-            t.referenceno AS reference_no,
+            t.referenceno       AS reference_no,
+            t.description       AS description,
             t.inputer
         FROM transaction.budgettransaction bt
         JOIN transaction.transactionitem ti ON ti.transactionitemid = bt.transactionitemid
         JOIN transaction.transaction t ON t.transactionid = ti.transactionid
+        LEFT JOIN transaction.transactiontype tt ON tt.transactioncode = t.transactioncode
         {where_clause}
-        ORDER BY t.actualdate DESC, bt.transactionitemid DESC
+        ORDER BY t.actualdate ASC, bt.transactionitemid ASC
         LIMIT ${p_limit} OFFSET ${p_offset}
         """,
         *(params + [limit, (page - 1) * limit]),
@@ -763,13 +766,15 @@ async def get_budget_transactions(
     trans_rows = [
         BudgetTransactionRow(
             transaction_item_id=r["transactionitemid"],
-            actual_date=str(r["actualdate"]) if r["actualdate"] else "",
+            actual_date=str(r["actualdate"])[:10] if r["actualdate"] else "",
             transaction_code=r["transactioncode"],
+            transaction_type_name=r["transaction_type_name"],
             transaction_no=r["no_transaksi"],
             realization_amount=Decimal(str(r["realization_amount"])) if r["realization_amount"] else Decimal(0),
             return_amount=Decimal(str(r["return_amount"])) if r["return_amount"] else Decimal(0),
             budget_trans_type=r["budgettranstype"],
             reference_no=r["reference_no"],
+            description=r["description"],
             inputer=r["inputer"],
         )
         for r in rows

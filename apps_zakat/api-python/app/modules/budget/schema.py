@@ -134,12 +134,13 @@ class BudgetTransactionRow(BaseModel):
     transaction_item_id: int
     actual_date: str
     transaction_code: str
+    transaction_type_name: Optional[str] = None
     transaction_no: Optional[str] = None
-    item_name: Optional[str] = None
     realization_amount: Decimal = Decimal(0)
     return_amount: Decimal = Decimal(0)
     budget_trans_type: Optional[str] = None
     reference_no: Optional[str] = None
+    description: Optional[str] = None
     inputer: Optional[str] = None
 
 
