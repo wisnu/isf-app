@@ -378,6 +378,12 @@ const router = createRouter({
       meta: { title: 'Penyerahan Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-penyerahan' as MenuKey },
     },
     {
+      path: '/keuangan/transaksi/uang-muka-pengembalian',
+      name: 'keuangan-transaksi-uang-muka-pengembalian',
+      component: () => import('@/pages/keuangan/UangMukaPengembalianPage.vue'),
+      meta: { title: 'Pengembalian Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-pengembalian' as MenuKey },
+    },
+    {
       path: '/keuangan/monitoring/otorisasi',
       name: 'keuangan-monitoring-otorisasi',
       component: () => import('@/pages/keuangan/OtorisasiPage.vue'),
