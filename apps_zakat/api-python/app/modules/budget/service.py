@@ -15,6 +15,8 @@ from app.modules.budget.schema import (
     BudgetMasterPeriodRow,
     BudgetNewRequest,
     BudgetOwnerItem,
+    BudgetOwnerSummaryResponse,
+    BudgetOwnerSummaryRow,
     BudgetPeriodItem,
     BudgetReviseRequest,
     BudgetRow,
@@ -222,6 +224,68 @@ async def list_budgets(
             total=total,
             total_pages=total_pages,
         ),
+    )
+
+
+# ── Summary per Owner ─────────────────────────────────────────────────────────
+
+async def get_budget_owner_summary(period_id: int, branch_code: str = "") -> BudgetOwnerSummaryResponse:
+    """Summary anggaran per pemilik untuk satu tahun."""
+    period = await fetch_one(
+        "SELECT periodid, periodvalue FROM transaction.budgetperiod WHERE periodid = $1",
+        period_id,
+    )
+    if branch_code:
+        rows = await fetch_all(
+            """
+            SELECT
+                bo.ownerid AS owner_id,
+                bo.ownername AS owner_name,
+                CAST(SUM(b.amount) AS DECIMAL) AS total_budget,
+                CAST(SUM(COALESCE(b.realization, 0)) AS DECIMAL) AS total_realization
+            FROM transaction.budget b
+            JOIN transaction.budgetowner bo ON bo.ownerid = b.ownerid
+            WHERE b.budgettype = 'Y'
+              AND b.isdetail = 'F'
+              AND b.periodid = $1
+              AND b.branchcode = $2
+            GROUP BY bo.ownerid, bo.ownername
+            ORDER BY bo.ownername
+            """,
+            period_id,
+            branch_code,
+        )
+    else:
+        rows = await fetch_all(
+            """
+            SELECT
+                bo.ownerid AS owner_id,
+                bo.ownername AS owner_name,
+                CAST(SUM(b.amount) AS DECIMAL) AS total_budget,
+                CAST(SUM(COALESCE(b.realization, 0)) AS DECIMAL) AS total_realization
+            FROM transaction.budget b
+            JOIN transaction.budgetowner bo ON bo.ownerid = b.ownerid
+            WHERE b.budgettype = 'Y'
+              AND b.isdetail = 'F'
+              AND b.periodid = $1
+            GROUP BY bo.ownerid, bo.ownername
+            ORDER BY bo.ownername
+            """,
+            period_id,
+        )
+    return BudgetOwnerSummaryResponse(
+        period_id=period_id,
+        period_value=period["periodvalue"] if period else 0,
+        rows=[
+            BudgetOwnerSummaryRow(
+                owner_id=r["owner_id"],
+                owner_name=r["owner_name"],
+                total_budget=r["total_budget"],
+                total_realization=r["total_realization"],
+                remaining=r["total_budget"] - r["total_realization"],
+            )
+            for r in rows
+        ],
     )
 
 

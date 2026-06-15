@@ -11,6 +11,7 @@ from app.modules.budget.schema import (
     BudgetNewRequest,
     BudgetReviseRequest,
 )
+
 from app.shared.db import ping
 from app.shared.response import err, ok
 
@@ -55,6 +56,19 @@ async def list_periods_for_owner(
         )
     data = await service.get_budget_periods_for_owner(owner_id, branch_code or "")
     return ok({"data": [item.model_dump() for item in data]})
+
+
+# ── Summary per Owner ─────────────────────────────────────────────────────────
+
+@router.get("/summary")
+async def get_budget_summary(
+    period_id: int = Query(...),
+    branch_code: str | None = Query(default=None),
+):
+    if not await ping():
+        return JSONResponse(status_code=503, content=err("DB_UNAVAILABLE", "Database not ready"))
+    data = await service.get_budget_owner_summary(period_id, branch_code or "")
+    return ok(data.model_dump())
 
 
 # ── List ───────────────────────────────────────────────────────────────────────

@@ -1,34 +1,32 @@
 <script setup lang="ts">
 import { Download } from 'lucide-vue-next'
-import { onMounted, ref, shallowRef, watch } from 'vue'
+import { onMounted, ref, shallowRef } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import { api, ApiError, blob } from '@/lib/api/client'
+import { api, ApiError } from '@/lib/api/client'
 import { formatIdr } from '@/lib/format'
-import { downloadBlob } from '@/lib/download'
 import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface BudgetOwner { owner_id: string; owner_name: string }
 interface Period { period_id: number; period_value: number }
-interface BudgetItem {
-  budget_id: number
-  budget_code: string
-  item_group: string
-  item_name: string
-  amount: number
-  realization: number
+
+interface OwnerSummaryRow {
+  owner_id: number
+  owner_name: string
+  total_budget: number
+  total_realization: number
+  remaining: number
 }
 
-interface BudgetListResponse {
-  rows: BudgetItem[]
-  pagination: { page: number; limit: number; total: number; total_pages: number }
+interface SummaryResponse {
+  period_id: number
+  period_value: number
+  rows: OwnerSummaryRow[]
 }
 
 interface SelectOption { value: string; label: string }
@@ -37,67 +35,35 @@ interface SelectOption { value: string; label: string }
 
 const toast = useToast()
 
-const owners = ref<SelectOption[]>([])
 const periods = ref<SelectOption[]>([])
-const selectedOwner = ref('')
 const selectedPeriod = ref('')
-const ownersLoading = shallowRef(false)
 const periodsLoading = shallowRef(false)
 
-const rows = ref<BudgetItem[]>([])
+const rows = ref<OwnerSummaryRow[]>([])
 const loading = shallowRef(false)
-const exportLoading = shallowRef(false)
 const hasData = shallowRef(false)
+const periodLabel = shallowRef('')
 
-const page = shallowRef(1)
-const pageSize = shallowRef(25)
-const totalPages = shallowRef(1)
-const totalRecords = shallowRef(0)
+const summary = ref({ total_budget: 0, total_realization: 0, total_remaining: 0 })
 
-const summary = ref({
-  total_budget: 0,
-  total_realization: 0,
-  total_remaining: 0,
-})
-
-function computeSummary(items: BudgetItem[]) {
-  const total_budget = items.reduce((s, r) => s + (r.amount || 0), 0)
-  const total_realization = items.reduce((s, r) => s + (r.realization || 0), 0)
-  summary.value = {
-    total_budget,
-    total_realization,
-    total_remaining: total_budget - total_realization,
-  }
+function computeSummary(items: OwnerSummaryRow[]) {
+  const total_budget = items.reduce((s, r) => s + (r.total_budget || 0), 0)
+  const total_realization = items.reduce((s, r) => s + (r.total_realization || 0), 0)
+  summary.value = { total_budget, total_realization, total_remaining: total_budget - total_realization }
 }
 
 // ── Load lookups ──────────────────────────────────────────────────────────────
 
-async function loadOwners() {
-  ownersLoading.value = true
-  try {
-    const res = await api.get<{ data: BudgetOwner[] }>('/api/budget/owners')
-    owners.value = (res.data ?? []).map((o) => ({
-      value: o.owner_id,
-      label: o.owner_name,
-    }))
-  } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : 'Gagal memuat daftar pemilik')
-  } finally {
-    ownersLoading.value = false
-  }
-}
-
 async function loadPeriods() {
-  if (!selectedOwner.value) return
   periodsLoading.value = true
   try {
-    const res = await api.get<{ data: Period[] }>(`/api/budget/periods/${selectedOwner.value}`)
+    const res = await api.get<{ data: Period[] }>('/api/budget/periods')
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
       label: String(p.period_value),
     }))
   } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : 'Gagal memuat periode')
+    toast.error(e instanceof ApiError ? e.message : 'Gagal memuat daftar tahun')
   } finally {
     periodsLoading.value = false
   }
@@ -106,23 +72,17 @@ async function loadPeriods() {
 // ── Load data ─────────────────────────────────────────────────────────────────
 
 async function tampilkan() {
-  if (!selectedOwner.value || !selectedPeriod.value) {
-    toast.error('Pilih pemilik anggaran dan periode terlebih dahulu')
+  if (!selectedPeriod.value) {
+    toast.error('Pilih tahun anggaran terlebih dahulu')
     return
   }
 
   loading.value = true
+  hasData.value = false
   try {
-    const params = new URLSearchParams({
-      owner_id: selectedOwner.value,
-      period_id: selectedPeriod.value,
-      page: String(page.value),
-      limit: String(pageSize.value),
-    })
-    const res = await api.get<BudgetListResponse>(`/api/budget/?${params}`)
+    const res = await api.get<SummaryResponse>(`/api/budget/summary?period_id=${selectedPeriod.value}`)
     rows.value = res.rows ?? []
-    totalRecords.value = res.pagination?.total ?? 0
-    totalPages.value = res.pagination?.total_pages ?? 1
+    periodLabel.value = String(res.period_value)
     computeSummary(rows.value)
     hasData.value = true
   } catch (e) {
@@ -133,94 +93,51 @@ async function tampilkan() {
   }
 }
 
-async function exportXlsx() {
-  if (!selectedOwner.value || !selectedPeriod.value) return
-
-  exportLoading.value = true
-  try {
-    const params = new URLSearchParams({
-      owner_id: selectedOwner.value,
-      period_id: selectedPeriod.value,
-    })
-    const b = await blob(`/api/budget/export?${params}`)
-    downloadBlob(b, `inquiry-anggaran.xlsx`)
-    toast.success('File berhasil diunduh')
-  } catch (e) {
-    toast.error(e instanceof ApiError ? e.message : 'Gagal mengunduh file')
-  } finally {
-    exportLoading.value = false
-  }
-}
-
-watch(selectedOwner, (val) => {
-  selectedPeriod.value = ''
-  periods.value = []
-  if (val) loadPeriods()
-})
-
-onMounted(loadOwners)
+onMounted(loadPeriods)
 </script>
 
 <template>
   <div class="space-y-4">
-    <PageHeader title="Inquiry Anggaran" subtitle="Laporan pertanyaan anggaran per pemilik dan periode" />
+    <PageHeader title="Inquiry Anggaran" subtitle="Ringkasan anggaran per pemilik berdasarkan tahun" />
 
     <!-- Filter card -->
     <Card>
       <CardContent class="p-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          <div>
+        <div class="flex flex-wrap items-end gap-4">
+          <div class="w-48">
             <label class="mb-1.5 block text-sm font-medium">
-              Pemilik Anggaran <span class="text-red-500">*</span>
-            </label>
-            <SearchSelect
-              v-model="selectedOwner"
-              :options="owners"
-              :loading="ownersLoading"
-              placeholder="Pilih pemilik..."
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">
-              Periode <span class="text-red-500">*</span>
+              Tahun <span class="text-red-500">*</span>
             </label>
             <SearchSelect
               v-model="selectedPeriod"
               :options="periods"
               :loading="periodsLoading"
-              :disabled="!selectedOwner"
-              placeholder="Pilih periode..."
+              placeholder="Pilih tahun..."
             />
           </div>
-        </div>
-
-        <div class="flex justify-end gap-2 mt-4">
-          <Button :loading="loading" @click="tampilkan">Tampilkan</Button>
-          <Button
-            variant="outline"
-            :disabled="!hasData"
-            :loading="exportLoading"
-            @click="exportXlsx"
-          >
-            <Download class="w-3.5 h-3.5 mr-1" />
-            Export Excel
-          </Button>
+          <div class="flex gap-2">
+            <Button :loading="loading" @click="tampilkan">Tampilkan</Button>
+            <Button variant="outline" :disabled="!hasData">
+              <Download class="w-3.5 h-3.5 mr-1" />
+              Export Excel
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
 
-    <!-- Empty state (sebelum klik Tampilkan) -->
-    <div v-if="!hasData" class="flex items-center justify-center h-48 text-muted-foreground text-sm">
-      Pilih pemilik anggaran dan periode, lalu klik "Tampilkan" untuk melihat laporan
+    <!-- Empty state -->
+    <div v-if="!hasData && !loading" class="flex items-center justify-center h-48 text-muted-foreground text-sm">
+      Pilih tahun anggaran, lalu klik "Tampilkan" untuk melihat laporan
     </div>
 
-    <!-- Report section (setelah klik Tampilkan) -->
-    <template v-else>
-      <!-- Summary cards -->
+    <!-- Results -->
+    <template v-if="hasData">
+      <!-- Summary totals -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent class="p-4">
-            <p class="text-xs uppercase tracking-wide text-muted">Total Anggaran</p>
+            <p class="text-xs uppercase tracking-wide text-muted">Total Anggaran {{ periodLabel }}</p>
             <p class="text-2xl font-bold tabular-nums text-primary mt-1">{{ formatIdr(summary.total_budget) }}</p>
           </CardContent>
         </Card>
@@ -233,79 +150,83 @@ onMounted(loadOwners)
         <Card>
           <CardContent class="p-4">
             <p class="text-xs uppercase tracking-wide text-muted">Sisa Anggaran</p>
-            <p class="text-2xl font-bold tabular-nums" :class="summary.total_remaining >= 0 ? 'text-positive' : 'text-red-600'">
+            <p
+              class="text-2xl font-bold tabular-nums mt-1"
+              :class="summary.total_remaining >= 0 ? 'text-positive' : 'text-red-600'"
+            >
               {{ formatIdr(summary.total_remaining) }}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <!-- Table card -->
+      <!-- Table -->
       <div class="rounded-xl border border-border bg-surface overflow-hidden">
-        <!-- Pagination -->
-        <div class="px-4 py-2 border-b border-border flex items-center justify-between">
+        <div class="px-4 py-2 border-b border-border">
           <span class="text-[11px] text-muted tabular-nums">
             <template v-if="loading">Memuat...</template>
-            <template v-else-if="totalRecords > 0">
-              {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, totalRecords) }}
-              dari {{ totalRecords }} anggaran
-            </template>
-            <template v-else>Tidak ada anggaran</template>
+            <template v-else>{{ rows.length }} pemilik anggaran</template>
           </span>
-          <TablePagination
-            :page="page"
-            :total-pages="totalPages"
-            :total="totalRecords"
-            :page-size="pageSize"
-            :loading="loading"
-            unit="anggaran"
-            @prev="page > 1 && (page--, tampilkan())"
-            @next="page < totalPages && (page++, tampilkan())"
-            @update:page-size="(s) => { pageSize = s; page = 1; tampilkan() }"
-          />
         </div>
 
-        <!-- Table -->
         <div class="overflow-x-auto">
           <table class="w-full text-[11px]">
             <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
               <tr>
-                <th class="px-4 py-2 text-center font-medium w-12">No</th>
-                <th class="px-4 py-2 text-left font-medium">Kode Budget</th>
-                <th class="px-4 py-2 text-left font-medium">Kelompok Kegiatan</th>
-                <th class="px-4 py-2 text-left font-medium">Rincian Kebutuhan</th>
+                <th class="px-4 py-2 text-center font-medium w-10">No</th>
+                <th class="px-4 py-2 text-left font-medium">Pemilik Anggaran</th>
                 <th class="px-4 py-2 text-right font-medium">Anggaran</th>
                 <th class="px-4 py-2 text-right font-medium">Realisasi</th>
                 <th class="px-4 py-2 text-right font-medium">Sisa</th>
+                <th class="px-4 py-2 text-right font-medium w-24">% Realisasi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
               <tr v-if="loading">
-                <td colspan="7" class="px-4 py-8 text-center text-muted">Memuat...</td>
+                <td colspan="6" class="px-4 py-8 text-center text-muted">Memuat...</td>
               </tr>
               <tr v-else-if="rows.length === 0">
-                <td colspan="7" class="px-4 py-8 text-center text-muted italic">
-                  Tidak ada anggaran yang ditemukan.
+                <td colspan="6" class="px-4 py-8 text-center text-muted italic">
+                  Tidak ada data anggaran untuk tahun ini.
                 </td>
               </tr>
-              <tr v-for="(row, idx) in rows" :key="row.budget_id" class="hover:bg-muted/30">
-                <td class="px-4 py-1 text-center text-xs">
-                  {{ (page - 1) * pageSize + idx + 1 }}
+              <tr
+                v-for="(row, idx) in rows"
+                :key="row.owner_id"
+                class="hover:bg-muted/30"
+              >
+                <td class="px-4 py-1.5 text-center text-xs text-muted">{{ idx + 1 }}</td>
+                <td class="px-4 py-1.5 text-xs font-medium">{{ row.owner_name }}</td>
+                <td class="px-4 py-1.5 text-right text-xs tabular-nums">{{ formatIdr(row.total_budget) }}</td>
+                <td class="px-4 py-1.5 text-right text-xs tabular-nums">{{ formatIdr(row.total_realization) }}</td>
+                <td
+                  class="px-4 py-1.5 text-right text-xs tabular-nums font-medium"
+                  :class="row.remaining >= 0 ? '' : 'text-red-600'"
+                >
+                  {{ formatIdr(row.remaining) }}
                 </td>
-                <td class="px-4 py-1 text-xs font-mono">{{ row.budget_code }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.item_group }}</td>
-                <td class="px-4 py-1 text-xs">{{ row.item_name }}</td>
-                <td class="px-4 py-1 text-right text-xs font-medium">
-                  {{ formatIdr(row.amount) }}
-                </td>
-                <td class="px-4 py-1 text-right text-xs">
-                  {{ row.realization ? formatIdr(row.realization) : '—' }}
-                </td>
-                <td class="px-4 py-1 text-right text-xs font-medium">
-                  {{ formatIdr((row.amount ?? 0) - (row.realization ?? 0)) }}
+                <td class="px-4 py-1.5 text-right text-xs tabular-nums text-muted">
+                  {{ row.total_budget > 0 ? ((row.total_realization / row.total_budget) * 100).toFixed(1) + '%' : '—' }}
                 </td>
               </tr>
             </tbody>
+            <!-- Grand total row -->
+            <tfoot v-if="rows.length > 0" class="border-t-2 border-border bg-muted/20">
+              <tr class="font-semibold">
+                <td colspan="2" class="px-4 py-2 text-xs">Total</td>
+                <td class="px-4 py-2 text-right text-xs tabular-nums">{{ formatIdr(summary.total_budget) }}</td>
+                <td class="px-4 py-2 text-right text-xs tabular-nums">{{ formatIdr(summary.total_realization) }}</td>
+                <td
+                  class="px-4 py-2 text-right text-xs tabular-nums"
+                  :class="summary.total_remaining >= 0 ? '' : 'text-red-600'"
+                >
+                  {{ formatIdr(summary.total_remaining) }}
+                </td>
+                <td class="px-4 py-2 text-right text-xs tabular-nums text-muted">
+                  {{ summary.total_budget > 0 ? ((summary.total_realization / summary.total_budget) * 100).toFixed(1) + '%' : '—' }}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>

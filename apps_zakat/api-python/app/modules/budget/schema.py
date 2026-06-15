@@ -187,3 +187,17 @@ class BudgetMasterPeriodRow(BaseModel):
     period_value: int
     is_open: str
     child_count: int = 0
+
+
+class BudgetOwnerSummaryRow(BaseModel):
+    owner_id: int
+    owner_name: str
+    total_budget: Decimal
+    total_realization: Decimal
+    remaining: Decimal
+
+
+class BudgetOwnerSummaryResponse(BaseModel):
+    period_id: int
+    period_value: int
+    rows: list[BudgetOwnerSummaryRow]

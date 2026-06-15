@@ -173,6 +173,26 @@ async def create_parameter_period(
 
 
 # ---------------------------------------------------------------------------
+# Summary per owner (inquiry)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/summary")
+async def get_budget_summary(
+    request: Request,
+    period_id: int = Query(...),
+    _: str = Depends(require_menu(_MENU_INQUIRY)),
+):
+    """Summary anggaran per pemilik untuk satu tahun."""
+    s = _session(request)
+    params: dict = {"period_id": period_id}
+    if s["branch"]:
+        params["branch_code"] = s["branch"]
+    downstream = await get_api_python("/api/budget/summary", params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+# ---------------------------------------------------------------------------
 # List & Detail endpoints (inquiry + revisi)
 # ---------------------------------------------------------------------------
 
