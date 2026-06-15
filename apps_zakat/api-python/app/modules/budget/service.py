@@ -79,21 +79,36 @@ async def get_budget_periods() -> list[BudgetPeriodItem]:
 
 async def get_budget_periods_for_owner(owner_id: int, branch_code: str) -> list[BudgetPeriodItem]:
     """Get periods that have budgets for a specific owner."""
-    rows = await fetch_all(
-        """
-        SELECT DISTINCT bp.periodid, bp.periodvalue, bp.isopen, bp.parentperiodid
-        FROM transaction.budgetperiod bp
-        WHERE bp.parentperiodid IS NULL
-          AND EXISTS (SELECT 1 FROM transaction.budget b
-                      WHERE b.periodid = bp.periodid
-                        AND b.ownerid = $1
-                        AND b.branchcode = $2
-                        AND b.budgettype = 'Y')
-        ORDER BY bp.periodvalue DESC
-        """,
-        owner_id,
-        branch_code,
-    )
+    if branch_code:
+        rows = await fetch_all(
+            """
+            SELECT DISTINCT bp.periodid, bp.periodvalue, bp.isopen, bp.parentperiodid
+            FROM transaction.budgetperiod bp
+            WHERE bp.parentperiodid IS NULL
+              AND EXISTS (SELECT 1 FROM transaction.budget b
+                          WHERE b.periodid = bp.periodid
+                            AND b.ownerid = $1
+                            AND b.branchcode = $2
+                            AND b.budgettype = 'Y')
+            ORDER BY bp.periodvalue DESC
+            """,
+            owner_id,
+            branch_code,
+        )
+    else:
+        rows = await fetch_all(
+            """
+            SELECT DISTINCT bp.periodid, bp.periodvalue, bp.isopen, bp.parentperiodid
+            FROM transaction.budgetperiod bp
+            WHERE bp.parentperiodid IS NULL
+              AND EXISTS (SELECT 1 FROM transaction.budget b
+                          WHERE b.periodid = bp.periodid
+                            AND b.ownerid = $1
+                            AND b.budgettype = 'Y')
+            ORDER BY bp.periodvalue DESC
+            """,
+            owner_id,
+        )
     return [
         BudgetPeriodItem(
             period_id=r["periodid"],

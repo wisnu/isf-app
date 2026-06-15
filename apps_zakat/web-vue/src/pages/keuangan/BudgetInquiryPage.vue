@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download } from 'lucide-vue-next'
-import { onMounted, ref, shallowRef } from 'vue'
+import { onMounted, ref, shallowRef, watch } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
@@ -151,6 +151,12 @@ async function exportXlsx() {
     exportLoading.value = false
   }
 }
+
+watch(selectedOwner, (val) => {
+  selectedPeriod.value = ''
+  periods.value = []
+  if (val) loadPeriods()
+})
 
 onMounted(loadOwners)
 </script>

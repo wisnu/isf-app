@@ -46,14 +46,14 @@ async def list_budget_periods():
 @router.get("/periods/{owner_id}")
 async def list_periods_for_owner(
     owner_id: int,
-    branch_code: str = Query(...),
+    branch_code: str | None = Query(default=None),
 ):
     if not await ping():
         return JSONResponse(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    data = await service.get_budget_periods_for_owner(owner_id, branch_code)
+    data = await service.get_budget_periods_for_owner(owner_id, branch_code or "")
     return ok({"data": [item.model_dump() for item in data]})
 
 
