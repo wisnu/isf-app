@@ -14,6 +14,7 @@ from app.modules.transaction.router import router as transaction_router
 from app.modules.transaksi.router import router as transaksi_router
 from app.modules.transaksi.uang_muka_router import router as uang_muka_router
 from app.modules.transaksi.uang_muka_pengembalian_router import router as uang_muka_pengembalian_router
+from app.modules.transaksi.transfer_antar_rekening_router import router as transfer_antar_rekening_router
 from app.modules.transaksi_histori.router import router as transaksi_histori_router
 from app.modules.parameter.router import router as parameter_router
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
@@ -56,5 +57,6 @@ app.include_router(transaction_router, prefix="/api")
 app.include_router(transaksi_router, prefix="/api")
 app.include_router(uang_muka_router, prefix="/api")
 app.include_router(uang_muka_pengembalian_router, prefix="/api")
+app.include_router(transfer_antar_rekening_router, prefix="/api")
 app.include_router(transaksi_histori_router, prefix="/api")
 app.include_router(parameter_router, prefix="/api")
