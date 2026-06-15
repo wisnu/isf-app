@@ -76,7 +76,7 @@ async def get_budget_summary(
 @router.get("")
 async def list_budgets(
     page: int = Query(default=1, ge=1),
-    limit: int = Query(default=25, ge=1, le=100),
+    limit: int = Query(default=25, ge=1, le=500),
     owner_id: int | None = Query(default=None),
     period_id: int | None = Query(default=None),
     branch_code: str | None = Query(default=None),

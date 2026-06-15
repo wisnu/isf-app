@@ -3,6 +3,8 @@ import { Download, Eye } from 'lucide-vue-next'
 import { onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
+const CACHE_KEY = 'budget-inquiry-state'
+
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
@@ -89,6 +91,12 @@ async function tampilkan() {
     selectedPeriodValue.value = res.period_value
     computeSummary(rows.value)
     hasData.value = true
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+      selectedPeriod: selectedPeriod.value,
+      periodId: res.period_id,
+      periodValue: res.period_value,
+      rows: res.rows,
+    }))
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat inquiry anggaran')
     rows.value = []
@@ -111,7 +119,23 @@ function goToDetail(row: OwnerSummaryRow) {
   })
 }
 
-onMounted(loadPeriods)
+onMounted(async () => {
+  await loadPeriods()
+  const cached = sessionStorage.getItem(CACHE_KEY)
+  if (cached) {
+    try {
+      const s = JSON.parse(cached)
+      selectedPeriod.value = s.selectedPeriod
+      selectedPeriodId.value = s.periodId
+      selectedPeriodValue.value = s.periodValue
+      rows.value = s.rows ?? []
+      computeSummary(rows.value)
+      hasData.value = true
+    } catch {
+      sessionStorage.removeItem(CACHE_KEY)
+    }
+  }
+})
 </script>
 
 <template>
