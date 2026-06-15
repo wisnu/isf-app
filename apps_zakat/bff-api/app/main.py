@@ -21,6 +21,7 @@ from app.routers.penyaluran import router as penyaluran_router
 from app.routers.penghimpunan import router as penghimpunan_router
 from app.routers.uang_muka import router as uang_muka_router
 from app.routers.uang_muka_pengembalian import router as uang_muka_pengembalian_router
+from app.routers.transfer_antar_rekening import router as transfer_antar_rekening_router
 from app.routers.otorisasi import router as otorisasi_router
 from app.routers.parameter import router as parameter_router
 from app.routers.transaction import router as transaction_router
@@ -108,6 +109,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(penghimpunan_router, prefix="/api")
     app.include_router(uang_muka_router, prefix="/api")
     app.include_router(uang_muka_pengembalian_router, prefix="/api")
+    app.include_router(transfer_antar_rekening_router, prefix="/api")
     app.include_router(otorisasi_router, prefix="/api")
     app.include_router(parameter_router, prefix="/api")
     return app

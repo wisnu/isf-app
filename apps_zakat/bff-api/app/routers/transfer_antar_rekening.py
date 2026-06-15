@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+import httpx
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import JSONResponse
+
+from app.services.auth import require_menu
+from app.services.proxy import get_api_python
+from app.shared.config import settings
+
+router = APIRouter(prefix='/transaksi/transfer-antar-rekening', tags=['transfer-antar-rekening'])
+
+_MENU = 'keuangan.transaksi.transfer-antar-rekening'
+
+
+def _session(request: Request) -> dict:
+    user_id = request.session.get('user_id', '')
+    access = request.session.get('branch_access', 'single')
+    primary = request.session.get('primary_branch') or ''
+    branch = '' if access == 'all' else primary
+    return {'user_id': user_id, 'branch': branch}
+
+
+@router.get('/lookup/cash-accounts')
+async def lookup_cash_accounts(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    search: str | None = Query(default=None),
+):
+    s = _session(request)
+    params: dict = {}
+    if search:
+        params['search'] = search
+    if s['branch']:
+        params['branch_code'] = s['branch']
+    downstream = await get_api_python('/api/transaksi/transfer-antar-rekening/lookup/cash-accounts', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get('/')
+async def list_transfers(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=25, ge=1, le=200),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+):
+    s = _session(request)
+    params: dict = {'page': page, 'limit': limit}
+    if s['branch']:
+        params['branch_code'] = s['branch']
+    if date_from:
+        params['date_from'] = date_from
+    if date_to:
+        params['date_to'] = date_to
+    downstream = await get_api_python('/api/transaksi/transfer-antar-rekening', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get('/{transaction_id}')
+async def get_transfer(
+    transaction_id: int,
+    _: str = Depends(require_menu(_MENU)),
+):
+    downstream = await get_api_python(f'/api/transaksi/transfer-antar-rekening/{transaction_id}')
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.post('/')
+async def create_transfer(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+):
+    s = _session(request)
+    body = await request.json()
+    url = f"{settings.api_python_base_url}/api/transaksi/transfer-antar-rekening"
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(url, json=body, params={
+            'user_id': s['user_id'],
+            'branch_code': s['branch'] or '001',
+        })
+    return JSONResponse(status_code=resp.status_code, content=resp.json())
