@@ -390,6 +390,12 @@ const router = createRouter({
       meta: { title: 'Transfer Antar Rekening', menu_key: 'keuangan.transaksi.transfer-antar-rekening' as MenuKey },
     },
     {
+      path: '/keuangan/transaksi/umum',
+      name: 'keuangan-transaksi-umum',
+      component: () => import('@/pages/keuangan/TransaksiUmumPage.vue'),
+      meta: { title: 'Transaksi Umum', menu_key: 'keuangan.transaksi.umum' as MenuKey },
+    },
+    {
       path: '/keuangan/transaksi/piutang',
       name: 'keuangan-transaksi-piutang',
       component: () => import('@/pages/keuangan/PiutangPage.vue'),

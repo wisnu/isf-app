@@ -38,6 +38,7 @@ export const MENU_KEYS = [
   'keuangan.transaksi.uang-muka-penyerahan',
   'keuangan.transaksi.uang-muka-pengembalian',
   'keuangan.transaksi.transfer-antar-rekening',
+  'keuangan.transaksi.umum',
   'keuangan.piutang.pinjam-bayar',
   'keuangan.upload.penghimpunan',
   'keuangan.upload.penghimpunan.approve',

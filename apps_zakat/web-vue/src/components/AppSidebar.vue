@@ -96,6 +96,7 @@ const groups: MenuGroup[] = [
           { label: 'Penyerahan Uang Muka',    to: '/keuangan/transaksi/uang-muka-penyerahan',    icon: HandCoins, menu_key: 'keuangan.transaksi.uang-muka-penyerahan' },
           { label: 'Pengembalian Uang Muka', to: '/keuangan/transaksi/uang-muka-pengembalian', icon: RotateCcw,  menu_key: 'keuangan.transaksi.uang-muka-pengembalian' },
           { label: 'Transfer Antar Rekening', to: '/keuangan/transaksi/transfer-antar-rekening', icon: ArrowLeftRight, menu_key: 'keuangan.transaksi.transfer-antar-rekening' },
+          { label: 'Transaksi Umum',         to: '/keuangan/transaksi/umum',                   icon: BookOpen,       menu_key: 'keuangan.transaksi.umum' as MenuKey },
           { label: 'Piutang (Pinjam/Bayar)',  to: '/keuangan/transaksi/piutang', icon: DollarSign, menu_key: 'keuangan.piutang.pinjam-bayar' },
           { section: 'Upload' },
           { label: 'Upload Penghimpunan', to: '/keuangan/upload/penghimpunan',      icon: Upload,          menu_key: 'keuangan.upload.penghimpunan' },
