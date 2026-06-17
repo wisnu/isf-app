@@ -35,6 +35,9 @@ def _register_defaults() -> None:
     # Piutang dispatcher
     from app.modules.transaksi import piutang_service
     register_dispatcher('piutang', piutang_service.create_from_payload)
+    # Transaksi Umum (GT) dispatcher
+    from app.modules.transaksi import transaksi_umum_service
+    register_dispatcher('transaksi_umum', transaksi_umum_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
