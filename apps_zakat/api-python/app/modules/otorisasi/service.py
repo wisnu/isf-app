@@ -32,6 +32,9 @@ def _register_defaults() -> None:
     # Transfer Antar Rekening dispatcher
     from app.modules.transaksi import transfer_antar_rekening_service
     register_dispatcher('transfer_antar_rekening', transfer_antar_rekening_service.create_from_payload)
+    # Piutang dispatcher
+    from app.modules.transaksi import piutang_service
+    register_dispatcher('piutang', piutang_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
@@ -157,6 +160,7 @@ ENTITY_TRANSACTION_CODE: dict[str, str] = {
     'penyaluran':          'DD001',
     'upload_penghimpunan': 'SDULBA',
     'uang_muka':           'KK',
+    'piutang':             'EAR',
 }
 
 
