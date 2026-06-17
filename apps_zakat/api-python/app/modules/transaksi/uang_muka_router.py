@@ -1,11 +1,9 @@
 """FastAPI router for Uang Muka Penyerahan (Cash Advance) endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
-from asyncpg import Connection
+from fastapi import APIRouter, HTTPException, Request
 
-from app.core.auth import require_menu
-from app.core.db import get_db
+from app.shared.db import get_pool
 from app.shared.response import ok
 from . import uang_muka_service
 from .uang_muka_schema import (
@@ -30,23 +28,20 @@ async def list_uang_muka(
     date_to: str = "",
     employee_id: int = 0,
     authstatus: str = "",
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
+    branch_code: str = "",
 ):
     """List Uang Muka transactions."""
-    request = None  # For future: can extract branch from request.state.session
-    branch_code = ""  # TODO: extract from session if needed
-
-    rows, total = await uang_muka_service.list_uang_muka(
-        db,
-        branch_code=branch_code,
-        page=page,
-        limit=limit,
-        date_from=date_from,
-        date_to=date_to,
-        employee_id=employee_id,
-        authstatus=authstatus,
-    )
+    async with get_pool().acquire() as db:
+        rows, total = await uang_muka_service.list_uang_muka(
+            db,
+            branch_code=branch_code,
+            page=page,
+            limit=limit,
+            date_from=date_from,
+            date_to=date_to,
+            employee_id=employee_id,
+            authstatus=authstatus,
+        )
 
     return ok({
         "rows": rows,
@@ -59,14 +54,41 @@ async def list_uang_muka(
     })
 
 
+@router.get("/lookup/employee")
+async def lookup_employee(
+    search: str = "",
+    branch_code: str = "",
+):
+    """Lookup employee by name/number."""
+    rows = await uang_muka_service.lookup_employee(search=search, branch_code=branch_code)
+    return ok({"rows": rows})
+
+
+@router.get("/lookup/cash-account")
+async def lookup_cash_account(
+    branch_code: str = "",
+):
+    """Lookup cash account."""
+    rows = await uang_muka_service.lookup_cash_account(branch_code=branch_code)
+    return ok({"rows": rows})
+
+
+@router.get("/lookup/budget")
+async def lookup_budget(
+    search: str = "",
+):
+    """Lookup budget."""
+    rows = await uang_muka_service.lookup_budget(search=search)
+    return ok({"rows": rows})
+
+
 @router.get("/{transaction_id}")
 async def get_uang_muka(
     transaction_id: int,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
 ):
     """Get Uang Muka detail by ID."""
-    row = await uang_muka_service.get_uang_muka_detail(db, transaction_id)
+    async with get_pool().acquire() as db:
+        row = await uang_muka_service.get_uang_muka_detail(db, transaction_id)
     if not row:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     return ok(row)
@@ -81,8 +103,6 @@ async def get_uang_muka(
 async def create_uang_muka(
     payload: UangMukaCreate,
     request: Request,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
 ):
     """Create new Uang Muka via otorisasi save-and-submit."""
     from app.modules.otorisasi import service as otorisasi_svc
@@ -107,13 +127,7 @@ async def update_uang_muka(
     transaction_id: int,
     payload: UangMukaUpdate,
     request: Request,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
 ):
-    """Update Uang Muka (only if has_return_trans=False and status DRAFT/REJECTED).
-
-    NOT YET IMPLEMENTED — requires submission tracking updates.
-    """
     raise HTTPException(status_code=501, detail="Not yet implemented")
 
 
@@ -121,47 +135,5 @@ async def update_uang_muka(
 async def delete_uang_muka(
     transaction_id: int,
     request: Request,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
 ):
-    """Cancel Uang Muka submission (only DRAFT/REJECTED status).
-
-    NOT YET IMPLEMENTED — requires submission tracking updates.
-    """
     raise HTTPException(status_code=501, detail="Not yet implemented")
-
-
-# ============================================================================
-# LOOKUP ENDPOINTS
-# ============================================================================
-
-
-@router.get("/lookup/employee")
-async def lookup_employee(
-    search: str = "",
-    branch_code: str = "",
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
-):
-    """Lookup employee by name/number."""
-    rows = await uang_muka_service.lookup_employee(search=search, branch_code=branch_code)
-    return ok({"rows": rows})
-
-
-@router.get("/lookup/cash-account")
-async def lookup_cash_account(
-    branch_code: str = "",
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
-):
-    """Lookup cash account."""
-    rows = await uang_muka_service.lookup_cash_account(branch_code=branch_code)
-    return ok({"rows": rows})
-
-
-@router.get("/lookup/budget")
-async def lookup_budget(
-    search: str = "",
-    _=Depends(require_menu("keuangan.transaksi.uang-muka-penyerahan")),
-):
-    """Lookup budget."""
-    rows = await uang_muka_service.lookup_budget(search=search)
-    return ok({"rows": rows})

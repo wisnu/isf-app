@@ -1,11 +1,9 @@
 """FastAPI router for Transfer Antar Rekening (transactioncode='TI') endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from asyncpg import Connection
+from fastapi import APIRouter, HTTPException, Query, Request
 
-from app.core.auth import require_menu
-from app.core.db import get_db
+from app.shared.db import get_pool
 from app.shared.response import ok
 from . import transfer_antar_rekening_service as svc
 from .transfer_antar_rekening_schema import TransferAntarRekeningCreate
@@ -25,17 +23,16 @@ async def list_transfers(
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
     branch_code: str | None = Query(default=None),
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu(_MENU)),
 ):
-    rows, total = await svc.list_transfers(
-        db,
-        branch_code=branch_code or '',
-        page=page,
-        limit=limit,
-        date_from=date_from or '',
-        date_to=date_to or '',
-    )
+    async with get_pool().acquire() as db:
+        rows, total = await svc.list_transfers(
+            db,
+            branch_code=branch_code or '',
+            page=page,
+            limit=limit,
+            date_from=date_from or '',
+            date_to=date_to or '',
+        )
     return ok({
         'rows': rows,
         'pagination': {
@@ -51,7 +48,6 @@ async def list_transfers(
 async def lookup_cash_accounts(
     search: str | None = Query(default=None),
     branch_code: str | None = Query(default=None),
-    _=Depends(require_menu(_MENU)),
 ):
     rows = await svc.lookup_cash_accounts(
         search=search or '',
@@ -63,10 +59,9 @@ async def lookup_cash_accounts(
 @router.get('/{transaction_id}')
 async def get_transfer(
     transaction_id: int,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu(_MENU)),
 ):
-    row = await svc.get_transfer_detail(db, transaction_id)
+    async with get_pool().acquire() as db:
+        row = await svc.get_transfer_detail(db, transaction_id)
     if not row:
         raise HTTPException(status_code=404, detail='Data tidak ditemukan')
     return ok(row)
@@ -78,14 +73,8 @@ async def get_transfer(
 async def create_transfer(
     payload: TransferAntarRekeningCreate,
     request: Request,
-    db: Connection = Depends(get_db),
-    _=Depends(require_menu(_MENU)),
 ):
-    """Create Transfer Antar Rekening via otorisasi save-and-submit.
-
-    Jika dalam limit → langsung AUTHORIZED + transaksi dibuat.
-    Jika melebihi limit → PENDING (menunggu otorisasi supervisor).
-    """
+    """Create Transfer Antar Rekening via otorisasi save-and-submit."""
     from app.modules.otorisasi import service as otorisasi_svc
 
     session = request.state.session
@@ -93,7 +82,6 @@ async def create_transfer(
     branch_code = session.get('primary_branch', '') or ''
 
     data = payload.model_dump()
-    # Include items for limit check in _decide_and_finalize
     data['items'] = [{'amount': payload.amount}]
 
     result = await otorisasi_svc.save_and_submit(

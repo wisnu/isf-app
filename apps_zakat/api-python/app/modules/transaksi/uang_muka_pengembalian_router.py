@@ -1,17 +1,14 @@
 """FastAPI router for Uang Muka Pengembalian (Cash Advance Return, CAR)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Request
 
-from app.core.auth import require_menu
-from app.core.db import get_db
+from app.shared.db import get_pool
 from app.shared.response import ok
 from . import uang_muka_pengembalian_service
 from .uang_muka_pengembalian_schema import UangMukaPengembalianCreate
 
 router = APIRouter(prefix="/transaksi/uang-muka-pengembalian", tags=["transaksi-uang-muka-pengembalian"])
-
-_MENU = "keuangan.transaksi.uang-muka-pengembalian"
 
 
 @router.get("")
@@ -22,18 +19,17 @@ async def list_pengembalian(
     date_to: str = "",
     employee_id: int = 0,
     branch_code: str = "",
-    db=Depends(get_db),
-    _=Depends(require_menu(_MENU)),
 ):
-    rows, total = await uang_muka_pengembalian_service.list_pengembalian(
-        db,
-        branch_code=branch_code,
-        page=page,
-        limit=limit,
-        date_from=date_from,
-        date_to=date_to,
-        employee_id=employee_id,
-    )
+    async with get_pool().acquire() as db:
+        rows, total = await uang_muka_pengembalian_service.list_pengembalian(
+            db,
+            branch_code=branch_code,
+            page=page,
+            limit=limit,
+            date_from=date_from,
+            date_to=date_to,
+            employee_id=employee_id,
+        )
     return ok({
         "rows": rows,
         "pagination": {
@@ -49,7 +45,6 @@ async def list_pengembalian(
 async def create_pengembalian(
     payload: UangMukaPengembalianCreate,
     request: Request,
-    _=Depends(require_menu(_MENU)),
 ):
     from app.modules.otorisasi import service as otorisasi_svc
 
@@ -71,7 +66,6 @@ async def create_pengembalian(
 async def lookup_open_uang_muka(
     employee_id: int,
     branch_code: str = "",
-    _=Depends(require_menu(_MENU)),
 ):
     """List open (belum di-LPJ) CA transactions for a given employee."""
     rows = await uang_muka_pengembalian_service.lookup_open_uang_muka(
