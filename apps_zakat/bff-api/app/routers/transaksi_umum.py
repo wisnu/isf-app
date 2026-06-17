@@ -47,6 +47,71 @@ async def list_transaksi_umum(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
+@router.get('/lookup/kasbank')
+async def lookup_kasbank(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    search: str = Query(default=''),
+):
+    """Proxy lookup rekening kas/bank ke api-python."""
+    s = _session(request)
+    params: dict = {}
+    if search:
+        params['search'] = search
+    if s['branch']:
+        params['branch_code'] = s['branch']
+    downstream = await get_api_python('/api/transaksi/umum/lookup/kasbank', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get('/lookup/produk')
+async def lookup_produk(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    search: str = Query(default=''),
+    fund_entity: int = Query(default=0),
+):
+    """Proxy lookup produk penghimpunan ke api-python."""
+    s = _session(request)
+    params: dict = {}
+    if search:
+        params['search'] = search
+    if fund_entity:
+        params['fund_entity'] = fund_entity
+    if s['branch']:
+        params['branch_code'] = s['branch']
+    downstream = await get_api_python('/api/transaksi/umum/lookup/produk', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get('/lookup/penyaluran')
+async def lookup_penyaluran(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    search: str = Query(default=''),
+):
+    """Proxy lookup program penyaluran ke api-python."""
+    params: dict = {}
+    if search:
+        params['search'] = search
+    downstream = await get_api_python('/api/transaksi/umum/lookup/penyaluran', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get('/lookup/donor')
+async def lookup_donor(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    search: str = Query(default=''),
+):
+    """Proxy lookup donor ke api-python."""
+    params: dict = {}
+    if search:
+        params['search'] = search
+    downstream = await get_api_python('/api/transaksi/umum/lookup/donor', params=params)
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
 @router.get('/{transaction_id}')
 async def get_transaksi_umum(
     request: Request,
