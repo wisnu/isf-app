@@ -5,6 +5,7 @@ BFF owns auth; pool ini dipakai oleh AuthDB + AuditWriter.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any
 
@@ -15,21 +16,41 @@ _pool: asyncpg.Pool | None = None
 
 
 async def init_pool(dsn: str | None = None) -> asyncpg.Pool | None:
-    """Create pool dari ISF_AUTH_DATABASE_URL env (override via param untuk test)."""
+    """Create pool dari ISF_AUTH_DATABASE_URL env (override via param untuk test).
+
+    Retry up to 5x with 2s delay to handle container startup race with host network.
+    """
     global _pool
     target = (dsn or os.getenv("ISF_AUTH_DATABASE_URL", "")).strip()
     if not target:
         return None
-    _pool = await asyncpg.create_pool(
-        target,
-        min_size=1,
-        max_size=10,
-        command_timeout=15,
-        # statement_cache_size=0 hindari "relation does not exist" akibat prepared-statement
-        # cache stale ketika schema di-recreate (mis. di test runner antar fixture).
-        statement_cache_size=0,
-    )
-    return _pool
+    # Append sslmode=disable if not already set — Postgres on this host doesn't
+    # require SSL and asyncpg's default ssl=prefer causes spurious connection
+    # failures on container startup when the SSL socket races with network setup.
+    if "sslmode" not in target:
+        sep = "&" if "?" in target else "?"
+        target = f"{target}{sep}sslmode=disable"
+
+    # Brief initial wait for container network routes to stabilize.
+    await asyncio.sleep(3)
+
+    last_exc: Exception | None = None
+    for attempt in range(10):
+        try:
+            _pool = await asyncpg.create_pool(
+                target,
+                min_size=0,
+                max_size=10,
+                command_timeout=15,
+                # statement_cache_size=0 hindari "relation does not exist" akibat prepared-statement
+                # cache stale ketika schema di-recreate (mis. di test runner antar fixture).
+                statement_cache_size=0,
+            )
+            return _pool
+        except (OSError, asyncpg.PostgresConnectionFailureError) as e:
+            last_exc = e
+            await asyncio.sleep(2)
+    raise RuntimeError(f"Cannot connect to DB after 10 attempts: {last_exc}") from last_exc
 
 
 async def close_pool() -> None:

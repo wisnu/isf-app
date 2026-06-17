@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any
 
@@ -18,13 +19,18 @@ async def init_pool() -> asyncpg.Pool | None:
     dsn = os.getenv("DATABASE_URL", "").strip()
     if not dsn:
         return None
-    _pool = await asyncpg.create_pool(
-        dsn,
-        min_size=1,
-        max_size=10,
-        command_timeout=15,
-    )
-    return _pool
+    if "sslmode" not in dsn:
+        sep = "&" if "?" in dsn else "?"
+        dsn = f"{dsn}{sep}sslmode=disable"
+    last_exc: Exception | None = None
+    for attempt in range(10):
+        try:
+            _pool = await asyncpg.create_pool(dsn, min_size=0, max_size=10, command_timeout=15)
+            return _pool
+        except (OSError, asyncpg.PostgresConnectionFailureError) as e:
+            last_exc = e
+            await asyncio.sleep(2)
+    raise RuntimeError(f"Cannot connect to DB after 10 attempts: {last_exc}") from last_exc
 
 
 async def close_pool() -> None:
@@ -80,13 +86,18 @@ async def init_isf_auth_pool() -> asyncpg.Pool | None:
     dsn = os.getenv("ISF_AUTH_DATABASE_URL", "").strip()
     if not dsn:
         return None
-    _isf_auth_pool = await asyncpg.create_pool(
-        dsn,
-        min_size=1,
-        max_size=10,
-        command_timeout=15,
-    )
-    return _isf_auth_pool
+    if "sslmode" not in dsn:
+        sep = "&" if "?" in dsn else "?"
+        dsn = f"{dsn}{sep}sslmode=disable"
+    last_exc: Exception | None = None
+    for attempt in range(10):
+        try:
+            _isf_auth_pool = await asyncpg.create_pool(dsn, min_size=0, max_size=10, command_timeout=15)
+            return _isf_auth_pool
+        except (OSError, asyncpg.PostgresConnectionFailureError) as e:
+            last_exc = e
+            await asyncio.sleep(2)
+    raise RuntimeError(f"Cannot connect to isf_auth DB after 10 attempts: {last_exc}") from last_exc
 
 
 async def close_isf_auth_pool() -> None:
