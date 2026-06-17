@@ -350,9 +350,7 @@ async def lookup_kasbank(search: str = '', branch_code: str = '') -> list[dict]:
     params: list = []
     idx = 1
 
-    where_parts = [
-        "(financialaccounttype LIKE 'Cash%' OR financialaccounttype LIKE 'Bank%')"
-    ]
+    where_parts = ['1=1']
 
     if search:
         where_parts.append(
@@ -361,23 +359,16 @@ async def lookup_kasbank(search: str = '', branch_code: str = '') -> list[dict]:
         params.append(f'%{search.lower()}%')
         idx += 1
 
-    if branch_code:
-        where_parts.append(f"branchcode = ${idx}")
-        params.append(branch_code)
-        idx += 1
-
     where = ' AND '.join(where_parts)
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             f"""
             SELECT
-                accountno,
-                accountname,
-                financialaccounttype,
-                CAST(balance AS NUMERIC(20,2)) AS balance
+                accountno   AS account_no,
+                accountname AS account_name
             FROM transaction.financialaccount
-            WHERE {where}
+            WHERE financialaccounttype = 'C' AND ({where})
             ORDER BY accountname ASC
             LIMIT 20
             """,
@@ -388,36 +379,33 @@ async def lookup_kasbank(search: str = '', branch_code: str = '') -> list[dict]:
 
 
 async def lookup_produk(search: str = '', branch_code: str = '', fund_entity: int = 0) -> list[dict]:
-    """Search product account untuk penghimpunan."""
+    """Search product account untuk penghimpunan (dari productaccount + financialaccount)."""
     pool = get_pool()
     params: list = []
     idx = 1
 
-    where_parts = []
+    # Penghimpunan products: numeric-prefix account codes (0101..., 0102..., 0501...)
+    where_parts = ["pa.accountno ~ '^[0-9]'"]
 
     if search:
         where_parts.append(
-            f"(LOWER(accountno) LIKE ${idx})"
+            f"(LOWER(pa.accountno) LIKE ${idx} OR LOWER(fa.accountname) LIKE ${idx})"
         )
         params.append(f'%{search.lower()}%')
         idx += 1
 
-    where = ' AND '.join(where_parts) if where_parts else '1=1'
+    where = ' AND '.join(where_parts)
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             f"""
             SELECT
-                accountno,
-                productid,
-                producttype,
-                zakatbalance,
-                infaqbalance,
-                wakafbalance,
-                amilbalance
-            FROM transaction.productaccount
+                pa.accountno            AS account_no,
+                COALESCE(fa.accountname, pa.accountno) AS account_name
+            FROM transaction.productaccount pa
+            LEFT JOIN transaction.financialaccount fa ON fa.accountno = pa.accountno
             WHERE {where}
-            ORDER BY accountno ASC
+            ORDER BY fa.accountname ASC NULLS LAST
             LIMIT 20
             """,
             *params,
@@ -427,32 +415,35 @@ async def lookup_produk(search: str = '', branch_code: str = '', fund_entity: in
 
 
 async def lookup_penyaluran(search: str = '') -> list[dict]:
-    """Search program penyaluran."""
+    """Search program penyaluran (productaccount dengan prefix huruf: GBK..., GBI..., Z1BS...)."""
     pool = get_pool()
     params: list = []
     idx = 1
 
-    where_parts = []
+    # Distribution programs: alpha-prefix account codes (GBK..., GBI..., Z1BS...)
+    where_parts = [
+        "pa.accountno ~ '^[A-Za-z]'",
+    ]
 
     if search:
         where_parts.append(
-            f"(LOWER(accountno) LIKE ${idx})"
+            f"(LOWER(pa.accountno) LIKE ${idx} OR LOWER(fa.accountname) LIKE ${idx})"
         )
         params.append(f'%{search.lower()}%')
         idx += 1
 
-    where = ' AND '.join(where_parts) if where_parts else '1=1'
+    where = ' AND '.join(where_parts)
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             f"""
             SELECT
-                accountno,
-                productid,
-                producttype
-            FROM transaction.productaccount
+                pa.accountno            AS account_no,
+                COALESCE(fa.accountname, pa.accountno) AS account_name
+            FROM transaction.productaccount pa
+            LEFT JOIN transaction.financialaccount fa ON fa.accountno = pa.accountno
             WHERE {where}
-            ORDER BY accountno ASC
+            ORDER BY fa.accountname ASC NULLS LAST
             LIMIT 20
             """,
             *params,
@@ -482,10 +473,9 @@ async def lookup_donor(search: str = '') -> list[dict]:
         rows = await conn.fetch(
             f"""
             SELECT
-                donorid,
-                donorname,
-                donorno,
-                donortype
+                donorid   AS donor_id,
+                donorname AS donor_name,
+                donorno   AS donor_no
             FROM fund.donor
             WHERE {where}
             ORDER BY donorname ASC
