@@ -231,6 +231,11 @@ const totalDebet = computed(() =>
 const totalKredit = computed(() =>
   formItems.value.filter(i => i.mutation_type === 'C').reduce((s, i) => s + (i.amount ?? 0), 0)
 )
+const detailItems = computed<Record<string, unknown>[]>(() => {
+  const row = detailRow.value as (TxRow & { items?: Record<string, unknown>[] }) | null
+  return row?.items ?? []
+})
+
 const isBalanced = computed(() =>
   formItems.value.length >= 2 && Math.abs(totalDebet.value - totalKredit.value) < 0.01
 )
@@ -1228,7 +1233,7 @@ onMounted(load)
           </div>
         </div>
 
-        <div v-if="(detailRow as TxRow & { items?: unknown[] }).items">
+        <div v-if="detailItems.length">
           <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Baris Jurnal</div>
           <div class="overflow-x-auto rounded border">
             <table class="w-full text-xs">
@@ -1241,17 +1246,13 @@ onMounted(load)
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="(item, idx) in (detailRow as TxRow & { items?: Record<string,unknown>[] }).items"
-                  :key="idx"
-                  class="border-t"
-                >
-                  <td class="px-3 py-1.5 font-mono text-zinc-500">{{ (item.account_code as string) || '—' }}</td>
-                  <td class="px-3 py-1.5">{{ item.account_name as string }}</td>
+                <tr v-for="(item, idx) in detailItems" :key="idx" class="border-t">
+                  <td class="px-3 py-1.5 font-mono text-zinc-500">{{ String(item.account_code ?? '') || '—' }}</td>
+                  <td class="px-3 py-1.5">{{ String(item.account_name ?? '') }}</td>
                   <td class="px-3 py-1.5 text-center font-bold" :class="item.mutation_type === 'D' ? 'text-emerald-700' : 'text-red-600'">
                     {{ item.mutation_type === 'D' ? 'Debet' : 'Kredit' }}
                   </td>
-                  <td class="px-3 py-1.5 text-right font-mono">{{ (item.amount as number).toLocaleString('id-ID') }}</td>
+                  <td class="px-3 py-1.5 text-right font-mono">{{ Number(item.amount ?? 0).toLocaleString('id-ID') }}</td>
                 </tr>
               </tbody>
             </table>
