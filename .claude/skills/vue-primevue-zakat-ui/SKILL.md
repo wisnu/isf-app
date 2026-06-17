@@ -456,11 +456,11 @@ space-y-0                          ← tidak ada gap antar bagian (border menyam
 
   <!-- Table -->
   overflow-x-auto rounded-b border
-    <table class="w-full text-sm">
-      <thead bg-zinc-50 text-xs font-semibold uppercase text-zinc-500>
+    <table class="w-full text-[11px]">
+      <thead text-[10px] text-muted uppercase tracking-widest border-b border-border>
       <tbody>
-        submission rows: border-t bg-amber-50/40
-        transaction rows: cursor-pointer border-t hover:bg-zinc-50
+        submission rows: border-b border-border bg-amber-50/40
+        transaction rows: cursor-pointer border-b border-border last:border-0 hover:bg-background/60
 ```
 
 ### State wajib
@@ -498,8 +498,9 @@ function goto(target: number) {
            class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
            @keyup.enter="() => { page = 1; load() }" />
   </div>
-  <Button variant="secondary" :disabled="loading" @click="() => { page = 1; load() }">
-    <Search class="mr-2 h-4 w-4" />
+  <!-- Tampilkan button: PRIMARY (green), bukan secondary/gray -->
+  <Button size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="() => { page = 1; load() }">
+    <Search class="w-3.5 h-3.5" />
     {{ loading ? 'Memuat...' : 'Tampilkan' }}
   </Button>
 </div>
@@ -524,7 +525,7 @@ function goto(target: number) {
 ### Table header standar
 
 ```vue
-<thead class="bg-zinc-50 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
+<thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
   <tr>
     <th class="px-4 py-2 text-left">No. Transaksi / Draft</th>
     <th class="px-4 py-2 text-left">Tanggal</th>

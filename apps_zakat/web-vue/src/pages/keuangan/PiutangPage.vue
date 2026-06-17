@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { DollarSign, Plus, Search, X } from 'lucide-vue-next'
-import { onMounted, ref, shallowRef, watch, computed } from 'vue'
+import { CreditCard, Plus, Search } from 'lucide-vue-next'
+import { computed, onMounted, ref, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -8,32 +9,52 @@ import DateField from '@/components/ui/DateField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
-import { useAuthStore } from '@/stores/auth'
-import type { MenuKey } from '@/lib/menu/registry'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PiutangRow {
+  _rowKind: 'transaction'
   id: number
   transactionno: string | null
-  transactioncode: string  // 'EAR' (Pinjam) | 'PEAR' (Bayar)
-  actualdate: string       // ISO YYYY-MM-DD
+  transactioncode: string
+  actualdate: string
   debtorname: string
-  debtortype: string       // 'E' (Karyawan) | 'X' (Non-Karyawan)
+  debtortype: string
   amount: number
-  status: string           // 'AUTHORIZED' | 'PENDING'
+  status: string
   description: string | null
   inputer: string
+}
+
+interface SubmissionRow {
+  _rowKind: 'submission'
+  id: number
+  actual_date: string
+  transaction_type: string
+  debtor_name: string
+  debtor_type: string
+  amount: number
+  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED'
+  rejection_notes: string | null
+  payload: Record<string, any>
+}
+
+type MergedRow = PiutangRow | SubmissionRow
+
+interface ListResponse {
+  rows: Omit<PiutangRow, '_rowKind'>[]
+  pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
 interface DebtorOption {
   debtorid: string
   debtorcode: string
   debtorname: string
-  debtortype: string       // 'E' | 'X'
+  debtortype: string
   branchcode: string
 }
 
@@ -53,17 +74,13 @@ interface GLAccountOption {
   balance: number | null
 }
 
-interface ListResponse {
-  rows: PiutangRow[]
-  pagination: { page: number; limit: number; total: number; total_pages: number }
-}
-
 // ── State ─────────────────────────────────────────────────────────────────────
-const auth = useAuthStore()
+const router = useRouter()
 const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
-const rows = ref<PiutangRow[]>([])
+const txRows = ref<PiutangRow[]>([])
+const subRows = ref<SubmissionRow[]>([])
 const loading = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 const page = shallowRef(1)
@@ -71,17 +88,15 @@ const pageSize = shallowRef(25)
 const totalPages = shallowRef(1)
 const totalRec = shallowRef(0)
 const hasLoaded = shallowRef(false)
+const actionLoading = shallowRef<number | null>(null)
 
-// Filter state
 const dateFrom = shallowRef(today)
 const dateTo = shallowRef(today)
 
-// Modal state
+// Form modal state
 const showForm = shallowRef(false)
 const formSaving = shallowRef(false)
 const formError = shallowRef<string | null>(null)
-
-// Form fields
 const formTransactionType = shallowRef<'P' | 'B'>('P')
 const formChannelType = shallowRef<'C' | 'G'>('C')
 const formDate = shallowRef(today)
@@ -89,27 +104,25 @@ const formAmount = shallowRef<number | null>(null)
 const formRefNo = shallowRef('')
 const formDescription = shallowRef('')
 const formCasher = shallowRef('')
-
-// Debitur lookup
 const formDebtor = ref<DebtorOption | null>(null)
 const debtorOptions = ref<DebtorOption[]>([])
-const debtorDebtorType = shallowRef('')  // Read-only, auto-filled from lookup
-
-// Kas/Bank account lookup
+const debtorDebtorType = shallowRef('')
 const formCashAccount = ref<CashAccountOption | null>(null)
 const cashAccountOptions = ref<CashAccountOption[]>([])
-
-// GL Account lookup
 const formGLAccount = ref<GLAccountOption | null>(null)
 const glAccountOptions = ref<GLAccountOption[]>([])
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
 
+const mergedRows = computed<MergedRow[]>(() => [
+  ...subRows.value,
+  ...txRows.value,
+])
+
 const showCount = computed(() => {
   const from = (page.value - 1) * pageSize.value + 1
   const to = Math.min(page.value * pageSize.value, totalRec.value)
-  if (!hasLoaded.value) return 'Pilih periode dan klik Tampilkan'
   return totalRec.value > 0 ? `Showing ${from}–${to} of ${totalRec.value} records` : 'Tidak ada data'
 })
 
@@ -118,64 +131,7 @@ function goto(target: number) {
   load()
 }
 
-// ── Debitur lookup ────────────────────────────────────────────────────────────
-async function searchDebtors(query: string) {
-  if (!query.trim()) {
-    debtorOptions.value = []
-    return
-  }
-  try {
-    const res = await api.get<{ rows: DebtorOption[] }>(
-      `/api/piutang/debitur/?q=${encodeURIComponent(query.trim())}`
-    )
-    debtorOptions.value = res.rows ?? []
-  } catch {
-    debtorOptions.value = []
-  }
-}
-
-function onDebtorSelected(debtor: DebtorOption | null) {
-  formDebtor.value = debtor
-  if (debtor) {
-    debtorDebtorType.value = debtor.debtortype === 'E' ? 'Karyawan' : 'Non-Karyawan'
-  } else {
-    debtorDebtorType.value = ''
-  }
-}
-
-// ── Cash account lookup ───────────────────────────────────────────────────────
-async function searchCashAccounts(query: string) {
-  if (!query.trim()) {
-    cashAccountOptions.value = []
-    return
-  }
-  try {
-    const res = await api.get<{ rows: CashAccountOption[] }>(
-      `/api/piutang/cash-accounts/?q=${encodeURIComponent(query.trim())}`
-    )
-    cashAccountOptions.value = res.rows ?? []
-  } catch {
-    cashAccountOptions.value = []
-  }
-}
-
-// ── GL Account lookup ─────────────────────────────────────────────────────────
-async function searchGLAccounts(query: string) {
-  if (!query.trim()) {
-    glAccountOptions.value = []
-    return
-  }
-  try {
-    const res = await api.get<{ rows: GLAccountOption[] }>(
-      `/api/piutang/gl-accounts/?q=${encodeURIComponent(query.trim())}`
-    )
-    glAccountOptions.value = res.rows ?? []
-  } catch {
-    glAccountOptions.value = []
-  }
-}
-
-// ── Load data ─────────────────────────────────────────────────────────────────
+// ── Load ──────────────────────────────────────────────────────────────────────
 async function load() {
   loading.value = true
   errorMsg.value = null
@@ -186,39 +142,114 @@ async function load() {
       page: String(page.value),
       limit: String(pageSize.value),
     })
-    const res = await api.get<ListResponse>(`/api/piutang/?${params}`)
-    rows.value = res.rows ?? []
-    totalRec.value = res.pagination.total
-    totalPages.value = res.pagination.total_pages
+
+    const [txRes, subRes] = await Promise.all([
+      api.get<ListResponse>(`/api/piutang/?${params}`).catch(() => ({
+        rows: [],
+        pagination: { page: 1, limit: 25, total: 0, total_pages: 1 },
+      })),
+      api.get<{ rows: any[] }>('/api/otorisasi/my-submissions/?entity_type=piutang').catch(
+        () => ({ rows: [] }),
+      ),
+    ])
+
+    txRows.value = txRes.rows.map((r) => ({ ...r, _rowKind: 'transaction' as const }))
+    totalRec.value = txRes.pagination.total
+    totalPages.value = txRes.pagination.total_pages
     hasLoaded.value = true
+
+    subRows.value = subRes.rows.map((r: any) => ({
+      _rowKind: 'submission' as const,
+      id: r.id,
+      actual_date: r.payload?.actual_date ?? r.submitted_at ?? today,
+      transaction_type: r.payload?.transaction_type ?? '',
+      debtor_name: r.payload?.debtor_name ?? '-',
+      debtor_type: r.payload?.debtor_type ?? '',
+      amount: r.payload?.amount ?? 0,
+      status: r.status,
+      rejection_notes: r.rejection_notes ?? null,
+      payload: r.payload ?? {},
+    }))
   } catch (e: unknown) {
-    errorMsg.value = e instanceof Error ? e.message : 'Gagal memuat data'
+    errorMsg.value = e instanceof Error ? e.message : String(e)
     toast.error('Gagal memuat data piutang')
   } finally {
     loading.value = false
   }
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-function statusLabel(status: string) {
-  if (status === 'AUTHORIZED') return 'Disetujui'
-  if (status === 'PENDING') return 'Menunggu'
-  return status
+// ── Submission actions ────────────────────────────────────────────────────────
+async function submitDraft(id: number) {
+  actionLoading.value = id
+  try {
+    await api.post(`/api/otorisasi/submission/${id}/submit`, {})
+    toast.success('Submission berhasil dikirim untuk otorisasi')
+    await load()
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : 'Gagal mengirim submission')
+  } finally {
+    actionLoading.value = null
+  }
 }
 
-function statusClass(status: string) {
-  if (status === 'AUTHORIZED') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200'
-  if (status === 'PENDING') return 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200'
-  return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+async function deleteDraft(id: number) {
+  actionLoading.value = id
+  try {
+    await api.delete(`/api/otorisasi/submission/${id}`)
+    toast.success('Draft dihapus')
+    subRows.value = subRows.value.filter((r) => r.id !== id)
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : 'Gagal menghapus draft')
+  } finally {
+    actionLoading.value = null
+  }
 }
 
-// ── Transaction type label ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function typeLabel(code: string) {
-  return code === 'EAR' ? 'Pinjam' : code === 'PEAR' ? 'Bayar' : code
+  if (code === 'EAR' || code === 'P') return 'Pinjam'
+  if (code === 'PEAR' || code === 'B') return 'Bayar'
+  return code
 }
 
 function debtorTypeLabel(type: string) {
   return type === 'E' ? 'Karyawan' : type === 'X' ? 'Non-Karyawan' : type
+}
+
+// ── Debitur lookup ────────────────────────────────────────────────────────────
+async function searchDebtors(query: string) {
+  if (!query.trim()) { debtorOptions.value = []; return }
+  try {
+    const res = await api.get<{ rows: DebtorOption[] }>(
+      `/api/piutang/debitur/?q=${encodeURIComponent(query.trim())}`,
+    )
+    debtorOptions.value = res.rows ?? []
+  } catch { debtorOptions.value = [] }
+}
+
+function onDebtorSelected(debtor: DebtorOption | null) {
+  formDebtor.value = debtor
+  debtorDebtorType.value = debtor ? (debtor.debtortype === 'E' ? 'Karyawan' : 'Non-Karyawan') : ''
+}
+
+async function searchCashAccounts(query: string) {
+  if (!query.trim()) { cashAccountOptions.value = []; return }
+  try {
+    const res = await api.get<{ rows: CashAccountOption[] }>(
+      `/api/piutang/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
+    )
+    cashAccountOptions.value = res.rows ?? []
+  } catch { cashAccountOptions.value = [] }
+}
+
+async function searchGLAccounts(query: string) {
+  if (!query.trim()) { glAccountOptions.value = []; return }
+  try {
+    const res = await api.get<{ rows: GLAccountOption[] }>(
+      `/api/piutang/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
+    )
+    glAccountOptions.value = res.rows ?? []
+  } catch { glAccountOptions.value = [] }
 }
 
 // ── Form modal ────────────────────────────────────────────────────────────────
@@ -247,27 +278,11 @@ function closeForm() {
 }
 
 async function submitForm() {
-  // Validation
-  if (!formDate.value) {
-    formError.value = 'Tanggal transaksi wajib dipilih'
-    return
-  }
-  if (!formDebtor.value) {
-    formError.value = 'Debitur wajib dipilih'
-    return
-  }
-  if (!formAmount.value || formAmount.value <= 0) {
-    formError.value = 'Nominal harus lebih dari 0'
-    return
-  }
-  if (formChannelType.value === 'C' && !formCashAccount.value) {
-    formError.value = 'Rekening Kas/Bank wajib dipilih'
-    return
-  }
-  if (formChannelType.value === 'G' && !formGLAccount.value) {
-    formError.value = 'Kode GL Account wajib dipilih'
-    return
-  }
+  if (!formDate.value) { formError.value = 'Tanggal transaksi wajib dipilih'; return }
+  if (!formDebtor.value) { formError.value = 'Debitur wajib dipilih'; return }
+  if (!formAmount.value || formAmount.value <= 0) { formError.value = 'Nominal harus lebih dari 0'; return }
+  if (formChannelType.value === 'C' && !formCashAccount.value) { formError.value = 'Rekening Kas/Bank wajib dipilih'; return }
+  if (formChannelType.value === 'G' && !formGLAccount.value) { formError.value = 'GL Account wajib dipilih'; return }
 
   formSaving.value = true
   formError.value = null
@@ -282,25 +297,16 @@ async function submitForm() {
       description: formDescription.value,
       casher: formCasher.value,
     }
-
-    if (formChannelType.value === 'C' && formCashAccount.value) {
+    if (formChannelType.value === 'C' && formCashAccount.value)
       payload.cash_account_no = formCashAccount.value.cashaccountno
-    } else if (formChannelType.value === 'G' && formGLAccount.value) {
+    else if (formChannelType.value === 'G' && formGLAccount.value)
       payload.gl_account_code = formGLAccount.value.account_code
-    }
 
     const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/piutang/',
-      payload
+      '/api/piutang/', payload,
     )
-
-    if (result.status === 'AUTHORIZED') {
-      toast.success(`Piutang berhasil disimpan dan disetujui.`)
-    } else if (result.status === 'PENDING') {
-      toast.info(`Piutang dikirim untuk otorisasi. Status: ${result.status}`)
-    } else {
-      toast.success(`Piutang berhasil disimpan.`)
-    }
+    if (result.status === 'AUTHORIZED') toast.success('Piutang berhasil disimpan dan disetujui.')
+    else toast.info(`Piutang dikirim untuk otorisasi. Status: ${result.status}`)
     closeForm()
     load()
   } catch (e: unknown) {
@@ -317,114 +323,154 @@ onMounted(load)
   <div class="space-y-0">
     <PageHeader title="Piutang (Pinjam/Bayar)" subtitle="Kelola transaksi pinjam dan bayar piutang kepada karyawan dan pihak eksternal">
       <template #actions>
-        <Button
-          v-if="auth.hasMenu('keuangan.piutang.pinjam-bayar' as MenuKey)"
-          size="sm"
-          class="gap-1.5 h-8 text-xs"
-          @click="openAdd"
-        >
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="openAdd">
           <Plus class="w-3.5 h-3.5" />
-          Input Baru
+          Input Piutang
         </Button>
       </template>
     </PageHeader>
 
-    <!-- Error message -->
-    <div v-if="errorMsg" class="mx-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700">
-      {{ errorMsg }}
-    </div>
+    <Alert v-if="errorMsg" variant="destructive" class="mb-3">{{ errorMsg }}</Alert>
 
-    <!-- Card: Toolbar + Pagination + Table -->
-    <div class="rounded-xl border border-border bg-surface overflow-hidden">
-
-      <!-- Toolbar -->
-      <div class="px-4 py-3 border-b border-border">
-        <div class="flex flex-wrap items-end gap-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Dari Tanggal</label>
-            <DateField v-model="dateFrom" />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Sampai Tanggal</label>
-            <DateField v-model="dateTo" />
-          </div>
-          <Button variant="secondary" :disabled="loading" @click="() => { page = 1; load() }">
-            <Search class="mr-2 h-4 w-4" />
-            {{ loading ? 'Memuat...' : 'Tampilkan' }}
-          </Button>
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+      <div class="flex items-end gap-2">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-zinc-500">Dari</label>
+          <DateField v-model="dateFrom" />
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-zinc-500">Sampai</label>
+          <DateField v-model="dateTo" />
         </div>
       </div>
+      <Button size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="() => { page = 1; load() }">
+        <Search class="w-3.5 h-3.5" />
+        {{ loading ? 'Memuat...' : 'Tampilkan' }}
+      </Button>
+    </div>
 
-      <!-- Pagination (SELALU di atas tabel) -->
-      <div class="px-4 py-2 border-b border-border flex items-center justify-between">
-        <span class="text-xs text-muted-foreground tabular-nums">{{ showCount }}</span>
-        <TablePagination
-          v-if="hasLoaded && totalPages > 1"
-          :page="page"
-          :total-pages="totalPages"
-          :total="totalRec"
-          :page-size="pageSize"
-          @goto="goto"
-        />
-      </div>
+    <!-- Paginator TOP -->
+    <div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
+      <span class="text-xs text-zinc-500">
+        {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
+        <span v-if="subRows.length" class="ml-2 text-yellow-600">(+ {{ subRows.length }} draft/pending)</span>
+      </span>
+      <TablePagination
+        v-if="hasLoaded && totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        :total="totalRec"
+        :page-size="pageSize"
+        @prev="goto(page - 1)"
+        @next="goto(page + 1)"
+        @update:page-size="pageSize = $event; goto(1)"
+      />
+    </div>
 
-      <!-- Tabel -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="text-[10px] text-muted-foreground uppercase tracking-widest border-b border-border bg-muted/50">
-            <tr>
-              <th class="px-4 py-2 text-left font-medium">No. Transaksi</th>
-              <th class="px-4 py-2 text-left font-medium">Tanggal</th>
-              <th class="px-4 py-2 text-left font-medium">Jenis</th>
-              <th class="px-4 py-2 text-left font-medium">Debitur</th>
-              <th class="px-4 py-2 text-left font-medium">Tipe Debitur</th>
-              <th class="px-4 py-2 text-right font-medium">Nominal</th>
-              <th class="px-4 py-2 text-center font-medium">Status</th>
-              <th class="px-4 py-2 text-left font-medium">Input Oleh</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            <tr v-if="loading">
-              <td colspan="8" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
-            </tr>
-            <tr v-else-if="!rows.length && !hasLoaded">
-              <td colspan="8" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
-                Pilih periode dan klik Tampilkan untuk melihat data.
-              </td>
-            </tr>
-            <tr v-else-if="!rows.length">
-              <td colspan="8" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
-                Tidak ada transaksi dalam periode ini.
-              </td>
-            </tr>
-            <tr
-              v-for="row in rows"
-              :key="row.id"
-              class="hover:bg-muted/30 transition-colors"
-            >
-              <td class="px-4 py-2 text-xs font-mono">{{ row.transactionno ?? '-' }}</td>
-              <td class="px-4 py-2 text-xs">{{ dmy(row.actualdate) }}</td>
-              <td class="px-4 py-2 text-xs">{{ typeLabel(row.transactioncode) }}</td>
-              <td class="px-4 py-2 text-xs">{{ row.debtorname }}</td>
-              <td class="px-4 py-2 text-xs">{{ debtorTypeLabel(row.debtortype) }}</td>
-              <td class="px-4 py-2 text-xs text-right font-tabular">{{ fmt(row.amount) }}</td>
-              <td class="px-4 py-2 text-xs text-center">
-                <span :class="['inline-block px-2 py-1 rounded text-[10px] font-semibold', statusClass(row.status)]">
-                  {{ statusLabel(row.status) }}
-                </span>
-              </td>
-              <td class="px-4 py-2 text-xs">{{ row.inputer }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- DataTable -->
+    <div class="overflow-x-auto rounded-b border">
+      <table class="w-full text-[11px]">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+          <tr>
+            <th class="px-4 py-2 font-medium text-left">No. Transaksi / Draft</th>
+            <th class="px-4 py-2 font-medium text-left">Tanggal</th>
+            <th class="px-4 py-2 font-medium text-left">Jenis</th>
+            <th class="px-4 py-2 font-medium text-left">Debitur</th>
+            <th class="px-4 py-2 font-medium text-left">Tipe Debitur</th>
+            <th class="px-4 py-2 font-medium text-right">Nominal</th>
+            <th class="px-4 py-2 font-medium text-center">Status</th>
+            <th class="px-4 py-2 font-medium text-left">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="!hasLoaded">
+            <td colspan="8" class="px-4 py-8 text-center text-zinc-400">
+              Pilih tanggal dan klik Tampilkan untuk melihat data.
+            </td>
+          </tr>
+          <tr v-else-if="mergedRows.length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-zinc-400">
+              Tidak ada transaksi piutang dalam periode ini.
+            </td>
+          </tr>
+
+          <!-- Submission rows (DRAFT/PENDING/REJECTED) -->
+          <tr
+            v-for="row in subRows"
+            :key="`sub-${row.id}`"
+            class="border-b border-border bg-amber-50/40 dark:bg-amber-900/10"
+          >
+            <td class="px-4 py-2 font-mono text-xs text-zinc-400">Draft #{{ row.id }}</td>
+            <td class="px-4 py-2">{{ dmy(row.actual_date) }}</td>
+            <td class="px-4 py-2">{{ typeLabel(row.transaction_type) }}</td>
+            <td class="px-4 py-2 text-zinc-700 dark:text-zinc-300">{{ row.debtor_name }}</td>
+            <td class="px-4 py-2">{{ debtorTypeLabel(row.debtor_type) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmt(row.amount) }}</td>
+            <td class="px-4 py-2 text-center">
+              <StatusBadge :status="row.status" />
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <template v-if="row.status === 'DRAFT'">
+                  <button
+                    class="rounded border border-primary px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary hover:text-white transition disabled:opacity-50"
+                    :disabled="actionLoading === row.id"
+                    @click="submitDraft(row.id)"
+                  >Submit</button>
+                </template>
+                <template v-else-if="row.status === 'PENDING'">
+                  <span class="text-xs text-zinc-500">Menunggu otorisasi</span>
+                </template>
+                <template v-else-if="row.status === 'REJECTED'">
+                  <button
+                    class="rounded border border-amber-500 px-2 py-0.5 text-xs font-medium text-amber-600 hover:bg-amber-50 transition disabled:opacity-50"
+                    :disabled="actionLoading === row.id"
+                    @click="openAdd"
+                  >Revisi</button>
+                  <button
+                    class="rounded border border-red-400 px-2 py-0.5 text-xs font-medium text-red-500 hover:bg-red-50 transition disabled:opacity-50"
+                    :disabled="actionLoading === row.id"
+                    @click="deleteDraft(row.id)"
+                  >Hapus</button>
+                  <span
+                    v-if="row.rejection_notes"
+                    :title="row.rejection_notes"
+                    class="cursor-help text-xs text-red-400 underline decoration-dotted"
+                  >Alasan</span>
+                </template>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Transaction rows (authorized) -->
+          <tr
+            v-for="row in txRows"
+            :key="`tx-${row.id}`"
+            class="cursor-pointer border-b border-border last:border-0 hover:bg-background/60"
+          >
+            <td class="px-4 py-2 font-mono text-xs">{{ row.transactionno ?? '-' }}</td>
+            <td class="px-4 py-2">{{ dmy(row.actualdate) }}</td>
+            <td class="px-4 py-2">{{ typeLabel(row.transactioncode) }}</td>
+            <td class="px-4 py-2 text-zinc-700 dark:text-zinc-300">{{ row.debtorname }}</td>
+            <td class="px-4 py-2">{{ debtorTypeLabel(row.debtortype) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmt(row.amount) }}</td>
+            <td class="px-4 py-2 text-center">
+              <span class="rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                Terotorisasi
+              </span>
+            </td>
+            <td class="px-4 py-2 text-xs text-zinc-400">{{ row.inputer ?? '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Form Modal: Input Piutang -->
     <Modal v-if="showForm" @close="closeForm">
       <template #header>
         <div class="flex items-center gap-2">
-          <DollarSign class="w-4 h-4 text-primary" />
+          <CreditCard class="w-4 h-4 text-primary" />
           <span class="font-semibold">Input Piutang (Pinjam/Bayar)</span>
         </div>
       </template>
@@ -432,14 +478,10 @@ onMounted(load)
       <div class="space-y-4 py-1">
         <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
 
-        <!-- Row 1: Jenis Transaksi + Tanggal -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="mb-1 block text-xs font-medium text-muted-foreground">Jenis Transaksi <span class="text-red-500">*</span></label>
-            <select
-              v-model="formTransactionType"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            >
+            <select v-model="formTransactionType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
               <option value="P">Pinjam (EAR)</option>
               <option value="B">Bayar (PEAR)</option>
             </select>
@@ -450,14 +492,10 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Row 2: Channel Type + Account (conditional) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="mb-1 block text-xs font-medium text-muted-foreground">Channel <span class="text-red-500">*</span></label>
-            <select
-              v-model="formChannelType"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            >
+            <select v-model="formChannelType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
               <option value="C">Kas/Bank</option>
               <option value="G">Rekening Ledger</option>
             </select>
@@ -467,7 +505,6 @@ onMounted(load)
               <template v-if="formChannelType === 'C'">Rekening Kas/Bank <span class="text-red-500">*</span></template>
               <template v-else>GL Account Code <span class="text-red-500">*</span></template>
             </label>
-            <!-- Cash Account (visible saat channel=C) -->
             <div v-show="formChannelType === 'C'">
               <SearchSelect
                 :model-value="formCashAccount"
@@ -484,7 +521,6 @@ onMounted(load)
                 <span v-if="formCashAccount.balance !== null"> · Saldo: {{ fmt(formCashAccount.balance) }}</span>
               </p>
             </div>
-            <!-- GL Account (visible saat channel=G) -->
             <div v-show="formChannelType === 'G'">
               <SearchSelect
                 :model-value="formGLAccount"
@@ -504,7 +540,6 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Row 3: Debitur (full width) -->
         <div>
           <label class="mb-1 block text-xs font-medium text-muted-foreground">Nama Debitur <span class="text-red-500">*</span></label>
           <SearchSelect
@@ -522,7 +557,6 @@ onMounted(load)
           </p>
         </div>
 
-        <!-- Tipe Debitur (read-only) -->
         <div>
           <label class="mb-1 block text-xs font-medium text-muted-foreground">Tipe Debitur</label>
           <input
@@ -533,7 +567,6 @@ onMounted(load)
           />
         </div>
 
-        <!-- Row 4: Nominal + No Referensi -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="mb-1 block text-xs font-medium text-muted-foreground">Nominal (Rp) <span class="text-red-500">*</span></label>
@@ -547,7 +580,7 @@ onMounted(load)
             />
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">No. Referensi (Cek/Kwitansi)</label>
+            <label class="mb-1 block text-xs font-medium text-muted-foreground">No. Referensi</label>
             <input
               v-model="formRefNo"
               type="text"
@@ -558,7 +591,6 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Row 5: Kasir + Keterangan -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="mb-1 block text-xs font-medium text-muted-foreground">Kasir</label>
@@ -585,12 +617,9 @@ onMounted(load)
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" :disabled="formSaving" @click="closeForm">
-            <X class="mr-1.5 h-4 w-4" />
-            Batal
-          </Button>
+          <Button variant="ghost" :disabled="formSaving" @click="closeForm">Batal</Button>
           <Button :disabled="formSaving" @click="submitForm">
-            <DollarSign class="mr-1.5 h-4 w-4" />
+            <CreditCard class="mr-1.5 h-4 w-4" />
             {{ formSaving ? 'Menyimpan...' : 'Simpan Piutang' }}
           </Button>
         </div>
