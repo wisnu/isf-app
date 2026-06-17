@@ -12,6 +12,44 @@ from .transaksi_umum_schema import TransaksiUmumCreate
 router = APIRouter(prefix='/transaksi/umum', tags=['transaksi-umum'])
 
 
+# Lookup endpoints
+@router.get('/lookup/kasbank')
+async def lookup_kasbank(
+    search: str = Query(default=''),
+    branch_code: str = Query(default=''),
+):
+    """Search cash/bank accounts (rekening kas/bank)."""
+    rows = await transaksi_umum_service.lookup_kasbank(search=search, branch_code=branch_code)
+    return ok({'rows': rows})
+
+
+@router.get('/lookup/produk')
+async def lookup_produk(
+    search: str = Query(default=''),
+    branch_code: str = Query(default=''),
+    fund_entity: int = Query(default=0),
+):
+    """Search product accounts for penghimpunan (collection)."""
+    rows = await transaksi_umum_service.lookup_produk(
+        search=search, branch_code=branch_code, fund_entity=fund_entity
+    )
+    return ok({'rows': rows})
+
+
+@router.get('/lookup/penyaluran')
+async def lookup_penyaluran(search: str = Query(default='')):
+    """Search distribution/penyaluran programs."""
+    rows = await transaksi_umum_service.lookup_penyaluran(search=search)
+    return ok({'rows': rows})
+
+
+@router.get('/lookup/donor')
+async def lookup_donor(search: str = Query(default='')):
+    """Search donors."""
+    rows = await transaksi_umum_service.lookup_donor(search=search)
+    return ok({'rows': rows})
+
+
 @router.get('')
 async def list_transaksi_umum(
     page: int = Query(default=1, ge=1),
@@ -53,7 +91,14 @@ async def get_transaksi_umum(transaction_id: int):
 
 @router.post('')
 async def create_transaksi_umum(body: TransaksiUmumCreate):
-    """Create GT transaction via otorisasi save-and-submit."""
+    """Create GT transaction via otorisasi save-and-submit.
+
+    Supports 4 item types:
+    - Type 'G': GL/Ledger (existing)
+    - Type 'B': Kas/Bank
+    - Type 'C': Penghimpunan (Donor/Collection)
+    - Type 'D': Penyaluran (Distribution)
+    """
     payload = body.model_dump()
     user_id = payload.pop('inputer_id', '') or 'SYSTEM'
     branch_code = payload.pop('branch_code', '') or '001'
@@ -67,12 +112,15 @@ async def create_transaksi_umum(body: TransaksiUmumCreate):
             branch_code=branch_code,
         )
         return ok({
-            'submission_id': result['id'],
-            'status': result['status'],
-            'kode_entri': 'TRANS050',
+            'submission_id': result.get('submission_id'),
+            'status': result.get('status'),
+            'transaction_id': result.get('transaction_id'),
+            'bypassed_auth': result.get('bypassed_auth', False),
             'entity_type': 'transaksi_umum',
         })
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
         return JSONResponse(
             status_code=400,
             content=err('CREATE_ERROR', str(exc)),

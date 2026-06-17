@@ -103,6 +103,7 @@ async def get_transaksi_umum(transaction_id: int) -> dict | None:
             """
             SELECT
                 ti.transactionitemid,
+                ti.transactionitemtype       AS item_type,
                 ti.refaccountno              AS account_code,
                 ti.refaccountname            AS account_name,
                 ti.mutationtype              AS mutation_type,
@@ -188,26 +189,139 @@ async def create_from_payload(
 
             # 5. INSERT transaction items + journal items
             for seq_no, item in enumerate(items, start=1):
-                account_code = item['account_code']
-                account_name = item['account_name']
-                mutation_type = item['mutation_type']  # 'D' or 'C'
+                item_type = item.get('item_type', 'G')
                 amount = float(item['amount'])
                 item_desc = item.get('description', '') or description
 
                 item_id = int(await conn.fetchval("SELECT nextval('transaction.seq_transactionitem')"))
-                await conn.execute(
-                    """INSERT INTO transaction.transactionitem
-                       (transactionitemid, transactionid, branchcode, currencycode,
-                        mutationtype, amount, rate, ekuivalenamount, transactionitemtype,
-                        description, refaccountno, refaccountname, accountcode, parameterjournalid)
-                       VALUES ($1,$2,$3,'IDR',$4,$5,1.0,$5,'G',$6,$7,$8,$7,$9)""",
-                    item_id, transaction_id, branch_code,
-                    mutation_type, amount, item_desc,
-                    account_code, account_name, journal_code,
-                )
 
-                debit_amt = amount if mutation_type == 'D' else 0
-                credit_amt = amount if mutation_type == 'C' else 0
+                # Handle different item types
+                if item_type == 'G':
+                    # Type G - GL/Ledger (existing logic)
+                    account_code = item['account_code']
+                    account_name = item['account_name']
+                    mutation_type = item['mutation_type']
+
+                    await conn.execute(
+                        """INSERT INTO transaction.transactionitem
+                           (transactionitemid, transactionid, branchcode, currencycode,
+                            mutationtype, amount, rate, ekuivalenamount, transactionitemtype,
+                            description, refaccountno, refaccountname, accountcode, parameterjournalid)
+                           VALUES ($1,$2,$3,'IDR',$4,$5,1.0,$5,'G',$6,$7,$8,$7,$9)""",
+                        item_id, transaction_id, branch_code,
+                        mutation_type, amount, item_desc,
+                        account_code, account_name, journal_code,
+                    )
+
+                    debit_amt = amount if mutation_type == 'D' else 0
+                    credit_amt = amount if mutation_type == 'C' else 0
+
+                elif item_type == 'B':
+                    # Type B - Kas/Bank
+                    account_no = item['account_no']
+                    account_name = item['account_name']
+                    mutation_type = item['mutation_type']
+
+                    await conn.execute(
+                        """INSERT INTO transaction.transactionitem
+                           (transactionitemid, transactionid, branchcode, currencycode,
+                            mutationtype, amount, rate, ekuivalenamount, transactionitemtype,
+                            description, refaccountno, refaccountname, accountcode, parameterjournalid)
+                           VALUES ($1,$2,$3,'IDR',$4,$5,1.0,$5,'A',$6,$7,$8,$7,$9)""",
+                        item_id, transaction_id, branch_code,
+                        mutation_type, amount, item_desc,
+                        account_no, account_name, journal_code,
+                    )
+
+                    # INSERT into accounttransactionitem for cash/bank
+                    await conn.execute(
+                        """INSERT INTO transaction.accounttransactionitem
+                           (transactionitemid, accountno, accounttitype, fundentity, isupdatebalance)
+                           VALUES ($1, $2, 'A', 0, 'T')""",
+                        item_id, account_no,
+                    )
+
+                    # Update financial account balance
+                    sign = 1 if mutation_type == 'C' else -1
+                    await conn.execute(
+                        """UPDATE transaction.financialaccount
+                           SET balance = balance + $1
+                           WHERE accountno = $2""",
+                        amount * sign, account_no,
+                    )
+
+                    debit_amt = amount if mutation_type == 'D' else 0
+                    credit_amt = amount if mutation_type == 'C' else 0
+                    account_code = account_no
+
+                elif item_type == 'C':
+                    # Type C - Penghimpunan (Donor) - always credit
+                    product_account_no = item['product_account_no']
+                    product_name = item['product_name']
+                    donor_id = item.get('donor_id', 0) or 0
+                    donor_name = item.get('donor_name', 'HAMBA ALLAH')
+                    fund_entity = item.get('fund_entity', 1)
+
+                    await conn.execute(
+                        """INSERT INTO transaction.transactionitem
+                           (transactionitemid, transactionid, branchcode, currencycode,
+                            mutationtype, amount, rate, ekuivalenamount, transactionitemtype,
+                            description, refaccountno, refaccountname, accountcode, parameterjournalid)
+                           VALUES ($1,$2,$3,'IDR','C',$4,1.0,$4,'A',$5,$6,$7,$6,$8)""",
+                        item_id, transaction_id, branch_code,
+                        amount, item_desc, product_account_no, product_name, journal_code,
+                    )
+
+                    # INSERT into accounttransactionitem for collection
+                    await conn.execute(
+                        """INSERT INTO transaction.accounttransactionitem
+                           (transactionitemid, accountno, accounttitype, fundentity,
+                            isupdatebalance, donorid)
+                           VALUES ($1, $2, 'D', $3, 'T', $4)""",
+                        item_id, product_account_no, fund_entity, donor_id,
+                    )
+
+                    debit_amt = 0
+                    credit_amt = amount
+                    account_code = product_account_no
+
+                elif item_type == 'D':
+                    # Type D - Penyaluran (Distribution)
+                    dist_account_no = item['dist_account_no']
+                    dist_account_name = item['dist_account_name']
+                    fund_account_no = item['fund_account_no']
+                    ashnaf = item['ashnaf']
+                    fund_entity = item.get('fund_entity', 1)
+                    mutation_type = item['mutation_type']
+
+                    await conn.execute(
+                        """INSERT INTO transaction.transactionitem
+                           (transactionitemid, transactionid, branchcode, currencycode,
+                            mutationtype, amount, rate, ekuivalenamount, transactionitemtype,
+                            description, refaccountno, refaccountname, accountcode, parameterjournalid)
+                           VALUES ($1,$2,$3,'IDR',$4,$5,1.0,$5,'A',$6,$7,$8,$7,$9)""",
+                        item_id, transaction_id, branch_code,
+                        mutation_type, amount, item_desc,
+                        dist_account_no, dist_account_name, journal_code,
+                    )
+
+                    # INSERT into accounttransactionitem for distribution
+                    await conn.execute(
+                        """INSERT INTO transaction.accounttransactionitem
+                           (transactionitemid, accountno, accounttitype, fundentity,
+                            isupdatebalance, ashnaf, distributionitemaccount, fundaccountno)
+                           VALUES ($1, $2, 'Z', $3, 'T', $4, $5, $6)""",
+                        item_id, dist_account_no, fund_entity, ashnaf, dist_account_no, fund_account_no,
+                    )
+
+                    debit_amt = amount if mutation_type == 'D' else 0
+                    credit_amt = amount if mutation_type == 'C' else 0
+                    account_code = dist_account_no
+
+                else:
+                    raise ValueError(f"Unknown item_type: {item_type}")
+
+                # Journal item (common for all types)
                 await conn.execute(
                     """INSERT INTO transaction.journalitem
                        (fl_journal, journalitem_no, fl_account, amount_debit, amount_credit,
@@ -228,3 +342,156 @@ async def create_from_payload(
             )
 
     return transaction_id
+
+
+async def lookup_kasbank(search: str = '', branch_code: str = '') -> list[dict]:
+    """Search rekening kas/bank dari financialaccount."""
+    pool = get_pool()
+    params: list = []
+    idx = 1
+
+    where_parts = [
+        "(financialaccounttype LIKE 'Cash%' OR financialaccounttype LIKE 'Bank%')"
+    ]
+
+    if search:
+        where_parts.append(
+            f"(LOWER(accountno) LIKE ${idx} OR LOWER(accountname) LIKE ${idx})"
+        )
+        params.append(f'%{search.lower()}%')
+        idx += 1
+
+    if branch_code:
+        where_parts.append(f"branchcode = ${idx}")
+        params.append(branch_code)
+        idx += 1
+
+    where = ' AND '.join(where_parts)
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            SELECT
+                accountno,
+                accountname,
+                financialaccounttype,
+                CAST(balance AS NUMERIC(20,2)) AS balance
+            FROM transaction.financialaccount
+            WHERE {where}
+            ORDER BY accountname ASC
+            LIMIT 20
+            """,
+            *params,
+        )
+
+    return [dict(r) for r in rows]
+
+
+async def lookup_produk(search: str = '', branch_code: str = '', fund_entity: int = 0) -> list[dict]:
+    """Search product account untuk penghimpunan."""
+    pool = get_pool()
+    params: list = []
+    idx = 1
+
+    where_parts = []
+
+    if search:
+        where_parts.append(
+            f"(LOWER(accountno) LIKE ${idx})"
+        )
+        params.append(f'%{search.lower()}%')
+        idx += 1
+
+    where = ' AND '.join(where_parts) if where_parts else '1=1'
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            SELECT
+                accountno,
+                productid,
+                producttype,
+                zakatbalance,
+                infaqbalance,
+                wakafbalance,
+                amilbalance
+            FROM transaction.productaccount
+            WHERE {where}
+            ORDER BY accountno ASC
+            LIMIT 20
+            """,
+            *params,
+        )
+
+    return [dict(r) for r in rows]
+
+
+async def lookup_penyaluran(search: str = '') -> list[dict]:
+    """Search program penyaluran."""
+    pool = get_pool()
+    params: list = []
+    idx = 1
+
+    where_parts = []
+
+    if search:
+        where_parts.append(
+            f"(LOWER(accountno) LIKE ${idx})"
+        )
+        params.append(f'%{search.lower()}%')
+        idx += 1
+
+    where = ' AND '.join(where_parts) if where_parts else '1=1'
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            SELECT
+                accountno,
+                productid,
+                producttype
+            FROM transaction.productaccount
+            WHERE {where}
+            ORDER BY accountno ASC
+            LIMIT 20
+            """,
+            *params,
+        )
+
+    return [dict(r) for r in rows]
+
+
+async def lookup_donor(search: str = '') -> list[dict]:
+    """Search donor."""
+    pool = get_pool()
+    params: list = []
+    idx = 1
+
+    where_parts = []
+
+    if search:
+        where_parts.append(
+            f"(LOWER(donorname) LIKE ${idx} OR LOWER(donorno) LIKE ${idx})"
+        )
+        params.append(f'%{search.lower()}%')
+        idx += 1
+
+    where = ' AND '.join(where_parts) if where_parts else '1=1'
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            SELECT
+                donorid,
+                donorname,
+                donorno,
+                donortype
+            FROM fund.donor
+            WHERE {where}
+            ORDER BY donorname ASC
+            LIMIT 20
+            """,
+            *params,
+        )
+
+    return [dict(r) for r in rows]
