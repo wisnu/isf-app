@@ -18,6 +18,7 @@ _ENTITY_MENU: dict[str, str] = {
     'coa':                 'keuangan.coa',
     'kas':                 'keuangan.kas',
     'bank':                'keuangan.bank',
+    'transaksi_umum':      'keuangan.transaksi.umum',
 }
 _MENU_MONITORING = 'keuangan.monitoring.otorisasi'
 

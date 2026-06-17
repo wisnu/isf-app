@@ -27,6 +27,7 @@ from app.routers.otorisasi import router as otorisasi_router
 from app.routers.parameter import router as parameter_router
 from app.routers.transaction import router as transaction_router
 from app.routers.transaksi import router as transaksi_router
+from app.routers.transaksi_umum import router as transaksi_umum_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -112,6 +113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(uang_muka_router, prefix="/api")
     app.include_router(uang_muka_pengembalian_router, prefix="/api")
     app.include_router(transfer_antar_rekening_router, prefix="/api")
+    app.include_router(transaksi_umum_router, prefix="/api")
     app.include_router(otorisasi_router, prefix="/api")
     app.include_router(parameter_router, prefix="/api")
     return app
