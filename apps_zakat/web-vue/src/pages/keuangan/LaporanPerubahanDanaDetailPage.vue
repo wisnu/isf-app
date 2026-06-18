@@ -125,7 +125,7 @@ onMounted(async () => {
         <div class="p-4 space-y-4">
           <template v-for="(sec, si) in f.sections" :key="si">
             <div v-if="sec.rows.length" class="overflow-x-auto">
-              <table class="w-full text-[11px]">
+              <table class="w-full text-sm">
                 <thead>
                   <tr class="text-[10px] uppercase tracking-widest text-muted border-b border-border/50">
                     <td class="px-3 py-1 font-semibold" colspan="3">{{ sec.title }}</td>

@@ -293,8 +293,8 @@ onBeforeRouteLeave(() => {
         <template #empty>Tidak ada role yang cocok dengan '{{ searchRole }}'</template>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-[11px]">
-            <thead class="sticky top-0 text-[10px] text-muted uppercase tracking-widest border-b border-border bg-surface z-10">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 z-10 text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
               <tr>
                 <th class="text-left p-2 sticky left-0 bg-surface z-20 min-w-[180px] font-semibold">
                   Role

@@ -225,8 +225,8 @@ async function submitUntukOtorisasi() {
 
         <!-- Items table -->
         <div class="overflow-x-auto rounded-lg border border-border">
-          <table class="w-full text-[11px]">
-            <thead class="sticky top-0 text-[10px] text-muted uppercase tracking-widest border-b border-border bg-surface">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 z-10 text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
               <tr>
                 <th class="whitespace-nowrap px-3 py-1.5 text-left font-semibold">No</th>
                 <th class="whitespace-nowrap px-3 py-1.5 text-left font-semibold">NIP</th>

@@ -257,7 +257,7 @@ async function submitDelete() {
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-surface">
+          <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
             <tr>
               <th class="px-4 py-2 text-left font-medium">Periode</th>
               <th class="px-4 py-2 text-left font-medium">Tgl Transaksi</th>
@@ -365,7 +365,7 @@ async function submitDelete() {
           <h3 class="text-sm font-semibold">Detail Item</h3>
           <div class="overflow-x-auto rounded border border-border">
             <table class="w-full text-[10px]">
-              <thead class="text-[9px] text-muted uppercase tracking-widest border-b border-border bg-surface">
+              <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
                 <tr>
                   <th class="px-2 py-1.5 text-left font-semibold">No</th>
                   <th class="px-2 py-1.5 text-left font-semibold">NIP</th>

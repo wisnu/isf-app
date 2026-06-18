@@ -747,8 +747,8 @@ onMounted(load)
 
       <!-- Table -->
       <div class="overflow-x-auto rounded-b border border-surface-200">
-        <table class="w-full text-[11px]">
-          <thead class="border-b border-border text-[10px] uppercase tracking-widest text-muted">
+        <table class="w-full text-sm">
+          <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
             <tr>
               <th class="px-4 py-2 text-left">No. Transaksi / Draft</th>
               <th class="px-4 py-2 text-left">Tanggal</th>
@@ -874,7 +874,7 @@ onMounted(load)
         <!-- Items table -->
         <div class="overflow-x-auto rounded-b border">
           <table class="w-full text-xs">
-            <thead class="border-b bg-zinc-50 text-[10px] uppercase tracking-widest text-zinc-500">
+            <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
               <tr>
                 <th class="px-3 py-2 text-left">Jenis</th>
                 <th class="px-3 py-2 text-left">Referensi</th>
@@ -1229,7 +1229,7 @@ onMounted(load)
           <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Baris Jurnal</div>
           <div class="overflow-x-auto rounded border">
             <table class="w-full text-xs">
-              <thead class="border-b bg-zinc-50 text-[10px] uppercase tracking-widest text-zinc-500">
+              <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
                 <tr>
                   <th class="px-3 py-2 text-left">Kode / Referensi</th>
                   <th class="px-3 py-2 text-left">Nama</th>

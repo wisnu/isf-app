@@ -116,8 +116,8 @@ onMounted(async () => {
     <div v-else-if="data && data.groups.length === 0" class="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted italic">Tidak ada data kas untuk filter ini.</div>
 
     <div v-else-if="data" class="rounded-xl border border-border bg-surface overflow-x-auto">
-      <table class="w-full text-[11px]">
-        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border bg-background/50">
+      <table class="w-full text-sm">
+        <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
           <tr>
             <th class="text-left px-3 py-1 font-semibold sticky left-0 bg-background/50 min-w-[16rem]">Rekening</th>
             <th v-for="m in data.months" :key="m" class="text-right px-3 py-1 font-semibold whitespace-nowrap">{{ m }}</th>

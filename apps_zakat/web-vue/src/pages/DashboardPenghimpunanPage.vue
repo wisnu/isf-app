@@ -95,7 +95,7 @@ function formatIdr(v: number): string {
       </CardHeader>
       <CardContent class="p-5 pt-0">
         <div class="overflow-x-auto">
-          <table class="w-full text-[11px]">
+          <table class="w-full text-sm">
             <tbody class="divide-y divide-border">
               <tr v-for="d in topDonatur" :key="d.nama">
                 <td class="py-2 pr-3 font-medium text-foreground">{{ d.nama }}</td>

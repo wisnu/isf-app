@@ -222,8 +222,8 @@ onMounted(loadItems)
 
       <!-- Table -->
       <div class="overflow-x-auto">
-        <table class="w-full text-[11px]">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+        <table class="w-full text-sm">
+          <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
             <tr>
               <th class="px-4 py-2 text-left font-medium">Kode Item</th>
               <th class="px-4 py-2 text-left font-medium">Nama Item</th>

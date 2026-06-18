@@ -130,7 +130,7 @@ onMounted(async () => {
     <div v-else-if="data" class="grid gap-4 md:grid-cols-2">
       <div v-for="f in data.funds" :key="f.fund" class="rounded-xl border border-border bg-surface overflow-hidden">
         <div class="px-4 py-2 bg-background/40 border-b border-border font-semibold text-sm">{{ f.fund }}</div>
-        <table class="w-full text-[11px]">
+        <table class="w-full text-sm">
           <tbody>
             <tr><td class="px-4 py-1 font-semibold text-muted" colspan="2">Penerimaan</td></tr>
             <tr v-for="(ln, i) in f.penerimaan" :key="'r' + i" class="border-b border-border/20">

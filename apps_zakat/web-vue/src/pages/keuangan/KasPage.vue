@@ -203,8 +203,8 @@ async function submitNewKas() {
     <Card>
       <CardContent class="p-0">
         <div class="overflow-x-auto">
-          <table class="w-full text-[11px]">
-            <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+          <table class="w-full text-sm">
+            <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
               <tr class="border-b border-border">
                 <th class="text-left px-4 py-2 font-medium w-24">Kode</th>
                 <th class="text-left px-4 py-2 font-medium">Nama Kas</th>

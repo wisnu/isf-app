@@ -188,7 +188,7 @@ async function doRepost() {
           Jurnal Items {{ detail.journal_items.length === 0 ? '— belum ada jurnal' : '' }}
         </div>
         <table v-if="detail.journal_items.length" class="w-full text-xs">
-          <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+          <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
             <tr>
               <th class="px-2 py-1.5 text-left font-semibold">No</th>
               <th class="px-2 py-1.5 text-left font-semibold">Kode Akun</th>

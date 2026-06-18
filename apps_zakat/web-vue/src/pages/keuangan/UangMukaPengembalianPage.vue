@@ -9,6 +9,7 @@ import DateField from '@/components/ui/DateField.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
+import AppTable from '@/components/ui/AppTable.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
@@ -184,49 +185,45 @@ onMounted(load)
     </div>
 
     <!-- DataTable -->
-    <div class="overflow-x-auto rounded-b border">
-      <table class="w-full text-[11px]">
-        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
-          <tr>
-            <th class="px-4 py-2 text-left font-medium">No. Transaksi</th>
-            <th class="px-4 py-2 text-left font-medium">Tanggal</th>
-            <th class="px-4 py-2 text-left font-medium">Karyawan</th>
-            <th class="px-4 py-2 text-right font-medium">Nominal</th>
-            <th class="px-4 py-2 text-center font-medium">Status</th>
-            <th class="px-4 py-2 text-left font-medium">Input Oleh</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!hasLoaded">
-            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
-              Pilih tanggal dan klik Tampilkan untuk melihat data.
-            </td>
-          </tr>
-          <tr v-else-if="loading">
-            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
-          </tr>
-          <tr v-else-if="!rows.length">
-            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
-              Tidak ada transaksi pengembalian dalam periode ini.
-            </td>
-          </tr>
-          <tr
-            v-for="row in rows"
-            :key="row.transaction_id"
-            class="border-b border-border hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-          >
-            <td class="px-4 py-2 font-mono">{{ row.transaction_no ?? '-' }}</td>
-            <td class="px-4 py-2">{{ dmy(row.actualdate) }}</td>
-            <td class="px-4 py-2">{{ row.employee_name }}</td>
-            <td class="px-4 py-2 text-right">{{ fmt(row.amount) }}</td>
-            <td class="px-4 py-2 text-center">
-              <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
-            </td>
-            <td class="px-4 py-2">{{ row.inputer }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <AppTable class="rounded-b border">
+      <template #head>
+        <tr>
+          <th class="px-4 py-3 text-left">No. Transaksi</th>
+          <th class="px-4 py-3 text-left">Tanggal</th>
+          <th class="px-4 py-3 text-left">Karyawan</th>
+          <th class="px-4 py-3 text-right">Nominal</th>
+          <th class="px-4 py-3 text-center">Status</th>
+          <th class="px-4 py-3 text-left">Input Oleh</th>
+        </tr>
+      </template>
+      <tr v-if="!hasLoaded">
+        <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+          Pilih tanggal dan klik Tampilkan untuk melihat data.
+        </td>
+      </tr>
+      <tr v-else-if="loading">
+        <td colspan="6" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
+      </tr>
+      <tr v-else-if="!rows.length">
+        <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+          Tidak ada transaksi pengembalian dalam periode ini.
+        </td>
+      </tr>
+      <tr
+        v-for="row in rows"
+        :key="row.transaction_id"
+        class="border-b border-border hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+      >
+        <td class="px-4 py-3 font-mono">{{ row.transaction_no ?? '-' }}</td>
+        <td class="px-4 py-3">{{ dmy(row.actualdate) }}</td>
+        <td class="px-4 py-3">{{ row.employee_name }}</td>
+        <td class="px-4 py-3 text-right">{{ fmt(row.amount) }}</td>
+        <td class="px-4 py-3 text-center">
+          <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
+        </td>
+        <td class="px-4 py-3">{{ row.inputer }}</td>
+      </tr>
+    </AppTable>
 
     <UangMukaPengembalianFormModal
       v-if="showForm"

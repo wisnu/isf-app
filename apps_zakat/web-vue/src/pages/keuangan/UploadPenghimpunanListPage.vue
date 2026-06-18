@@ -120,8 +120,8 @@ async function load() {
     <Alert v-if="errorMsg" variant="error" :message="errorMsg" class="mb-3" />
 
     <div v-if="hasLoaded" class="overflow-hidden rounded-lg border border-border">
-      <table v-if="batches.length" class="w-full text-[11px]">
-        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+      <table v-if="batches.length" class="w-full text-sm">
+        <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
           <tr>
             <th class="px-3 py-1.5 text-left font-semibold">Batch</th>
             <th class="px-3 py-1.5 text-left font-semibold">Filename</th>
