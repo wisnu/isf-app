@@ -597,6 +597,58 @@ function goto(target: number) {
 
 ## Brand Color Tokens
 
+CSS variables di `src/styles.css` (berlaku untuk kedua portal):
+
+```css
+--color-primary:    #1B4F72;  /* deep navy — AppHeader, sidebar, default buttons */
+--color-positive:   #16a34a;  /* green — success/save actions (success variant) */
+--color-warning:    #d97706;  /* amber — pending status */
+--color-destructive:#b91c1c;  /* red — delete/error */
+--color-accent:     #0f766e;  /* teal — accent highlights */
+```
+
+> ⚠️ **Jangan ubah `--color-primary` ke hijau** — AppHeader dan sidebar menggunakan
+> `bg-primary`, sehingga primary harus selalu navy `#1B4F72`. Hijau hanya untuk
+> tombol `success` (save/submit), bukan primary.
+
+---
+
+## Button Variants — Standar Wajib
+
+```vue
+<!-- Default — dark navy fill. Untuk action utama halaman (Tampilkan, Cari, Tambah) -->
+<Button>Tampilkan</Button>
+<Button variant="default" size="sm">+ Input Transaksi</Button>
+
+<!-- Success — green outline. WAJIB untuk save/submit/simpan -->
+<Button variant="success" @click="save">Simpan Transaksi</Button>
+<Button variant="success" @click="submit">Submit untuk Otorisasi</Button>
+
+<!-- Outline — gray border. Untuk Batal / Tutup / Reset -->
+<Button variant="outline" @click="close">Tutup</Button>
+<Button variant="outline" @click="reset">Reset</Button>
+
+<!-- Destructive — red fill. Untuk Delete (selalu dalam modal konfirmasi) -->
+<Button variant="destructive" @click="confirmDelete">Hapus</Button>
+
+<!-- Ghost — no bg. Untuk navigasi ringan / back links -->
+<Button variant="ghost">Kembali</Button>
+```
+
+### Kapan memakai variant mana
+
+| Aksi | Variant |
+|---|---|
+| Simpan / Submit / Konfirmasi | `success` |
+| Cari / Tampilkan / Filter / Tambah | `default` |
+| Batal / Tutup / Reset | `outline` |
+| Hapus / Void (dalam confirm modal) | `destructive` |
+| Link navigasi / back | `ghost` |
+
+---
+
+## Brand Color Reference
+
 ```
 brand-primary:   #1B4F72  (deep navy — buttons, sidebar, headers)
 brand-secondary: #1A5276  (darker navy — hover states)

@@ -865,19 +865,10 @@ onMounted(load)
 
         <!-- Item toolbar -->
         <div class="rounded-t border-x border-t bg-zinc-50 px-4 py-2.5 flex flex-wrap gap-2">
-          <span class="self-center text-xs font-semibold uppercase tracking-wide text-zinc-500 mr-1">Tambah:</span>
-          <button class="rounded border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition" @click="openSubForm('G')">
-            + GL Accounting
-          </button>
-          <button class="rounded border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition" @click="openSubForm('B')">
-            + Kas / Bank
-          </button>
-          <button class="rounded border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition" @click="openSubForm('C')">
-            + Penghimpunan
-          </button>
-          <button class="rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition" @click="openSubForm('D')">
-            + Penyaluran
-          </button>
+          <Button size="sm" @click="openSubForm('B')">+ Detail Kas / Bank</Button>
+          <Button size="sm" @click="openSubForm('D')">+ Detail Penyaluran Dana</Button>
+          <Button size="sm" @click="openSubForm('C')">+ Detail Penghimpunan Dana</Button>
+          <Button size="sm" @click="openSubForm('G')">+ Detail GL Accounting</Button>
         </div>
 
         <!-- Items table -->
@@ -1188,17 +1179,18 @@ onMounted(load)
       <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
       <template #footer>
         <div v-if="formView === 'main'" class="flex items-center justify-between">
-          <Button variant="outline" @click="showForm = false">Batal</Button>
+          <Button variant="outline" @click="showForm = false">Tutup</Button>
           <Button
+            variant="success"
             :disabled="formSaving || !isBalanced || formItems.length < 2"
             @click="submitForm"
           >
-            {{ formSaving ? 'Menyimpan...' : 'Submit untuk Otorisasi' }}
+            {{ formSaving ? 'Menyimpan...' : 'Simpan Transaksi' }}
           </Button>
         </div>
         <div v-else class="flex justify-end gap-2">
           <Button variant="outline" @click="backToMain">Batal</Button>
-          <Button @click="saveCurrentItem">Simpan Detail</Button>
+          <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
         </div>
       </template>
     </Modal>

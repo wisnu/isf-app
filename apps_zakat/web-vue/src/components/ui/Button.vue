@@ -14,6 +14,7 @@ const buttonVariants = cva(
         ghost: 'text-foreground hover:bg-background/60',
         'ghost-on-primary':
           'text-primary-foreground hover:bg-white/15 focus-visible:ring-white/40 focus-visible:ring-offset-primary',
+        success: 'border border-positive bg-surface text-positive hover:bg-positive hover:text-white',
       },
       size: {
         default: 'h-10 px-4 py-2',
