@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookOpen, Plus, Search } from 'lucide-vue-next'
+import { BookOpen, Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
 import { computed, ref, shallowRef, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -12,6 +12,7 @@ import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
+import { useToast } from '@/lib/useToast'
 
 interface TxRow {
   _kind: 'tx'
@@ -38,6 +39,7 @@ interface SubRow {
 type MergedRow = TxRow | SubRow
 
 const router = useRouter()
+const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
 const txRows = ref<TxRow[]>([])
@@ -52,15 +54,25 @@ const hasLoaded = shallowRef(false)
 const dateFrom = shallowRef(today)
 const dateTo = shallowRef(today)
 const search = shallowRef('')
+const statusFilter = shallowRef<'all' | 'posted' | 'draft'>('all')
 
+// Detail modal
 const showDetail = shallowRef(false)
 const detailRow = ref<TxRow & { items?: unknown[] } | null>(null)
 const detailLoading = shallowRef(false)
 
-const mergedRows = computed<MergedRow[]>(() => [
-  ...subRows.value.map(r => ({ ...r, _kind: 'sub' as const })),
-  ...txRows.value.map(r => ({ ...r, _kind: 'tx' as const })),
-])
+// Delete modal
+const showDeleteModal = shallowRef(false)
+const deleteRow = ref<MergedRow | null>(null)
+const deleteLoading = shallowRef(false)
+
+const mergedRows = computed<MergedRow[]>(() => {
+  const subs = subRows.value.map(r => ({ ...r, _kind: 'sub' as const }))
+  const txs = txRows.value.map(r => ({ ...r, _kind: 'tx' as const }))
+  if (statusFilter.value === 'posted') return txs
+  if (statusFilter.value === 'draft') return subs
+  return [...subs, ...txs]
+})
 
 const showCount = computed(() => {
   if (!totalRec.value && !subRows.value.length) return 'Tidak ada data'
@@ -72,6 +84,12 @@ const showCount = computed(() => {
 const detailItems = computed<Record<string, unknown>[]>(() => {
   const row = detailRow.value as (TxRow & { items?: Record<string, unknown>[] }) | null
   return row?.items ?? []
+})
+
+const deleteRowLabel = computed(() => {
+  if (!deleteRow.value) return null
+  if (deleteRow.value._kind === 'tx') return deleteRow.value.transactionno
+  return `Draft #${deleteRow.value.id}`
 })
 
 function goto(target: number) {
@@ -126,6 +144,31 @@ async function openDetail(row: TxRow) {
   }
 }
 
+function openDeleteModal(row: MergedRow) {
+  deleteRow.value = row
+  showDeleteModal.value = true
+}
+
+async function confirmDelete() {
+  if (!deleteRow.value) return
+  deleteLoading.value = true
+  try {
+    if (deleteRow.value._kind === 'tx') {
+      await api.delete(`/api/transaksi-umum/${deleteRow.value.transactionid}`)
+    } else {
+      await api.delete(`/api/otorisasi/submission/${deleteRow.value.id}`)
+    }
+    toast.success('Transaksi berhasil dihapus')
+    showDeleteModal.value = false
+    deleteRow.value = null
+    load()
+  } catch (e: unknown) {
+    toast.error((e as { message?: string })?.message ?? 'Gagal menghapus transaksi')
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -158,6 +201,17 @@ onMounted(load)
           </div>
         </div>
         <div>
+          <label class="mb-1 block text-xs font-medium text-zinc-500">Status</label>
+          <select
+            v-model="statusFilter"
+            class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+          >
+            <option value="all">Semua</option>
+            <option value="posted">Posted</option>
+            <option value="draft">Draft / Pending</option>
+          </select>
+        </div>
+        <div>
           <label class="mb-1 block text-xs font-medium text-zinc-500">Cari</label>
           <input
             v-model="search"
@@ -176,7 +230,9 @@ onMounted(load)
       <div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
         <span class="text-xs text-zinc-500">
           {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
-          <span v-if="subRows.length" class="ml-2 text-yellow-600">(+ {{ subRows.length }} draft/pending)</span>
+          <span v-if="subRows.length && statusFilter !== 'posted'" class="ml-2 text-yellow-600">
+            (+ {{ subRows.length }} draft/pending)
+          </span>
         </span>
         <TablePagination
           v-if="hasLoaded && totalPages > 1"
@@ -189,22 +245,23 @@ onMounted(load)
       <AppTable class="rounded-b border">
         <template #head>
           <tr>
-            <th class="px-4 py-3 text-left">No. Transaksi / Draft</th>
+            <th class="px-4 py-3 text-left">No. Transaksi</th>
             <th class="px-4 py-3 text-left">Tanggal</th>
             <th class="px-4 py-3 text-left">Deskripsi</th>
-            <th class="px-4 py-3 text-right">Total Debet</th>
+            <th class="px-4 py-3 text-right">Nilai</th>
             <th class="px-4 py-3 text-center">Status</th>
             <th class="px-4 py-3 text-left">Inputer</th>
+            <th class="px-4 py-3 text-center w-20">Aksi</th>
           </tr>
         </template>
 
         <tr v-if="!hasLoaded">
-          <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+          <td colspan="7" class="px-4 py-8 text-center text-zinc-400">
             Pilih tanggal dan klik Tampilkan untuk melihat data.
           </td>
         </tr>
         <tr v-else-if="mergedRows.length === 0">
-          <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+          <td colspan="7" class="px-4 py-8 text-center text-zinc-400">
             Tidak ada transaksi dalam periode ini.
           </td>
         </tr>
@@ -217,12 +274,18 @@ onMounted(load)
             <td class="px-4 py-3 text-right text-zinc-400">—</td>
             <td class="px-4 py-3 text-center"><StatusBadge :status="row.status" /></td>
             <td class="px-4 py-3">
-              <template v-if="row.status === 'REJECTED' && row.rejection_notes">
-                <span :title="row.rejection_notes" class="cursor-help text-xs text-red-400 underline decoration-dotted">Alasan</span>
-              </template>
-              <template v-else-if="row.status === 'PENDING'">
-                <span class="text-xs text-zinc-400">Menunggu otorisasi</span>
-              </template>
+              <span v-if="row.status === 'REJECTED' && row.rejection_notes" :title="row.rejection_notes" class="cursor-help text-xs text-red-400 underline decoration-dotted">Alasan</span>
+              <span v-else-if="row.status === 'PENDING'" class="text-xs text-zinc-400">Menunggu otorisasi</span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <button
+                v-if="row.status === 'DRAFT'"
+                class="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+                title="Hapus draft"
+                @click.stop="openDeleteModal(row)"
+              >
+                <Trash2 class="h-3.5 w-3.5" />
+              </button>
             </td>
           </tr>
 
@@ -232,9 +295,27 @@ onMounted(load)
             <td class="px-4 py-3 max-w-xs truncate" :title="row.description">{{ row.description }}</td>
             <td class="px-4 py-3 text-right font-mono">{{ row.amount.toLocaleString('id-ID') }}</td>
             <td class="px-4 py-3 text-center">
-              <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">Authorized</span>
+              <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">Posted</span>
             </td>
             <td class="px-4 py-3 text-zinc-500">{{ row.inputer }}</td>
+            <td class="px-4 py-3 text-center" @click.stop>
+              <div class="flex items-center justify-center gap-1">
+                <button
+                  class="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  title="Lihat detail"
+                  @click="openDetail(row as TxRow)"
+                >
+                  <Pencil class="h-3.5 w-3.5" />
+                </button>
+                <button
+                  class="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+                  title="Hapus transaksi"
+                  @click="openDeleteModal(row as TxRow)"
+                >
+                  <Trash2 class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </td>
           </tr>
         </template>
       </AppTable>
@@ -272,7 +353,7 @@ onMounted(load)
           <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Baris Jurnal</div>
           <div class="overflow-x-auto rounded border">
             <table class="w-full text-xs">
-              <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
+              <thead class="border-b bg-zinc-50 text-xs font-semibold text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400">
                 <tr>
                   <th class="px-3 py-2 text-left">Kode / Referensi</th>
                   <th class="px-3 py-2 text-left">Nama</th>
@@ -284,7 +365,10 @@ onMounted(load)
                 <tr v-for="(item, idx) in detailItems" :key="idx" class="border-t">
                   <td class="px-3 py-1.5 font-mono text-zinc-500">{{ String(item.account_code ?? '') || '—' }}</td>
                   <td class="px-3 py-1.5">{{ String(item.account_name ?? '') }}</td>
-                  <td class="px-3 py-1.5 text-center font-bold" :class="item.mutation_type === 'D' ? 'text-emerald-700' : 'text-red-600'">
+                  <td
+                    class="px-3 py-1.5 text-center font-bold"
+                    :class="item.mutation_type === 'D' ? 'text-emerald-700' : 'text-red-600'"
+                  >
                     {{ item.mutation_type === 'D' ? 'Debet' : 'Kredit' }}
                   </td>
                   <td class="px-3 py-1.5 text-right font-mono">{{ Number(item.amount ?? 0).toLocaleString('id-ID') }}</td>
@@ -299,6 +383,54 @@ onMounted(load)
       <template #footer>
         <div class="flex justify-end">
           <Button variant="outline" @click="showDetail = false">Tutup</Button>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal v-if="showDeleteModal" max-width="max-w-md" @close="showDeleteModal = false">
+      <template #header>
+        <span class="font-semibold text-red-600">Hapus Transaksi</span>
+      </template>
+
+      <div v-if="deleteRow" class="space-y-4">
+        <p class="text-sm text-zinc-600">
+          Yakin ingin menghapus transaksi berikut? Tindakan ini tidak dapat dibatalkan.
+        </p>
+
+        <div class="rounded-lg border bg-zinc-50 p-4 text-sm space-y-2 dark:bg-zinc-800">
+          <div class="flex justify-between">
+            <span class="text-zinc-500">No. Transaksi</span>
+            <span class="font-mono font-medium">{{ deleteRowLabel }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Tanggal</span>
+            <span>{{ dmy(deleteRow.actual_date) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Deskripsi</span>
+            <span class="max-w-[200px] truncate text-right">
+              {{ deleteRow._kind === 'tx' ? deleteRow.description : ((deleteRow.payload as Record<string,unknown>).description as string || '—') }}
+            </span>
+          </div>
+          <div v-if="deleteRow._kind === 'tx'" class="flex justify-between">
+            <span class="text-zinc-500">Nilai</span>
+            <span class="font-mono">{{ deleteRow.amount.toLocaleString('id-ID') }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Status</span>
+            <span v-if="deleteRow._kind === 'tx'" class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">Posted</span>
+            <StatusBadge v-else :status="deleteRow.status" />
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" :disabled="deleteLoading" @click="showDeleteModal = false">Batal</Button>
+          <Button variant="destructive" :disabled="deleteLoading" @click="confirmDelete">
+            {{ deleteLoading ? 'Menghapus...' : 'Hapus Transaksi' }}
+          </Button>
         </div>
       </template>
     </Modal>
