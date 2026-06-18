@@ -32,7 +32,6 @@ import type { FunctionalComponent } from 'vue'
 import { computed, onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-import AppLogo from '@/components/AppLogo.vue'
 import { cn } from '@/lib/utils'
 import { portalLabel } from '@/lib/portal'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -282,7 +281,6 @@ const parentBaseClass = computed(() =>
         )
       "
     >
-      <AppLogo class="w-7 h-7 shrink-0 rounded object-contain" />
       <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
         <span class="font-bold text-sm">isf-app</span>
         <span class="text-[10px] opacity-80 truncate">{{ portalLabel }}</span>
@@ -292,12 +290,6 @@ const parentBaseClass = computed(() =>
     <!-- Menu -->
     <nav class="flex flex-col gap-4 px-3 py-4 flex-1 overflow-y-auto">
       <div v-for="group in groups" :key="group.label" class="flex flex-col gap-1">
-        <div
-          v-if="!sidebar.collapsed"
-          class="px-3 text-[10px] uppercase tracking-wider text-muted font-semibold"
-        >
-          {{ group.label }}
-        </div>
 
         <template v-for="item in group.items" :key="item.label">
           <!-- Only render item if user has access (or item is standalone disabled) -->
