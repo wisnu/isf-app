@@ -2,11 +2,13 @@
 import { Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 
+import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
+import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import { api } from '@/lib/api/client'
 import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
@@ -108,15 +110,6 @@ async function load() {
   }
 }
 
-function authLabel(status: string) {
-  return status === 'T' ? 'Disetujui' : 'Menunggu'
-}
-
-function authClass(status: string) {
-  if (status === 'T') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200'
-  return 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200'
-}
-
 function onSaved() {
   showForm.value = false
   load()
@@ -144,9 +137,7 @@ onMounted(load)
       </template>
     </PageHeader>
 
-    <div v-if="errorMsg" class="mx-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700">
-      {{ errorMsg }}
-    </div>
+    <Alert v-if="errorMsg" variant="destructive" class="mb-3">{{ errorMsg }}</Alert>
 
     <div class="rounded-xl border border-border bg-surface overflow-hidden">
       <!-- Toolbar -->
@@ -207,13 +198,13 @@ onMounted(load)
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
-            <tr v-if="loading">
-              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
-            </tr>
-            <tr v-else-if="!rows.length && !hasLoaded">
+            <tr v-if="!hasLoaded">
               <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
                 Pilih periode dan klik Tampilkan untuk melihat data.
               </td>
+            </tr>
+            <tr v-else-if="loading">
+              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
             </tr>
             <tr v-else-if="!rows.length">
               <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
@@ -230,9 +221,7 @@ onMounted(load)
               <td class="px-4 py-2 text-xs">{{ row.employee_name }}</td>
               <td class="px-4 py-2 text-xs text-right font-tabular">{{ fmt(row.amount) }}</td>
               <td class="px-4 py-2 text-xs text-center">
-                <span :class="['inline-block px-2 py-1 rounded text-[10px] font-semibold', authClass(row.authstatus)]">
-                  {{ authLabel(row.authstatus) }}
-                </span>
+                <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
               </td>
               <td class="px-4 py-2 text-xs">{{ row.inputer }}</td>
             </tr>
