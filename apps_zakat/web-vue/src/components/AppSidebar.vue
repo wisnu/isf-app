@@ -33,7 +33,6 @@ import { computed, onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { cn } from '@/lib/utils'
-import { portalLabel } from '@/lib/portal'
 import { useSidebarStore } from '@/stores/sidebar'
 import { useAuthStore } from '@/stores/auth'
 import type { MenuKey } from '@/lib/menu/registry'
@@ -272,21 +271,6 @@ const parentBaseClass = computed(() =>
       )
     "
   >
-    <!-- Brand header -->
-    <div
-      :class="
-        cn(
-          'h-12 flex items-center gap-2 border-b border-border bg-primary text-primary-foreground shrink-0',
-          sidebar.collapsed ? 'justify-center px-2' : 'px-4',
-        )
-      "
-    >
-      <div v-if="!sidebar.collapsed" class="flex flex-col leading-tight min-w-0">
-        <span class="font-bold text-sm">isf-app</span>
-        <span class="text-[10px] opacity-80 truncate">{{ portalLabel }}</span>
-      </div>
-    </div>
-
     <!-- Menu -->
     <nav class="flex flex-col gap-4 px-3 py-4 flex-1 overflow-y-auto">
       <div v-for="group in groups" :key="group.label" class="flex flex-col gap-1">
