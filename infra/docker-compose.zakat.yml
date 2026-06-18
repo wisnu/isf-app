@@ -87,7 +87,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET_ZAKAT:-dev-secret-zakat-change-me}
       CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173,http://${HOST_IP:-localhost}:5173
       AUTH_PROVIDERS: ${AUTH_PROVIDERS:-password,google}
-      ISF_AUTH_DATABASE_URL: ${ISF_AUTH_DATABASE_URL_ZAKAT:-postgresql://postgres:solusi@host.containers.internal:5432/isf_auth_zakat}
+      ISF_AUTH_DATABASE_URL: ${ISF_AUTH_DATABASE_URL_ZAKAT:-postgresql://transaction:solusi@host.containers.internal:5432/isf_auth_zakat}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
       GOOGLE_OAUTH_REDIRECT_URL: http://${HOST_IP:-localhost}:7000/api/auth/google/callback

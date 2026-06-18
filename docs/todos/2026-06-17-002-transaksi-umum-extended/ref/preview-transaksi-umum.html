@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaksi Umum</title>
+
+  <style>
+    :root {
+      --primary: #0f4c81;
+      --primary-dark: #0a3760;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --border: #d8e2ec;
+      --text: #243b53;
+      --muted: #829ab1;
+      --success: #2f855a;
+      --danger: #d64545;
+      --warning: #b7791f;
+      --soft-blue: #e6f0ff;
+      --soft-gray: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header .subtitle {
+      font-size: 13px;
+      background: rgba(255,255,255,0.16);
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
+
+    .container {
+      padding: 24px;
+      max-width: 1440px;
+      margin: auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(16, 42, 67, 0.08);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      background: var(--soft-gray);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .form-grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.span-2 {
+      grid-column: span 2;
+    }
+
+    .field.span-4 {
+      grid-column: span 4;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #52616f;
+    }
+
+    input,
+    select,
+    textarea {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      background: white;
+      min-height: 40px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.12);
+    }
+
+    input[readonly] {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #334e68;
+    }
+
+    .btn-success {
+      background: #ddf7e8;
+      color: var(--success);
+    }
+
+    .btn-danger {
+      background: #ffe5e5;
+      color: var(--danger);
+    }
+
+    .btn-outline {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .btn-link-danger {
+      background: transparent;
+      color: var(--danger);
+      padding: 6px 8px;
+    }
+
+    .btn-link-primary {
+      background: transparent;
+      color: var(--primary);
+      padding: 6px 8px;
+    }
+
+    .row-action-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .summary-grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-box {
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--soft-gray);
+      border: 1px solid var(--border);
+    }
+
+    .summary-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .summary-box strong {
+      font-size: 20px;
+    }
+
+    .summary-box.success strong {
+      color: var(--success);
+    }
+
+    .summary-box.danger strong {
+      color: var(--danger);
+    }
+
+    .status {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #fff7e6;
+      color: var(--warning);
+    }
+
+    .status.ok {
+      background: #e6ffed;
+      color: var(--success);
+    }
+
+    .toolbar {
+      padding: 14px 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    th {
+      background: #f1f5f9;
+      padding: 11px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    .amount {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-row {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px;
+    }
+
+    .footer-actions {
+      padding: 18px 20px;
+      background: var(--soft-gray);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .right-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      justify-content: flex-end;
+      z-index: 20;
+    }
+
+    .drawer-backdrop.show {
+      display: flex;
+    }
+
+    .drawer {
+      width: 920px;
+      max-width: 100%;
+      height: 100%;
+      background: white;
+      box-shadow: -8px 0 30px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      animation: slideIn 0.2s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .drawer-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--soft-gray);
+    }
+
+    .drawer-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .drawer-subtitle {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .drawer-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      background: #fbfdff;
+    }
+
+    .drawer-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--soft-gray);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Better detail layout */
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1.45fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .detail-section {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .detail-section-header {
+      padding: 12px 14px;
+      background: var(--soft-gray);
+      border-bottom: 1px solid var(--border);
+      font-weight: 800;
+      font-size: 14px;
+      color: #334e68;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .detail-section-body {
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .detail-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .detail-fields.single {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .detail-field.full {
+      grid-column: span 2;
+    }
+
+    .detail-field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #52616f;
+    }
+
+    .detail-field input,
+    .detail-field select,
+    .detail-field textarea {
+      width: 100%;
+    }
+
+    .lookup-row {
+      display: grid;
+      grid-template-columns: 130px 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .lookup-row.two {
+      grid-template-columns: 1fr auto;
+    }
+
+    .money-panel {
+      position: sticky;
+      top: 12px;
+    }
+
+    .money-box {
+      display: grid;
+      gap: 14px;
+    }
+
+    .money-preview {
+      border-radius: 12px;
+      background: #f1f5f9;
+      padding: 14px;
+      border: 1px dashed #bcccdc;
+    }
+
+    .money-preview span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .money-preview strong {
+      font-size: 22px;
+      color: var(--primary);
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff7e6;
+      border: 1px solid #f7d794;
+      color: #7c5a12;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      min-height: 40px;
+    }
+
+    .option-row input {
+      width: auto;
+      min-height: auto;
+    }
+
+    .form-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #e6f0ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 1000px) {
+      .drawer {
+        width: 100%;
+      }
+
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .money-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .form-grid,
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .field.span-2,
+      .field.span-4 {
+        grid-column: span 2;
+      }
+
+      .type-selector {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .lookup-row {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-field.full {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .container {
+        padding: 14px;
+      }
+
+      .form-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.span-2,
+      .field.span-4 {
+        grid-column: span 1;
+      }
+
+      .type-selector {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-actions,
+      .right-actions,
+      .drawer-footer {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Transaksi Umum</h1>
+    <div class="subtitle">Input Jurnal & Mutasi</div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="card-header">
+        <h2>Header Transaksi</h2>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Nomor Transaksi</label>
+          <input value="<AUTOGENERATED>" readonly />
+        </div>
+
+        <div class="field">
+          <label>Tanggal Input</label>
+          <input type="date" value="2026-06-17" />
+        </div>
+
+        <div class="field">
+          <label>Tanggal Posting</label>
+          <input type="date" value="2026-06-17" />
+        </div>
+
+        <div class="field">
+          <label>Inputer</label>
+          <input value="ADM" readonly />
+        </div>
+
+        <div class="field span-2">
+          <label>Nomor Cek / Kwitansi</label>
+          <input placeholder="Nomor cek atau kwitansi" />
+        </div>
+
+        <div class="field span-4">
+          <label>Keterangan Transaksi</label>
+          <textarea placeholder="Keterangan umum transaksi"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Ringkasan</h2>
+        <div id="balanceStatus" class="status">Belum Balance</div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-box success">
+          <span>Total Debit</span>
+          <strong id="totalDebit">0</strong>
+        </div>
+
+        <div class="summary-box danger">
+          <span>Total Kredit</span>
+          <strong id="totalKredit">0</strong>
+        </div>
+
+        <div class="summary-box">
+          <span>Selisih</span>
+          <strong id="selisih">0</strong>
+        </div>
+
+        <div class="summary-box">
+          <span>Jumlah Detail</span>
+          <strong id="jumlahDetail">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Detail Transaksi</h2>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn-primary" onclick="openDrawer('kasbank')">+ Detail Kas / Bank</button>
+        <button class="btn-primary" onclick="openDrawer('penyaluran')">+ Detail Penyaluran Dana</button>
+        <button class="btn-primary" onclick="openDrawer('penghimpunan')">+ Detail Penghimpunan Dana</button>
+        <button class="btn-primary" onclick="openDrawer('ledger')">+ Detail GL Accounting</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Jenis Detail</th>
+              <th>Referensi</th>
+              <th>Mutasi</th>
+              <th>Valuta</th>
+              <th>Nilai</th>
+              <th>Kurs</th>
+              <th>Ekuivalen</th>
+              <th>Keterangan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="detailTable">
+            <tr>
+              <td colspan="9" class="empty-row">Belum ada detail transaksi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn-secondary" onclick="resetDetail()">Reset Detail</button>
+
+        <div class="right-actions">
+          <button class="btn-secondary">Tutup</button>
+          <button class="btn-success" onclick="saveTransaction()">Simpan Transaksi</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="drawerBackdrop" class="drawer-backdrop">
+    <aside class="drawer">
+      <div class="drawer-header">
+        <div>
+          <h3 id="drawerTitle">Tambah Detail</h3>
+          <div id="drawerSubtitle" class="drawer-subtitle">Form hanya sesuai jenis detail yang dipilih</div>
+        </div>
+        <button class="btn-secondary" onclick="closeDrawer()">Tutup</button>
+      </div>
+
+      <div class="drawer-body">
+        <form id="detailForm"></form>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="btn-secondary" onclick="closeDrawer()" type="button">Batal</button>
+        <button id="drawerActionButton" class="btn-success" onclick="submitDetail()" type="button">Simpan Detail</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    let currentType = "kasbank";
+    let details = [];
+    let editIndex = null;
+
+    const labels = {
+      kasbank: "Transaksi Kas / Bank",
+      penyaluran: "Penyaluran Dana",
+      penghimpunan: "Penghimpunan Dana",
+      ledger: "GL Accounting"
+    };
+
+    function openDrawer(type) {
+      editIndex = null;
+      currentType = type;
+      document.getElementById("drawerBackdrop").classList.add("show");
+      renderForm();
+      setDrawerMode("add");
+    }
+
+    function openEditDrawer(index) {
+      editIndex = index;
+      currentType = details[index].type;
+      document.getElementById("drawerBackdrop").classList.add("show");
+      renderForm();
+      fillFormData(details[index].raw);
+      updateMoneyPreview();
+      setDrawerMode("edit");
+    }
+
+    function closeDrawer() {
+      document.getElementById("drawerBackdrop").classList.remove("show");
+      editIndex = null;
+    }
+
+    function setDrawerMode(mode) {
+      const actionButton = document.getElementById("drawerActionButton");
+      const subtitle = document.getElementById("drawerSubtitle");
+
+      if (mode === "edit") {
+        actionButton.textContent = "Update Detail";
+        subtitle.textContent = "Edit detail transaksi tanpa mengubah jenis form";
+      } else {
+        actionButton.textContent = "Simpan Detail";
+        subtitle.textContent = "Form hanya sesuai jenis detail yang dipilih";
+      }
+    }
+
+    function renderForm() {
+      document.getElementById("drawerTitle").textContent = labels[currentType];
+      const form = document.getElementById("detailForm");
+
+      if (currentType === "kasbank") {
+        form.innerHTML = formKasBank();
+      }
+
+      if (currentType === "penyaluran") {
+        form.innerHTML = formPenyaluran();
+      }
+
+      if (currentType === "penghimpunan") {
+        form.innerHTML = formPenghimpunan();
+      }
+
+      if (currentType === "ledger") {
+        form.innerHTML = formLedger();
+      }
+
+      updateMoneyPreview();
+    }
+
+    function moneySection() {
+      return `
+        <div class="detail-section money-panel">
+          <div class="detail-section-header">
+            <span>Nominal Transaksi</span>
+            <span class="mini-badge">Auto Hitung</span>
+          </div>
+
+          <div class="detail-section-body money-box">
+            <div class="detail-field">
+              <label>Jenis Mutasi</label>
+              <select name="mutasi" onchange="updateMoneyPreview()">
+                <option value="D">Debit</option>
+                <option value="K">Kredit</option>
+              </select>
+            </div>
+
+            <div class="detail-field">
+              <label>Nilai</label>
+              <input
+                type="number"
+                name="nilai"
+                value="0"
+                min="0"
+                oninput="updateMoneyPreview()"
+              />
+            </div>
+
+            <div class="detail-field">
+              <label>Nilai Kurs</label>
+              <input
+                type="number"
+                name="kurs"
+                value="1"
+                min="1"
+                oninput="updateMoneyPreview()"
+              />
+            </div>
+
+            <div class="money-preview">
+              <span>Nilai Ekuivalen</span>
+              <strong id="moneyPreview">0</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function formKasBank() {
+      return `
+        <div class="detail-layout">
+          <div class="detail-section">
+            <div class="detail-section-header">Informasi Kas / Bank</div>
+
+            <div class="detail-section-body">
+              <div class="detail-fields single">
+                <div class="detail-field">
+                  <label>Kas / Bank</label>
+                  <div class="lookup-row">
+                    <input name="kodeKasBank" placeholder="Kode" />
+                    <input name="namaKasBank" placeholder="Nama kas / bank" />
+                    <button type="button" class="btn-outline">Cari</button>
+                  </div>
+                  <div class="form-note">Pilih rekening kas atau bank yang digunakan untuk transaksi.</div>
+                </div>
+
+                <div class="detail-field">
+                  <label>Valuta</label>
+                  <input name="valuta" value="IDR" />
+                </div>
+
+                <div class="detail-field">
+                  <label>Keterangan</label>
+                  <textarea name="keterangan" placeholder="Keterangan transaksi kas / bank"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${moneySection()}
+        </div>
+      `;
+    }
+
+    function formPenyaluran() {
+      return `
+        <div class="detail-layout">
+          <div class="detail-section">
+            <div class="detail-section-header">Informasi Penyaluran</div>
+
+            <div class="detail-section-body">
+              <div class="detail-fields">
+                <div class="detail-field full">
+                  <label>Nama Program</label>
+                  <div class="lookup-row">
+                    <input name="kodeProgram" placeholder="Kode" />
+                    <input name="namaProgram" placeholder="Nama program" />
+                    <button type="button" class="btn-outline">Cari</button>
+                  </div>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Sumber Dana</label>
+                  <div class="lookup-row">
+                    <input name="kodeSumber" placeholder="Kode" />
+                    <input name="sumberDana" placeholder="Sumber dana" />
+                    <button type="button" class="btn-outline">Cari</button>
+                  </div>
+                </div>
+
+                <div class="detail-field">
+                  <label>Valuta</label>
+                  <input name="valuta" value="IDR" />
+                </div>
+
+                <div class="detail-field">
+                  <label>Jenis Dana</label>
+                  <select name="jenisDana">
+                    <option>Zakat</option>
+                    <option>Infak</option>
+                    <option>Sedekah</option>
+                    <option>Wakaf</option>
+                    <option>Amil</option>
+                  </select>
+                </div>
+
+                <div class="detail-field">
+                  <label>Ashnaf</label>
+                  <select name="ashnaf">
+                    <option>Fakir</option>
+                    <option>Miskin</option>
+                    <option>Amil</option>
+                    <option>Mualaf</option>
+                    <option>Riqab</option>
+                    <option>Gharimin</option>
+                    <option>Fisabilillah</option>
+                    <option>Ibnu Sabil</option>
+                  </select>
+                </div>
+
+                <div class="detail-field">
+                  <label>&nbsp;</label>
+                  <label class="option-row">
+                    <input type="checkbox" name="koreksi" />
+                    Transaksi koreksi
+                  </label>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Keterangan</label>
+                  <textarea name="keterangan" placeholder="Keterangan penyaluran dana"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${moneySection()}
+        </div>
+      `;
+    }
+
+    function formPenghimpunan() {
+      return `
+        <div class="detail-layout">
+          <div class="detail-section">
+            <div class="detail-section-header">Informasi Penghimpunan</div>
+
+            <div class="detail-section-body">
+              <div class="detail-fields">
+                <div class="detail-field full">
+                  <label>Donatur</label>
+                  <div class="lookup-row">
+                    <input name="kodeDonatur" value="00P00000000" />
+                    <input name="namaDonatur" value="HAMBA ALLAH" />
+                    <button type="button" class="btn-outline">Cari Donatur</button>
+                  </div>
+                </div>
+
+                <div class="detail-field">
+                  <label>Produk</label>
+                  <input name="produk" placeholder="Produk penghimpunan" />
+                </div>
+
+                <div class="detail-field">
+                  <label>Kode Valuta</label>
+                  <input name="valuta" value="IDR - RUPIAH" />
+                </div>
+
+                <div class="detail-field">
+                  <label>Jenis Dana</label>
+                  <select name="jenisDana">
+                    <option>Zakat</option>
+                    <option>Infak</option>
+                    <option>Sedekah</option>
+                    <option>Wakaf</option>
+                  </select>
+                </div>
+
+                <div class="detail-field">
+                  <label>&nbsp;</label>
+                  <label class="option-row">
+                    <input type="checkbox" name="koreksi" />
+                    Koreksi / reversal
+                  </label>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Keterangan</label>
+                  <textarea name="keterangan" placeholder="Keterangan penghimpunan dana"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${moneySection()}
+        </div>
+      `;
+    }
+
+    function formLedger() {
+      return `
+        <div class="detail-layout">
+          <div class="detail-section">
+            <div class="detail-section-header">Informasi Ledger</div>
+
+            <div class="detail-section-body">
+              <div class="detail-fields">
+                <div class="detail-field full">
+                  <label>Rekening Ledger</label>
+                  <div class="lookup-row">
+                    <input name="kodeLedger" placeholder="Kode rekening" />
+                    <input name="namaLedger" placeholder="Nama rekening ledger" />
+                    <button type="button" class="btn-outline">Cari</button>
+                  </div>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Valuta</label>
+                  <div class="lookup-row">
+                    <input name="valuta" value="IDR" />
+                    <input placeholder="RUPIAH" readonly />
+                    <button type="button" class="btn-outline">Cari</button>
+                  </div>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Kode Anggaran</label>
+                  <div class="lookup-row">
+                    <input name="kodeAnggaran" placeholder="Kode anggaran" />
+                    <input name="ketAnggaran" placeholder="Keterangan anggaran" />
+                    <button type="button" class="btn-outline">Cari Anggaran</button>
+                  </div>
+                </div>
+
+                <div class="detail-field full">
+                  <label>Keterangan</label>
+                  <textarea name="keterangan" placeholder="Keterangan GL accounting"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${moneySection()}
+        </div>
+      `;
+    }
+
+    function updateMoneyPreview() {
+      const form = document.getElementById("detailForm");
+      const nilai = Number(form.querySelector("[name='nilai']")?.value || 0);
+      const kurs = Number(form.querySelector("[name='kurs']")?.value || 1);
+      const preview = document.getElementById("moneyPreview");
+
+      if (preview) {
+        preview.textContent = formatNumber(nilai * kurs);
+      }
+    }
+
+    function getFormData() {
+      const form = document.getElementById("detailForm");
+      const data = {};
+
+      Array.from(form.elements).forEach(el => {
+        if (!el.name) return;
+
+        if (el.type === "checkbox") {
+          data[el.name] = el.checked;
+        } else {
+          data[el.name] = el.value;
+        }
+      });
+
+      return data;
+    }
+
+    function fillFormData(data) {
+      const form = document.getElementById("detailForm");
+
+      Object.keys(data || {}).forEach(name => {
+        const el = form.querySelector(`[name="${name}"]`);
+        if (!el) return;
+
+        if (el.type === "checkbox") {
+          el.checked = Boolean(data[name]);
+        } else {
+          el.value = data[name];
+        }
+      });
+    }
+
+    function submitDetail() {
+      const data = getFormData();
+
+      const nilai = Number(data.nilai || 0);
+      const kurs = Number(data.kurs || 1);
+      const ekuivalen = nilai * kurs;
+
+      if (nilai <= 0) {
+        alert("Nilai transaksi harus lebih dari 0.");
+        return;
+      }
+
+      if (!data.mutasi) {
+        alert("Jenis mutasi wajib dipilih.");
+        return;
+      }
+
+      const detailItem = {
+        type: currentType,
+        label: labels[currentType],
+        reference: buildReference(currentType, data),
+        mutasi: data.mutasi,
+        valuta: extractValuta(data),
+        nilai,
+        kurs,
+        ekuivalen,
+        keterangan: data.keterangan || "",
+        raw: data
+      };
+
+      if (editIndex === null) {
+        details.push(detailItem);
+      } else {
+        details[editIndex] = detailItem;
+      }
+
+      renderTable();
+      calculateSummary();
+      closeDrawer();
+    }
+
+    function buildReference(type, data) {
+      if (type === "kasbank") {
+        return `${data.kodeKasBank || "-"} ${data.namaKasBank || ""}`.trim();
+      }
+
+      if (type === "penyaluran") {
+        return `${data.namaProgram || "-"} / ${data.sumberDana || "-"}`;
+      }
+
+      if (type === "penghimpunan") {
+        return `${data.kodeDonatur || "-"} ${data.namaDonatur || ""}`.trim();
+      }
+
+      if (type === "ledger") {
+        return `${data.kodeLedger || "-"} ${data.namaLedger || ""}`.trim();
+      }
+
+      return "-";
+    }
+
+    function extractValuta(data) {
+      if (!data.valuta) return "IDR";
+      return data.valuta.split(" ")[0];
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("detailTable");
+
+      if (details.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="empty-row">Belum ada detail transaksi</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = details.map((item, index) => `
+        <tr>
+          <td>${item.label}</td>
+          <td>${item.reference}</td>
+          <td>${item.mutasi === "D" ? "Debit" : "Kredit"}</td>
+          <td>${item.valuta}</td>
+          <td class="amount">${formatNumber(item.nilai)}</td>
+          <td class="amount">${formatNumber(item.kurs)}</td>
+          <td class="amount">${formatNumber(item.ekuivalen)}</td>
+          <td>${item.keterangan || "-"}</td>
+          <td>
+            <div class="row-action-group">
+              <button class="btn-link-primary" onclick="openEditDrawer(${index})">Edit</button>
+              <button class="btn-link-danger" onclick="deleteDetail(${index})">Hapus</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function deleteDetail(index) {
+      details.splice(index, 1);
+      renderTable();
+      calculateSummary();
+    }
+
+    function calculateSummary() {
+      let totalDebit = 0;
+      let totalKredit = 0;
+
+      details.forEach(item => {
+        if (item.mutasi === "D") {
+          totalDebit += item.ekuivalen;
+        } else {
+          totalKredit += item.ekuivalen;
+        }
+      });
+
+      const selisih = totalDebit - totalKredit;
+
+      document.getElementById("totalDebit").textContent = formatNumber(totalDebit);
+      document.getElementById("totalKredit").textContent = formatNumber(totalKredit);
+      document.getElementById("selisih").textContent = formatNumber(Math.abs(selisih));
+      document.getElementById("jumlahDetail").textContent = details.length;
+
+      const status = document.getElementById("balanceStatus");
+
+      if (details.length > 0 && selisih === 0) {
+        status.textContent = "Balance";
+        status.classList.add("ok");
+      } else {
+        status.textContent = "Belum Balance";
+        status.classList.remove("ok");
+      }
+    }
+
+    function resetDetail() {
+      if (!confirm("Hapus semua detail transaksi?")) return;
+
+      details = [];
+      renderTable();
+      calculateSummary();
+    }
+
+    function saveTransaction() {
+      const status = document.getElementById("balanceStatus").textContent;
+
+      if (details.length === 0) {
+        alert("Detail transaksi belum diisi.");
+        return;
+      }
+
+      if (status !== "Balance") {
+        alert("Transaksi belum balance. Total debit dan kredit harus sama.");
+        return;
+      }
+
+      console.log("DATA TRANSAKSI:", details);
+      alert("Transaksi berhasil divalidasi dan siap disimpan.");
+    }
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("id-ID").format(value || 0);
+    }
+  </script>
+</body>
+</html>
