@@ -27,6 +27,8 @@ services:
     restart: unless-stopped
     security_opt:
       - label=disable
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
     environment:
       APP_ENV: development
       DOMAIN: wakaf
@@ -52,6 +54,8 @@ services:
     restart: unless-stopped
     security_opt:
       - label=disable
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
     environment:
       APP_ENV: development
       DOMAIN: wakaf
@@ -79,6 +83,8 @@ services:
     restart: unless-stopped
     security_opt:
       - label=disable
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
     env_file:
       - path: .env
         required: false
