@@ -139,95 +139,93 @@ onMounted(load)
 
     <Alert v-if="errorMsg" variant="destructive" class="mb-3">{{ errorMsg }}</Alert>
 
-    <div class="rounded-xl border border-border bg-surface overflow-hidden">
-      <!-- Toolbar -->
-      <div class="px-4 py-3 border-b border-border space-y-3">
-        <div class="flex flex-wrap items-end gap-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Dari Tanggal</label>
-            <DateField v-model="dateFrom" />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Sampai Tanggal</label>
-            <DateField v-model="dateTo" />
-          </div>
-          <div class="flex-1 min-w-[200px]">
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Cari Karyawan</label>
-            <SearchSelect
-              :model-value="selectedEmployee"
-              :options="employeeOptions"
-              :loading="false"
-              placeholder="Ketik nama atau nomor karyawan..."
-              option-label="employee_name"
-              option-value="employee_id"
-              @update:model-value="(v) => (selectedEmployee = v)"
-              @search="searchEmployees"
-            />
-          </div>
-          <Button variant="secondary" :disabled="loading" @click="() => { page = 1; load() }">
-            <Search class="mr-2 h-4 w-4" />
-            {{ loading ? 'Memuat...' : 'Tampilkan' }}
-          </Button>
-        </div>
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Dari</label>
+        <DateField v-model="dateFrom" />
       </div>
-
-      <!-- Pagination (di atas tabel) -->
-      <div class="px-4 py-2 border-b border-border flex items-center justify-between">
-        <span class="text-xs text-muted-foreground tabular-nums">{{ showCount }}</span>
-        <TablePagination
-          v-if="hasLoaded && totalPages > 1"
-          :page="page"
-          :total-pages="totalPages"
-          :total="totalRec"
-          :page-size="pageSize"
-          @goto="goto"
+      <div>
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Sampai</label>
+        <DateField v-model="dateTo" />
+      </div>
+      <div class="flex-1 min-w-[200px]">
+        <label class="mb-1 block text-xs font-medium text-zinc-500">Karyawan</label>
+        <SearchSelect
+          :model-value="selectedEmployee"
+          :options="employeeOptions"
+          :loading="false"
+          placeholder="Ketik nama atau nomor karyawan..."
+          option-label="employee_name"
+          option-value="employee_id"
+          @update:model-value="(v) => (selectedEmployee = v)"
+          @search="searchEmployees"
         />
       </div>
+      <Button size="sm" class="gap-1.5 h-8 text-xs" :disabled="loading" @click="() => { page = 1; load() }">
+        <Search class="w-3.5 h-3.5" />
+        {{ loading ? 'Memuat...' : 'Tampilkan' }}
+      </Button>
+    </div>
 
-      <!-- Tabel -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="text-[10px] text-muted-foreground uppercase tracking-widest border-b border-border bg-muted/50">
-            <tr>
-              <th class="px-4 py-2 text-left font-medium">No. Transaksi</th>
-              <th class="px-4 py-2 text-left font-medium">Tanggal</th>
-              <th class="px-4 py-2 text-left font-medium">Karyawan</th>
-              <th class="px-4 py-2 text-right font-medium">Nominal</th>
-              <th class="px-4 py-2 text-center font-medium">Status</th>
-              <th class="px-4 py-2 text-left font-medium">Input Oleh</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            <tr v-if="!hasLoaded">
-              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
-                Pilih periode dan klik Tampilkan untuk melihat data.
-              </td>
-            </tr>
-            <tr v-else-if="loading">
-              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs">Memuat...</td>
-            </tr>
-            <tr v-else-if="!rows.length">
-              <td colspan="6" class="px-4 py-8 text-center text-muted-foreground text-xs italic">
-                Tidak ada transaksi pengembalian dalam periode ini.
-              </td>
-            </tr>
-            <tr
-              v-for="row in rows"
-              :key="row.transaction_id"
-              class="hover:bg-muted/30 transition-colors"
-            >
-              <td class="px-4 py-2 text-xs font-mono">{{ row.transaction_no ?? '-' }}</td>
-              <td class="px-4 py-2 text-xs">{{ dmy(row.actualdate) }}</td>
-              <td class="px-4 py-2 text-xs">{{ row.employee_name }}</td>
-              <td class="px-4 py-2 text-xs text-right font-tabular">{{ fmt(row.amount) }}</td>
-              <td class="px-4 py-2 text-xs text-center">
-                <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
-              </td>
-              <td class="px-4 py-2 text-xs">{{ row.inputer }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- Paginator TOP -->
+    <div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
+      <span class="text-xs text-zinc-500">
+        {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
+      </span>
+      <TablePagination
+        v-if="hasLoaded && totalPages > 1"
+        :page="page"
+        :total-pages="totalPages"
+        :total="totalRec"
+        :page-size="pageSize"
+        @goto="goto"
+      />
+    </div>
+
+    <!-- DataTable -->
+    <div class="overflow-x-auto rounded-b border">
+      <table class="w-full text-[11px]">
+        <thead class="text-[10px] text-muted uppercase tracking-widest border-b border-border">
+          <tr>
+            <th class="px-4 py-2 text-left font-medium">No. Transaksi</th>
+            <th class="px-4 py-2 text-left font-medium">Tanggal</th>
+            <th class="px-4 py-2 text-left font-medium">Karyawan</th>
+            <th class="px-4 py-2 text-right font-medium">Nominal</th>
+            <th class="px-4 py-2 text-center font-medium">Status</th>
+            <th class="px-4 py-2 text-left font-medium">Input Oleh</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="!hasLoaded">
+            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+              Pilih tanggal dan klik Tampilkan untuk melihat data.
+            </td>
+          </tr>
+          <tr v-else-if="loading">
+            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">Memuat...</td>
+          </tr>
+          <tr v-else-if="!rows.length">
+            <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
+              Tidak ada transaksi pengembalian dalam periode ini.
+            </td>
+          </tr>
+          <tr
+            v-for="row in rows"
+            :key="row.transaction_id"
+            class="border-b border-border hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+          >
+            <td class="px-4 py-2 font-mono">{{ row.transaction_no ?? '-' }}</td>
+            <td class="px-4 py-2">{{ dmy(row.actualdate) }}</td>
+            <td class="px-4 py-2">{{ row.employee_name }}</td>
+            <td class="px-4 py-2 text-right">{{ fmt(row.amount) }}</td>
+            <td class="px-4 py-2 text-center">
+              <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
+            </td>
+            <td class="px-4 py-2">{{ row.inputer }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <UangMukaPengembalianFormModal
