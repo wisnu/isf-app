@@ -1,44 +1,16 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, Plus, Search, Trash2, X } from 'lucide-vue-next'
-import { computed, ref, shallowRef, onMounted } from 'vue'
+import { ArrowLeft, BookOpen, Search, Trash2, X } from 'lucide-vue-next'
+import { computed, ref, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import Modal from '@/components/ui/Modal.vue'
-import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface TxRow {
-  _kind: 'tx'
-  transactionid: number
-  transactionno: string
-  actual_date: string
-  description: string
-  reference_no: string | null
-  amount: number
-  authstatus: string
-  inputer: string
-  branch_code: string
-}
-
-interface SubRow {
-  _kind: 'sub'
-  id: number
-  actual_date: string
-  status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' | 'PROCESSING'
-  rejection_notes: string | null
-  payload: Record<string, unknown>
-}
-
-type MergedRow = TxRow | SubRow
-
-// Sub-item types (4 jenis mutasi)
 interface ItemGL {
   item_type: 'G'
   account_code: string
@@ -119,35 +91,20 @@ const ITEM_BADGES: Record<string, string> = {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
+const router = useRouter()
 const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
-// List state
-const txRows = ref<TxRow[]>([])
-const subRows = ref<SubRow[]>([])
-const loading = shallowRef(false)
-const errorMsg = shallowRef<string | null>(null)
-const page = shallowRef(1)
-const pageSize = shallowRef(25)
-const totalPages = shallowRef(1)
-const totalRec = shallowRef(0)
-const hasLoaded = shallowRef(false)
-const dateFrom = shallowRef(today)
-const dateTo = shallowRef(today)
-const search = shallowRef('')
-
-// Main form
-const showForm = shallowRef(false)
 const formView = shallowRef<'main' | 'G' | 'B' | 'C' | 'D'>('main')
 const editItemIdx = shallowRef<number | null>(null)
-const formSaving = shallowRef(false)
+const saving = shallowRef(false)
 const formError = shallowRef<string | null>(null)
 const formDate = shallowRef(today)
 const formDescription = shallowRef('')
 const formReferenceNo = shallowRef('')
 const formItems = ref<AnyItem[]>([])
 
-// COA (for GL)
+// COA (GL)
 const coaOptions = ref<CoaOption[]>([])
 const coaLoading = shallowRef(false)
 
@@ -207,45 +164,21 @@ const pyIsCorrection = shallowRef(false)
 const pyShowProgramResults = shallowRef(false)
 const pyShowSumberResults = shallowRef(false)
 
-// Detail modal
-const showDetail = shallowRef(false)
-const detailRow = ref<TxRow & { items?: unknown[] } | null>(null)
-const detailLoading = shallowRef(false)
-
 // ── Computed ──────────────────────────────────────────────────────────────────
-const mergedRows = computed<MergedRow[]>(() => [
-  ...subRows.value.map(r => ({ ...r, _kind: 'sub' as const })),
-  ...txRows.value.map(r => ({ ...r, _kind: 'tx' as const })),
-])
-
-const showCount = computed(() => {
-  if (!totalRec.value && !subRows.value.length) return 'Tidak ada data'
-  const from = (page.value - 1) * pageSize.value + 1
-  const to = Math.min(page.value * pageSize.value, totalRec.value)
-  return `Showing ${from}–${to} of ${totalRec.value} records`
-})
-
 const totalDebet = computed(() =>
   formItems.value.filter(i => i.mutation_type === 'D').reduce((s, i) => s + (i.amount ?? 0), 0)
 )
 const totalKredit = computed(() =>
   formItems.value.filter(i => i.mutation_type === 'C').reduce((s, i) => s + (i.amount ?? 0), 0)
 )
-const detailItems = computed<Record<string, unknown>[]>(() => {
-  const row = detailRow.value as (TxRow & { items?: Record<string, unknown>[] }) | null
-  return row?.items ?? []
-})
-
 const isBalanced = computed(() =>
   formItems.value.length >= 2 && Math.abs(totalDebet.value - totalKredit.value) < 0.01
 )
-
 const coaSelectOptions = computed(() =>
   coaOptions.value.map(o => ({ value: o.code, label: `${o.code} — ${o.name}` }))
 )
-
-const formTitle = computed(() => {
-  if (formView.value === 'main') return editItemIdx.value !== null ? 'Edit Detail' : 'Input Transaksi Umum'
+const pageTitle = computed(() => {
+  if (formView.value === 'main') return 'Input Transaksi Umum'
   const labels: Record<string, string> = {
     G: 'Detail GL Accounting',
     B: 'Detail Kas / Bank',
@@ -254,45 +187,6 @@ const formTitle = computed(() => {
   }
   return labels[formView.value] ?? 'Tambah Detail'
 })
-
-// ── List Methods ──────────────────────────────────────────────────────────────
-function goto(target: number) {
-  page.value = Math.min(Math.max(1, target), totalPages.value || 1)
-  load()
-}
-
-async function load() {
-  loading.value = true
-  errorMsg.value = null
-  try {
-    const params = new URLSearchParams({
-      page: String(page.value),
-      limit: String(pageSize.value),
-      date_from: dateFrom.value,
-      date_to: dateTo.value,
-    })
-    if (search.value) params.set('search', search.value)
-
-    const [txRes, subRes] = await Promise.all([
-      api.get<{ rows: Omit<TxRow, '_kind'>[]; pagination: { total: number; total_pages: number } }>(
-        `/api/transaksi-umum/?${params}`
-      ),
-      api.get<{ rows: Omit<SubRow, '_kind'>[] }>(
-        '/api/otorisasi/my-submissions/?entity_type=transaksi_umum'
-      ).catch(() => ({ rows: [] })),
-    ])
-
-    txRows.value = (txRes?.rows ?? []).map(r => ({ ...r, _kind: 'tx' as const }))
-    subRows.value = (subRes?.rows ?? []).map(r => ({ ...r, _kind: 'sub' as const }))
-    totalRec.value = txRes?.pagination?.total ?? 0
-    totalPages.value = txRes?.pagination?.total_pages ?? 1
-    hasLoaded.value = true
-  } catch {
-    errorMsg.value = 'Gagal memuat data transaksi'
-  } finally {
-    loading.value = false
-  }
-}
 
 // ── COA / Lookup ──────────────────────────────────────────────────────────────
 async function loadCoa() {
@@ -446,26 +340,14 @@ function clearSumber() {
   pySumberSearch.value = ''
 }
 
-// ── COA select handler (GL) ───────────────────────────────────────────────────
+// ── COA select handler ────────────────────────────────────────────────────────
 function onCoaSelect(code: string) {
   glAccountCode.value = code
   const opt = coaOptions.value.find(o => o.code === code)
   glAccountName.value = opt?.name ?? ''
 }
 
-// ── Form Control ──────────────────────────────────────────────────────────────
-function openForm() {
-  formDate.value = today
-  formDescription.value = ''
-  formReferenceNo.value = ''
-  formItems.value = []
-  formError.value = null
-  formView.value = 'main'
-  editItemIdx.value = null
-  showForm.value = true
-  loadCoa()
-}
-
+// ── Sub-form navigation ───────────────────────────────────────────────────────
 function openSubForm(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) {
   editItemIdx.value = editIdx
   formView.value = type
@@ -508,13 +390,13 @@ function openSubForm(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null)
     return
   }
 
-  // Reset sub-form state
   if (type === 'G') {
     glAccountCode.value = ''
     glAccountName.value = ''
     glMutationType.value = 'D'
     glAmount.value = null
     glDescription.value = ''
+    loadCoa()
   } else if (type === 'B') {
     clearKasBank()
     kbMutationType.value = 'D'
@@ -649,7 +531,7 @@ async function submitForm() {
     return
   }
 
-  formSaving.value = true
+  saving.value = true
   try {
     await api.post('/api/transaksi-umum/', {
       actual_date: formDate.value,
@@ -658,174 +540,40 @@ async function submitForm() {
       items: formItems.value,
     })
     toast.success('Transaksi umum berhasil disubmit untuk otorisasi')
-    showForm.value = false
-    load()
+    router.push({ name: 'keuangan-transaksi-umum' })
   } catch (e: unknown) {
     const msg = (e as { message?: string })?.message ?? 'Gagal menyimpan transaksi'
     formError.value = msg
     toast.error(msg)
   } finally {
-    formSaving.value = false
+    saving.value = false
   }
 }
-
-// ── Detail ────────────────────────────────────────────────────────────────────
-async function openDetail(row: TxRow) {
-  detailLoading.value = true
-  showDetail.value = true
-  detailRow.value = { ...row }
-  try {
-    const res = await api.get<{ id: number; items: unknown[] }>(`/api/transaksi-umum/${row.transactionid}`)
-    detailRow.value = { ...row, items: res?.items ?? [] } as TxRow & { items: unknown[] }
-  } catch {
-    // keep header
-  } finally {
-    detailLoading.value = false
-  }
-}
-
-onMounted(load)
 </script>
 
 <template>
   <div class="p-4 sm:p-6 space-y-4">
     <!-- Page header -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800"
+        @click="formView !== 'main' ? backToMain() : router.push({ name: 'keuangan-transaksi-umum' })"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Kembali
+      </button>
       <div class="flex items-center gap-2">
         <BookOpen class="h-5 w-5 text-primary" />
-        <h1 class="text-xl font-bold text-foreground">Transaksi Umum</h1>
-      </div>
-      <Button size="sm" class="gap-1.5" @click="openForm">
-        <Plus class="h-3.5 w-3.5" />
-        Input Transaksi
-      </Button>
-    </div>
-
-    <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
-
-    <!-- List section -->
-    <div class="space-y-0">
-      <!-- Toolbar -->
-      <div class="flex flex-wrap items-end gap-3 rounded-t border bg-white px-4 py-3 dark:bg-zinc-900">
-        <div class="flex items-end gap-2">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-zinc-500">Dari</label>
-            <DateField v-model="dateFrom" />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-zinc-500">Sampai</label>
-            <DateField v-model="dateTo" />
-          </div>
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-zinc-500">Cari</label>
-          <input
-            v-model="search"
-            placeholder="No. transaksi / deskripsi..."
-            class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            @keyup.enter="() => { page.value = 1; load() }"
-          />
-        </div>
-        <Button size="sm" class="h-8 gap-1.5 text-xs" :disabled="loading" @click="() => { page.value = 1; load() }">
-          <Search class="h-3.5 w-3.5" />
-          {{ loading ? 'Memuat...' : 'Tampilkan' }}
-        </Button>
-      </div>
-
-      <!-- Count + pagination -->
-      <div class="flex items-center justify-between border-x bg-white px-4 py-2 dark:bg-zinc-900">
-        <span class="text-xs text-zinc-500">
-          {{ hasLoaded ? showCount : 'Pilih tanggal dan klik Tampilkan' }}
-          <span v-if="subRows.length" class="ml-2 text-yellow-600">(+ {{ subRows.length }} draft/pending)</span>
-        </span>
-        <TablePagination
-          v-if="hasLoaded && totalPages > 1"
-          :page="page" :total-pages="totalPages" :total="totalRec" :page-size="pageSize"
-          @goto="goto"
-        />
-      </div>
-
-      <!-- Table -->
-      <div class="overflow-x-auto rounded-b border border-surface-200">
-        <table class="w-full text-sm">
-          <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
-            <tr>
-              <th class="px-4 py-2 text-left">No. Transaksi / Draft</th>
-              <th class="px-4 py-2 text-left">Tanggal</th>
-              <th class="px-4 py-2 text-left">Deskripsi</th>
-              <th class="px-4 py-2 text-right">Total Debet</th>
-              <th class="px-4 py-2 text-center">Status</th>
-              <th class="px-4 py-2 text-left">Inputer</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="!hasLoaded">
-              <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
-                Pilih tanggal dan klik Tampilkan untuk melihat data.
-              </td>
-            </tr>
-            <tr v-else-if="mergedRows.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-zinc-400">
-                Tidak ada transaksi dalam periode ini.
-              </td>
-            </tr>
-
-            <template v-for="row in mergedRows" :key="row._kind === 'tx' ? `tx-${row.transactionid}` : `sub-${row.id}`">
-              <tr v-if="row._kind === 'sub'" class="border-t bg-amber-50/40 dark:bg-amber-900/10">
-                <td class="px-4 py-2 font-mono text-xs text-zinc-400">Draft #{{ row.id }}</td>
-                <td class="px-4 py-2">{{ dmy(row.actual_date) }}</td>
-                <td class="px-4 py-2 text-zinc-500">{{ (row.payload as Record<string,unknown>).description as string || '—' }}</td>
-                <td class="px-4 py-2 text-right text-zinc-400">—</td>
-                <td class="px-4 py-2 text-center"><StatusBadge :status="row.status" /></td>
-                <td class="px-4 py-2">
-                  <template v-if="row.status === 'REJECTED' && row.rejection_notes">
-                    <span :title="row.rejection_notes" class="cursor-help text-xs text-red-400 underline decoration-dotted">Alasan</span>
-                  </template>
-                  <template v-else-if="row.status === 'PENDING'">
-                    <span class="text-xs text-zinc-400">Menunggu otorisasi</span>
-                  </template>
-                </td>
-              </tr>
-
-              <tr v-else class="cursor-pointer border-t hover:bg-zinc-50 dark:hover:bg-zinc-800" @click="openDetail(row as TxRow)">
-                <td class="px-4 py-2 font-mono">{{ row.transactionno }}</td>
-                <td class="px-4 py-2">{{ dmy(row.actual_date) }}</td>
-                <td class="px-4 py-2 max-w-xs truncate" :title="row.description">{{ row.description }}</td>
-                <td class="px-4 py-2 text-right font-mono">{{ row.amount.toLocaleString('id-ID') }}</td>
-                <td class="px-4 py-2 text-center">
-                  <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">Authorized</span>
-                </td>
-                <td class="px-4 py-2 text-zinc-500">{{ row.inputer }}</td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
+        <h1 class="text-xl font-bold text-foreground">{{ pageTitle }}</h1>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         MAIN FORM MODAL — view switching: main | G | B | C | D
-    ════════════════════════════════════════════════════════════════════════ -->
-    <Modal v-if="showForm" max-width="max-w-5xl" @close="showForm = false">
-      <template #header>
-        <div class="flex items-center gap-2">
-          <button
-            v-if="formView !== 'main'"
-            class="flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
-            @click="backToMain"
-          >
-            <ArrowLeft class="h-3.5 w-3.5" />
-            Kembali
-          </button>
-          <span class="font-semibold text-foreground">{{ formTitle }}</span>
-        </div>
-      </template>
+    <!-- ── MAIN VIEW ──────────────────────────────────────────────────────── -->
+    <div v-if="formView === 'main'" class="space-y-4 max-w-4xl">
+      <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
 
-      <!-- ── MAIN VIEW ──────────────────────────────────────────────────── -->
-      <div v-if="formView === 'main'" class="space-y-4">
-        <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
-
-        <!-- Header fields -->
+      <!-- Header fields -->
+      <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-3">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
             <label class="mb-1 block text-xs font-medium text-zinc-600">Tanggal Transaksi</label>
@@ -862,8 +610,10 @@ onMounted(load)
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Item toolbar -->
+      <!-- Item section -->
+      <div class="space-y-0">
         <div class="rounded-t border-x border-t bg-zinc-50 px-4 py-2.5 flex flex-wrap gap-2">
           <Button size="sm" @click="openSubForm('B')">+ Detail Kas / Bank</Button>
           <Button size="sm" @click="openSubForm('D')">+ Detail Penyaluran Dana</Button>
@@ -871,7 +621,6 @@ onMounted(load)
           <Button size="sm" @click="openSubForm('G')">+ Detail GL Accounting</Button>
         </div>
 
-        <!-- Items table -->
         <div class="overflow-x-auto rounded-b border">
           <table class="w-full text-xs">
             <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
@@ -918,8 +667,22 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── GL SUB-FORM ────────────────────────────────────────────────── -->
-      <div v-else-if="formView === 'G'" class="space-y-4">
+      <!-- Footer actions -->
+      <div class="flex items-center justify-between">
+        <Button variant="outline" @click="router.push({ name: 'keuangan-transaksi-umum' })">Batal</Button>
+        <Button
+          variant="success"
+          :disabled="saving || !isBalanced || formItems.length < 2"
+          @click="submitForm"
+        >
+          {{ saving ? 'Menyimpan...' : 'Simpan Transaksi' }}
+        </Button>
+      </div>
+    </div>
+
+    <!-- ── GL SUB-FORM ────────────────────────────────────────────────────── -->
+    <div v-else-if="formView === 'G'" class="space-y-4 max-w-2xl">
+      <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
             <label class="mb-1 block text-xs font-medium text-zinc-600">Rekening Ledger (COA) <span class="text-red-500">*</span></label>
@@ -954,8 +717,15 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── KAS/BANK SUB-FORM ──────────────────────────────────────────── -->
-      <div v-else-if="formView === 'B'" class="space-y-4">
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="backToMain">Batal</Button>
+        <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
+      </div>
+    </div>
+
+    <!-- ── KAS/BANK SUB-FORM ──────────────────────────────────────────────── -->
+    <div v-else-if="formView === 'B'" class="space-y-4 max-w-2xl">
+      <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-4">
         <div>
           <label class="mb-1 block text-xs font-medium text-zinc-600">Rekening Kas / Bank <span class="text-red-500">*</span></label>
           <div class="flex gap-2">
@@ -965,7 +735,6 @@ onMounted(load)
               {{ kbLoading ? '...' : 'Cari' }}
             </Button>
           </div>
-          <!-- Results -->
           <div v-if="kbShowResults && kbResults.length" class="mt-1 max-h-48 overflow-y-auto rounded border bg-white shadow-sm">
             <button
               v-for="r in kbResults" :key="r.account_no"
@@ -977,7 +746,6 @@ onMounted(load)
             </button>
           </div>
           <div v-if="kbShowResults && !kbResults.length" class="mt-1 rounded border bg-zinc-50 px-3 py-2 text-xs text-zinc-400">Tidak ada hasil</div>
-          <!-- Selected -->
           <div v-if="kbSelectedNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
             <span class="font-mono text-xs text-zinc-400">{{ kbSelectedNo }}</span>
             <span class="text-sm font-medium text-zinc-700">{{ kbSelectedName }}</span>
@@ -1004,8 +772,15 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── PENGHIMPUNAN SUB-FORM ──────────────────────────────────────── -->
-      <div v-else-if="formView === 'C'" class="space-y-4">
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="backToMain">Batal</Button>
+        <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
+      </div>
+    </div>
+
+    <!-- ── PENGHIMPUNAN SUB-FORM ──────────────────────────────────────────── -->
+    <div v-else-if="formView === 'C'" class="space-y-4 max-w-2xl">
+      <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-4">
         <!-- Donatur lookup -->
         <div>
           <label class="mb-1 block text-xs font-medium text-zinc-600">Donatur</label>
@@ -1083,8 +858,15 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── PENYALURAN SUB-FORM ────────────────────────────────────────── -->
-      <div v-else-if="formView === 'D'" class="space-y-4">
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="backToMain">Batal</Button>
+        <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
+      </div>
+    </div>
+
+    <!-- ── PENYALURAN SUB-FORM ────────────────────────────────────────────── -->
+    <div v-else-if="formView === 'D'" class="space-y-4 max-w-2xl">
+      <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-4">
         <!-- Program Penyaluran -->
         <div>
           <label class="mb-1 block text-xs font-medium text-zinc-600">Nama Program <span class="text-red-500">*</span></label>
@@ -1176,88 +958,10 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
-      <template #footer>
-        <div v-if="formView === 'main'" class="flex items-center justify-between">
-          <Button variant="outline" @click="showForm = false">Tutup</Button>
-          <Button
-            variant="success"
-            :disabled="formSaving || !isBalanced || formItems.length < 2"
-            @click="submitForm"
-          >
-            {{ formSaving ? 'Menyimpan...' : 'Simpan Transaksi' }}
-          </Button>
-        </div>
-        <div v-else class="flex justify-end gap-2">
-          <Button variant="outline" @click="backToMain">Batal</Button>
-          <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
-        </div>
-      </template>
-    </Modal>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         DETAIL MODAL
-    ════════════════════════════════════════════════════════════════════════ -->
-    <Modal v-if="showDetail" max-width="max-w-3xl" @close="showDetail = false">
-      <template #header><span class="font-semibold">Detail Transaksi Umum</span></template>
-
-      <div v-if="detailRow" class="space-y-4">
-        <div class="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <div class="text-xs text-zinc-500">No. Transaksi</div>
-            <div class="font-mono font-medium">{{ detailRow.transactionno }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-zinc-500">Tanggal</div>
-            <div>{{ dmy(detailRow.actual_date) }}</div>
-          </div>
-          <div class="col-span-2">
-            <div class="text-xs text-zinc-500">Deskripsi</div>
-            <div>{{ detailRow.description }}</div>
-          </div>
-          <div v-if="detailRow.reference_no">
-            <div class="text-xs text-zinc-500">No. Referensi</div>
-            <div>{{ detailRow.reference_no }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-zinc-500">Inputer</div>
-            <div>{{ detailRow.inputer }}</div>
-          </div>
-        </div>
-
-        <div v-if="detailItems.length">
-          <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Baris Jurnal</div>
-          <div class="overflow-x-auto rounded border">
-            <table class="w-full text-xs">
-              <thead class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 border-b border-border">
-                <tr>
-                  <th class="px-3 py-2 text-left">Kode / Referensi</th>
-                  <th class="px-3 py-2 text-left">Nama</th>
-                  <th class="px-3 py-2 text-center">D/K</th>
-                  <th class="px-3 py-2 text-right">Jumlah</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, idx) in detailItems" :key="idx" class="border-t">
-                  <td class="px-3 py-1.5 font-mono text-zinc-500">{{ String(item.account_code ?? '') || '—' }}</td>
-                  <td class="px-3 py-1.5">{{ String(item.account_name ?? '') }}</td>
-                  <td class="px-3 py-1.5 text-center font-bold" :class="item.mutation_type === 'D' ? 'text-emerald-700' : 'text-red-600'">
-                    {{ item.mutation_type === 'D' ? 'Debet' : 'Kredit' }}
-                  </td>
-                  <td class="px-3 py-1.5 text-right font-mono">{{ Number(item.amount ?? 0).toLocaleString('id-ID') }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div v-else-if="detailLoading" class="py-4 text-center text-xs text-zinc-400">Memuat detail...</div>
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="backToMain">Batal</Button>
+        <Button variant="success" @click="saveCurrentItem">Simpan Detail</Button>
       </div>
-
-      <template #footer>
-        <div class="flex justify-end">
-          <Button variant="outline" @click="showDetail = false">Tutup</Button>
-        </div>
-      </template>
-    </Modal>
+    </div>
   </div>
 </template>

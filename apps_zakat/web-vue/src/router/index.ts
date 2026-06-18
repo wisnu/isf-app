@@ -392,8 +392,14 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/umum',
       name: 'keuangan-transaksi-umum',
-      component: () => import('@/pages/keuangan/TransaksiUmumPage.vue'),
+      component: () => import('@/pages/keuangan/transaksi-umum/TransaksiUmumListPage.vue'),
       meta: { title: 'Transaksi Umum', menu_key: 'keuangan.transaksi.umum' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/umum/input',
+      name: 'keuangan-transaksi-umum-create',
+      component: () => import('@/pages/keuangan/transaksi-umum/TransaksiUmumCreatePage.vue'),
+      meta: { title: 'Input Transaksi Umum', menu_key: 'keuangan.transaksi.umum' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/piutang',
