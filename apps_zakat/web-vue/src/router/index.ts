@@ -356,19 +356,19 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/penghimpunan',
       name: 'keuangan-transaksi-penghimpunan',
-      component: () => import('@/pages/keuangan/PenghimpunanDanaPage.vue'),
+      component: () => import('@/pages/keuangan/penghimpunan-dana/PenghimpunanDanaListPage.vue'),
       meta: { title: 'Penghimpunan Dana', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/penghimpunan/baru',
       name: 'keuangan-transaksi-penghimpunan-baru',
-      component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
+      component: () => import('@/pages/keuangan/penghimpunan-dana/PenghimpunanDanaCreatePage.vue'),
       meta: { title: 'Input Penghimpunan Dana', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/penghimpunan/edit/:id',
       name: 'keuangan-transaksi-penghimpunan-edit',
-      component: () => import('@/pages/keuangan/PenghimpunanDanaFormPage.vue'),
+      component: () => import('@/pages/keuangan/penghimpunan-dana/PenghimpunanDanaCreatePage.vue'),
       meta: { title: 'Edit Draft Penghimpunan', menu_key: 'keuangan.transaksi.penghimpunan' as MenuKey },
     },
     {
