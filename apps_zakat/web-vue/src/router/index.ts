@@ -314,19 +314,19 @@ const router = createRouter({
     {
       path: '/keuangan/upload/penghimpunan',
       name: 'keuangan-upload-penghimpunan',
-      component: () => import('@/pages/keuangan/UploadPenghimpunanPage.vue'),
+      component: () => import('@/pages/keuangan/upload-penghimpunan-multi/UploadPenghimpunanMultiPage.vue'),
       meta: { title: 'Upload Penghimpunan', menu_key: 'keuangan.upload.penghimpunan' as MenuKey },
     },
     {
       path: '/keuangan/upload/penghimpunan/list',
       name: 'keuangan-upload-penghimpunan-list',
-      component: () => import('@/pages/keuangan/UploadPenghimpunanListPage.vue'),
+      component: () => import('@/pages/keuangan/upload-penghimpunan-multi/UploadPenghimpunanMultiListPage.vue'),
       meta: { title: 'Daftar Batch Upload', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
     },
     {
       path: '/keuangan/upload/penghimpunan/:id',
       name: 'keuangan-upload-penghimpunan-detail',
-      component: () => import('@/pages/keuangan/UploadPenghimpunanDetailPage.vue'),
+      component: () => import('@/pages/keuangan/upload-penghimpunan-multi/UploadPenghimpunanMultiDetailPage.vue'),
       meta: { title: 'Detail Batch', menu_key: 'keuangan.upload.penghimpunan.approve' as MenuKey },
     },
     {
