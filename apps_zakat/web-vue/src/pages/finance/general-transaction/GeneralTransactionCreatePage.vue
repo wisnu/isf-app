@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -596,7 +596,7 @@ async function submitForm() {
 
 <template>
   <div class="p-3 sm:p-4 space-y-3">
-    <!-- Back + title -->
+    <!-- Back button -->
     <div class="flex items-center gap-2">
       <button
         class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
@@ -605,8 +605,6 @@ async function submitForm() {
         <ArrowLeft class="h-3.5 w-3.5" />
         Kembali
       </button>
-      <BookOpen class="h-4 w-4 text-indigo-600" />
-      <h1 class="text-base font-semibold text-slate-800">Input Transaksi Umum</h1>
     </div>
 
     <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
