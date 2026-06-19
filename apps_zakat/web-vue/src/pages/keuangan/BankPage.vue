@@ -195,9 +195,11 @@ async function openEdit(accountNo: string) {
   resetForm()
   modalOpen.value = true
   drawerLoading.value = true
-  await loadLookups()
   try {
-    const res = await api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`)
+    const [res] = await Promise.all([
+      api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`),
+      loadLookups(),
+    ])
     form.account_name = res.account_name ?? ''
     form.bank_account_no = res.bank_account_no ?? ''
     form.bank_code = res.bank_code ?? ''
@@ -292,9 +294,11 @@ async function openDelete(accountNo: string) {
   resetForm()
   modalOpen.value = true
   drawerLoading.value = true
-  await loadLookups()
   try {
-    const res = await api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`)
+    const [res] = await Promise.all([
+      api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`),
+      loadLookups(),
+    ])
     form.account_name = res.account_name ?? ''
     form.bank_account_no = res.bank_account_no ?? ''
     form.bank_code = res.bank_code ?? ''
