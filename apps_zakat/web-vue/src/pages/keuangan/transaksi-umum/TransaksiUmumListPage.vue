@@ -97,6 +97,11 @@ function goto(target: number) {
   load()
 }
 
+function searchAndReset() {
+  page.value = 1
+  load()
+}
+
 async function load() {
   loading.value = true
   errorMsg.value = null
@@ -217,10 +222,10 @@ onMounted(load)
             v-model="search"
             placeholder="No. transaksi / deskripsi..."
             class="h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-            @keyup.enter="() => { page.value = 1; load() }"
+            @keyup.enter="searchAndReset"
           />
         </div>
-        <Button size="sm" class="h-8 gap-1.5 text-xs" :disabled="loading" @click="() => { page.value = 1; load() }">
+        <Button size="sm" class="h-8 gap-1.5 text-xs" :disabled="loading" @click="searchAndReset">
           <Search class="h-3.5 w-3.5" />
           {{ loading ? 'Memuat...' : 'Tampilkan' }}
         </Button>
