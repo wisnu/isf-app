@@ -332,13 +332,13 @@ const router = createRouter({
     {
       path: '/keuangan/upload/zis-rutin',
       name: 'keuangan-upload-zis-rutin',
-      component: () => import('@/pages/keuangan/UploadHCZisPage.vue'),
+      component: () => import('@/pages/keuangan/upload-penghimpunan-hc/UploadPenghimpunanHCZisPage.vue'),
       meta: { title: 'Upload ZIS Rutin', menu_key: 'keuangan.upload.zis-rutin' as MenuKey },
     },
     {
       path: '/keuangan/upload/zis-rutin-list',
       name: 'keuangan-upload-zis-rutin-list',
-      component: () => import('@/pages/keuangan/UploadHCZisListPage.vue'),
+      component: () => import('@/pages/keuangan/upload-penghimpunan-hc/UploadPenghimpunanHCZisListPage.vue'),
       meta: { title: 'Daftar Upload ZIS Rutin', menu_key: 'keuangan.upload.zis-rutin-list' as MenuKey },
     },
     {
