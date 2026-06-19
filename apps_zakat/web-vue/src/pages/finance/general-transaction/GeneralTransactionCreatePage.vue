@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, Trash2, X } from 'lucide-vue-next'
+import { ArrowLeft, BookOpen, Search, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
