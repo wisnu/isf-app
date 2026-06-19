@@ -178,7 +178,7 @@ const pagedRows = computed(() => {
   return filteredRows.value.slice(start, start + pageSize.value)
 })
 
-watch(filteredRows, () => { currentPage.value = 1 })
+watch([() => f.global, () => f.typeLabels.length, () => f.isDetail], () => { currentPage.value = 1 })
 watch(pageSize, () => { currentPage.value = 1 })
 
 // ── API ────────────────────────────────────────────────────────────────────────
