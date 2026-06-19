@@ -49,7 +49,7 @@ async function uploadFormData<T>(path: string, formData: FormData): Promise<T> {
   return (payload as { data: T }).data
 }
 
-async function fetchBlob(path: string, params?: URLSearchParams): Promise<Blob> {
+async function fetchBlob(path: string, params?: URLSearchParams): Promise<{ blob: Blob; headers: Headers }> {
   const fetchUrl = params ? `${BASE_URL}${path}?${params}` : `${BASE_URL}${path}`
   const response = await fetch(fetchUrl, { credentials: 'include' })
   if (!response.ok) {
@@ -64,17 +64,12 @@ async function fetchBlob(path: string, params?: URLSearchParams): Promise<Blob> 
     }
     throw new ApiError(code, message, response.status)
   }
-  return response.blob()
+  return { blob: await response.blob(), headers: response.headers }
 }
 
 async function downloadBlob(path: string, suggestedFilename: string, params?: URLSearchParams): Promise<void> {
-  const blob = await fetchBlob(path, params)
-  // Prefer filename dari Content-Disposition kalau ada
-  const response = await fetch(
-    params ? `${BASE_URL}${path}?${params}` : `${BASE_URL}${path}`,
-    { credentials: 'include' }
-  )
-  const disp = response.headers.get('Content-Disposition') ?? ''
+  const { blob, headers } = await fetchBlob(path, params)
+  const disp = headers.get('Content-Disposition') ?? ''
   const match = /filename\s*=\s*"?([^";]+)"?/i.exec(disp)
   const filename = match?.[1] ?? suggestedFilename
 
