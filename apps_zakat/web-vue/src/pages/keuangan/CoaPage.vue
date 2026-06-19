@@ -216,8 +216,8 @@ async function exportXlsx() {
 }
 
 onMounted(() => {
-  loadAll()
-  loadSubmissions()
+  void loadAll()
+  void loadSubmissions()
 })
 </script>
 
