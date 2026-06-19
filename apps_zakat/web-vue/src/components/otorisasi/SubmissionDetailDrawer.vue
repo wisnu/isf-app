@@ -5,7 +5,7 @@ import { api } from '@/lib/api/client'
 import { dmyt, dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
-import type { SubmissionRow } from '@/types/otorisasi'
+import type { SubmissionItem, SubmissionRow } from '@/types/otorisasi'
 
 const props = defineProps<{ submission: SubmissionRow | null; open: boolean; readonly?: boolean }>()
 const emit = defineEmits<{
@@ -100,7 +100,7 @@ const fmtRp = (n: number | string | undefined) => 'Rp ' + idr.format(Number(n) |
 const v = (val: unknown, fallback = '—') =>
   val === null || val === undefined || val === '' ? fallback : String(val)
 
-const items = computed<any[]>(() => p.value.items ?? [])
+const items = computed<SubmissionItem[]>(() => (p.value.items as SubmissionItem[] | undefined) ?? [])
 const totalAmount = computed(() =>
   items.value.reduce((s, i) => s + (Number(i.amount) || 0), 0)
 )
