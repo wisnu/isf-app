@@ -57,7 +57,7 @@ const searchCategory = shallowRef('none')
 const searchText = shallowRef('')
 const cashAccountNo = shallowRef('')
 const page = shallowRef(1)
-const pageSize = shallowRef(20)
+const pageSize = shallowRef(25)
 
 const rows = ref<TransaksiRow[]>([])
 const total = shallowRef(0)
@@ -128,7 +128,7 @@ function restoreState() {
     searchText.value = s.searchText ?? ''
     cashAccountNo.value = s.cashAccountNo ?? ''
     page.value = s.page ?? 1
-    pageSize.value = s.pageSize ?? 20
+    pageSize.value = s.pageSize ?? 25
     if (s.hasLoaded) load()
   } catch {
     // ignore corrupt state

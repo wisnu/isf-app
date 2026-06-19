@@ -52,7 +52,7 @@ interface BankAccountDetail {
 interface SelectOption { value: string; label: string }
 
 const toast = useToast()
-const pageSize = shallowRef(20)
+const pageSize = shallowRef(25)
 
 // ── List data ─────────────────────────────────────────────────────────────────
 

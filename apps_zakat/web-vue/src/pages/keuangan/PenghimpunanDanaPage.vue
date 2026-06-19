@@ -54,7 +54,7 @@ const begin = shallowRef(today)
 const end = shallowRef(today)
 const search = shallowRef('')
 const page = shallowRef(1)
-const pageSize = shallowRef(20)
+const pageSize = shallowRef(25)
 
 const txRows = ref<PenghimpunanRow[]>([])
 const subRows = ref<SubmissionRow[]>([])
