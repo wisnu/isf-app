@@ -33,20 +33,38 @@ const router = createRouter({
     {
       path: '/keuangan/kas',
       name: 'keuangan-kas',
-      component: () => import('@/pages/keuangan/KasPage.vue'),
+      component: () => import('@/pages/keuangan/kas/KasListPage.vue'),
       meta: { title: 'Manajemen Kas', menu_key: 'keuangan.kas' as MenuKey },
+    },
+    {
+      path: '/keuangan/kas/create',
+      name: 'keuangan-kas-create',
+      component: () => import('@/pages/keuangan/kas/KasCreatePage.vue'),
+      meta: { title: 'Tambah Kas', menu_key: 'keuangan.kas' as MenuKey },
     },
     {
       path: '/keuangan/bank',
       name: 'keuangan-bank',
-      component: () => import('@/pages/keuangan/BankPage.vue'),
+      component: () => import('@/pages/keuangan/bank/BankListPage.vue'),
       meta: { title: 'Manajemen Bank', menu_key: 'keuangan.bank' as MenuKey },
+    },
+    {
+      path: '/keuangan/bank/create',
+      name: 'keuangan-bank-create',
+      component: () => import('@/pages/keuangan/bank/BankCreatePage.vue'),
+      meta: { title: 'Tambah Rekening Bank', menu_key: 'keuangan.bank' as MenuKey },
     },
     {
       path: '/keuangan/kas-kecil',
       name: 'keuangan-kas-kecil',
-      component: () => import('@/pages/keuangan/KasKecilPage.vue'),
+      component: () => import('@/pages/keuangan/kas-kecil/KasKecilListPage.vue'),
       meta: { title: 'Manajemen Kas Kecil', menu_key: 'keuangan.kas_kecil' as MenuKey },
+    },
+    {
+      path: '/keuangan/kas-kecil/create',
+      name: 'keuangan-kas-kecil-create',
+      component: () => import('@/pages/keuangan/kas-kecil/KasKecilCreatePage.vue'),
+      meta: { title: 'Tambah Rekening Kas Kecil', menu_key: 'keuangan.kas_kecil' as MenuKey },
     },
     {
       path: '/keuangan/anggaran/import',

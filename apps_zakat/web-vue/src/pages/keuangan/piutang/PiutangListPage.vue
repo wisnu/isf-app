@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { CreditCard, Plus, Search } from 'lucide-vue-next'
+import { Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import Modal from '@/components/ui/Modal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import SearchSelect from '@/components/ui/SearchSelect.vue'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
@@ -50,30 +48,6 @@ interface ListResponse {
   pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
-interface DebtorOption {
-  debtorid: string
-  debtorcode: string
-  debtorname: string
-  debtortype: string
-  branchcode: string
-}
-
-interface CashAccountOption {
-  cashaccountno: string
-  accountname: string
-  accountno: string
-  branchcode: string
-  balance: number | null
-  cashaccounttype: string
-}
-
-interface GLAccountOption {
-  account_code: string
-  account_name: string
-  account_type: string
-  balance: number | null
-}
-
 // ── State ─────────────────────────────────────────────────────────────────────
 const router = useRouter()
 const toast = useToast()
@@ -92,25 +66,6 @@ const actionLoading = shallowRef<number | null>(null)
 
 const dateFrom = shallowRef(today)
 const dateTo = shallowRef(today)
-
-// Form modal state
-const showForm = shallowRef(false)
-const formSaving = shallowRef(false)
-const formError = shallowRef<string | null>(null)
-const formTransactionType = shallowRef<'P' | 'B'>('P')
-const formChannelType = shallowRef<'C' | 'G'>('C')
-const formDate = shallowRef(today)
-const formAmount = shallowRef<number | null>(null)
-const formRefNo = shallowRef('')
-const formDescription = shallowRef('')
-const formCasher = shallowRef('')
-const formDebtor = ref<DebtorOption | null>(null)
-const debtorOptions = ref<DebtorOption[]>([])
-const debtorDebtorType = shallowRef('')
-const formCashAccount = ref<CashAccountOption | null>(null)
-const cashAccountOptions = ref<CashAccountOption[]>([])
-const formGLAccount = ref<GLAccountOption | null>(null)
-const glAccountOptions = ref<GLAccountOption[]>([])
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
@@ -216,106 +171,6 @@ function debtorTypeLabel(type: string) {
   return type === 'E' ? 'Karyawan' : type === 'X' ? 'Non-Karyawan' : type
 }
 
-// ── Debitur lookup ────────────────────────────────────────────────────────────
-async function searchDebtors(query: string) {
-  if (!query.trim()) { debtorOptions.value = []; return }
-  try {
-    const res = await api.get<{ rows: DebtorOption[] }>(
-      `/api/piutang/debitur/?q=${encodeURIComponent(query.trim())}`,
-    )
-    debtorOptions.value = res.rows ?? []
-  } catch { debtorOptions.value = [] }
-}
-
-function onDebtorSelected(debtor: DebtorOption | null) {
-  formDebtor.value = debtor
-  debtorDebtorType.value = debtor ? (debtor.debtortype === 'E' ? 'Karyawan' : 'Non-Karyawan') : ''
-}
-
-async function searchCashAccounts(query: string) {
-  if (!query.trim()) { cashAccountOptions.value = []; return }
-  try {
-    const res = await api.get<{ rows: CashAccountOption[] }>(
-      `/api/piutang/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
-    )
-    cashAccountOptions.value = res.rows ?? []
-  } catch { cashAccountOptions.value = [] }
-}
-
-async function searchGLAccounts(query: string) {
-  if (!query.trim()) { glAccountOptions.value = []; return }
-  try {
-    const res = await api.get<{ rows: GLAccountOption[] }>(
-      `/api/piutang/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
-    )
-    glAccountOptions.value = res.rows ?? []
-  } catch { glAccountOptions.value = [] }
-}
-
-// ── Form modal ────────────────────────────────────────────────────────────────
-function openAdd() {
-  formTransactionType.value = 'P'
-  formChannelType.value = 'C'
-  formDate.value = today
-  formAmount.value = null
-  formRefNo.value = ''
-  formDescription.value = ''
-  formCasher.value = ''
-  formDebtor.value = null
-  debtorDebtorType.value = ''
-  formCashAccount.value = null
-  formGLAccount.value = null
-  debtorOptions.value = []
-  cashAccountOptions.value = []
-  glAccountOptions.value = []
-  formError.value = null
-  showForm.value = true
-}
-
-function closeForm() {
-  showForm.value = false
-  formError.value = null
-}
-
-async function submitForm() {
-  if (!formDate.value) { formError.value = 'Tanggal transaksi wajib dipilih'; return }
-  if (!formDebtor.value) { formError.value = 'Debitur wajib dipilih'; return }
-  if (!formAmount.value || formAmount.value <= 0) { formError.value = 'Nominal harus lebih dari 0'; return }
-  if (formChannelType.value === 'C' && !formCashAccount.value) { formError.value = 'Rekening Kas/Bank wajib dipilih'; return }
-  if (formChannelType.value === 'G' && !formGLAccount.value) { formError.value = 'GL Account wajib dipilih'; return }
-
-  formSaving.value = true
-  formError.value = null
-  try {
-    const payload: Record<string, unknown> = {
-      actual_date: formDate.value,
-      transaction_type: formTransactionType.value,
-      channel_type: formChannelType.value,
-      debtor_id: formDebtor.value.debtorid,
-      amount: formAmount.value,
-      reference_no: formRefNo.value,
-      description: formDescription.value,
-      casher: formCasher.value,
-    }
-    if (formChannelType.value === 'C' && formCashAccount.value)
-      payload.cash_account_no = formCashAccount.value.cashaccountno
-    else if (formChannelType.value === 'G' && formGLAccount.value)
-      payload.gl_account_code = formGLAccount.value.account_code
-
-    const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/piutang/', payload,
-    )
-    if (result.status === 'AUTHORIZED') toast.success('Piutang berhasil disimpan dan disetujui.')
-    else toast.info(`Piutang dikirim untuk otorisasi. Status: ${result.status}`)
-    closeForm()
-    load()
-  } catch (e: unknown) {
-    formError.value = e instanceof Error ? e.message : 'Gagal menyimpan piutang'
-  } finally {
-    formSaving.value = false
-  }
-}
-
 onMounted(load)
 </script>
 
@@ -323,7 +178,7 @@ onMounted(load)
   <div class="space-y-0">
     <PageHeader title="Piutang (Pinjam/Bayar)" subtitle="Kelola transaksi pinjam dan bayar piutang kepada karyawan dan pihak eksternal">
       <template #actions>
-        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="openAdd">
+        <Button size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'keuangan-transaksi-piutang-create' })">
           <Plus class="w-3.5 h-3.5" />
           Input Piutang
         </Button>
@@ -426,7 +281,7 @@ onMounted(load)
                   <button
                     class="rounded border border-amber-500 px-2 py-0.5 text-xs font-medium text-amber-600 hover:bg-amber-50 transition disabled:opacity-50"
                     :disabled="actionLoading === row.id"
-                    @click="openAdd"
+                    @click="router.push({ name: 'keuangan-transaksi-piutang-create' })"
                   >Revisi</button>
                   <button
                     class="rounded border border-red-400 px-2 py-0.5 text-xs font-medium text-red-500 hover:bg-red-50 transition disabled:opacity-50"
@@ -465,165 +320,5 @@ onMounted(load)
         </tbody>
       </table>
     </div>
-
-    <!-- Form Modal: Input Piutang -->
-    <Modal v-if="showForm" @close="closeForm">
-      <template #header>
-        <div class="flex items-center gap-2">
-          <CreditCard class="w-4 h-4 text-primary" />
-          <span class="font-semibold">Input Piutang (Pinjam/Bayar)</span>
-        </div>
-      </template>
-
-      <div class="space-y-4 py-1">
-        <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Jenis Transaksi <span class="text-red-500">*</span></label>
-            <select v-model="formTransactionType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
-              <option value="P">Pinjam (EAR)</option>
-              <option value="B">Bayar (PEAR)</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Tanggal Transaksi <span class="text-red-500">*</span></label>
-            <DateField v-model="formDate" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Channel <span class="text-red-500">*</span></label>
-            <select v-model="formChannelType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
-              <option value="C">Kas/Bank</option>
-              <option value="G">Rekening Ledger</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">
-              <template v-if="formChannelType === 'C'">Rekening Kas/Bank <span class="text-red-500">*</span></template>
-              <template v-else>GL Account Code <span class="text-red-500">*</span></template>
-            </label>
-            <div v-show="formChannelType === 'C'">
-              <SearchSelect
-                :model-value="formCashAccount"
-                :options="cashAccountOptions"
-                :loading="false"
-                placeholder="Cari rekening kas/bank..."
-                option-label="accountname"
-                option-value="cashaccountno"
-                @update:model-value="(v) => (formCashAccount = v)"
-                @search="searchCashAccounts"
-              />
-              <p v-if="formCashAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-                {{ formCashAccount.cashaccountno }}
-                <span v-if="formCashAccount.balance !== null"> · Saldo: {{ fmt(formCashAccount.balance) }}</span>
-              </p>
-            </div>
-            <div v-show="formChannelType === 'G'">
-              <SearchSelect
-                :model-value="formGLAccount"
-                :options="glAccountOptions"
-                :loading="false"
-                placeholder="Cari kode GL account..."
-                option-label="account_name"
-                option-value="account_code"
-                @update:model-value="(v) => (formGLAccount = v)"
-                @search="searchGLAccounts"
-              />
-              <p v-if="formGLAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-                {{ formGLAccount.account_code }}
-                <span v-if="formGLAccount.balance !== null"> · Saldo: {{ fmt(formGLAccount.balance) }}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Nama Debitur <span class="text-red-500">*</span></label>
-          <SearchSelect
-            :model-value="formDebtor"
-            :options="debtorOptions"
-            :loading="false"
-            placeholder="Cari nama debitur atau nomor..."
-            option-label="debtorname"
-            option-value="debtorid"
-            @update:model-value="onDebtorSelected"
-            @search="searchDebtors"
-          />
-          <p v-if="formDebtor" class="mt-1 text-[10px] text-muted-foreground font-mono">
-            {{ formDebtor.debtorcode }}
-          </p>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Tipe Debitur</label>
-          <input
-            :value="debtorDebtorType"
-            type="text"
-            readonly
-            class="w-full rounded-lg border border-input bg-muted px-2.5 py-2 text-xs text-muted-foreground cursor-not-allowed"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Nominal (Rp) <span class="text-red-500">*</span></label>
-            <input
-              v-model.number="formAmount"
-              type="number"
-              min="1"
-              step="1"
-              placeholder="Masukkan jumlah"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">No. Referensi</label>
-            <input
-              v-model="formRefNo"
-              type="text"
-              maxlength="30"
-              placeholder="Nomor referensi (opsional)"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Kasir</label>
-            <input
-              v-model="formCasher"
-              type="text"
-              maxlength="50"
-              placeholder="Nama kasir (opsional)"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted-foreground">Keterangan</label>
-            <input
-              v-model="formDescription"
-              type="text"
-              maxlength="100"
-              placeholder="Deskripsi (opsional)"
-              class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <Button variant="ghost" :disabled="formSaving" @click="closeForm">Batal</Button>
-          <Button :disabled="formSaving" @click="submitForm">
-            <CreditCard class="mr-1.5 h-4 w-4" />
-            {{ formSaving ? 'Menyimpan...' : 'Simpan Piutang' }}
-          </Button>
-        </div>
-      </template>
-    </Modal>
   </div>
 </template>
