@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
+import { Pencil, Plus, Trash2, X } from 'lucide-vue-next'
 import { onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
@@ -35,6 +36,7 @@ interface SelectOption { value: string; label: string }
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+const router = useRouter()
 const toast = useToast()
 
 const owners = ref<SelectOption[]>([])
@@ -54,7 +56,7 @@ const totalRecords = shallowRef(0)
 const changedItems = ref<Set<string>>(new Set())
 
 const modalOpen = shallowRef(false)
-const modalMode = shallowRef<'create' | 'edit' | 'delete'>('create')
+const modalMode = shallowRef<'edit' | 'delete'>('edit')
 const selectedItem = ref<BudgetItem | null>(null)
 
 const form = reactive({
@@ -144,13 +146,6 @@ function resetForm() {
   form.amount = 0
 }
 
-function openCreate() {
-  modalMode.value = 'create'
-  selectedItem.value = null
-  resetForm()
-  modalOpen.value = true
-}
-
 function openEdit(item: BudgetItem) {
   modalMode.value = 'edit'
   selectedItem.value = item
@@ -180,47 +175,22 @@ function closeModal() {
 // ── Submit handlers ───────────────────────────────────────────────────────────
 
 async function submitForm() {
-  if (!form.budget_code.trim()) {
-    toast.error('Kode Budget wajib diisi')
-    return
-  }
-  if (!form.item_group.trim()) {
-    toast.error('Kelompok Kegiatan wajib diisi')
-    return
-  }
-  if (!form.item_name.trim()) {
-    toast.error('Rincian Kebutuhan wajib diisi')
-    return
-  }
-  if (form.amount <= 0) {
-    toast.error('Nilai Anggaran harus lebih dari 0')
-    return
-  }
+  if (!form.budget_code.trim()) { toast.error('Kode Budget wajib diisi'); return }
+  if (!form.item_group.trim()) { toast.error('Kelompok Kegiatan wajib diisi'); return }
+  if (!form.item_name.trim()) { toast.error('Rincian Kebutuhan wajib diisi'); return }
+  if (form.amount <= 0) { toast.error('Nilai Anggaran harus lebih dari 0'); return }
 
-  const isCreate = modalMode.value === 'create'
   loading.value = true
-
   try {
-    const payload = {
+    await api.put(`/api/budget/${selectedItem.value?.budget_id}`, {
       owner_id: Number(selectedOwner.value),
       period_id: Number(selectedPeriod.value),
       budget_code: form.budget_code.trim(),
       item_group: form.item_group.trim(),
       item_name: form.item_name.trim(),
       amount: form.amount,
-    }
-
-    if (isCreate) {
-      await api.post('/api/budget/', payload)
-    } else {
-      await api.put(`/api/budget/${selectedItem.value?.budget_id}`, payload)
-    }
-
-    toast.success(
-      isCreate
-        ? 'Anggaran baru berhasil disimpan. Silahkan diotorisasi.'
-        : 'Perubahan anggaran berhasil disimpan. Silahkan diotorisasi.',
-    )
+    })
+    toast.success('Perubahan anggaran berhasil disimpan. Silahkan diotorisasi.')
     closeModal()
     loadBudgets()
   } catch (e) {
@@ -330,7 +300,7 @@ onMounted(loadOwners)
         <div class="px-4 py-2.5 border-b border-border flex items-center justify-between gap-3">
           <div></div>
           <div class="flex items-center gap-2">
-            <Button size="sm" @click="openCreate">
+            <Button size="sm" @click="router.push({ name: 'keuangan-anggaran-revisi-create' })">
               <Plus class="w-3.5 h-3.5 mr-1" /> Tambah
             </Button>
           </div>
@@ -448,16 +418,10 @@ onMounted(loadOwners)
           <div class="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
             <div>
               <h2 class="text-base font-semibold" :class="modalMode === 'delete' ? 'text-red-700' : ''">
-                {{
-                  modalMode === 'create'
-                    ? 'Tambah Anggaran'
-                    : modalMode === 'edit'
-                      ? 'Ubah Anggaran'
-                      : 'Konfirmasi Hapus Anggaran'
-                }}
+                {{ modalMode === 'edit' ? 'Ubah Anggaran' : 'Konfirmasi Hapus Anggaran' }}
               </h2>
-              <p class="text-[11px] mt-0.5" :class="modalMode === 'delete' ? 'text-red-500' : 'text-muted'">
-                {{ modalMode === 'delete' ? 'Periksa data berikut sebelum menghapus' : '' }}
+              <p v-if="modalMode === 'delete'" class="text-[11px] mt-0.5 text-red-500">
+                Periksa data berikut sebelum menghapus
               </p>
             </div>
             <button
@@ -551,9 +515,7 @@ onMounted(loadOwners)
             >
               Hapus & Submit Otorisasi
             </button>
-            <Button v-else size="sm" @click="submitForm">
-              {{ modalMode === 'create' ? 'Simpan Anggaran' : 'Ubah Anggaran' }}
-            </Button>
+            <Button v-else size="sm" @click="submitForm">Ubah Anggaran</Button>
           </div>
         </div>
       </div>

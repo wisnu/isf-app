@@ -81,8 +81,14 @@ const router = createRouter({
     {
       path: '/keuangan/anggaran/revisi',
       name: 'keuangan-anggaran-revisi',
-      component: () => import('@/pages/keuangan/BudgetRevisePage.vue'),
+      component: () => import('@/pages/keuangan/budget-revise/BudgetReviseListPage.vue'),
       meta: { title: 'Revisi Anggaran', menu_key: 'keuangan.anggaran.revisi' as MenuKey },
+    },
+    {
+      path: '/keuangan/anggaran/revisi/create',
+      name: 'keuangan-anggaran-revisi-create',
+      component: () => import('@/pages/keuangan/budget-revise/BudgetReviseCreatePage.vue'),
+      meta: { title: 'Tambah Anggaran', menu_key: 'keuangan.anggaran.revisi' as MenuKey },
     },
     {
       path: '/keuangan/anggaran/inquiry',
