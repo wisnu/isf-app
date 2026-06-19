@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, RefreshCw, Search, Trash2, X } from 'lucide-vue-next'
+import { ArrowLeft, BookOpen, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -791,16 +791,18 @@ async function submitForm() {
                 <td class="px-3 py-1.5 text-center">
                   <div class="flex justify-center gap-1">
                     <button
-                      class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 text-sm"
+                      class="rounded p-1.5 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700"
                       title="Edit"
                       @click="openDrawer(item.item_type as 'G'|'B'|'C'|'D', idx)"
-                    >✎</button>
+                    >
+                      <Pencil class="h-4 w-4" />
+                    </button>
                     <button
-                      class="rounded p-1 text-red-400 hover:bg-red-50"
+                      class="rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700"
                       title="Hapus"
                       @click="removeItem(idx)"
                     >
-                      <Trash2 class="h-3 w-3" />
+                      <Trash2 class="h-4 w-4" />
                     </button>
                   </div>
                 </td>
