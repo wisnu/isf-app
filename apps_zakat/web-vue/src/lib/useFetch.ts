@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { shallowRef } from 'vue'
 
 import { ApiError } from '@/lib/api/client'
 
@@ -10,7 +10,7 @@ import { ApiError } from '@/lib/api/client'
 export function useFetch<T>(fetcher: () => Promise<T>) {
   const loading = shallowRef(false)
   const error = shallowRef<string | null>(null)
-  const data = ref<T | null>(null)
+  const data = shallowRef<T | null>(null)
 
   async function load() {
     loading.value = true
