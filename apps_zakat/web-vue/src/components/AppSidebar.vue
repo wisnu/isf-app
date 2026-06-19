@@ -6,7 +6,6 @@ import {
   BarChart3,
   Banknote,
   BookOpen,
-  Calendar,
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
@@ -29,7 +28,7 @@ import {
   Wallet,
 } from 'lucide-vue-next'
 import type { FunctionalComponent } from 'vue'
-import { computed, onMounted, shallowRef, watch } from 'vue'
+import { onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { cn } from '@/lib/utils'
@@ -170,16 +169,9 @@ const auth = useAuthStore()
 const sidebar = useSidebarStore()
 const route = useRoute()
 
-// ── Sidebar logo initials ─────────────────────────────────────────────────────
+// ── App version ───────────────────────────────────────────────────────────────
 
-const appInitials = 'TU' // SIMZAKAT → 2 chars
-
-// ── Active period (hardcoded Juni 2026 until period API exists) ───────────────
-
-const activePeriod = computed(() => {
-  const now = new Date()
-  return now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-})
+const appVersion = 'v0.2.0'
 
 // ── Menu visibility ────────────────────────────────────────────────────────────
 
@@ -287,15 +279,15 @@ const isActiveParent = (item: MenuItem) =>
         )
       "
     >
-      <!-- Logo avatar -->
-      <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-600 grid place-items-center">
-        <span class="text-xs font-bold text-white leading-none">{{ appInitials }}</span>
+      <!-- Logo icon -->
+      <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-600 grid place-items-center overflow-hidden">
+        <img src="@/assets/logo.svg" alt="Logo" class="w-6 h-6 object-contain" />
       </div>
 
       <template v-if="!sidebar.collapsed">
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-bold text-white leading-tight truncate">SIMZAKAT</p>
-          <p class="text-[10px] text-slate-400 italic leading-tight truncate">Modul Akuntansi</p>
+          <p class="text-sm font-bold text-white leading-tight truncate">MZISS</p>
+          <p class="text-[10px] text-slate-500 italic leading-tight truncate">Modul Akuntansi</p>
         </div>
       </template>
     </div>
@@ -368,13 +360,13 @@ const isActiveParent = (item: MenuItem) =>
                         'flex items-center gap-2 pl-4 pr-3 py-1.5 text-xs transition-colors rounded-r-full mr-1',
                         isActiveItem(child)
                           ? 'bg-indigo-600 text-white font-medium'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800',
+                          : 'text-slate-200 hover:text-white hover:bg-slate-800',
                       )
                     "
                   >
                     <span
                       v-if="!isActiveItem(child)"
-                      class="text-slate-600 text-[10px] leading-none shrink-0"
+                      class="text-slate-500 text-[10px] leading-none shrink-0"
                       aria-hidden="true"
                     >•</span>
                     <component
@@ -434,7 +426,7 @@ const isActiveParent = (item: MenuItem) =>
       </template>
     </nav>
 
-    <!-- ── Bottom: Periode Aktif ───────────────────────────────────────────── -->
+    <!-- ── Bottom: App Version ───────────────────────────────────────────────── -->
     <div
       :class="
         cn(
@@ -444,18 +436,10 @@ const isActiveParent = (item: MenuItem) =>
       "
     >
       <template v-if="!sidebar.collapsed">
-        <p class="text-[9px] uppercase tracking-widest text-slate-600 font-semibold mb-0.5">
-          Periode Aktif
-        </p>
-        <p class="text-xs font-semibold text-slate-300">{{ activePeriod }}</p>
+        <p class="text-[10px] text-slate-500 leading-none">{{ appVersion }}</p>
       </template>
       <template v-else>
-        <div
-          class="w-8 h-8 rounded-full bg-slate-800 grid place-items-center"
-          :title="'Periode: ' + activePeriod"
-        >
-          <Calendar class="w-3.5 h-3.5 text-slate-500" />
-        </div>
+        <p class="text-[9px] text-slate-600 leading-none" :title="appVersion">{{ appVersion }}</p>
       </template>
     </div>
   </aside>

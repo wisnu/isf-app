@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronRight, Menu } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { ChevronRight, KeyRound, LogOut, Menu } from 'lucide-vue-next'
+import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
@@ -56,11 +56,11 @@ const breadcrumbs = computed<string[]>(() => {
   return [parent, title]
 })
 
-// ── Active period ─────────────────────────────────────────────────────────────
+// ── Today's date ──────────────────────────────────────────────────────────────
 
-const activePeriod = computed(() => {
+const todayLabel = computed(() => {
   const now = new Date()
-  return now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()
+  return now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 })
 
 // ── User info ─────────────────────────────────────────────────────────────────
@@ -90,9 +90,38 @@ const roleLabel = computed(() => {
   return roleLabels[roles[0]] ?? roles[0]
 })
 
-function goProfile() {
+// ── User dropdown ─────────────────────────────────────────────────────────────
+
+const dropdownOpen = shallowRef(false)
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function closeDropdown() {
+  dropdownOpen.value = false
+}
+
+function goChangePassword() {
+  closeDropdown()
   router.push({ name: 'profile-password' })
 }
+
+async function doLogout() {
+  closeDropdown()
+  await auth.logout()
+  router.push({ name: 'login' })
+}
+
+function onDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('[data-user-menu]')) {
+    closeDropdown()
+  }
+}
+
+onMounted(() => document.addEventListener('click', onDocumentClick, true))
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick, true))
 </script>
 
 <template>
@@ -133,35 +162,63 @@ function goProfile() {
       </nav>
     </div>
 
-    <!-- RIGHT: period label + user avatar + user info -->
+    <!-- RIGHT: today's date + user avatar + dropdown -->
     <div v-if="auth.user" class="flex items-center gap-3 shrink-0">
 
-      <!-- Periode aktif -->
-      <div class="hidden sm:flex flex-col items-end leading-none">
-        <span class="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">Periode</span>
-        <span class="text-xs text-slate-300 font-semibold tabular-nums mt-0.5">{{ activePeriod }}</span>
+      <!-- Tanggal hari ini -->
+      <div class="hidden sm:flex items-center leading-none">
+        <span class="text-xs text-slate-300 font-semibold tabular-nums">{{ todayLabel }}</span>
       </div>
 
       <!-- Divider -->
       <div class="hidden sm:block w-px h-5 bg-slate-700" aria-hidden="true" />
 
-      <!-- Avatar + name + username -->
-      <button
-        type="button"
-        class="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-        :title="displayName"
-        @click="goProfile"
-      >
-        <!-- Avatar circle -->
-        <div class="w-7 h-7 rounded-full bg-indigo-600 grid place-items-center shrink-0">
-          <span class="text-[10px] font-bold text-white leading-none">{{ userInitials }}</span>
-        </div>
+      <!-- Avatar + name + dropdown -->
+      <div class="relative" data-user-menu>
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+          :title="displayName"
+          @click="toggleDropdown"
+        >
+          <!-- Avatar circle -->
+          <div class="w-7 h-7 rounded-full bg-indigo-600 grid place-items-center shrink-0">
+            <span class="text-[10px] font-bold text-white leading-none">{{ userInitials }}</span>
+          </div>
 
-        <div class="hidden sm:flex flex-col items-start leading-none">
-          <span class="text-xs font-semibold text-white truncate max-w-[120px]">{{ displayName }}</span>
-          <span class="text-[10px] text-slate-400 truncate max-w-[120px] mt-0.5">{{ roleLabel }}</span>
+          <div class="hidden sm:flex flex-col items-start leading-none">
+            <span class="text-xs font-semibold text-white truncate max-w-[120px]">{{ displayName }}</span>
+            <span class="text-[10px] text-slate-400 truncate max-w-[120px] mt-0.5">{{ roleLabel }}</span>
+          </div>
+        </button>
+
+        <!-- Dropdown menu -->
+        <div
+          v-if="dropdownOpen"
+          class="absolute right-0 top-full mt-1.5 w-44 bg-slate-800 border border-slate-700 rounded shadow-lg z-50 py-1 overflow-hidden"
+          role="menu"
+        >
+          <button
+            type="button"
+            class="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+            role="menuitem"
+            @click="goChangePassword"
+          >
+            <KeyRound class="w-3.5 h-3.5 shrink-0" />
+            <span>Ubah Password</span>
+          </button>
+          <div class="my-1 border-t border-slate-700" aria-hidden="true" />
+          <button
+            type="button"
+            class="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+            role="menuitem"
+            @click="doLogout"
+          >
+            <LogOut class="w-3.5 h-3.5 shrink-0" />
+            <span>Keluar</span>
+          </button>
         </div>
-      </button>
+      </div>
     </div>
   </header>
 </template>
