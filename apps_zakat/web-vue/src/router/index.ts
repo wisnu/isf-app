@@ -344,13 +344,13 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/histori',
       name: 'keuangan-transaksi-histori',
-      component: () => import('@/pages/keuangan/HistoriTransaksiPage.vue'),
+      component: () => import('@/pages/keuangan/histori-transaksi/HistoriTransaksiListPage.vue'),
       meta: { title: 'Histori Transaksi', menu_key: 'keuangan.transaksi.histori' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/histori/:id',
       name: 'keuangan-transaksi-histori-detail',
-      component: () => import('@/pages/keuangan/HistoriTransaksiDetailPage.vue'),
+      component: () => import('@/pages/keuangan/histori-transaksi/HistoriTransaksiDetailPage.vue'),
       meta: { title: 'Detail Transaksi', menu_key: 'keuangan.transaksi.histori' as MenuKey },
     },
     {
