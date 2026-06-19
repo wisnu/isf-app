@@ -21,7 +21,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/pages/DashboardPage.vue'),
+      component: () => import('@/pages/dashboard/DashboardPage.vue'),
       meta: { title: 'Dashboard', menu_key: 'dashboard.overview' as MenuKey },
     },
     {
@@ -278,19 +278,19 @@ const router = createRouter({
     {
       path: '/dashboard/keuangan',
       name: 'dashboard-keuangan',
-      component: () => import('@/pages/DashboardKeuanganPage.vue'),
+      component: () => import('@/pages/dashboard/DashboardKeuanganPage.vue'),
       meta: { title: 'Dashboard Keuangan', menu_key: 'dashboard.keuangan' as MenuKey },
     },
     {
       path: '/dashboard/penyaluran',
       name: 'dashboard-penyaluran',
-      component: () => import('@/pages/DashboardPenyaluranPage.vue'),
+      component: () => import('@/pages/dashboard/DashboardPenyaluranPage.vue'),
       meta: { title: 'Dashboard Penyaluran', menu_key: 'dashboard.penyaluran' as MenuKey },
     },
     {
       path: '/dashboard/penghimpunan',
       name: 'dashboard-penghimpunan',
-      component: () => import('@/pages/DashboardPenghimpunanPage.vue'),
+      component: () => import('@/pages/dashboard/DashboardPenghimpunanPage.vue'),
       meta: { title: 'Dashboard Penghimpunan', menu_key: 'dashboard.penghimpunan' as MenuKey },
     },
     {
