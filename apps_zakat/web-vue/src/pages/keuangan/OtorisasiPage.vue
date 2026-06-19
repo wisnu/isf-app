@@ -82,14 +82,14 @@ function parsePayload(payload: unknown): Record<string, any> {
   return (payload as Record<string, any>) ?? {}
 }
 
-function rowTotal(row: SubmissionRow): string {
-  const items: any[] = parsePayload(row.payload).items ?? []
+function rowTotal(row: SubmissionRow & { _parsed?: Record<string, any> }): string {
+  const items: any[] = (row._parsed ?? parsePayload(row.payload)).items ?? []
   const total = items.reduce((s, i) => s + (i.amount ?? 0), 0)
   return total > 0 ? fmt(total) : '—'
 }
 
-function summaryFor(row: SubmissionRow): SummaryItem[] {
-  const p = parsePayload(row.payload)
+function summaryFor(row: SubmissionRow & { _parsed?: Record<string, any> }): SummaryItem[] {
+  const p = row._parsed ?? parsePayload(row.payload)
   const items: (SummaryItem | null)[] = []
 
   switch (row.entity_type) {
@@ -146,6 +146,10 @@ function summaryFor(row: SubmissionRow): SummaryItem[] {
 const selectedRows = computed(() => rows.value.filter(r => selectedIds.value.has(r.id)))
 const allSelected = computed(() => rows.value.length > 0 && rows.value.every(r => selectedIds.value.has(r.id)))
 const someSelected = computed(() => selectedIds.value.size > 0 && !allSelected.value)
+
+const parsedRows = computed(() =>
+  rows.value.map(r => ({ ...r, _parsed: parsePayload(r.payload) }))
+)
 
 const showCount = computed(() => {
   const from = (page.value - 1) * pageSize.value + 1
@@ -387,7 +391,7 @@ function onRejected() { drawerOpen.value = false; load() }
             </td>
           </tr>
           <tr
-            v-for="row in rows"
+            v-for="row in parsedRows"
             :key="row.id"
             class="border-b border-border last:border-0 hover:bg-background/60"
           >
@@ -405,16 +409,16 @@ function onRejected() { drawerOpen.value = false; load() }
             <td class="px-4 py-2 text-xs">{{ row.submitted_at ? dmyt(row.submitted_at) : '—' }}</td>
             <!-- Kolom Operasi: CREATE / EDIT / DELETE -->
             <td class="px-4 py-2">
-              <template v-if="parsePayload(row.payload).action">
+              <template v-if="row._parsed.action">
                 <span
                   :class="[
                     'inline-block rounded px-1.5 py-px text-[10px] font-bold uppercase tracking-wide',
-                    parsePayload(row.payload).action === 'create' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                    parsePayload(row.payload).action === 'delete' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                    parsePayload(row.payload).action === 'edit'   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                                                                    'bg-zinc-100 text-zinc-600'
+                    row._parsed.action === 'create' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                    row._parsed.action === 'delete' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                    row._parsed.action === 'edit'   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                                                      'bg-zinc-100 text-zinc-600'
                   ]"
-                >{{ String(parsePayload(row.payload).action).toUpperCase() }}</span>
+                >{{ String(row._parsed.action).toUpperCase() }}</span>
               </template>
               <span v-else class="text-xs text-zinc-300">—</span>
             </td>
