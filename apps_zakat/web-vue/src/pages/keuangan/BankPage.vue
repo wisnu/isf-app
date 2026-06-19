@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
-import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
@@ -333,6 +333,7 @@ async function submitDelete() {
 }
 
 onMounted(loadBankAccounts)
+onUnmounted(() => { if (searchTimer) clearTimeout(searchTimer) })
 </script>
 
 <template>
