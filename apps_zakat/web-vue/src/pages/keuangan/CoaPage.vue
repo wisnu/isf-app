@@ -187,12 +187,11 @@ async function loadAll() {
   errorMsg.value = null
   try {
     const first = await api.get<CoaList>('/api/coa/accounts?page=1&page_size=500')
-    let rows = [...first.rows]
-    for (let p = 2; p <= first.pagination.total_pages; p++) {
-      const more = await api.get<CoaList>(`/api/coa/accounts?page=${p}&page_size=500`)
-      rows = [...rows, ...more.rows]
-    }
-    allRows.value = rows
+    const restPages = Array.from({ length: first.pagination.total_pages - 1 }, (_, i) =>
+      api.get<CoaList>(`/api/coa/accounts?page=${i + 2}&page_size=500`)
+    )
+    const rest = await Promise.all(restPages)
+    allRows.value = [...first.rows, ...rest.flatMap(r => r.rows)]
     statsData.value = first.stats
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat COA'
