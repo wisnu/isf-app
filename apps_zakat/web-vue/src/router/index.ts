@@ -404,8 +404,14 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/transfer-antar-rekening',
       name: 'keuangan-transaksi-transfer-antar-rekening',
-      component: () => import('@/pages/keuangan/TransferAntarRekeningPage.vue'),
+      component: () => import('@/pages/keuangan/transfer-antar-rekening/TransferAntarRekeningListPage.vue'),
       meta: { title: 'Transfer Antar Rekening', menu_key: 'keuangan.transaksi.transfer-antar-rekening' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/transfer-antar-rekening/create',
+      name: 'keuangan-transaksi-transfer-antar-rekening-create',
+      component: () => import('@/pages/keuangan/transfer-antar-rekening/TransferAntarRekeningCreatePage.vue'),
+      meta: { title: 'Input Transfer Antar Rekening', menu_key: 'keuangan.transaksi.transfer-antar-rekening' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/umum',
