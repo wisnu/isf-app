@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, Search } from 'lucide-vue-next'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -93,7 +93,10 @@ async function exportXlsx() {
   }
 }
 
-watch([begin, end, branch], () => { data.value = null })
+function search() {
+  data.value = null
+  load()
+}
 
 // Standar laporan: data di-load saat klik "Tampilkan", bukan saat buka halaman.
 onMounted(async () => {
@@ -124,7 +127,7 @@ onMounted(async () => {
         <label class="text-xs font-medium text-muted">Tanggal Akhir</label>
         <DateField v-model="end" />
       </div>
-      <Button size="sm" class="gap-1.5 h-9" :disabled="loading" @click="load">
+      <Button size="sm" class="gap-1.5 h-9" :disabled="loading" @click="search">
         <Search class="w-4 h-4" :class="{ 'animate-pulse': loading }" /> Tampilkan
       </Button>
       <Button variant="outline" size="sm" class="gap-1.5 h-9" :disabled="exporting || loading || !data || !data.groups.length" @click="exportXlsx">
