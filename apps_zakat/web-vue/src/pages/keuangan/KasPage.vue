@@ -8,7 +8,8 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import { api } from '@/lib/api/client'
-import { formatDate, formatIdr } from '@/lib/format'
+import { formatIdr } from '@/lib/format'
+import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 
 interface KasAccount {
@@ -228,7 +229,7 @@ async function submitNewKas() {
                   {{ formatIdr(a.balance) }}
                 </td>
                 <td class="px-4 py-1 text-muted text-[11px] max-md:hidden whitespace-nowrap">
-                  {{ formatDate(a.updatedAt) }}
+                  {{ dmy(a.updatedAt) }}
                 </td>
                 <td class="px-4 py-1 text-center">
                   <span

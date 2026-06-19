@@ -4,6 +4,8 @@ import CardContent from '@/components/ui/CardContent.vue'
 import CardDescription from '@/components/ui/CardDescription.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
+import { dmy } from '@/lib/date'
+import { formatIdr } from '@/lib/format'
 
 interface Transaction {
   id: string
@@ -15,22 +17,6 @@ interface Transaction {
 }
 
 defineProps<{ items: Transaction[] }>()
-
-function formatIdr(n: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
-
-function formatDate(s: string): string {
-  const d = new Date(s)
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-  }).format(d)
-}
 </script>
 
 <template>
@@ -58,7 +44,7 @@ function formatDate(s: string): string {
               class="border-b border-border last:border-0 hover:bg-background/60"
             >
               <td class="px-6 py-2 text-muted tabular-nums whitespace-nowrap">
-                {{ formatDate(tx.date) }}
+                {{ dmy(tx.date) }}
               </td>
               <td class="px-6 py-2 whitespace-nowrap">{{ tx.type }}</td>
               <td class="px-6 py-2 max-md:hidden text-muted whitespace-nowrap">
