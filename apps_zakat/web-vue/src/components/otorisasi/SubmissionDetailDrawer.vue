@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { CheckCircle, XCircle, X } from 'lucide-vue-next'
 import { api } from '@/lib/api/client'
 import { dmyt, dmy } from '@/lib/date'
@@ -38,15 +38,15 @@ const emit = defineEmits<{
 const toast = useToast()
 const rejectNotes = ref('')
 const showRejectForm = ref(false)
-const loading = ref(false)
+const loading = shallowRef(false)
 
 // ── Lookup resolver (untuk kode → nama saat payload tidak menyertakan nama) ──
 const bankMap = ref<Record<string, string>>({})
 const branchMap = ref<Record<string, string>>({})
-let lookupLoaded = false
+const lookupLoaded = shallowRef(false)
 
 async function loadBankLookups() {
-  if (lookupLoaded) return
+  if (lookupLoaded.value) return
   try {
     const [banks, branches] = await Promise.all([
       api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/bank/lookup/banks'),
@@ -54,7 +54,7 @@ async function loadBankLookups() {
     ])
     for (const b of banks.data ?? []) bankMap.value[b.bank_code] = b.bank_short_name ?? b.bank_name ?? b.bank_code
     for (const b of branches.data ?? []) branchMap.value[b.branch_code] = b.branch_name ?? b.branch_code
-    lookupLoaded = true
+    lookupLoaded.value = true
   } catch { /* silent */ }
 }
 
