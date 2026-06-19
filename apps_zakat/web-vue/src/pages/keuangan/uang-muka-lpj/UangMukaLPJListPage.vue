@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -15,7 +16,6 @@ import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import { useAuthStore } from '@/stores/auth'
 import type { MenuKey } from '@/lib/menu/registry'
-import UangMukaPengembalianFormModal from '@/components/modals/UangMukaPengembalianFormModal.vue'
 
 interface PengembalianRow {
   transaction_id: number
@@ -43,6 +43,7 @@ interface ListResponse {
 }
 
 const auth = useAuthStore()
+const router = useRouter()
 const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
@@ -59,8 +60,6 @@ const dateFrom = shallowRef(today)
 const dateTo = shallowRef(today)
 const selectedEmployee = ref<EmployeeLookup | null>(null)
 const employeeOptions = ref<EmployeeLookup[]>([])
-
-const showForm = shallowRef(false)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
@@ -111,11 +110,6 @@ async function load() {
   }
 }
 
-function onSaved() {
-  showForm.value = false
-  load()
-}
-
 onMounted(load)
 </script>
 
@@ -130,7 +124,7 @@ onMounted(load)
           v-if="auth.hasMenu('keuangan.transaksi.uang-muka-pengembalian' as MenuKey)"
           size="sm"
           class="gap-1.5 h-8 text-xs"
-          @click="showForm = true"
+          @click="router.push({ name: 'keuangan-transaksi-uang-muka-lpj-create' })"
         >
           <Plus class="w-3.5 h-3.5" />
           Input Baru
@@ -225,10 +219,5 @@ onMounted(load)
       </tr>
     </AppTable>
 
-    <UangMukaPengembalianFormModal
-      v-if="showForm"
-      @close="showForm = false"
-      @saved="onSaved"
-    />
   </div>
 </template>

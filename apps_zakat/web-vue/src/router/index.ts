@@ -398,14 +398,26 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/uang-muka-penyerahan',
       name: 'keuangan-transaksi-uang-muka-penyerahan',
-      component: () => import('@/pages/keuangan/UangMukaPenyerahanPage.vue'),
+      component: () => import('@/pages/keuangan/uang-muka-penyerahan/UangMukaPenyerahanListPage.vue'),
       meta: { title: 'Penyerahan Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-penyerahan' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/uang-muka-penyerahan/create',
+      name: 'keuangan-transaksi-uang-muka-penyerahan-create',
+      component: () => import('@/pages/keuangan/uang-muka-penyerahan/UangMukaPenyerahanCreatePage.vue'),
+      meta: { title: 'Input Penyerahan Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-penyerahan' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/uang-muka-pengembalian',
       name: 'keuangan-transaksi-uang-muka-pengembalian',
-      component: () => import('@/pages/keuangan/UangMukaPengembalianPage.vue'),
-      meta: { title: 'Pengembalian Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-pengembalian' as MenuKey },
+      component: () => import('@/pages/keuangan/uang-muka-lpj/UangMukaLPJListPage.vue'),
+      meta: { title: 'LPJ Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-pengembalian' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/uang-muka-pengembalian/create',
+      name: 'keuangan-transaksi-uang-muka-lpj-create',
+      component: () => import('@/pages/keuangan/uang-muka-lpj/UangMukaLPJCreatePage.vue'),
+      meta: { title: 'Input LPJ Uang Muka', menu_key: 'keuangan.transaksi.uang-muka-pengembalian' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/transfer-antar-rekening',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { HandCoins, Plus, Search } from 'lucide-vue-next'
+import { Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
@@ -15,7 +16,6 @@ import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import { useAuthStore } from '@/stores/auth'
 import type { MenuKey } from '@/lib/menu/registry'
-import UangMukaFormModal from '@/components/modals/UangMukaFormModal.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface UangMukaRow {
@@ -44,6 +44,7 @@ interface ListResponse {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const auth = useAuthStore()
+const router = useRouter()
 const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
@@ -62,9 +63,6 @@ const dateTo = shallowRef(today)
 const selectedEmployee = ref<EmployeeLookup | null>(null)
 const employeeSearchInput = ref('')
 const employeeOptions = ref<EmployeeLookup[]>([])
-
-// Modal state
-const showForm = shallowRef(false)
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
@@ -123,16 +121,6 @@ async function load() {
   }
 }
 
-// ── Modal handlers ────────────────────────────────────────────────────────────
-function openAdd() {
-  showForm.value = true
-}
-
-function onSaved() {
-  showForm.value = false
-  load()
-}
-
 onMounted(load)
 </script>
 
@@ -140,7 +128,7 @@ onMounted(load)
   <div class="space-y-0">
     <PageHeader title="Penyerahan Uang Muka" subtitle="Daftar transaksi penyerahan uang muka kepada karyawan">
       <template #actions>
-        <Button v-if="auth.hasMenu('keuangan.transaksi.uang-muka-penyerahan' as MenuKey)" size="sm" class="gap-1.5 h-8 text-xs" @click="openAdd">
+        <Button v-if="auth.hasMenu('keuangan.transaksi.uang-muka-penyerahan' as MenuKey)" size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'keuangan-transaksi-uang-muka-penyerahan-create' })">
           <Plus class="w-3.5 h-3.5" />
           Input Baru
         </Button>
@@ -234,11 +222,5 @@ onMounted(load)
       </tr>
     </AppTable>
 
-    <!-- Form Modal -->
-    <UangMukaFormModal
-      v-if="showForm"
-      @close="showForm = false"
-      @saved="onSaved"
-    />
   </div>
 </template>
