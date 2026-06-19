@@ -11,22 +11,9 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { api } from '@/lib/api/client'
 import { dmyt } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
+import type { SubmissionRow } from '@/types/otorisasi'
 
 const toast = useToast()
-
-interface SubmissionRow {
-  id: number
-  entity_type: string
-  entity_label: string
-  branch_code: string
-  submitted_by: string
-  submitted_at: string | null
-  status: string
-  level_current: number
-  level_required: number
-  payload: Record<string, any>
-  approval_log: any[]
-}
 
 interface ListResponse {
   rows: SubmissionRow[]

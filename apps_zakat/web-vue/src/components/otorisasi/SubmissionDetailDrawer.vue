@@ -5,30 +5,9 @@ import { api } from '@/lib/api/client'
 import { dmyt, dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import StatusBadge from '@/components/otorisasi/StatusBadge.vue'
+import type { SubmissionRow } from '@/types/otorisasi'
 
-interface ApprovalLog {
-  level: number
-  authorizer_id: string
-  status: 'APPROVED' | 'REJECTED'
-  notes: string | null
-  logged_at: string
-}
-
-interface Submission {
-  id: number
-  entity_type: string
-  entity_label: string
-  branch_code: string
-  payload: Record<string, any>
-  status: string
-  level_current: number
-  level_required: number
-  submitted_by: string
-  submitted_at: string | null
-  approval_log: ApprovalLog[]
-}
-
-const props = defineProps<{ submission: Submission | null; open: boolean; readonly?: boolean }>()
+const props = defineProps<{ submission: SubmissionRow | null; open: boolean; readonly?: boolean }>()
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'approved', id: number): void
