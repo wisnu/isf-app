@@ -1,3 +1,4 @@
+import { computed, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
 import { api, ApiError } from '@/lib/api/client'
@@ -21,98 +22,99 @@ export interface AuthProviders {
   google: boolean
 }
 
-interface State {
-  initialized: boolean
-  user: User | null
-  activeTenantId: string | null
-  providers: AuthProviders
-  providersLoaded: boolean
-}
+export const useAuthStore = defineStore('auth', () => {
+  const initialized = shallowRef(false)
+  const user = shallowRef<User | null>(null)
+  const activeTenantId = shallowRef<string | null>(null)
+  const providers = shallowRef<AuthProviders>({ password: true, google: false })
+  const providersLoaded = shallowRef(false)
 
-export const useAuthStore = defineStore('auth', {
-  state: (): State => ({
-    initialized: false,
-    user: null,
-    activeTenantId: null,
-    providers: { password: true, google: false },
-    providersLoaded: false,
-  }),
-  getters: {
-    activeTenant(state): Tenant | null {
-      if (!state.user || !state.activeTenantId) return null
-      return state.user.tenants.find((t) => t.id === state.activeTenantId) ?? null
-    },
-    hasTenant(state): boolean {
-      return Boolean(state.activeTenantId)
-    },
-    menus(state): string[] {
-      return state.user?.menus ?? []
-    },
-    hasMenu(state) {
-      return (key: MenuKey | string): boolean =>
-        Boolean(state.user && state.user.menus.includes(key))
-    },
-  },
-  actions: {
-    async loadProviders() {
-      if (this.providersLoaded) return
-      try {
-        const result = await api.get<AuthProviders>('/api/auth/providers')
-        this.providers = result
-      } catch {
-        // fallback to defaults
-      } finally {
-        this.providersLoaded = true
-      }
-    },
+  const activeTenant = computed<Tenant | null>(() => {
+    if (!user.value || !activeTenantId.value) return null
+    return user.value.tenants.find((t) => t.id === activeTenantId.value) ?? null
+  })
+  const hasTenant = computed(() => Boolean(activeTenantId.value))
+  const menus = computed(() => user.value?.menus ?? [])
 
-    async bootstrap() {
-      try {
-        const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
-        this.user = me.user
-        this.activeTenantId = me.active_tenant_id
-      } catch (e) {
-        if (e instanceof ApiError && e.status === 401) {
-          this.user = null
-          this.activeTenantId = null
-        } else {
-          throw e
-        }
-      } finally {
-        this.initialized = true
-      }
-    },
+  function hasMenu(key: MenuKey | string): boolean {
+    return Boolean(user.value && user.value.menus.includes(key))
+  }
 
-    async login(username: string, password: string) {
-      const result = await api.post<{ user: User; active_tenant_id: string }>(
-        '/api/auth/login', { username, password },
-      )
-      this.user = result.user
-      this.activeTenantId = result.active_tenant_id
-    },
+  async function loadProviders() {
+    if (providersLoaded.value) return
+    try {
+      const result = await api.get<AuthProviders>('/api/auth/providers')
+      providers.value = result
+    } catch {
+      // fallback to defaults
+    } finally {
+      providersLoaded.value = true
+    }
+  }
 
-    async logout() {
-      try {
-        await api.post('/api/auth/logout')
-      } finally {
-        this.user = null
-        this.activeTenantId = null
-      }
-    },
-
-    async switchTenant(tenantId: string) {
-      const result = await api.post<{ active_tenant_id: string }>(
-        '/api/tenants/switch', { tenant_id: tenantId },
-      )
-      this.activeTenantId = result.active_tenant_id
-    },
-
-    async refreshProfile() {
-      await api.post('/api/auth/refresh-profile')
-      // Re-bootstrap untuk dapat user shape baru dari /me
+  async function bootstrap() {
+    try {
       const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
-      this.user = me.user
-      this.activeTenantId = me.active_tenant_id
-    },
-  },
+      user.value = me.user
+      activeTenantId.value = me.active_tenant_id
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        user.value = null
+        activeTenantId.value = null
+      } else {
+        throw e
+      }
+    } finally {
+      initialized.value = true
+    }
+  }
+
+  async function login(username: string, password: string) {
+    const result = await api.post<{ user: User; active_tenant_id: string }>(
+      '/api/auth/login', { username, password },
+    )
+    user.value = result.user
+    activeTenantId.value = result.active_tenant_id
+  }
+
+  async function logout() {
+    try {
+      await api.post('/api/auth/logout')
+    } finally {
+      user.value = null
+      activeTenantId.value = null
+    }
+  }
+
+  async function switchTenant(tenantId: string) {
+    const result = await api.post<{ active_tenant_id: string }>(
+      '/api/tenants/switch', { tenant_id: tenantId },
+    )
+    activeTenantId.value = result.active_tenant_id
+  }
+
+  async function refreshProfile() {
+    await api.post('/api/auth/refresh-profile')
+    const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
+    user.value = me.user
+    activeTenantId.value = me.active_tenant_id
+  }
+
+  return {
+    initialized,
+    user,
+    activeTenantId,
+    providers,
+    providersLoaded,
+    activeTenant,
+    hasTenant,
+    menus,
+    hasMenu,
+    loadProviders,
+    bootstrap,
+    login,
+    logout,
+    switchTenant,
+    refreshProfile,
+  }
 })
