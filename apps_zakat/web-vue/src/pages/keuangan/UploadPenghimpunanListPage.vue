@@ -58,7 +58,7 @@ watch(hasProcessingBatch, (val) => {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
-}, { immediate: true })
+})
 
 onUnmounted(() => {
   if (refreshTimer) {
