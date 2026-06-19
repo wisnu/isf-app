@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
+import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { api } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
 
@@ -141,12 +142,12 @@ const glKodeAnggaran = shallowRef('')
 const glKetAnggaran = shallowRef('')
 
 // KasBank-specific
-const kbSearch = shallowRef('')
 const kbResults = ref<LookupRow[]>([])
 const kbLoading = shallowRef(false)
 const kbSelectedNo = shallowRef('')
 const kbSelectedName = shallowRef('')
-const kbShowResults = shallowRef(false)
+// v-model for SearchSelect — holds account_no of the selected rekening
+const kbSelectedValue = shallowRef('')
 
 // Penghimpunan-specific
 const phDonorNo = shallowRef('')
@@ -193,6 +194,9 @@ const isBalanced = computed(() =>
 const coaSelectOptions = computed(() =>
   coaOptions.value.map(o => ({ value: o.code, label: `${o.code} — ${o.name}` }))
 )
+const kbOptions = computed(() =>
+  kbResults.value.map(r => ({ value: r.account_no, label: `${r.account_no}  ${r.account_name}` }))
+)
 const drawerTitle = computed(() => {
   const titles: Record<string, string> = {
     G: 'Detail GL Accounting',
@@ -238,32 +242,31 @@ function onCoaSelect(code: string) {
   glAccountName.value = coaOptions.value.find(o => o.code === code)?.name ?? ''
 }
 
-async function searchKasBank() {
-  if (!kbSearch.value.trim()) return
+async function loadKasBankOptions() {
   kbLoading.value = true
-  kbShowResults.value = false
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/kasbank?search=${encodeURIComponent(kbSearch.value)}`
+      `/api/transaksi-umum/lookup/kasbank?search=`
     )
     kbResults.value = res?.rows ?? []
-    kbShowResults.value = true
   } finally {
     kbLoading.value = false
   }
 }
 
-function selectKasBank(r: LookupRow) {
-  kbSelectedNo.value = r.account_no
-  kbSelectedName.value = r.account_name
-  kbShowResults.value = false
-  kbSearch.value = ''
+function clearKasBank() {
+  kbSelectedNo.value = ''
+  kbSelectedName.value = ''
+  kbSelectedValue.value = ''
+  kbResults.value = []
 }
 
-function clearKasBank() {
-  kbSelectedNo.value = ''; kbSelectedName.value = ''
-  kbResults.value = []; kbSearch.value = ''
-}
+// Sync SearchSelect selection → downstream state (account_no + account_name)
+watch(kbSelectedValue, (val) => {
+  const found = kbResults.value.find(r => r.account_no === val)
+  kbSelectedNo.value = found?.account_no ?? ''
+  kbSelectedName.value = found?.account_name ?? ''
+})
 
 async function searchDonor() {
   if (!phDonorSearch.value.trim()) return
@@ -403,6 +406,8 @@ function openDrawer(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) 
     } else if (item.item_type === 'B') {
       kbSelectedNo.value = item.account_no
       kbSelectedName.value = item.account_name
+      kbSelectedValue.value = item.account_no
+      loadKasBankOptions()
     } else if (item.item_type === 'C') {
       phDonorId.value = item.donor_id
       phDonorName.value = item.donor_name
@@ -427,6 +432,7 @@ function openDrawer(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) 
     } else if (type === 'B') {
       resetNominalPanel('D')
       clearKasBank()
+      loadKasBankOptions()
     } else if (type === 'C') {
       resetNominalPanel('C')
       clearDonor(); clearProduk()
@@ -563,85 +569,85 @@ async function submitForm() {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-4">
+  <div class="p-3 sm:p-4 space-y-3">
     <!-- Back + title -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800"
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
         @click="router.push({ name: 'finance-transactions-general' })"
       >
-        <ArrowLeft class="h-4 w-4" />
+        <ArrowLeft class="h-3.5 w-3.5" />
         Kembali
       </button>
-      <BookOpen class="h-5 w-5 text-primary" />
-      <h1 class="text-xl font-bold text-foreground">Input Transaksi Umum</h1>
+      <BookOpen class="h-4 w-4 text-indigo-600" />
+      <h1 class="text-base font-semibold text-slate-800">Input Transaksi Umum</h1>
     </div>
 
     <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
 
     <!-- Split layout -->
-    <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
 
       <!-- LEFT: sticky header + summary -->
-      <div class="w-full space-y-4 lg:w-[380px] lg:flex-shrink-0 lg:sticky lg:top-[64px]">
+      <div class="w-full space-y-3 lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-[64px]">
 
         <!-- Header form card -->
-        <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-3">
-          <h2 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Header Transaksi</h2>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:bg-zinc-900 space-y-3">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Header Transaksi</h2>
           <div>
-            <label class="mb-1 block text-xs font-medium text-zinc-600">Tanggal Transaksi</label>
+            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Tanggal Transaksi</label>
             <DateField v-model="formDate" />
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium text-zinc-600">
+            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
               Deskripsi <span class="text-red-500">*</span>
             </label>
             <input
               v-model="formDescription"
               placeholder="Keterangan transaksi..."
-              class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
-            <label class="mb-1 block text-xs font-medium text-zinc-600">No. Referensi / Cek / Kwitansi</label>
+            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">No. Referensi / Cek / Kwitansi</label>
             <input
               v-model="formReferenceNo"
               placeholder="Opsional"
-              class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
 
         <!-- Summary card + save -->
-        <div class="rounded-xl border bg-white p-4 dark:bg-zinc-900 space-y-3">
-          <h2 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ringkasan</h2>
+        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:bg-zinc-900 space-y-3">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ringkasan</h2>
           <div class="grid grid-cols-2 gap-2">
-            <div class="rounded-lg border bg-zinc-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-zinc-500">Total Debet</div>
-              <div class="mt-0.5 font-mono text-base font-bold text-emerald-700">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+              <div class="text-xs text-slate-500">Total Debet</div>
+              <div class="mt-0.5 font-mono text-sm font-bold text-emerald-700">
                 {{ totalDebet.toLocaleString('id-ID') }}
               </div>
             </div>
-            <div class="rounded-lg border bg-zinc-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-zinc-500">Total Kredit</div>
-              <div class="mt-0.5 font-mono text-base font-bold text-red-600">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+              <div class="text-xs text-slate-500">Total Kredit</div>
+              <div class="mt-0.5 font-mono text-sm font-bold text-red-600">
                 {{ totalKredit.toLocaleString('id-ID') }}
               </div>
             </div>
-            <div class="rounded-lg border bg-zinc-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-zinc-500">Selisih</div>
-              <div class="mt-0.5 font-mono text-base font-bold text-zinc-700">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+              <div class="text-xs text-slate-500">Selisih</div>
+              <div class="mt-0.5 font-mono text-sm font-bold text-slate-700">
                 {{ Math.abs(totalDebet - totalKredit).toLocaleString('id-ID') }}
               </div>
             </div>
             <div
               class="rounded-lg border p-3"
-              :class="isBalanced && formItems.length ? 'bg-green-50 border-green-200 dark:bg-green-900/20' : 'bg-zinc-50 dark:bg-zinc-800'"
+              :class="isBalanced && formItems.length ? 'bg-green-50 border-green-200 dark:bg-green-900/20' : 'bg-slate-50 border-slate-200 dark:bg-zinc-800'"
             >
-              <div class="text-xs text-zinc-500">Status</div>
+              <div class="text-xs text-slate-500">Status</div>
               <div
                 class="mt-0.5 text-sm font-bold"
-                :class="isBalanced && formItems.length ? 'text-green-700' : 'text-zinc-400'"
+                :class="isBalanced && formItems.length ? 'text-green-700' : 'text-slate-400'"
               >
                 {{ isBalanced && formItems.length ? '✓ Balance' : formItems.length ? '✗ Belum Balance' : '—' }}
               </div>
@@ -649,11 +655,12 @@ async function submitForm() {
           </div>
 
           <div class="flex gap-2 pt-1">
-            <Button variant="outline" class="flex-1" @click="router.push({ name: 'finance-transactions-general' })">
+            <Button variant="outline" size="sm" class="flex-1" @click="router.push({ name: 'finance-transactions-general' })">
               Batal
             </Button>
             <Button
               variant="success"
+              size="sm"
               class="flex-1"
               :disabled="saving || !isBalanced || formItems.length < 2"
               @click="submitForm"
@@ -667,7 +674,7 @@ async function submitForm() {
       <!-- RIGHT: detail table -->
       <div class="min-w-0 flex-1 space-y-0">
         <!-- Toolbar: add buttons -->
-        <div class="flex flex-wrap gap-2 rounded-t border bg-zinc-50 px-4 py-2.5 dark:bg-zinc-800/50">
+        <div class="flex flex-wrap gap-2 rounded-t border border-slate-200 bg-slate-50 px-3 py-2 dark:bg-zinc-800/50">
           <Button size="sm" variant="outline" @click="openDrawer('B')">+ Kas / Bank</Button>
           <Button size="sm" variant="outline" @click="openDrawer('D')">+ Penyaluran Dana</Button>
           <Button size="sm" variant="outline" @click="openDrawer('C')">+ Penghimpunan Dana</Button>
@@ -675,52 +682,52 @@ async function submitForm() {
         </div>
 
         <!-- Items table -->
-        <div class="overflow-x-auto rounded-b border">
+        <div class="overflow-x-auto rounded-b border border-slate-200">
           <table class="w-full text-xs">
-            <thead class="border-b bg-zinc-50 text-xs font-semibold text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400">
+            <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-zinc-800/50 dark:text-zinc-400">
               <tr>
-                <th class="px-3 py-2 text-left">Jenis</th>
-                <th class="px-3 py-2 text-left">Referensi</th>
-                <th class="px-3 py-2 text-center w-28">Mutasi</th>
-                <th class="px-3 py-2 text-right w-36">Jumlah (IDR)</th>
-                <th class="px-3 py-2 text-left">Keterangan</th>
-                <th class="px-3 py-2 w-16"></th>
+                <th class="px-3 py-1.5 text-left">Jenis</th>
+                <th class="px-3 py-1.5 text-left">Referensi</th>
+                <th class="px-3 py-1.5 text-center w-28">Mutasi</th>
+                <th class="px-3 py-1.5 text-right w-36">Jumlah (IDR)</th>
+                <th class="px-3 py-1.5 text-left">Keterangan</th>
+                <th class="px-3 py-1.5 w-16"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="formItems.length === 0">
-                <td colspan="6" class="px-3 py-8 text-center text-zinc-400">
+                <td colspan="6" class="px-3 py-6 text-center text-xs text-slate-400">
                   Belum ada item — klik tombol tambah di atas
                 </td>
               </tr>
-              <tr v-for="(item, idx) in formItems" :key="idx" class="border-t">
-                <td class="px-3 py-2">
+              <tr v-for="(item, idx) in formItems" :key="idx" class="border-t border-slate-100 hover:bg-indigo-50/40 even:bg-slate-50/50">
+                <td class="px-3 py-1.5">
                   <span :class="['rounded-full px-2 py-0.5 text-[10px] font-bold', ITEM_BADGES[item.item_type]]">
                     {{ ITEM_LABELS[item.item_type] }}
                   </span>
                 </td>
-                <td class="px-3 py-2 max-w-[200px] truncate text-zinc-600" :title="itemRef(item)">
+                <td class="px-3 py-1.5 max-w-[200px] truncate text-slate-600" :title="itemRef(item)">
                   {{ itemRef(item) }}
                 </td>
-                <td class="px-3 py-2 text-center">
+                <td class="px-3 py-1.5 text-center">
                   <span
                     class="font-semibold text-[10px]"
                     :class="item.mutation_type === 'D' ? 'text-emerald-700' : 'text-red-600'"
                   >
                     {{ item.mutation_type === 'D' ? 'Debet' : 'Kredit' }}
                   </span>
-                  <span v-if="item.valuta !== 'IDR'" class="ml-1 rounded bg-zinc-100 px-1 text-[10px] text-zinc-500">
+                  <span v-if="item.valuta !== 'IDR'" class="ml-1 rounded bg-slate-100 px-1 text-[10px] text-slate-500">
                     {{ item.valuta }}
                   </span>
                 </td>
-                <td class="px-3 py-2 text-right font-mono font-semibold">
+                <td class="px-3 py-1.5 text-right font-mono font-semibold text-slate-800">
                   {{ (item.amount ?? 0).toLocaleString('id-ID') }}
                 </td>
-                <td class="px-3 py-2 max-w-[120px] truncate text-zinc-500">{{ item.description || '—' }}</td>
-                <td class="px-3 py-2 text-center">
+                <td class="px-3 py-1.5 max-w-[120px] truncate text-slate-500">{{ item.description || '—' }}</td>
+                <td class="px-3 py-1.5 text-center">
                   <div class="flex justify-center gap-1">
                     <button
-                      class="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 text-sm"
+                      class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 text-sm"
                       title="Edit"
                       @click="openDrawer(item.item_type as 'G'|'B'|'C'|'D', idx)"
                     >✎</button>
@@ -756,13 +763,13 @@ async function submitForm() {
       >
         <aside class="relative flex h-full w-full max-w-[960px] flex-col bg-white shadow-2xl dark:bg-zinc-900">
           <!-- Drawer header -->
-          <div class="flex items-center justify-between border-b px-5 py-4">
-            <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-200">{{ drawerTitle }}</h2>
+          <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <h2 class="text-sm font-semibold text-slate-800 dark:text-zinc-200">{{ drawerTitle }}</h2>
             <button
-              class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+              class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
               @click="closeDrawer"
             >
-              <X class="h-5 w-5" />
+              <X class="h-4 w-4" />
             </button>
           </div>
 
@@ -770,18 +777,18 @@ async function submitForm() {
           <div class="flex min-h-0 flex-1">
 
             <!-- LEFT: type-specific form fields -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-5">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
 
               <!-- ── GL fields ─────────────────────────────────────────── -->
               <template v-if="drawerType === 'G'">
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Rekening Ledger (COA) <span class="text-red-500">*</span>
                   </label>
                   <select
                     :value="glAccountCode"
                     :disabled="coaLoading"
-                    class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     @change="onCoaSelect(($event.target as HTMLSelectElement).value)"
                   >
                     <option value="">{{ coaLoading ? 'Memuat...' : '— Pilih akun —' }}</option>
@@ -790,21 +797,21 @@ async function submitForm() {
                     </option>
                   </select>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Kode Anggaran</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Kode Anggaran</label>
                     <input
                       v-model="glKodeAnggaran"
                       placeholder="Opsional"
-                      class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Ket. Anggaran</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Ket. Anggaran</label>
                     <input
                       v-model="glKetAnggaran"
                       placeholder="Opsional"
-                      class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -813,41 +820,19 @@ async function submitForm() {
               <!-- ── KasBank fields ─────────────────────────────────────── -->
               <template v-else-if="drawerType === 'B'">
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Rekening Kas / Bank <span class="text-red-500">*</span>
                   </label>
-                  <div class="flex gap-2">
-                    <input
-                      v-model="kbSearch"
-                      placeholder="Cari kode / nama rekening..."
-                      class="flex-1 rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      @keyup.enter="searchKasBank"
-                    />
-                    <Button size="sm" variant="outline" :disabled="kbLoading" @click="searchKasBank">
-                      <Search class="h-3.5 w-3.5" />
-                      {{ kbLoading ? '...' : 'Cari' }}
-                    </Button>
+                  <div v-if="kbLoading" class="flex items-center gap-2 text-xs text-slate-400 py-1.5">
+                    <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-slate-300 border-t-indigo-500 rounded-full"></span>
+                    Memuat daftar rekening...
                   </div>
-                  <div v-if="kbShowResults && kbResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border bg-white shadow-sm dark:bg-zinc-900">
-                    <button
-                      v-for="r in kbResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b px-3 py-2 text-left text-sm last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      @click="selectKasBank(r)"
-                    >
-                      <span class="font-mono text-xs text-zinc-400">{{ r.account_no }}</span>
-                      <span>{{ r.account_name }}</span>
-                    </button>
-                  </div>
-                  <div v-if="kbShowResults && !kbResults.length" class="mt-1 rounded border bg-zinc-50 px-3 py-2 text-xs text-zinc-400">
-                    Tidak ada hasil
-                  </div>
-                  <div v-if="kbSelectedNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
-                    <span class="font-mono text-xs text-zinc-400">{{ kbSelectedNo }}</span>
-                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ kbSelectedName }}</span>
-                    <button class="ml-auto text-zinc-400 hover:text-red-500" @click="clearKasBank">
-                      <X class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <SearchSelect
+                    v-else
+                    v-model="kbSelectedValue"
+                    :options="kbOptions"
+                    placeholder="Cari kode / nama rekening..."
+                  />
                 </div>
               </template>
 
@@ -855,12 +840,12 @@ async function submitForm() {
               <template v-else-if="drawerType === 'C'">
                 <!-- Donatur -->
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">Donatur</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Donatur</label>
                   <div class="flex gap-2">
                     <input
                       v-model="phDonorSearch"
                       placeholder="Cari nama donatur..."
-                      class="flex-1 rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       @keyup.enter="searchDonor"
                     />
                     <Button size="sm" variant="outline" :disabled="phDonorLoading" @click="searchDonor">
@@ -868,30 +853,30 @@ async function submitForm() {
                       {{ phDonorLoading ? '...' : 'Cari' }}
                     </Button>
                   </div>
-                  <div v-if="phShowDonorResults && phDonorResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border bg-white shadow-sm dark:bg-zinc-900">
+                  <div v-if="phShowDonorResults && phDonorResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
                     <button
                       v-for="r in phDonorResults" :key="r.donor_id"
-                      class="flex w-full items-center gap-3 border-b px-3 py-2 text-left text-sm last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
                       @click="selectDonor(r)"
                     >
-                      <span class="font-mono text-xs text-zinc-400">{{ r.donor_no || '—' }}</span>
+                      <span class="font-mono text-xs text-slate-400">{{ r.donor_no || '—' }}</span>
                       <span>{{ r.donor_name }}</span>
                     </button>
                   </div>
                   <div class="mt-1.5 grid grid-cols-[100px_1fr] gap-2">
                     <div>
-                      <label class="mb-0.5 block text-[10px] text-zinc-400">Kode Donatur</label>
+                      <label class="mb-0.5 block text-[10px] text-slate-400 uppercase tracking-wide">Kode Donatur</label>
                       <input
                         v-model="phDonorNo"
                         placeholder="—"
-                        class="w-full rounded border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        class="w-full rounded border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
                     <div>
-                      <label class="mb-0.5 block text-[10px] text-zinc-400">Nama Donatur</label>
-                      <div class="flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-1.5 dark:bg-violet-900/20">
+                      <label class="mb-0.5 block text-[10px] text-slate-400 uppercase tracking-wide">Nama Donatur</label>
+                      <div class="flex items-center gap-2 rounded-lg bg-violet-50 border border-violet-100 px-3 py-1.5 dark:bg-violet-900/20">
                         <span class="flex-1 text-sm font-medium text-violet-800 dark:text-violet-300">{{ phDonorName }}</span>
-                        <button v-if="phDonorId" class="text-zinc-400 hover:text-red-500" @click="clearDonor">
+                        <button v-if="phDonorId" class="text-slate-400 hover:text-red-500" @click="clearDonor">
                           <X class="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -901,14 +886,14 @@ async function submitForm() {
 
                 <!-- Produk Penghimpunan -->
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Produk Penghimpunan <span class="text-red-500">*</span>
                   </label>
                   <div class="flex gap-2">
                     <input
                       v-model="phProdukSearch"
                       placeholder="Cari kode / nama produk..."
-                      class="flex-1 rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       @keyup.enter="searchProduk"
                     />
                     <Button size="sm" variant="outline" :disabled="phProdukLoading" @click="searchProduk">
@@ -916,28 +901,28 @@ async function submitForm() {
                       {{ phProdukLoading ? '...' : 'Cari' }}
                     </Button>
                   </div>
-                  <div v-if="phShowProdukResults && phProdukResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border bg-white shadow-sm dark:bg-zinc-900">
+                  <div v-if="phShowProdukResults && phProdukResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
                     <button
                       v-for="r in phProdukResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b px-3 py-2 text-left text-sm last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
                       @click="selectProduk(r)"
                     >
-                      <span class="font-mono text-xs text-zinc-400">{{ r.account_no }}</span>
+                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
                       <span>{{ r.account_name }}</span>
                     </button>
                   </div>
-                  <div v-if="phProdukNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
-                    <span class="font-mono text-xs text-zinc-400">{{ phProdukNo }}</span>
-                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ phProdukName }}</span>
-                    <button class="ml-auto text-zinc-400 hover:text-red-500" @click="clearProduk">
+                  <div v-if="phProdukNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
+                    <span class="font-mono text-xs text-slate-400">{{ phProdukNo }}</span>
+                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ phProdukName }}</span>
+                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearProduk">
                       <X class="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">Jenis Dana</label>
-                  <select v-model="phFundEntity" class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Jenis Dana</label>
+                  <select v-model="phFundEntity" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option v-for="o in FUND_ENTITY_PENGHIMPUNAN" :key="o.value" :value="o.value">{{ o.label }}</option>
                   </select>
                 </div>
@@ -947,14 +932,14 @@ async function submitForm() {
               <template v-else-if="drawerType === 'D'">
                 <!-- Program Penyaluran -->
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Nama Program <span class="text-red-500">*</span>
                   </label>
                   <div class="flex gap-2">
                     <input
                       v-model="pyProgramSearch"
                       placeholder="Cari kode / nama program..."
-                      class="flex-1 rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       @keyup.enter="searchProgram"
                     />
                     <Button size="sm" variant="outline" :disabled="pyProgramLoading" @click="searchProgram">
@@ -962,20 +947,20 @@ async function submitForm() {
                       {{ pyProgramLoading ? '...' : 'Cari' }}
                     </Button>
                   </div>
-                  <div v-if="pyShowProgramResults && pyProgramResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border bg-white shadow-sm dark:bg-zinc-900">
+                  <div v-if="pyShowProgramResults && pyProgramResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
                     <button
                       v-for="r in pyProgramResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b px-3 py-2 text-left text-sm last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
                       @click="selectProgram(r)"
                     >
-                      <span class="font-mono text-xs text-zinc-400">{{ r.account_no }}</span>
+                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
                       <span>{{ r.account_name }}</span>
                     </button>
                   </div>
-                  <div v-if="pyProgramNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
-                    <span class="font-mono text-xs text-zinc-400">{{ pyProgramNo }}</span>
-                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ pyProgramName }}</span>
-                    <button class="ml-auto text-zinc-400 hover:text-red-500" @click="clearProgram">
+                  <div v-if="pyProgramNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
+                    <span class="font-mono text-xs text-slate-400">{{ pyProgramNo }}</span>
+                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ pyProgramName }}</span>
+                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearProgram">
                       <X class="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -983,12 +968,12 @@ async function submitForm() {
 
                 <!-- Sumber Dana -->
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">Sumber Dana</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Sumber Dana</label>
                   <div class="flex gap-2">
                     <input
                       v-model="pySumberSearch"
                       placeholder="Cari rekening sumber dana..."
-                      class="flex-1 rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       @keyup.enter="searchSumber"
                     />
                     <Button size="sm" variant="outline" :disabled="pySumberLoading" @click="searchSumber">
@@ -996,35 +981,35 @@ async function submitForm() {
                       {{ pySumberLoading ? '...' : 'Cari' }}
                     </Button>
                   </div>
-                  <div v-if="pyShowSumberResults && pySumberResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border bg-white shadow-sm dark:bg-zinc-900">
+                  <div v-if="pyShowSumberResults && pySumberResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
                     <button
                       v-for="r in pySumberResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b px-3 py-2 text-left text-sm last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
                       @click="selectSumber(r)"
                     >
-                      <span class="font-mono text-xs text-zinc-400">{{ r.account_no }}</span>
+                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
                       <span>{{ r.account_name }}</span>
                     </button>
                   </div>
-                  <div v-if="pySumberNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-primary/5 px-3 py-2">
-                    <span class="font-mono text-xs text-zinc-400">{{ pySumberNo }}</span>
-                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ pySumberName }}</span>
-                    <button class="ml-auto text-zinc-400 hover:text-red-500" @click="clearSumber">
+                  <div v-if="pySumberNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
+                    <span class="font-mono text-xs text-slate-400">{{ pySumberNo }}</span>
+                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ pySumberName }}</span>
+                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearSumber">
                       <X class="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Jenis Dana</label>
-                    <select v-model="pyFundEntity" class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Jenis Dana</label>
+                    <select v-model="pyFundEntity" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                       <option v-for="o in FUND_ENTITY_ALL" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
                   </div>
                   <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Ashnaf</label>
-                    <select v-model="pyAshnaf" class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Ashnaf</label>
+                    <select v-model="pyAshnaf" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                       <option v-for="o in ASHNAF_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
                   </div>
@@ -1034,14 +1019,14 @@ async function submitForm() {
             </div><!-- end left form -->
 
             <!-- RIGHT: nominal panel -->
-            <div class="w-64 flex-shrink-0 overflow-y-auto border-l bg-zinc-50/80 p-4 space-y-4 dark:bg-zinc-800/50 dark:border-zinc-700">
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Nominal Transaksi</h3>
+            <div class="w-60 flex-shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-50/80 p-4 space-y-3 dark:bg-zinc-800/50 dark:border-zinc-700">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nominal Transaksi</h3>
 
               <div>
-                <label class="mb-1 block text-xs font-medium text-zinc-600">Jenis Mutasi</label>
+                <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Jenis Mutasi</label>
                 <select
                   v-model="drawerMutationType"
-                  class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option v-for="opt in mutationOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -1050,18 +1035,18 @@ async function submitForm() {
               </div>
 
               <div>
-                <label class="mb-1 block text-xs font-medium text-zinc-600">Valuta</label>
+                <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Valuta</label>
                 <select
                   v-model="drawerValuta"
-                  class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option v-for="v in VALUTA_OPTIONS" :key="v.value" :value="v.value">{{ v.label }}</option>
                 </select>
               </div>
 
               <div>
-                <label class="mb-1 block text-xs font-medium text-zinc-600">
-                  Nilai <span v-if="drawerValuta !== 'IDR'" class="text-zinc-400">({{ drawerValuta }})</span>
+                <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  Nilai <span v-if="drawerValuta !== 'IDR'" class="text-slate-400">({{ drawerValuta }})</span>
                   <span class="text-red-500">*</span>
                 </label>
                 <AmountInput v-model="drawerNilai" />
@@ -1069,48 +1054,48 @@ async function submitForm() {
 
               <template v-if="drawerValuta !== 'IDR'">
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-zinc-600">Kurs (ke IDR)</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Kurs (ke IDR)</label>
                   <input
                     v-model.number="drawerKurs"
                     type="number"
                     min="1"
                     step="1"
                     placeholder="Contoh: 15000"
-                    class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:bg-blue-900/20">
-                  <div class="text-[10px] text-zinc-500 mb-1">Ekuivalen IDR</div>
-                  <div class="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
+                <div class="rounded-lg border border-blue-200 bg-blue-50 p-2.5 dark:bg-blue-900/20">
+                  <div class="text-[10px] text-slate-500 mb-1">Ekuivalen IDR</div>
+                  <div class="font-mono text-sm font-bold text-blue-700 dark:text-blue-400">
                     {{ drawerEkuivalen.toLocaleString('id-ID') }}
                   </div>
-                  <div class="mt-1 text-[10px] text-zinc-400">
+                  <div class="mt-1 text-[10px] text-slate-400">
                     {{ (drawerNilai ?? 0).toLocaleString('id-ID') }} × {{ drawerKurs.toLocaleString('id-ID') }}
                   </div>
                 </div>
               </template>
 
               <div>
-                <label class="mb-1 block text-xs font-medium text-zinc-600">Keterangan</label>
+                <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Keterangan</label>
                 <input
                   v-model="drawerDescription"
                   placeholder="Opsional"
-                  class="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <!-- Summary preview -->
-              <div v-if="drawerNilai" class="rounded-lg border bg-white p-3 text-xs dark:bg-zinc-900">
-                <div class="flex justify-between text-zinc-500">
+              <div v-if="drawerNilai" class="rounded-lg border border-slate-200 bg-white p-2.5 text-xs dark:bg-zinc-900">
+                <div class="flex justify-between text-slate-500">
                   <span>Mutasi</span>
                   <span :class="drawerMutationType === 'D' ? 'font-semibold text-emerald-700' : 'font-semibold text-red-600'">
                     {{ drawerMutationType === 'D' ? 'Debet' : 'Kredit' }}
                   </span>
                 </div>
                 <div class="mt-1 flex justify-between">
-                  <span class="text-zinc-500">IDR</span>
-                  <span class="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                  <span class="text-slate-500">IDR</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-zinc-200">
                     {{ drawerEkuivalen.toLocaleString('id-ID') }}
                   </span>
                 </div>
@@ -1120,9 +1105,9 @@ async function submitForm() {
           </div><!-- end drawer body -->
 
           <!-- Drawer footer -->
-          <div class="flex justify-end gap-2 border-t px-5 py-3 dark:border-zinc-700">
-            <Button variant="outline" @click="closeDrawer">Batal</Button>
-            <Button variant="success" @click="saveDrawerItem">Simpan Detail</Button>
+          <div class="flex justify-end gap-2 border-t border-slate-200 px-4 py-2.5 dark:border-zinc-700">
+            <Button variant="outline" size="sm" @click="closeDrawer">Batal</Button>
+            <Button variant="success" size="sm" @click="saveDrawerItem">Simpan Detail</Button>
           </div>
         </aside>
       </div>
