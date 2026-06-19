@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, Search, Trash2, X } from 'lucide-vue-next'
+import { ArrowLeft, BookOpen, RefreshCw, Search, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -559,6 +559,11 @@ watch(drawerValuta, (v) => {
   if (v === 'IDR') drawerKurs.value = 1
 })
 
+// ── Reset Detail ──────────────────────────────────────────────────────────────
+function resetDetail() {
+  formItems.value = []
+}
+
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function submitForm() {
   formError.value = null
@@ -613,97 +618,135 @@ async function submitForm() {
       <div class="w-full space-y-3 lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-[64px]">
 
         <!-- Header form card -->
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:bg-zinc-900 space-y-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Header Transaksi</h2>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Tanggal Transaksi</label>
-            <DateField v-model="formDate" />
+        <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+          <!-- Card header bar -->
+          <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+            <h2 class="font-bold text-xs tracking-widest text-white uppercase">Header Transaksi</h2>
+            <span class="bg-slate-600 text-white text-xs px-2 py-0.5 rounded">DRAFT</span>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
-              Deskripsi <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="formDescription"
-              placeholder="Keterangan transaksi..."
-              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">No. Referensi / Cek / Kwitansi</label>
-            <input
-              v-model="formReferenceNo"
-              placeholder="Opsional"
-              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <!-- Card body -->
+          <div class="p-4 space-y-3">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tanggal Transaksi</label>
+              <DateField v-model="formDate" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Keterangan Transaksi <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                v-model="formDescription"
+                placeholder="Keterangan transaksi..."
+                rows="3"
+                class="w-full border border-slate-200 rounded px-3 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y min-h-[72px]"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi / Cek / Kwitansi</label>
+              <input
+                v-model="formReferenceNo"
+                placeholder="Opsional"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
           </div>
         </div>
 
         <!-- Summary card + save -->
-        <div class="rounded-lg border border-slate-200 bg-white p-4 dark:bg-zinc-900 space-y-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ringkasan</h2>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-slate-500">Total Debet</div>
-              <div class="mt-0.5 font-mono text-sm font-bold text-emerald-700">
-                {{ totalDebet.toLocaleString('id-ID') }}
-              </div>
-            </div>
-            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-slate-500">Total Kredit</div>
-              <div class="mt-0.5 font-mono text-sm font-bold text-red-600">
-                {{ totalKredit.toLocaleString('id-ID') }}
-              </div>
-            </div>
-            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
-              <div class="text-xs text-slate-500">Selisih</div>
-              <div class="mt-0.5 font-mono text-sm font-bold text-slate-700">
-                {{ Math.abs(totalDebet - totalKredit).toLocaleString('id-ID') }}
-              </div>
-            </div>
-            <div
-              class="rounded-lg border p-3"
-              :class="isBalanced && formItems.length ? 'bg-green-50 border-green-200 dark:bg-green-900/20' : 'bg-slate-50 border-slate-200 dark:bg-zinc-800'"
+        <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+          <!-- Card header bar -->
+          <div class="flex items-center justify-between bg-slate-700 px-4 py-2">
+            <h2 class="font-bold text-xs tracking-widest text-white uppercase">Ringkasan</h2>
+            <span
+              class="text-xs px-2 py-0.5 rounded font-semibold"
+              :class="isBalanced && formItems.length ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'"
             >
-              <div class="text-xs text-slate-500">Status</div>
-              <div
-                class="mt-0.5 text-sm font-bold"
-                :class="isBalanced && formItems.length ? 'text-green-700' : 'text-slate-400'"
-              >
-                {{ isBalanced && formItems.length ? '✓ Balance' : formItems.length ? '✗ Belum Balance' : '—' }}
-              </div>
-            </div>
+              {{ isBalanced && formItems.length ? '• Balance' : '• Belum Balance' }}
+            </span>
           </div>
+          <!-- Card body -->
+          <div class="p-4 space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+                <div class="text-xs text-slate-500">Total Debet</div>
+                <div class="mt-0.5 font-mono text-sm font-bold text-emerald-700">
+                  {{ totalDebet.toLocaleString('id-ID') }}
+                </div>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+                <div class="text-xs text-slate-500">Total Kredit</div>
+                <div class="mt-0.5 font-mono text-sm font-bold text-red-600">
+                  {{ totalKredit.toLocaleString('id-ID') }}
+                </div>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-zinc-800">
+                <div class="text-xs text-slate-500">Selisih</div>
+                <div class="mt-0.5 font-mono text-sm font-bold text-slate-700">
+                  {{ Math.abs(totalDebet - totalKredit).toLocaleString('id-ID') }}
+                </div>
+              </div>
+              <div
+                class="rounded-lg border p-3"
+                :class="isBalanced && formItems.length ? 'bg-green-50 border-green-200 dark:bg-green-900/20' : 'bg-slate-50 border-slate-200 dark:bg-zinc-800'"
+              >
+                <div class="text-xs text-slate-500">Status</div>
+                <div
+                  class="mt-0.5 text-sm font-bold"
+                  :class="isBalanced && formItems.length ? 'text-green-700' : 'text-slate-400'"
+                >
+                  {{ isBalanced && formItems.length ? '✓ Balance' : formItems.length ? '✗ Belum Balance' : '—' }}
+                </div>
+              </div>
+            </div>
 
-          <div class="flex gap-2 pt-1">
-            <Button variant="outline" size="sm" class="flex-1" @click="router.push({ name: 'finance-transactions-general' })">
-              Batal
-            </Button>
-            <Button
-              variant="success"
-              size="sm"
-              class="flex-1"
-              :disabled="saving || !isBalanced || formItems.length < 2"
-              @click="submitForm"
-            >
-              {{ saving ? 'Menyimpan...' : 'Simpan' }}
-            </Button>
+            <div class="flex gap-2 pt-1">
+              <button
+                class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+                @click="router.push({ name: 'finance-transactions-general' })"
+              >
+                Batal
+              </button>
+              <button
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="saving || !isBalanced || formItems.length < 2"
+                @click="submitForm"
+              >
+                {{ saving ? 'Menyimpan...' : 'Simpan Transaksi' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- RIGHT: detail table -->
-      <div class="min-w-0 flex-1 space-y-0">
+      <div class="min-w-0 flex-1 space-y-0 rounded-lg border border-slate-200 overflow-hidden">
+        <!-- Detail Transaksi header bar -->
+        <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+          <h2 class="font-bold text-xs tracking-widest text-white uppercase">Detail Transaksi</h2>
+          <span class="bg-slate-600 text-white text-xs px-2 py-0.5 rounded">
+            {{ formItems.length }} item
+          </span>
+        </div>
         <!-- Toolbar: add buttons -->
-        <div class="flex flex-wrap gap-2 rounded-t border border-slate-200 bg-slate-50 px-3 py-2 dark:bg-zinc-800/50">
+        <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:bg-zinc-800/50">
           <Button size="sm" variant="outline" @click="openDrawer('B')">+ Kas / Bank</Button>
           <Button size="sm" variant="outline" @click="openDrawer('D')">+ Penyaluran Dana</Button>
           <Button size="sm" variant="outline" @click="openDrawer('C')">+ Penghimpunan Dana</Button>
           <Button size="sm" variant="outline" @click="openDrawer('G')">+ GL Accounting</Button>
+          <div class="ml-auto">
+            <button
+              v-if="formItems.length > 0"
+              class="flex items-center gap-1.5 border border-red-300 text-red-600 hover:bg-red-50 text-xs px-3 py-1.5 rounded"
+              @click="resetDetail"
+            >
+              <RefreshCw class="h-3 w-3" />
+              Reset Detail
+            </button>
+          </div>
         </div>
 
         <!-- Items table -->
-        <div class="overflow-x-auto rounded-b border border-slate-200">
+        <div class="overflow-x-auto">
           <table class="w-full text-xs">
             <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-zinc-800/50 dark:text-zinc-400">
               <tr>
