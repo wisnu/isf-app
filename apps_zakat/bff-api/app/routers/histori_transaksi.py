@@ -8,7 +8,7 @@ from app.services.proxy import get_api_python, post_api_python, stream_api_pytho
 
 router = APIRouter(prefix='/transaksi-histori', tags=['transaksi-histori'])
 
-_MENU = 'keuangan.transaksi.histori'
+_MENU = 'finance.transactions.history'
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 

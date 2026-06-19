@@ -10,8 +10,8 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/transaksi', tags=['transaksi'])
 
-_MENU_UPLOAD = 'keuangan.upload.zis-rutin'
-_MENU_LIST = 'keuangan.upload.zis-rutin-list'
+_MENU_UPLOAD = 'finance.upload.zis_routine'
+_MENU_LIST = 'finance.upload.zis_routine_list'
 
 
 def _branch_for_session(request: Request) -> str:

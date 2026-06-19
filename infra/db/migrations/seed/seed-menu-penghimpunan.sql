@@ -3,10 +3,10 @@
 
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.transaksi.penghimpunan',
+  'finance.transactions.fund_collection',
   'Input Penghimpunan Dana',
   'Keuangan',
-  '/keuangan/transaksi/penghimpunan',
+  '/finance/transactions/fund-collection',
   145,
   'A'
 )
@@ -19,5 +19,5 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- Role: ACC (dari AllowedGroups legacy)
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
-  ('ACC', 'keuangan.transaksi.penghimpunan', 'system')
+  ('ACC', 'finance.transactions.fund_collection', 'system')
 ON CONFLICT DO NOTHING;

@@ -10,7 +10,7 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/penghimpunan', tags=['penghimpunan'])
 
-_MENU = 'keuangan.transaksi.penghimpunan'
+_MENU = 'finance.transactions.fund_collection'
 
 
 def _session(request: Request) -> dict:

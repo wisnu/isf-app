@@ -10,7 +10,7 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/transaksi/uang-muka', tags=['uang-muka'])
 
-_MENU = 'keuangan.transaksi.uang-muka-penyerahan'
+_MENU = 'finance.transactions.cash_advance'
 
 
 def _session(request: Request) -> dict:

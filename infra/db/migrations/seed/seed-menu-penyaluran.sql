@@ -2,10 +2,10 @@
 
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.transaksi.penyaluran',
+  'finance.transactions.fund_distribution',
   'Input Penyaluran Dana',
   'Keuangan',
-  '/keuangan/transaksi/penyaluran',
+  '/finance/transactions/fund-distribution',
   146,
   'A'
 )
@@ -18,9 +18,9 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- Role assignments: keuangan, distribusi, admin
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
-  ('KEU',     'keuangan.transaksi.penyaluran', 'system'),
-  ('SPVKEU',  'keuangan.transaksi.penyaluran', 'system'),
-  ('SPVDIST', 'keuangan.transaksi.penyaluran', 'system'),
-  ('DIST',    'keuangan.transaksi.penyaluran', 'system'),
-  ('ADM',     'keuangan.transaksi.penyaluran', 'system')
+  ('KEU',     'finance.transactions.fund_distribution', 'system'),
+  ('SPVKEU',  'finance.transactions.fund_distribution', 'system'),
+  ('SPVDIST', 'finance.transactions.fund_distribution', 'system'),
+  ('DIST',    'finance.transactions.fund_distribution', 'system'),
+  ('ADM',     'finance.transactions.fund_distribution', 'system')
 ON CONFLICT DO NOTHING;

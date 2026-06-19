@@ -4,8 +4,8 @@
 -- Tanggal: 2026-06-17
 
 -- 3-Way Consistency Check:
--- registry.ts: keuangan.piutang.pinjam-bayar → [x] DITAMBAH di registry.ts
--- router.ts:   /keuangan/transaksi/piutang → [x] DITAMBAH di router/index.ts
+-- registry.ts: finance.transactions.receivable → [x] DITAMBAH di registry.ts
+-- router.ts:   /finance/transactions/receivable → [x] DITAMBAH di router/index.ts
 -- seed SQL:    [x] FILE INI
 
 -- ============================================================================
@@ -15,7 +15,7 @@
 -- Parent: Piutang (baru — belum ada)
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.piutang',
+  'finance.receivable',
   'Piutang',
   'Keuangan',
   NULL,
@@ -30,10 +30,10 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- Child: Piutang - Pinjam/Bayar
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.piutang.pinjam-bayar',
+  'finance.transactions.receivable',
   'Pinjam/Bayar',
   'Keuangan',
-  '/keuangan/transaksi/piutang',
+  '/finance/transactions/receivable',
   161,
   'A'
 )
@@ -50,7 +50,7 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- ACC (Accounting) — full akses ke Piutang Pinjam/Bayar
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
-  ('ACC', 'keuangan.piutang.pinjam-bayar', 'system')
+  ('ACC', 'finance.transactions.receivable', 'system')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
@@ -66,6 +66,6 @@ VALUES (
   'keuangan',
   1,
   'Piutang Pinjam/Bayar',
-  'keuangan.monitoring.otorisasi'
+  'finance.monitoring.authorization'
 )
 ON CONFLICT (entity_type) DO NOTHING;

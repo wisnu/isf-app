@@ -10,7 +10,7 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/piutang', tags=['piutang'])
 
-_MENU = 'keuangan.piutang.pinjam-bayar'
+_MENU = 'finance.transactions.receivable'
 
 
 def _session(request: Request) -> dict:

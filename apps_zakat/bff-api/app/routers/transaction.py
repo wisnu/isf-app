@@ -11,8 +11,8 @@ from app.shared.response import err
 
 router = APIRouter(prefix='/transaction', tags=['transaction'])
 
-_UPLOAD_MENU = 'keuangan.upload.penghimpunan'
-_APPROVE_MENU = 'keuangan.upload.penghimpunan.approve'
+_UPLOAD_MENU = 'finance.upload.collection'
+_APPROVE_MENU = 'finance.upload.collection.approve'
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 

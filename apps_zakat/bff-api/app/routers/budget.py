@@ -15,9 +15,9 @@ from app.shared.response import ok
 
 router = APIRouter(prefix="/budget", tags=["budget"])
 
-_MENU_INQUIRY = "keuangan.anggaran.inquiry"
-_MENU_REVISI = "keuangan.anggaran.revisi"
-_MENU_IMPORT = "keuangan.anggaran.import"
+_MENU_INQUIRY = "finance.budget.inquiry"
+_MENU_REVISI = "finance.budget.revise"
+_MENU_IMPORT = "finance.budget.import"
 
 
 def _session(request: Request) -> dict:
@@ -96,8 +96,8 @@ async def search_codes(
 # Parameter master endpoints (BudgetItem + BudgetPeriod)
 # ---------------------------------------------------------------------------
 
-_MENU_PARAM = "keuangan.parameter.anggaran.item"
-_MENU_PERIOD = "keuangan.parameter.anggaran.periode"
+_MENU_PARAM = "finance.parameter.budget.item"
+_MENU_PERIOD = "finance.parameter.budget.period"
 
 
 @router.get("/parameter/items")

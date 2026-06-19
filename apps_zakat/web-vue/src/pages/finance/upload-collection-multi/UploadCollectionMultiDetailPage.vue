@@ -50,7 +50,7 @@ const approveError = shallowRef<string | null>(null)
 const canApprove = computed(
   () =>
     detail.value?.authstatus === 'P' &&
-    auth.hasMenu('keuangan.upload.penghimpunan.approve'),
+    auth.hasMenu('finance.upload.collection.approve'),
 )
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)

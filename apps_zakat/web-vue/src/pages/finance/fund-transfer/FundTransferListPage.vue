@@ -107,7 +107,7 @@ function authClass(status: string) {
     <PageHeader title="Transfer Antar Rekening" subtitle="Transfer dana antara rekening kas dan bank">
       <template #actions>
         <Button
-          v-if="auth.hasMenu('keuangan.transaksi.transfer-antar-rekening' as MenuKey)"
+          v-if="auth.hasMenu('finance.transactions.fund_transfer' as MenuKey)"
           size="sm"
           class="gap-1.5 h-8 text-xs"
           @click="router.push({ name: 'finance-transactions-fund-transfer-create' })"

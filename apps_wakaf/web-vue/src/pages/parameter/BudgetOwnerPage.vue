@@ -86,7 +86,7 @@ onMounted(loadData)
     <PageHeader title="Pemilik Anggaran" subtitle="Master data pemilik / penanggung jawab anggaran">
       <template #actions>
         <Button
-          v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.tambah')"
+          v-if="auth.hasMenu('finance.parameter.budget_owner.create')"
           size="sm"
           class="gap-1.5 h-8 text-xs"
           @click="openCreate"
@@ -188,7 +188,7 @@ onMounted(loadData)
               </td>
               <td class="px-4 py-1">
                 <div class="flex items-center justify-end gap-1">
-                  <Tooltip v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.ubah')" side="top">
+                  <Tooltip v-if="auth.hasMenu('finance.parameter.budget_owner.edit')" side="top">
                     <template #trigger>
                       <button
                         class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -199,7 +199,7 @@ onMounted(loadData)
                     </template>
                     Ubah
                   </Tooltip>
-                  <Tooltip v-if="auth.hasMenu('keuangan.parameter.pemilik-anggaran.hapus')" side="top">
+                  <Tooltip v-if="auth.hasMenu('finance.parameter.budget_owner.delete')" side="top">
                     <template #trigger>
                       <button
                         class="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"

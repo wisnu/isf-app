@@ -11,7 +11,7 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/transaksi-umum', tags=['transaksi-umum'])
 
-_MENU = 'keuangan.transaksi.umum'
+_MENU = 'finance.transactions.general'
 
 
 def _session(request: Request) -> dict:

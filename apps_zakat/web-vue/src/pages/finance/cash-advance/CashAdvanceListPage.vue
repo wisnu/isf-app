@@ -128,7 +128,7 @@ onMounted(load)
   <div class="space-y-0">
     <PageHeader title="Penyerahan Uang Muka" subtitle="Daftar transaksi penyerahan uang muka kepada karyawan">
       <template #actions>
-        <Button v-if="auth.hasMenu('keuangan.transaksi.uang-muka-penyerahan' as MenuKey)" size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'finance-transactions-cash-advance-create' })">
+        <Button v-if="auth.hasMenu('finance.transactions.cash_advance' as MenuKey)" size="sm" class="gap-1.5 h-8 text-xs" @click="router.push({ name: 'finance-transactions-cash-advance-create' })">
           <Plus class="w-3.5 h-3.5" />
           Input Baru
         </Button>

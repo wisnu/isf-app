@@ -8,7 +8,7 @@ from app.services.proxy import get_api_python, post_api_python
 
 router = APIRouter(prefix="/kas-kecil", tags=["kas-kecil"])
 
-_MENU = "keuangan.kas_kecil"
+_MENU = "finance.petty_cash"
 
 
 @router.get("/accounts")

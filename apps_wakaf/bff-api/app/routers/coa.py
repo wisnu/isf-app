@@ -30,7 +30,7 @@ def _build_passthrough_params(
 @router.get("/accounts")
 async def accounts(
     request: Request,
-    _: str = Depends(require_menu("keuangan.coa")),
+    _: str = Depends(require_menu("finance.coa")),
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     is_detail: str | None = Query(default=None),
@@ -52,7 +52,7 @@ async def accounts(
 @router.get("/accounts.xlsx")
 async def accounts_xlsx(
     request: Request,
-    _: str = Depends(require_menu("keuangan.coa")),
+    _: str = Depends(require_menu("finance.coa")),
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     is_detail: str | None = Query(default=None),

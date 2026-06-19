@@ -296,7 +296,7 @@ async function submitDelete() {
               <td class="px-4 py-2 text-right" @click.stop>
                 <div class="flex items-center justify-end gap-1">
                   <button
-                    v-if="auth.hasMenu('keuangan.upload.zis-rutin' as MenuKey)"
+                    v-if="auth.hasMenu('finance.upload.zis_routine' as MenuKey)"
                     class="p-1 rounded hover:bg-muted transition-colors"
                     title="Update Tanggal"
                     @click="openUpdateDate(row)"
@@ -304,7 +304,7 @@ async function submitDelete() {
                     <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                   <button
-                    v-if="auth.hasMenu('keuangan.upload.zis-rutin' as MenuKey)"
+                    v-if="auth.hasMenu('finance.upload.zis_routine' as MenuKey)"
                     class="p-1 rounded hover:bg-muted transition-colors"
                     title="Hapus"
                     @click="openDelete(row)"

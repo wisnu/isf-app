@@ -10,7 +10,7 @@ from app.shared.config import settings
 
 router = APIRouter(prefix='/transaksi/transfer-antar-rekening', tags=['transfer-antar-rekening'])
 
-_MENU = 'keuangan.transaksi.transfer-antar-rekening'
+_MENU = 'finance.transactions.fund_transfer'
 
 
 def _session(request: Request) -> dict:

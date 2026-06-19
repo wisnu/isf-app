@@ -4,10 +4,10 @@
 
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.kas_kecil',
+  'finance.petty_cash',
   'Kas Kecil',
   'Keuangan',
-  '/keuangan/kas-kecil',
+  '/finance/petty-cash',
   135,
   'A'
 )
@@ -21,7 +21,7 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- Roles: ADM, KEU, ACC
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
-  ('ADM', 'keuangan.kas_kecil', 'system'),
-  ('KEU', 'keuangan.kas_kecil', 'system'),
-  ('ACC', 'keuangan.kas_kecil', 'system')
+  ('ADM', 'finance.petty_cash', 'system'),
+  ('KEU', 'finance.petty_cash', 'system'),
+  ('ACC', 'finance.petty_cash', 'system')
 ON CONFLICT DO NOTHING;

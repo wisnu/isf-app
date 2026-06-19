@@ -12,7 +12,7 @@ router = APIRouter(prefix="/bank", tags=["bank"])
 @router.get("/accounts")
 async def accounts(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
     search: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=500),
@@ -33,7 +33,7 @@ async def accounts(
 async def get_account(
     request: Request,
     account_no: str,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
 ):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
@@ -46,7 +46,7 @@ async def get_account(
 @router.get("/lookup/banks")
 async def lookup_banks(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
 ):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
@@ -59,7 +59,7 @@ async def lookup_banks(
 @router.get("/lookup/branches")
 async def lookup_branches(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
 ):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
@@ -72,7 +72,7 @@ async def lookup_branches(
 @router.get("/lookup/currencies")
 async def lookup_currencies(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
 ):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
@@ -85,7 +85,7 @@ async def lookup_currencies(
 @router.get("/lookup/gl_accounts")
 async def lookup_gl_accounts(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
     search: str | None = Query(default=None),
 ):
     _, error_response = await current_user_id_or_401(request)
@@ -103,7 +103,7 @@ async def lookup_gl_accounts(
 @router.get("/lookup/products")
 async def lookup_products(
     request: Request,
-    _: str = Depends(require_menu("keuangan.bank")),
+    _: str = Depends(require_menu("finance.bank")),
     search: str | None = Query(default=None),
 ):
     _, error_response = await current_user_id_or_401(request)

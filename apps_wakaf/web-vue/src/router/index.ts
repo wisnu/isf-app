@@ -28,19 +28,19 @@ const router = createRouter({
       path: '/finance/coa',
       name: 'finance-coa',
       component: () => import('@/pages/finance/CoaPage.vue'),
-      meta: { title: 'Chart of Accounts', menu_key: 'keuangan.coa' as MenuKey },
+      meta: { title: 'Chart of Accounts', menu_key: 'finance.coa' as MenuKey },
     },
     {
       path: '/finance/cash',
       name: 'finance-cash',
       component: () => import('@/pages/finance/KasPage.vue'),
-      meta: { title: 'Manajemen Kas', menu_key: 'keuangan.kas' as MenuKey },
+      meta: { title: 'Manajemen Kas', menu_key: 'finance.cash' as MenuKey },
     },
     {
       path: '/finance/bank',
       name: 'finance-bank',
       component: () => import('@/pages/finance/BankPage.vue'),
-      meta: { title: 'Manajemen Bank', menu_key: 'keuangan.bank' as MenuKey },
+      meta: { title: 'Manajemen Bank', menu_key: 'finance.bank' as MenuKey },
     },
     {
       path: '/finance/reports/daily-journal',
@@ -48,7 +48,7 @@ const router = createRouter({
       component: () => import('@/pages/finance/reports/ReportDailyJournalPage.vue'),
       meta: {
         title: 'Laporan Jurnal Harian',
-        menu_key: 'keuangan.report.journal_daily' as MenuKey,
+        menu_key: 'finance.reports.daily_journal' as MenuKey,
       },
     },
     {
@@ -57,7 +57,7 @@ const router = createRouter({
       component: () => import('@/pages/finance/reports/ReportGeneralTransactionPage.vue'),
       meta: {
         title: 'List Transaksi Umum',
-        menu_key: 'keuangan.report.general_transaction' as MenuKey,
+        menu_key: 'finance.reports.general_transaction' as MenuKey,
       },
     },
     {
@@ -66,7 +66,7 @@ const router = createRouter({
       component: () => import('@/pages/finance/reports/ReportCashDailyPage.vue'),
       meta: {
         title: 'Transaksi Kas/Bank Harian',
-        menu_key: 'keuangan.report.cash_daily' as MenuKey,
+        menu_key: 'finance.reports.daily_cash' as MenuKey,
       },
     },
     {
@@ -75,7 +75,7 @@ const router = createRouter({
       component: () => import('@/pages/finance/reports/ReportCashSummaryPage.vue'),
       meta: {
         title: 'Rekapitulasi Transaksi Kas/Bank',
-        menu_key: 'keuangan.report.cash_summary' as MenuKey,
+        menu_key: 'finance.reports.cash_summary' as MenuKey,
       },
     },
     {
@@ -84,26 +84,26 @@ const router = createRouter({
       component: () => import('@/pages/finance/reports/ReportCashMonthlyPage.vue'),
       meta: {
         title: 'Monitoring Saldo Kas/Bank Bulanan',
-        menu_key: 'keuangan.report.cash_monthly' as MenuKey,
+        menu_key: 'finance.reports.monthly_balance' as MenuKey,
       },
     },
     {
       path: '/dashboard/finance',
       name: 'dashboard-finance',
       component: () => import('@/pages/DashboardFinancePage.vue'),
-      meta: { title: 'Dashboard Keuangan', menu_key: 'dashboard.keuangan' as MenuKey },
+      meta: { title: 'Dashboard Keuangan', menu_key: 'dashboard.finance' as MenuKey },
     },
     {
       path: '/dashboard/distribution',
       name: 'dashboard-distribution',
       component: () => import('@/pages/DashboardDistributionPage.vue'),
-      meta: { title: 'Dashboard Penyaluran', menu_key: 'dashboard.penyaluran' as MenuKey },
+      meta: { title: 'Dashboard Penyaluran', menu_key: 'dashboard.distribution' as MenuKey },
     },
     {
       path: '/dashboard/collection',
       name: 'dashboard-collection',
       component: () => import('@/pages/DashboardCollectionPage.vue'),
-      meta: { title: 'Dashboard Penghimpunan', menu_key: 'dashboard.penghimpunan' as MenuKey },
+      meta: { title: 'Dashboard Penghimpunan', menu_key: 'dashboard.collection' as MenuKey },
     },
     {
       path: '/admin/role-menu',
@@ -127,7 +127,7 @@ const router = createRouter({
       path: '/parameter/budget-owner',
       name: 'parameter-budget-owner',
       component: () => import('@/pages/parameter/BudgetOwnerPage.vue'),
-      meta: { title: 'Pemilik Anggaran', menu_key: 'keuangan.parameter.pemilik-anggaran' as MenuKey },
+      meta: { title: 'Pemilik Anggaran', menu_key: 'finance.parameter.budget_owner' as MenuKey },
     },
     { path: '/:catchAll(.*)', redirect: '/' },
   ],

@@ -12,15 +12,15 @@ from app.shared.response import err, ok
 router = APIRouter(prefix='/otorisasi', tags=['otorisasi'])
 
 _ENTITY_MENU: dict[str, str] = {
-    'penghimpunan':        'keuangan.transaksi.penghimpunan',
-    'penyaluran':          'keuangan.transaksi.penyaluran',
-    'upload_penghimpunan': 'keuangan.upload.penghimpunan',
-    'coa':                 'keuangan.coa',
-    'kas':                 'keuangan.kas',
-    'bank':                'keuangan.bank',
-    'transaksi_umum':      'keuangan.transaksi.umum',
+    'penghimpunan':        'finance.transactions.fund_collection',
+    'penyaluran':          'finance.transactions.fund_distribution',
+    'upload_penghimpunan': 'finance.upload.collection',
+    'coa':                 'finance.coa',
+    'kas':                 'finance.cash',
+    'bank':                'finance.bank',
+    'transaksi_umum':      'finance.transactions.general',
 }
-_MENU_MONITORING = 'keuangan.monitoring.otorisasi'
+_MENU_MONITORING = 'finance.monitoring.authorization'
 
 
 def _session(request: Request) -> dict:

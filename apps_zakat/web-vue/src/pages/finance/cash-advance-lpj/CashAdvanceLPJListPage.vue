@@ -121,7 +121,7 @@ onMounted(load)
     >
       <template #actions>
         <Button
-          v-if="auth.hasMenu('keuangan.transaksi.uang-muka-pengembalian' as MenuKey)"
+          v-if="auth.hasMenu('finance.transactions.cash_advance_lpj' as MenuKey)"
           size="sm"
           class="gap-1.5 h-8 text-xs"
           @click="router.push({ name: 'finance-transactions-cash-advance-lpj-create' })"

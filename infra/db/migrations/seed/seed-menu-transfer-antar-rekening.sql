@@ -4,17 +4,17 @@
 -- Tanggal: 2026-06-15
 
 -- 3-Way Consistency Check:
--- registry.ts: keuangan.transaksi.transfer-antar-rekening → [x] DITAMBAH di registry.ts
--- router.ts:   /keuangan/transaksi/transfer-antar-rekening → [x] DITAMBAH di router/index.ts
+-- registry.ts: finance.transactions.fund_transfer → [x] DITAMBAH di registry.ts
+-- router.ts:   /finance/transactions/fund-transfer → [x] DITAMBAH di router/index.ts
 -- seed SQL:    [x] FILE INI
 
 -- 1. Menu entry
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.transaksi.transfer-antar-rekening',
+  'finance.transactions.fund_transfer',
   'Transfer Antar Rekening',
   'Keuangan',
-  '/keuangan/transaksi/transfer-antar-rekening',
+  '/finance/transactions/fund-transfer',
   148,
   'A'
 )
@@ -26,8 +26,8 @@ ON CONFLICT (menu_key) DO UPDATE SET
 
 -- 2. Role assignments — KEU, ACC, SPVKEU, ADM dapat akses
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
-  ('KEU',    'keuangan.transaksi.transfer-antar-rekening', 'system'),
-  ('ACC',    'keuangan.transaksi.transfer-antar-rekening', 'system'),
-  ('SPVKEU', 'keuangan.transaksi.transfer-antar-rekening', 'system'),
-  ('ADM',    'keuangan.transaksi.transfer-antar-rekening', 'system')
+  ('KEU',    'finance.transactions.fund_transfer', 'system'),
+  ('ACC',    'finance.transactions.fund_transfer', 'system'),
+  ('SPVKEU', 'finance.transactions.fund_transfer', 'system'),
+  ('ADM',    'finance.transactions.fund_transfer', 'system')
 ON CONFLICT DO NOTHING;

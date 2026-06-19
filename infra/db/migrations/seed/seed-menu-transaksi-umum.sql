@@ -3,16 +3,16 @@
 -- Tanggal: 2026-06-17
 
 -- 3-Way Consistency Check:
--- registry.ts: keuangan.transaksi.umum → [x] DITAMBAH di registry.ts
--- router.ts:   /keuangan/transaksi/umum → [x] DITAMBAH di router/index.ts
+-- registry.ts: finance.transactions.general → [x] DITAMBAH di registry.ts
+-- router.ts:   /finance/transactions/general → [x] DITAMBAH di router/index.ts
 -- seed SQL:    [x] FILE INI
 
 INSERT INTO isf_auth.menu (menu_key, label, group_label, route_path, sort_order, status)
 VALUES (
-  'keuangan.transaksi.umum',
+  'finance.transactions.general',
   'Transaksi Umum',
   'Keuangan',
-  '/keuangan/transaksi/umum',
+  '/finance/transactions/general',
   149,
   'A'
 )
@@ -25,11 +25,11 @@ ON CONFLICT (menu_key) DO UPDATE SET
 -- Role: ACC (Accounting) — inputer transaksi umum
 INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
 VALUES
-  ('ACC', 'keuangan.transaksi.umum', 'system')
+  ('ACC', 'finance.transactions.general', 'system')
 ON CONFLICT DO NOTHING;
 
 -- Otorisasi entity_config (apply to mziss_laz ONLY)
 -- Maps 'transaksi_umum' entity type to otorisasi workflow
 INSERT INTO otorisasi.entity_config (entity_type, module, level_required, label, menu_key)
-VALUES ('transaksi_umum', 'keuangan', 1, 'Transaksi Umum', 'keuangan.monitoring.otorisasi')
+VALUES ('transaksi_umum', 'keuangan', 1, 'Transaksi Umum', 'finance.monitoring.authorization')
 ON CONFLICT (entity_type) DO NOTHING;

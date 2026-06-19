@@ -12,7 +12,7 @@ router = APIRouter(prefix="/parameter", tags=["parameter"])
 @router.get("/pemilik-anggaran")
 async def list_owners(
     request: Request,
-    _:       str       = Depends(require_menu("keuangan.parameter.pemilik-anggaran")),
+    _:       str       = Depends(require_menu("finance.parameter.budget_owner")),
     page:    int       = Query(default=1,    ge=1),
     limit:   int       = Query(default=25,   ge=1, le=100),
     q:       str | None = Query(default=None),
@@ -30,7 +30,7 @@ async def list_owners(
 @router.get("/pemilik-anggaran/lookup")
 async def lookup_owners(
     request: Request,
-    _:       str       = Depends(require_menu("keuangan.parameter.pemilik-anggaran")),
+    _:       str       = Depends(require_menu("finance.parameter.budget_owner")),
     q:       str | None = Query(default=None),
 ):
     _, err = await current_user_id_or_401(request)
@@ -47,7 +47,7 @@ async def lookup_owners(
 async def get_owner(
     request: Request,
     ownerid: int,
-    _:       str = Depends(require_menu("keuangan.parameter.pemilik-anggaran")),
+    _:       str = Depends(require_menu("finance.parameter.budget_owner")),
 ):
     _, err = await current_user_id_or_401(request)
     if err:
@@ -59,7 +59,7 @@ async def get_owner(
 @router.post("/pemilik-anggaran")
 async def create_owner(
     request: Request,
-    _:       str  = Depends(require_menu("keuangan.parameter.pemilik-anggaran.tambah")),
+    _:       str  = Depends(require_menu("finance.parameter.budget_owner.create")),
     payload: dict = Body(...),
 ):
     user_id, err = await current_user_id_or_401(request)
@@ -73,7 +73,7 @@ async def create_owner(
 async def update_owner(
     request: Request,
     ownerid: int,
-    _:       str  = Depends(require_menu("keuangan.parameter.pemilik-anggaran.ubah")),
+    _:       str  = Depends(require_menu("finance.parameter.budget_owner.edit")),
     payload: dict = Body(...),
 ):
     _, err = await current_user_id_or_401(request)
@@ -89,7 +89,7 @@ async def update_owner(
 async def delete_owner(
     request: Request,
     ownerid: int,
-    _:       str = Depends(require_menu("keuangan.parameter.pemilik-anggaran.hapus")),
+    _:       str = Depends(require_menu("finance.parameter.budget_owner.delete")),
 ):
     _, err = await current_user_id_or_401(request)
     if err:

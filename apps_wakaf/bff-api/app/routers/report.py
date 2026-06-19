@@ -9,11 +9,11 @@ from app.shared.response import err
 
 router = APIRouter(prefix="/report", tags=["report"])
 
-_JOURNAL_MENU = "keuangan.report.journal_daily"
-_GT_MENU = "keuangan.report.general_transaction"
-_CASH_MENU = "keuangan.report.cash_daily"
-_CASH_SUMMARY_MENU = "keuangan.report.cash_summary"
-_CASH_MONTHLY_MENU = "keuangan.report.cash_monthly"
+_JOURNAL_MENU = "finance.reports.daily_journal"
+_GT_MENU = "finance.reports.general_transaction"
+_CASH_MENU = "finance.reports.daily_cash"
+_CASH_SUMMARY_MENU = "finance.reports.cash_summary"
+_CASH_MONTHLY_MENU = "finance.reports.monthly_balance"
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
