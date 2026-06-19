@@ -137,7 +137,7 @@ async function load() {
             v-for="b in batches"
             :key="b.batch_id"
             class="cursor-pointer border-t border-border hover:bg-background"
-            @click="router.push(`/keuangan/upload/penghimpunan/${b.batch_id}`)"
+            @click="router.push({ name: 'keuangan-upload-penghimpunan-detail', params: { id: b.batch_id } })"
           >
             <td class="px-3 py-1 font-mono text-xs">#{{ b.batch_id }}</td>
             <td class="px-3 py-1 text-xs">{{ b.filename }}</td>

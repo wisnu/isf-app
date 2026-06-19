@@ -89,7 +89,7 @@ async function doDelete() {
     await api.post(`/api/transaksi-histori/transactions/${txId}/delete`, {})
     toast.success('Transaksi berhasil dihapus')
     showDeleteConfirm.value = false
-    router.push('/keuangan/transaksi/histori')
+    router.push({ name: 'keuangan-transaksi-histori' })
   } catch (e: unknown) {
     deleteError.value = e instanceof Error ? e.message : String(e)
   } finally {

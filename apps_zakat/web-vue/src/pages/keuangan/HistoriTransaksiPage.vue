@@ -218,7 +218,7 @@ function search() {
 
 function goToDetail(id: number) {
   saveState()
-  router.push(`/keuangan/transaksi/histori/${id}`)
+  router.push({ name: 'keuangan-transaksi-histori-detail', params: { id } })
 }
 
 async function confirmDelete() {

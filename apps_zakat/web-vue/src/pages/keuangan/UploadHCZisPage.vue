@@ -279,7 +279,7 @@ async function submitUntukOtorisasi() {
       </p>
       <div class="flex gap-3">
         <Button variant="outline" @click="resetUpload">Upload Lagi</Button>
-        <Button @click="router.push('/keuangan/upload/zis-rutin-list')">
+        <Button @click="router.push({ name: 'keuangan-upload-zis-rutin-list' })">
           Lihat Daftar Upload
         </Button>
       </div>
