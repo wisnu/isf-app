@@ -103,7 +103,7 @@ const paymentTabs = [
 
 async function loadLookups() {
   productOptions.value = await api
-    .get<ProductOption[]>('/api/penghimpunan/lookup/produk', { branch_code: productBranchCode.value })
+    .get<ProductOption[]>(`/api/penghimpunan/lookup/produk?branch_code=${encodeURIComponent(productBranchCode.value)}`)
     .catch(() => [])
 }
 
@@ -119,7 +119,7 @@ async function searchDonor() {
   donorSearchLoading.value = true
   try {
     donorOptions.value = await api
-      .get<DonorOption[]>('/api/penghimpunan/lookup/donor', { q: donorQuery.value })
+      .get<DonorOption[]>(`/api/penghimpunan/lookup/donor?q=${encodeURIComponent(donorQuery.value)}`)
       .catch(() => [])
   } finally {
     donorSearchLoading.value = false
