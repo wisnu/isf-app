@@ -81,7 +81,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/jurnal-harian',
       name: 'keuangan-laporan-jurnal-harian',
-      component: () => import('@/pages/keuangan/LaporanJurnalHarianPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanJurnalHarianPage.vue'),
       meta: {
         title: 'Laporan Jurnal Harian',
         menu_key: 'keuangan.report.journal_daily' as MenuKey,
@@ -90,7 +90,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/transaksi-umum',
       name: 'keuangan-laporan-transaksi-umum',
-      component: () => import('@/pages/keuangan/LaporanGeneralTransactionPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanGeneralTransactionPage.vue'),
       meta: {
         title: 'List Transaksi Umum',
         menu_key: 'keuangan.report.general_transaction' as MenuKey,
@@ -99,7 +99,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/kas-harian',
       name: 'keuangan-laporan-kas-harian',
-      component: () => import('@/pages/keuangan/LaporanCashDailyPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanCashDailyPage.vue'),
       meta: {
         title: 'Transaksi Kas/Bank Harian',
         menu_key: 'keuangan.report.cash_daily' as MenuKey,
@@ -108,7 +108,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/rekap-kas',
       name: 'keuangan-laporan-rekap-kas',
-      component: () => import('@/pages/keuangan/LaporanCashSummaryPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanCashSummaryPage.vue'),
       meta: {
         title: 'Rekapitulasi Transaksi Kas/Bank',
         menu_key: 'keuangan.report.cash_summary' as MenuKey,
@@ -117,7 +117,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/saldo-bulanan',
       name: 'keuangan-laporan-saldo-bulanan',
-      component: () => import('@/pages/keuangan/LaporanCashMonthlyPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanCashMonthlyPage.vue'),
       meta: {
         title: 'Monitoring Saldo Kas/Bank Bulanan',
         menu_key: 'keuangan.report.cash_monthly' as MenuKey,
@@ -126,7 +126,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/trial-balance',
       name: 'keuangan-laporan-trial-balance',
-      component: () => import('@/pages/keuangan/LaporanTrialBalancePage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanTrialBalancePage.vue'),
       meta: {
         title: 'Trial Balance',
         menu_key: 'keuangan.report.trial_balance' as MenuKey,
@@ -135,7 +135,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/neraca',
       name: 'keuangan-laporan-neraca',
-      component: () => import('@/pages/keuangan/LaporanNeracaPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanNeracaPage.vue'),
       meta: {
         title: 'Neraca',
         menu_key: 'keuangan.report.neraca' as MenuKey,
@@ -144,7 +144,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/arus-kas',
       name: 'keuangan-laporan-arus-kas',
-      component: () => import('@/pages/keuangan/LaporanArusKasPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanArusKasPage.vue'),
       meta: {
         title: 'Arus Kas',
         menu_key: 'keuangan.report.cash_flow' as MenuKey,
@@ -153,7 +153,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/buku-besar',
       name: 'keuangan-laporan-buku-besar',
-      component: () => import('@/pages/keuangan/LaporanBukuBesarPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanBukuBesarPage.vue'),
       meta: {
         title: 'Buku Besar',
         menu_key: 'keuangan.report.general_ledger' as MenuKey,
@@ -162,7 +162,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/perubahan-dana',
       name: 'keuangan-laporan-perubahan-dana',
-      component: () => import('@/pages/keuangan/LaporanPerubahanDanaPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanPerubahanDanaPage.vue'),
       meta: {
         title: 'Perubahan Dana',
         menu_key: 'keuangan.report.fund_changes' as MenuKey,
@@ -171,7 +171,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/perubahan-dana-detail',
       name: 'keuangan-laporan-perubahan-dana-detail',
-      component: () => import('@/pages/keuangan/LaporanPerubahanDanaDetailPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanPerubahanDanaDetailPage.vue'),
       meta: {
         title: 'Perubahan Dana Detail',
         menu_key: 'keuangan.report.fund_changes_detail' as MenuKey,
@@ -180,7 +180,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/penerimaan-amil',
       name: 'keuangan-laporan-penerimaan-amil',
-      component: () => import('@/pages/keuangan/LaporanAmilPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanAmilPage.vue'),
       meta: {
         title: 'Penerimaan Amil',
         menu_key: 'keuangan.report.amil_in' as MenuKey,
@@ -190,7 +190,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/pengeluaran-amil',
       name: 'keuangan-laporan-pengeluaran-amil',
-      component: () => import('@/pages/keuangan/LaporanAmilPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanAmilPage.vue'),
       meta: {
         title: 'Pengeluaran Amil',
         menu_key: 'keuangan.report.amil_out' as MenuKey,
@@ -200,7 +200,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/penyaluran-dana',
       name: 'keuangan-laporan-penyaluran-dana',
-      component: () => import('@/pages/keuangan/LaporanPenyaluranDanaPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanPenyaluranDanaPage.vue'),
       meta: {
         title: 'Penyaluran Dana',
         menu_key: 'keuangan.report.distribution' as MenuKey,
@@ -209,7 +209,7 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/penghimpunan-dana',
       name: 'keuangan-laporan-penghimpunan-dana',
-      component: () => import('@/pages/keuangan/LaporanPenghimpunanDanaPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanPenghimpunanDanaPage.vue'),
       meta: {
         title: 'Penghimpunan Dana',
         menu_key: 'keuangan.report.collection' as MenuKey,
@@ -218,43 +218,43 @@ const router = createRouter({
     {
       path: '/keuangan/laporan/piutang-karyawan',
       name: 'keuangan-laporan-piutang-karyawan',
-      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanARSummaryPage.vue'),
       meta: { title: 'Piutang pada Karyawan', menu_key: 'keuangan.report.ar_employee' as MenuKey, arEndpoint: 'employee-ar', arFile: 'piutangkaryawan' },
     },
     {
       path: '/keuangan/laporan/piutang-non-karyawan',
       name: 'keuangan-laporan-piutang-non-karyawan',
-      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanARSummaryPage.vue'),
       meta: { title: 'Piutang pada Non-Karyawan', menu_key: 'keuangan.report.ar_external' as MenuKey, arEndpoint: 'external-ar', arFile: 'piutangnonkaryawan' },
     },
     {
       path: '/keuangan/laporan/uang-muka-kegiatan',
       name: 'keuangan-laporan-uang-muka-kegiatan',
-      component: () => import('@/pages/keuangan/LaporanARSummaryPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanARSummaryPage.vue'),
       meta: { title: 'Rekapitulasi Uang Muka Kegiatan', menu_key: 'keuangan.report.ca_employee' as MenuKey, arEndpoint: 'cash-advance', arFile: 'rekapuangmuka' },
     },
     {
       path: '/keuangan/laporan/list-uang-muka',
       name: 'keuangan-laporan-list-uang-muka',
-      component: () => import('@/pages/keuangan/LaporanListUangMukaPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanListUangMukaPage.vue'),
       meta: { title: 'List Transaksi Uang Muka Kegiatan', menu_key: 'keuangan.report.ca_list' as MenuKey },
     },
     {
       path: '/keuangan/laporan/realisasi-memo',
       name: 'keuangan-laporan-realisasi-memo',
-      component: () => import('@/pages/keuangan/LaporanRealisasiMemoPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanRealisasiMemoPage.vue'),
       meta: { title: 'Laporan Realisasi Project (Memo)', menu_key: 'keuangan.report.project_memo' as MenuKey },
     },
     {
       path: '/keuangan/laporan/piutang-realisasi',
       name: 'keuangan-laporan-piutang-realisasi',
-      component: () => import('@/pages/keuangan/LaporanPiutangRealisasiPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanPiutangRealisasiPage.vue'),
       meta: { title: 'Piutang Realisasi Penyaluran', menu_key: 'keuangan.report.program_ar' as MenuKey },
     },
     {
       path: '/keuangan/laporan/upz',
       name: 'keuangan-laporan-upz',
-      component: () => import('@/pages/keuangan/LaporanUpzPage.vue'),
+      component: () => import('@/pages/keuangan/laporan/LaporanUpzPage.vue'),
       meta: { title: 'List Transaksi UPZ', menu_key: 'keuangan.report.upz' as MenuKey },
     },
     {
