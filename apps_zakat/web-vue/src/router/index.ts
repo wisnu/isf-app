@@ -87,19 +87,19 @@ const router = createRouter({
     {
       path: '/keuangan/anggaran/inquiry',
       name: 'keuangan-anggaran-inquiry',
-      component: () => import('@/pages/keuangan/BudgetInquiryPage.vue'),
+      component: () => import('@/pages/keuangan/budget-inquiry/BudgetInquiryPage.vue'),
       meta: { title: 'Inquiry Anggaran', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
     },
     {
       path: '/keuangan/anggaran/inquiry/owner/:owner_id',
       name: 'keuangan-anggaran-inquiry-owner',
-      component: () => import('@/pages/keuangan/BudgetInquiryOwnerPage.vue'),
+      component: () => import('@/pages/keuangan/budget-inquiry/BudgetInquiryOwnerPage.vue'),
       meta: { title: 'Detail Anggaran Pemilik', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
     },
     {
       path: '/keuangan/anggaran/inquiry/budget/:budget_id/transaksi',
       name: 'keuangan-anggaran-inquiry-transaksi',
-      component: () => import('@/pages/keuangan/BudgetInquiryTransaksiPage.vue'),
+      component: () => import('@/pages/keuangan/budget-inquiry/BudgetInquiryTransaksiPage.vue'),
       meta: { title: 'Riwayat Transaksi Anggaran', menu_key: 'keuangan.anggaran.inquiry' as MenuKey },
     },
     {
