@@ -11,11 +11,11 @@ const showShell = computed(() => Boolean(auth.user) && Boolean(auth.activeTenant
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <AppHeader v-if="auth.user" />
-    <div class="flex flex-1 min-h-0">
-      <AppSidebar v-if="showShell" />
-      <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 min-w-0">
+  <div class="h-screen flex overflow-hidden">
+    <AppSidebar v-if="showShell" />
+    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <AppHeader v-if="auth.user" />
+      <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-screen-xl mx-auto">
           <router-view />
         </div>
