@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, BookOpen, Search, Trash2, X } from 'lucide-vue-next'
+import { ArrowLeft, BookOpen, Trash2, X } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -156,30 +156,29 @@ const phDonorResults = ref<DonorRow[]>([])
 const phDonorLoading = shallowRef(false)
 const phDonorId = shallowRef(0)
 const phDonorName = shallowRef('HAMBA ALLAH')
-const phProdukSearch = shallowRef('')
+const phShowDonorResults = shallowRef(false)
 const phProdukResults = ref<LookupRow[]>([])
 const phProdukLoading = shallowRef(false)
 const phProdukNo = shallowRef('')
 const phProdukName = shallowRef('')
 const phFundEntity = shallowRef(1)
-const phShowDonorResults = shallowRef(false)
-const phShowProdukResults = shallowRef(false)
+// v-model for SearchSelect — holds account_no of the selected produk
+const phProdukSelectedValue = shallowRef('')
 
 // Penyaluran-specific
-const pyProgramSearch = shallowRef('')
 const pyProgramResults = ref<LookupRow[]>([])
 const pyProgramLoading = shallowRef(false)
 const pyProgramNo = shallowRef('')
 const pyProgramName = shallowRef('')
-const pySumberSearch = shallowRef('')
 const pySumberResults = ref<LookupRow[]>([])
 const pySumberLoading = shallowRef(false)
 const pySumberNo = shallowRef('')
 const pySumberName = shallowRef('')
 const pyAshnaf = shallowRef('F')
 const pyFundEntity = shallowRef(1)
-const pyShowProgramResults = shallowRef(false)
-const pyShowSumberResults = shallowRef(false)
+// v-model for SearchSelect — holds account_no of the selected program / sumber
+const pyProgramSelectedValue = shallowRef('')
+const pySumberSelectedValue = shallowRef('')
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 const totalDebet = computed(() =>
@@ -196,6 +195,15 @@ const coaSelectOptions = computed(() =>
 )
 const kbOptions = computed(() =>
   kbResults.value.map(r => ({ value: r.account_no, label: `${r.account_no}  ${r.account_name}` }))
+)
+const phProdukOptions = computed(() =>
+  phProdukResults.value.map(r => ({ value: r.account_no, label: `${r.account_no}  ${r.account_name}` }))
+)
+const pyProgramOptions = computed(() =>
+  pyProgramResults.value.map(r => ({ value: r.account_no, label: `${r.account_no}  ${r.account_name}` }))
+)
+const pySumberOptions = computed(() =>
+  pySumberResults.value.map(r => ({ value: r.account_no, label: `${r.account_no}  ${r.account_name}` }))
 )
 const drawerTitle = computed(() => {
   const titles: Record<string, string> = {
@@ -296,86 +304,85 @@ function clearDonor() {
   phDonorNo.value = ''; phDonorResults.value = []; phDonorSearch.value = ''
 }
 
-async function searchProduk() {
-  if (!phProdukSearch.value.trim()) return
+async function loadProdukOptions() {
   phProdukLoading.value = true
-  phShowProdukResults.value = false
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/produk?search=${encodeURIComponent(phProdukSearch.value)}&fund_entity=${phFundEntity.value}`
+      `/api/transaksi-umum/lookup/produk?search=&fund_entity=${phFundEntity.value}`
     )
     phProdukResults.value = res?.rows ?? []
-    phShowProdukResults.value = true
   } finally {
     phProdukLoading.value = false
   }
 }
 
-function selectProduk(r: LookupRow) {
-  phProdukNo.value = r.account_no
-  phProdukName.value = r.account_name
-  phShowProdukResults.value = false
-  phProdukSearch.value = ''
-}
-
 function clearProduk() {
   phProdukNo.value = ''; phProdukName.value = ''
-  phProdukResults.value = []; phProdukSearch.value = ''
+  phProdukSelectedValue.value = ''
 }
 
-async function searchProgram() {
-  if (!pyProgramSearch.value.trim()) return
+// Sync SearchSelect selection → downstream state
+watch(phProdukSelectedValue, (val) => {
+  const found = phProdukResults.value.find(r => r.account_no === val)
+  phProdukNo.value = found?.account_no ?? ''
+  phProdukName.value = found?.account_name ?? ''
+})
+
+// Reload produk list when fund entity changes (and drawer is open for type C)
+watch(phFundEntity, () => {
+  phProdukSelectedValue.value = ''
+  phProdukNo.value = ''
+  phProdukName.value = ''
+  loadProdukOptions()
+})
+
+async function loadProgramOptions() {
   pyProgramLoading.value = true
-  pyShowProgramResults.value = false
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/penyaluran?search=${encodeURIComponent(pyProgramSearch.value)}`
+      `/api/transaksi-umum/lookup/penyaluran?search=`
     )
     pyProgramResults.value = res?.rows ?? []
-    pyShowProgramResults.value = true
   } finally {
     pyProgramLoading.value = false
   }
 }
 
-function selectProgram(r: LookupRow) {
-  pyProgramNo.value = r.account_no
-  pyProgramName.value = r.account_name
-  pyShowProgramResults.value = false
-  pyProgramSearch.value = ''
-}
-
 function clearProgram() {
   pyProgramNo.value = ''; pyProgramName.value = ''
-  pyProgramResults.value = []; pyProgramSearch.value = ''
+  pyProgramSelectedValue.value = ''
 }
 
-async function searchSumber() {
-  if (!pySumberSearch.value.trim()) return
+// Sync SearchSelect selection → downstream state
+watch(pyProgramSelectedValue, (val) => {
+  const found = pyProgramResults.value.find(r => r.account_no === val)
+  pyProgramNo.value = found?.account_no ?? ''
+  pyProgramName.value = found?.account_name ?? ''
+})
+
+async function loadSumberOptions() {
   pySumberLoading.value = true
-  pyShowSumberResults.value = false
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/produk?search=${encodeURIComponent(pySumberSearch.value)}`
+      `/api/transaksi-umum/lookup/produk?search=`
     )
     pySumberResults.value = res?.rows ?? []
-    pyShowSumberResults.value = true
   } finally {
     pySumberLoading.value = false
   }
 }
 
-function selectSumber(r: LookupRow) {
-  pySumberNo.value = r.account_no
-  pySumberName.value = r.account_name
-  pyShowSumberResults.value = false
-  pySumberSearch.value = ''
-}
-
 function clearSumber() {
   pySumberNo.value = ''; pySumberName.value = ''
-  pySumberResults.value = []; pySumberSearch.value = ''
+  pySumberSelectedValue.value = ''
 }
+
+// Sync SearchSelect selection → downstream state
+watch(pySumberSelectedValue, (val) => {
+  const found = pySumberResults.value.find(r => r.account_no === val)
+  pySumberNo.value = found?.account_no ?? ''
+  pySumberName.value = found?.account_name ?? ''
+})
 
 // ── Drawer control ────────────────────────────────────────────────────────────
 function resetNominalPanel(defaultMutation: 'D' | 'C') {
@@ -415,6 +422,10 @@ function openDrawer(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) 
       phProdukNo.value = item.product_account_no
       phProdukName.value = item.product_name
       phFundEntity.value = item.fund_entity
+      // load produk options then restore selection
+      loadProdukOptions().then(() => {
+        phProdukSelectedValue.value = item.product_account_no
+      })
     } else if (item.item_type === 'D') {
       pyProgramNo.value = item.dist_account_no
       pyProgramName.value = item.dist_account_name
@@ -422,6 +433,13 @@ function openDrawer(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) 
       pySumberName.value = item.fund_account_name
       pyAshnaf.value = item.ashnaf
       pyFundEntity.value = item.fund_entity
+      // load options then restore selections
+      loadProgramOptions().then(() => {
+        pyProgramSelectedValue.value = item.dist_account_no
+      })
+      loadSumberOptions().then(() => {
+        pySumberSelectedValue.value = item.fund_account_no
+      })
     }
   } else {
     if (type === 'G') {
@@ -437,10 +455,13 @@ function openDrawer(type: 'G' | 'B' | 'C' | 'D', editIdx: number | null = null) 
       resetNominalPanel('C')
       clearDonor(); clearProduk()
       phFundEntity.value = 1
+      loadProdukOptions()
     } else if (type === 'D') {
       resetNominalPanel('D')
       clearProgram(); clearSumber()
       pyAshnaf.value = 'F'; pyFundEntity.value = 1
+      loadProgramOptions()
+      loadSumberOptions()
     }
   }
 
@@ -889,35 +910,16 @@ async function submitForm() {
                   <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Produk Penghimpunan <span class="text-red-500">*</span>
                   </label>
-                  <div class="flex gap-2">
-                    <input
-                      v-model="phProdukSearch"
-                      placeholder="Cari kode / nama produk..."
-                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      @keyup.enter="searchProduk"
-                    />
-                    <Button size="sm" variant="outline" :disabled="phProdukLoading" @click="searchProduk">
-                      <Search class="h-3.5 w-3.5" />
-                      {{ phProdukLoading ? '...' : 'Cari' }}
-                    </Button>
+                  <div v-if="phProdukLoading" class="flex items-center gap-2 text-xs text-slate-400 py-1.5">
+                    <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-slate-300 border-t-indigo-500 rounded-full"></span>
+                    Memuat daftar produk...
                   </div>
-                  <div v-if="phShowProdukResults && phProdukResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
-                    <button
-                      v-for="r in phProdukResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
-                      @click="selectProduk(r)"
-                    >
-                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
-                      <span>{{ r.account_name }}</span>
-                    </button>
-                  </div>
-                  <div v-if="phProdukNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
-                    <span class="font-mono text-xs text-slate-400">{{ phProdukNo }}</span>
-                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ phProdukName }}</span>
-                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearProduk">
-                      <X class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <SearchSelect
+                    v-else
+                    v-model="phProdukSelectedValue"
+                    :options="phProdukOptions"
+                    placeholder="Cari kode / nama produk..."
+                  />
                 </div>
 
                 <div>
@@ -935,69 +937,31 @@ async function submitForm() {
                   <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Nama Program <span class="text-red-500">*</span>
                   </label>
-                  <div class="flex gap-2">
-                    <input
-                      v-model="pyProgramSearch"
-                      placeholder="Cari kode / nama program..."
-                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      @keyup.enter="searchProgram"
-                    />
-                    <Button size="sm" variant="outline" :disabled="pyProgramLoading" @click="searchProgram">
-                      <Search class="h-3.5 w-3.5" />
-                      {{ pyProgramLoading ? '...' : 'Cari' }}
-                    </Button>
+                  <div v-if="pyProgramLoading" class="flex items-center gap-2 text-xs text-slate-400 py-1.5">
+                    <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-slate-300 border-t-indigo-500 rounded-full"></span>
+                    Memuat daftar program...
                   </div>
-                  <div v-if="pyShowProgramResults && pyProgramResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
-                    <button
-                      v-for="r in pyProgramResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
-                      @click="selectProgram(r)"
-                    >
-                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
-                      <span>{{ r.account_name }}</span>
-                    </button>
-                  </div>
-                  <div v-if="pyProgramNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
-                    <span class="font-mono text-xs text-slate-400">{{ pyProgramNo }}</span>
-                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ pyProgramName }}</span>
-                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearProgram">
-                      <X class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <SearchSelect
+                    v-else
+                    v-model="pyProgramSelectedValue"
+                    :options="pyProgramOptions"
+                    placeholder="Cari kode / nama program..."
+                  />
                 </div>
 
                 <!-- Sumber Dana -->
                 <div>
                   <label class="mb-1 block text-xs font-medium text-slate-500 uppercase tracking-wide">Sumber Dana</label>
-                  <div class="flex gap-2">
-                    <input
-                      v-model="pySumberSearch"
-                      placeholder="Cari rekening sumber dana..."
-                      class="flex-1 rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      @keyup.enter="searchSumber"
-                    />
-                    <Button size="sm" variant="outline" :disabled="pySumberLoading" @click="searchSumber">
-                      <Search class="h-3.5 w-3.5" />
-                      {{ pySumberLoading ? '...' : 'Cari' }}
-                    </Button>
+                  <div v-if="pySumberLoading" class="flex items-center gap-2 text-xs text-slate-400 py-1.5">
+                    <span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-slate-300 border-t-indigo-500 rounded-full"></span>
+                    Memuat daftar sumber dana...
                   </div>
-                  <div v-if="pyShowSumberResults && pySumberResults.length" class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-white shadow-sm dark:bg-zinc-900">
-                    <button
-                      v-for="r in pySumberResults" :key="r.account_no"
-                      class="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-1.5 text-left text-sm last:border-0 hover:bg-indigo-50/40 dark:hover:bg-zinc-800"
-                      @click="selectSumber(r)"
-                    >
-                      <span class="font-mono text-xs text-slate-400">{{ r.account_no }}</span>
-                      <span>{{ r.account_name }}</span>
-                    </button>
-                  </div>
-                  <div v-if="pySumberNo" class="mt-1.5 flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-1.5">
-                    <span class="font-mono text-xs text-slate-400">{{ pySumberNo }}</span>
-                    <span class="text-sm font-medium text-slate-700 dark:text-zinc-300">{{ pySumberName }}</span>
-                    <button class="ml-auto text-slate-400 hover:text-red-500" @click="clearSumber">
-                      <X class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <SearchSelect
+                    v-else
+                    v-model="pySumberSelectedValue"
+                    :options="pySumberOptions"
+                    placeholder="Cari rekening sumber dana..."
+                  />
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">

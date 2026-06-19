@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeftRight } from 'lucide-vue-next'
-import { ref, shallowRef } from 'vue'
+import { computed, onMounted, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -21,6 +21,11 @@ interface CashAccountOption {
   cashaccounttype: string
 }
 
+interface SelectOption {
+  value: string
+  label: string
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 const router = useRouter()
 const toast = useToast()
@@ -34,32 +39,46 @@ const formAmount = shallowRef<number | null>(null)
 const formDescription = shallowRef('')
 const formRefNo = shallowRef('')
 
-const sourceAccount = ref<CashAccountOption | null>(null)
-const sourceOptions = ref<CashAccountOption[]>([])
-const destAccount = ref<CashAccountOption | null>(null)
-const destOptions = ref<CashAccountOption[]>([])
+// Raw account data (used for balance display and submit payload)
+const allAccounts = shallowRef<CashAccountOption[]>([])
+
+// SearchSelect v-model: plain cashaccountno string
+const sourceSelectedValue = shallowRef('')
+const destSelectedValue = shallowRef('')
 
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
 
-// ── Lookup ────────────────────────────────────────────────────────────────────
-async function searchAccounts(query: string, target: 'source' | 'dest') {
-  if (!query.trim()) {
-    if (target === 'source') sourceOptions.value = []
-    else destOptions.value = []
-    return
-  }
+// ── Options ───────────────────────────────────────────────────────────────────
+const accountOptions = computed<SelectOption[]>(() =>
+  allAccounts.value.map((a) => ({
+    value: a.cashaccountno,
+    label: `${a.cashaccountno}  ${a.accountname}`,
+  }))
+)
+
+// ── Derived selected objects (for metadata display & submit) ──────────────────
+const sourceAccount = computed<CashAccountOption | null>(
+  () => allAccounts.value.find((a) => a.cashaccountno === sourceSelectedValue.value) ?? null
+)
+
+const destAccount = computed<CashAccountOption | null>(
+  () => allAccounts.value.find((a) => a.cashaccountno === destSelectedValue.value) ?? null
+)
+
+// ── Load accounts on mount ────────────────────────────────────────────────────
+async function loadAccounts() {
   try {
     const res = await api.get<{ rows: CashAccountOption[] }>(
-      `/api/transaksi/transfer-antar-rekening/lookup/cash-accounts?search=${encodeURIComponent(query.trim())}`
+      '/api/transaksi/transfer-antar-rekening/lookup/cash-accounts?search='
     )
-    if (target === 'source') sourceOptions.value = res.rows ?? []
-    else destOptions.value = res.rows ?? []
+    allAccounts.value = res.rows ?? []
   } catch {
-    if (target === 'source') sourceOptions.value = []
-    else destOptions.value = []
+    allAccounts.value = []
   }
 }
+
+onMounted(loadAccounts)
 
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function submit() {
@@ -116,14 +135,9 @@ async function submit() {
       <div>
         <label class="mb-1 block text-xs font-medium text-muted-foreground">Rekening Sumber <span class="text-red-500">*</span></label>
         <SearchSelect
-          :model-value="sourceAccount"
-          :options="sourceOptions"
-          :loading="false"
+          v-model="sourceSelectedValue"
+          :options="accountOptions"
           placeholder="Cari nama rekening atau nomor..."
-          option-label="accountname"
-          option-value="cashaccountno"
-          @update:model-value="(v) => (sourceAccount = v)"
-          @search="(q) => searchAccounts(q, 'source')"
         />
         <p v-if="sourceAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
           {{ sourceAccount.cashaccountno }}
@@ -135,14 +149,9 @@ async function submit() {
       <div>
         <label class="mb-1 block text-xs font-medium text-muted-foreground">Rekening Tujuan <span class="text-red-500">*</span></label>
         <SearchSelect
-          :model-value="destAccount"
-          :options="destOptions"
-          :loading="false"
+          v-model="destSelectedValue"
+          :options="accountOptions"
           placeholder="Cari nama rekening atau nomor..."
-          option-label="accountname"
-          option-value="cashaccountno"
-          @update:model-value="(v) => (destAccount = v)"
-          @search="(q) => searchAccounts(q, 'dest')"
         />
         <p v-if="destAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
           {{ destAccount.cashaccountno }}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef, computed } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
@@ -78,8 +78,28 @@ const fmt = (n: number) => idr.format(n)
 const rekeningOptions = ref<RekeningOption[]>([])
 const productOptions = ref<ProductOption[]>([])
 const donorOptions = ref<DonorOption[]>([])
-const donorQuery = shallowRef('')
-const donorSearchLoading = shallowRef(false)
+
+// Donor lookup via SearchSelect
+const donorSelectedValue = shallowRef('')
+const donorSearchOptions = computed(() =>
+  donorOptions.value.map((d) => ({
+    value: String(d.donor_id),
+    label: `${d.donor_no ?? ''} — ${d.donor_name ?? ''}`.trim().replace(/^— /, ''),
+  })),
+)
+
+watch(donorSelectedValue, (val) => {
+  const d = donorOptions.value.find((x) => String(x.donor_id) === val)
+  if (d) {
+    donorId.value = d.donor_id
+    donorNo.value = d.donor_no ?? ''
+    donorName.value = d.donor_name ?? ''
+  } else if (!val) {
+    donorId.value = null
+    donorNo.value = ''
+    donorName.value = ''
+  }
+})
 
 // Limit info
 const nilaiLimit = shallowRef<number>(0)
@@ -114,24 +134,10 @@ async function loadRekening() {
     .catch(() => [])
 }
 
-async function searchDonor() {
-  if (donorQuery.value.length < 2) return
-  donorSearchLoading.value = true
-  try {
-    donorOptions.value = await api
-      .get<DonorOption[]>(`/api/penghimpunan/lookup/donor?q=${encodeURIComponent(donorQuery.value)}`)
-      .catch(() => [])
-  } finally {
-    donorSearchLoading.value = false
-  }
-}
-
-function onDonorSelected(val: string | number) {
-  const d = donorOptions.value.find((x) => x.donor_id === Number(val))
-  if (!d) return
-  donorId.value = d.donor_id
-  donorNo.value = d.donor_no ?? ''
-  donorName.value = d.donor_name ?? ''
+async function loadDonors() {
+  donorOptions.value = await api
+    .get<DonorOption[]>('/api/penghimpunan/lookup/donor?q=')
+    .catch(() => [])
 }
 
 function onPaymentTypeChange(type: 'B' | 'C' | 'K' | 'A') {
@@ -300,8 +306,13 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(async () => {
   await loadLookups()
   await loadRekening()
+  await loadDonors()
   if (isEditMode.value && editId.value !== null) {
     await loadSubmission(editId.value)
+    // Restore donor selection in SearchSelect after edit-mode load
+    if (donorId.value !== null) {
+      donorSelectedValue.value = String(donorId.value)
+    }
   }
   fetchUserLimit()
   window.addEventListener('keydown', onKeydown)
@@ -377,32 +388,13 @@ onUnmounted(() => {
           </h2>
           <div>
             <label class="mb-1 block text-sm font-medium">Cari Donatur</label>
-            <div class="flex gap-2">
-              <input
-                v-model="donorQuery"
-                placeholder="Ketik nama / no. donatur..."
-                class="h-9 flex-1 rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-                @keyup.enter="searchDonor"
-              />
-              <Button variant="secondary" size="sm" :disabled="donorSearchLoading" @click="searchDonor">
-                {{ donorSearchLoading ? '...' : 'Cari' }}
-              </Button>
-            </div>
-            <div v-if="donorOptions.length > 0" class="mt-1">
-              <SearchSelect
-                :options="donorOptions.map((d) => ({ value: d.donor_id, label: `${d.donor_no} — ${d.donor_name}` }))"
-                :model-value="donorId ?? ''"
-                placeholder="Pilih hasil pencarian..."
-                @update:model-value="onDonorSelected($event as number)"
-              />
-            </div>
+            <SearchSelect
+              v-model="donorSelectedValue"
+              :options="donorSearchOptions"
+              placeholder="Ketik nama / no. donatur..."
+            />
           </div>
-          <div v-if="donorName" class="rounded bg-zinc-50 px-3 py-2 dark:bg-zinc-800">
-            <p class="text-xs text-zinc-500">Dipilih:</p>
-            <p class="font-medium">{{ donorName }}</p>
-            <p class="text-xs text-zinc-400">{{ donorNo }}</p>
-          </div>
-          <div v-else class="grid grid-cols-2 gap-3">
+          <div v-if="!donorSelectedValue" class="grid grid-cols-2 gap-3">
             <div>
               <label class="mb-1 block text-sm font-medium">No. Donatur</label>
               <input
