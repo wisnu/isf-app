@@ -404,8 +404,14 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/piutang',
       name: 'keuangan-transaksi-piutang',
-      component: () => import('@/pages/keuangan/PiutangPage.vue'),
+      component: () => import('@/pages/keuangan/piutang/PiutangListPage.vue'),
       meta: { title: 'Piutang (Pinjam/Bayar)', menu_key: 'keuangan.piutang.pinjam-bayar' as MenuKey },
+    },
+    {
+      path: '/keuangan/transaksi/piutang/create',
+      name: 'keuangan-transaksi-piutang-create',
+      component: () => import('@/pages/keuangan/piutang/PiutangCreatePage.vue'),
+      meta: { title: 'Input Piutang', menu_key: 'keuangan.piutang.pinjam-bayar' as MenuKey },
     },
     {
       path: '/keuangan/monitoring/otorisasi',
