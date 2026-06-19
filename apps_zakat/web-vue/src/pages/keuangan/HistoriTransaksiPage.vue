@@ -110,9 +110,6 @@ function saveState() {
       cashAccountNo: cashAccountNo.value,
       page: page.value,
       pageSize: pageSize.value,
-      rows: rows.value,
-      total: total.value,
-      totalPages: totalPages.value,
       hasLoaded: hasLoaded.value,
     }),
   )
@@ -131,11 +128,8 @@ function restoreState() {
     searchText.value = s.searchText ?? ''
     cashAccountNo.value = s.cashAccountNo ?? ''
     page.value = s.page ?? 1
-    pageSize.value = s.pageSize ?? 50
-    rows.value = s.rows ?? []
-    total.value = s.total ?? 0
-    totalPages.value = s.totalPages ?? 1
-    hasLoaded.value = s.hasLoaded ?? false
+    pageSize.value = s.pageSize ?? 20
+    if (s.hasLoaded) load()
   } catch {
     // ignore corrupt state
   }
