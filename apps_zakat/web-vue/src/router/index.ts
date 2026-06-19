@@ -338,19 +338,19 @@ const router = createRouter({
     {
       path: '/keuangan/transaksi/penyaluran',
       name: 'keuangan-transaksi-penyaluran',
-      component: () => import('@/pages/keuangan/PenyaluranDanaPage.vue'),
+      component: () => import('@/pages/keuangan/penyaluran-dana/PenyaluranDanaListPage.vue'),
       meta: { title: 'Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/penyaluran/baru',
       name: 'keuangan-transaksi-penyaluran-baru',
-      component: () => import('@/pages/keuangan/PenyaluranDanaFormPage.vue'),
+      component: () => import('@/pages/keuangan/penyaluran-dana/PenyaluranDanaCreatePage.vue'),
       meta: { title: 'Input Penyaluran Dana', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
     },
     {
       path: '/keuangan/transaksi/penyaluran/edit/:id',
       name: 'keuangan-transaksi-penyaluran-edit',
-      component: () => import('@/pages/keuangan/PenyaluranDanaFormPage.vue'),
+      component: () => import('@/pages/keuangan/penyaluran-dana/PenyaluranDanaCreatePage.vue'),
       meta: { title: 'Edit Draft Penyaluran', menu_key: 'keuangan.transaksi.penyaluran' as MenuKey },
     },
     {
