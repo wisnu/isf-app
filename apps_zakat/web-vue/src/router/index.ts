@@ -27,8 +27,14 @@ const router = createRouter({
     {
       path: '/keuangan/coa',
       name: 'keuangan-coa',
-      component: () => import('@/pages/keuangan/CoaPage.vue'),
+      component: () => import('@/pages/keuangan/coa/CoaListPage.vue'),
       meta: { title: 'Chart of Accounts', menu_key: 'keuangan.coa' as MenuKey },
+    },
+    {
+      path: '/keuangan/coa/create',
+      name: 'keuangan-coa-create',
+      component: () => import('@/pages/keuangan/coa/CoaCreatePage.vue'),
+      meta: { title: 'Tambah Akun COA', menu_key: 'keuangan.coa' as MenuKey },
     },
     {
       path: '/keuangan/kas',
