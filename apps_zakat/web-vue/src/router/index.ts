@@ -75,7 +75,7 @@ const router = createRouter({
     {
       path: '/keuangan/anggaran/import',
       name: 'keuangan-anggaran-import',
-      component: () => import('@/pages/keuangan/BudgetImportPage.vue'),
+      component: () => import('@/pages/keuangan/budget-import/BudgetImportCreatePage.vue'),
       meta: { title: 'Buat Anggaran Baru', menu_key: 'keuangan.anggaran.import' as MenuKey },
     },
     {
