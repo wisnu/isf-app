@@ -18,6 +18,7 @@ from app.modules.transaction.inter_account_transfer_router import router as inte
 from app.modules.transaction.receivable_router import router as receivable_router
 from app.modules.transaction.general_router import router as general_router
 from app.modules.transaction.amil_income_router import router as amil_income_router
+from app.modules.transaction.amil_expense_router import router as amil_expense_router
 from app.modules.transaction_history.router import router as transaksi_histori_router
 from app.modules.parameter.router import router as parameter_router
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
@@ -64,5 +65,6 @@ app.include_router(inter_account_transfer_router, prefix="/api")
 app.include_router(receivable_router, prefix="/api")
 app.include_router(general_router, prefix="/api")
 app.include_router(amil_income_router, prefix="/api")
+app.include_router(amil_expense_router, prefix="/api")
 app.include_router(transaksi_histori_router, prefix="/api")
 app.include_router(parameter_router, prefix="/api")

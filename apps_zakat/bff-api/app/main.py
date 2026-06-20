@@ -29,6 +29,7 @@ from app.routers.transaction import router as transaction_router
 from app.routers.hc_zis import router as hc_zis_router
 from app.routers.general_transaction import router as general_transaction_router
 from app.routers.amil_income import router as amil_income_router
+from app.routers.amil_expense import router as amil_expense_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -116,6 +117,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(inter_account_transfer_router, prefix="/api")
     app.include_router(general_transaction_router, prefix="/api")
     app.include_router(amil_income_router, prefix="/api")
+    app.include_router(amil_expense_router, prefix="/api")
     app.include_router(authorization_router, prefix="/api")
     app.include_router(parameter_router, prefix="/api")
     return app

@@ -41,6 +41,9 @@ def _register_defaults() -> None:
     # Penerimaan Amil (CI) dispatcher
     from app.modules.transaction import amil_income_service
     register_dispatcher('amil_income', amil_income_service.create_from_payload)
+    # Pengeluaran Amil (CO) dispatcher
+    from app.modules.transaction import amil_expense_service
+    register_dispatcher('amil_expense', amil_expense_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 

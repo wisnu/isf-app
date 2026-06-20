@@ -462,6 +462,18 @@ const router = createRouter({
       meta: { title: 'Input Penerimaan Amil', menu_key: 'finance.transactions.amil_income' as MenuKey },
     },
     {
+      path: '/finance/transactions/amil-expense',
+      name: 'finance-transactions-amil-expense',
+      component: () => import('@/pages/finance/amil-expense/AmilExpenseListPage.vue'),
+      meta: { title: 'Pengeluaran Amil', menu_key: 'finance.transactions.amil_expense' as MenuKey },
+    },
+    {
+      path: '/finance/transactions/amil-expense/create',
+      name: 'finance-transactions-amil-expense-create',
+      component: () => import('@/pages/finance/amil-expense/AmilExpenseCreatePage.vue'),
+      meta: { title: 'Input Pengeluaran Amil', menu_key: 'finance.transactions.amil_expense' as MenuKey },
+    },
+    {
       path: '/finance/transactions/receivable',
       name: 'finance-transactions-receivable',
       component: () => import('@/pages/finance/receivable/ReceivableListPage.vue'),
