@@ -9,7 +9,7 @@ from app.services.proxy import get_api_python
 from app.shared.config import settings
 from app.shared.response import err, ok
 
-router = APIRouter(prefix='/otorisasi', tags=['otorisasi'])
+router = APIRouter(prefix='/authorization', tags=['authorization'])
 
 _ENTITY_MENU: dict[str, str] = {
     'penghimpunan':        'finance.transactions.fund_collection',
@@ -74,7 +74,7 @@ async def list_pending(
         params['branch'] = s['branch']
     if s['branch_access']:
         params['branch_access'] = s['branch_access']
-    downstream = await get_api_python('/api/otorisasi/submissions/', params=params)
+    downstream = await get_api_python('/api/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     raw = downstream.json()
@@ -95,7 +95,7 @@ async def approve_submission(
     s = _session(request)
     body = await request.json() if await _has_body(request) else {}
     params = {'authorizer_id': s['user_id'], 'branch_access': s['branch_access']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/{submission_id}/approve"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/{submission_id}/approve"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -110,7 +110,7 @@ async def reject_submission(
     s = _session(request)
     body = await request.json() if await _has_body(request) else {}
     params = {'authorizer_id': s['user_id']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/{submission_id}/reject"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/{submission_id}/reject"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -124,7 +124,7 @@ async def bulk_approve(
     s = _session(request)
     body = await request.json()
     params = {'authorizer_id': s['user_id'], 'branch_access': s['branch_access']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/bulk/approve"
+    url = f"{settings.api_python_base_url}/api/authorization/bulk/approve"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -138,7 +138,7 @@ async def bulk_reject(
     s = _session(request)
     body = await request.json()
     params = {'authorizer_id': s['user_id']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/bulk/reject"
+    url = f"{settings.api_python_base_url}/api/authorization/bulk/reject"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -153,7 +153,7 @@ async def list_entity_config(
     params: dict = {}
     if module:
         params['module'] = module
-    downstream = await get_api_python('/api/otorisasi/entity-config/', params=params)
+    downstream = await get_api_python('/api/authorization/entity-config/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -169,7 +169,7 @@ async def create_submission(request: Request):
     await _check_dynamic_menu(request, entity_type)
     s = _session(request)
     params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -205,7 +205,7 @@ async def my_submissions(
         params['date_from'] = date_from
     if date_to:
         params['date_to'] = date_to
-    downstream = await get_api_python('/api/otorisasi/submissions/', params=params)
+    downstream = await get_api_python('/api/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     raw = downstream.json()
@@ -222,7 +222,7 @@ async def get_submission(submission_id: int, request: Request):
     Accessible by otorisator (monitoring menu) OR inputer (entity's own menu).
     Fetch first, then check — entity_type is needed to resolve inputer's menu key.
     """
-    downstream = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    downstream = await get_api_python(f'/api/authorization/submission/{submission_id}')
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -252,7 +252,7 @@ async def update_submission(
     request: Request,
 ):
     """Update submission. Fetch detail first to resolve entity_type, then check menu."""
-    detail = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    detail = await get_api_python(f'/api/authorization/submission/{submission_id}')
     if detail.status_code != 200:
         return JSONResponse(status_code=detail.status_code, content=detail.json())
     detail_data = detail.json()
@@ -261,7 +261,7 @@ async def update_submission(
     s = _session(request)
     body = await request.json()
     params = {'user_id': s['user_id']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/{submission_id}"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/{submission_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.put(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -273,7 +273,7 @@ async def delete_submission(
     request: Request,
 ):
     """Delete submission. Fetch detail first to resolve entity_type, then check menu."""
-    detail = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    detail = await get_api_python(f'/api/authorization/submission/{submission_id}')
     if detail.status_code != 200:
         return JSONResponse(status_code=detail.status_code, content=detail.json())
     detail_data = detail.json()
@@ -281,7 +281,7 @@ async def delete_submission(
     await _check_dynamic_menu(request, entity_type)
     s = _session(request)
     params = {'user_id': s['user_id']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/{submission_id}"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/{submission_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.request('DELETE', url, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -293,7 +293,7 @@ async def submit_submission(
     request: Request,
 ):
     """Mark draft as PENDING. Fetch detail first to resolve entity_type, then check menu."""
-    detail = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    detail = await get_api_python(f'/api/authorization/submission/{submission_id}')
     if detail.status_code != 200:
         return JSONResponse(status_code=detail.status_code, content=detail.json())
     detail_data = detail.json()
@@ -302,7 +302,7 @@ async def submit_submission(
     s = _session(request)
     body = await request.json() if await _has_body(request) else {}
     params = {'user_id': s['user_id']}
-    url = f"{settings.api_python_base_url}/api/otorisasi/submission/{submission_id}/submit"
+    url = f"{settings.api_python_base_url}/api/authorization/submission/{submission_id}/submit"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -321,7 +321,7 @@ async def save_and_submit(request: Request):
     await require_menu(menu_key)(request)
     s = _session(request)
     params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
-    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/"
+    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -330,14 +330,14 @@ async def save_and_submit(request: Request):
 @router.put('/save-and-submit/{submission_id}')
 async def update_and_submit(submission_id: int, request: Request):
     """Update submission REJECTED + cek limit + dispatch atau PENDING."""
-    detail = await get_api_python(f'/api/otorisasi/submission/{submission_id}')
+    detail = await get_api_python(f'/api/authorization/submission/{submission_id}')
     if detail.status_code != 200:
         return JSONResponse(status_code=detail.status_code, content=detail.json())
     entity_type = (detail.json().get('data') or {}).get('entity_type', '')
     await _check_dynamic_menu(request, entity_type)
     s = _session(request)
     body = await request.json()
-    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/{submission_id}"
+    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/{submission_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.put(url, json=body, params={'user_id': s['user_id']})
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -353,7 +353,7 @@ async def get_user_limit(
     await require_menu(menu_key)(request)
     s = _session(request)
     downstream = await get_api_python(
-        '/api/otorisasi/user-limit/',
+        '/api/authorization/user-limit/',
         params={'user_id': s['user_id'], 'entity_type': entity_type},
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

@@ -96,7 +96,7 @@ async function submitUntukOtorisasi() {
   errorMsg.value = null
   try {
     const result = await api.post<{ id: number; status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' }>(
-      '/api/otorisasi/submission/',
+      '/api/authorization/submission/',
       {
         entity_type: 'upload_penghimpunan',
         module: 'keuangan',

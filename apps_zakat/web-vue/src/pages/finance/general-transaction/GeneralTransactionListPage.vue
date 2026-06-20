@@ -119,7 +119,7 @@ async function load() {
         `/api/general-transaction/?${params}`
       ),
       api.get<{ rows: Omit<SubRow, '_kind'>[] }>(
-        '/api/otorisasi/my-submissions/?entity_type=transaksi_umum'
+        '/api/authorization/my-submissions/?entity_type=transaksi_umum'
       ).catch(() => ({ rows: [] })),
     ])
 
@@ -161,7 +161,7 @@ async function confirmDelete() {
     if (deleteRow.value._kind === 'tx') {
       await api.delete(`/api/general-transaction/${deleteRow.value.transactionid}`)
     } else {
-      await api.delete(`/api/otorisasi/submission/${deleteRow.value.id}`)
+      await api.delete(`/api/authorization/submission/${deleteRow.value.id}`)
     }
     toast.success('Transaksi berhasil dihapus')
     showDeleteModal.value = false

@@ -72,7 +72,7 @@ const submissions = ref<CoaSubmission[]>([])
 async function loadSubmissions() {
   try {
     const res = await api.get<{ rows: CoaSubmission[] }>(
-      '/api/otorisasi/my-submissions/?entity_type=coa',
+      '/api/authorization/my-submissions/?entity_type=coa',
     )
     submissions.value = res.rows ?? []
   } catch {

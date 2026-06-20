@@ -101,6 +101,7 @@ const groups: MenuGroup[] = [
           { label: 'LPJ Uang Muka',           to: '/finance/transactions/cash-advance-lpj',    icon: RotateCcw,       menu_key: 'finance.transactions.cash_advance_lpj' },
           { label: 'Transfer Antar Rekening', to: '/finance/transactions/fund-transfer',       icon: ArrowLeftRight,  menu_key: 'finance.transactions.fund_transfer' },
           { label: 'Transaksi Umum',          to: '/finance/transactions/general',             icon: BookOpen,        menu_key: 'finance.transactions.general' as MenuKey },
+          { label: 'Penerimaan Amil',         to: '/finance/transactions/amil-income',         icon: BookOpen,        menu_key: 'finance.transactions.amil_income' as MenuKey },
           { label: 'Piutang',                 to: '/finance/transactions/receivable',          icon: DollarSign,      menu_key: 'finance.transactions.receivable' },
         ],
       },

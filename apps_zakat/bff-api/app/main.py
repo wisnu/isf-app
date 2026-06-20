@@ -23,7 +23,7 @@ from app.routers.receivable import router as receivable_router
 from app.routers.cash_advance import router as cash_advance_router
 from app.routers.cash_advance_settlement import router as cash_advance_settlement_router
 from app.routers.inter_account_transfer import router as inter_account_transfer_router
-from app.routers.otorisasi import router as otorisasi_router
+from app.routers.authorization import router as authorization_router
 from app.routers.parameter import router as parameter_router
 from app.routers.transaction import router as transaction_router
 from app.routers.hc_zis import router as hc_zis_router
@@ -116,7 +116,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(inter_account_transfer_router, prefix="/api")
     app.include_router(general_transaction_router, prefix="/api")
     app.include_router(amil_income_router, prefix="/api")
-    app.include_router(otorisasi_router, prefix="/api")
+    app.include_router(authorization_router, prefix="/api")
     app.include_router(parameter_router, prefix="/api")
     return app
 

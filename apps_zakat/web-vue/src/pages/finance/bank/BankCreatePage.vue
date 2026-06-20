@@ -112,7 +112,7 @@ async function submit() {
       product_id: form.is_amil_account || !form.product_id ? null : Number(form.product_id),
       cash_code: form.cash_code.trim() || null,
     }
-    await api.post('/api/otorisasi/save-and-submit/', {
+    await api.post('/api/authorization/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload,

@@ -22,7 +22,7 @@ async function submit() {
   formError.value = null
   submitting.value = true
   try {
-    await api.post('/api/otorisasi/save-and-submit/', {
+    await api.post('/api/authorization/save-and-submit/', {
       entity_type: 'kas',
       module: 'keuangan',
       payload: {

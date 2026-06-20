@@ -103,7 +103,7 @@ async function load() {
         rows: [],
         pagination: { page: 1, limit: 25, total: 0, total_pages: 1 },
       })),
-      api.get<{ rows: any[] }>('/api/otorisasi/my-submissions/?entity_type=piutang').catch(
+      api.get<{ rows: any[] }>('/api/authorization/my-submissions/?entity_type=piutang').catch(
         () => ({ rows: [] }),
       ),
     ])
@@ -137,7 +137,7 @@ async function load() {
 async function submitDraft(id: number) {
   actionLoading.value = id
   try {
-    await api.post(`/api/otorisasi/submission/${id}/submit`, {})
+    await api.post(`/api/authorization/submission/${id}/submit`, {})
     toast.success('Submission berhasil dikirim untuk otorisasi')
     await load()
   } catch (e: unknown) {
@@ -150,7 +150,7 @@ async function submitDraft(id: number) {
 async function deleteDraft(id: number) {
   actionLoading.value = id
   try {
-    await api.delete(`/api/otorisasi/submission/${id}`)
+    await api.delete(`/api/authorization/submission/${id}`)
     toast.success('Draft dihapus')
     subRows.value = subRows.value.filter((r) => r.id !== id)
   } catch (e: unknown) {

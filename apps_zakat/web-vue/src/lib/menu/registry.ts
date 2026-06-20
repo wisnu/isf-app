@@ -39,6 +39,7 @@ export const MENU_KEYS = [
   'finance.transactions.cash_advance_lpj',
   'finance.transactions.fund_transfer',
   'finance.transactions.general',
+  'finance.transactions.amil_income',
   'finance.transactions.receivable',
   'finance.upload.collection',
   'finance.upload.collection.approve',

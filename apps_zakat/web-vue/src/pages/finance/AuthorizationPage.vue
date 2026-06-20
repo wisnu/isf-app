@@ -175,7 +175,7 @@ async function load() {
     if (filterEntityType.value) params.set('entity_type', filterEntityType.value)
     if (filterDateFrom.value) params.set('date_from', filterDateFrom.value)
     if (filterDateTo.value) params.set('date_to', filterDateTo.value)
-    const res = await api.get<ListResponse>(`/api/otorisasi/pending/?${params}`)
+    const res = await api.get<ListResponse>(`/api/authorization/pending/?${params}`)
     rows.value = res.rows
     total.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -211,7 +211,7 @@ onUnmounted(() => {
 
 async function openDetail(row: SubmissionRow) {
   try {
-    const res = await api.get<SubmissionRow>(`/api/otorisasi/submission/${row.id}`)
+    const res = await api.get<SubmissionRow>(`/api/authorization/submission/${row.id}`)
     drawerSubmission.value = res
     drawerOpen.value = true
   } catch {
@@ -224,7 +224,7 @@ async function bulkApprove() {
   if (!ids.length) return
   bulkLoading.value = true
   try {
-    const res = await api.post<any[]>('/api/otorisasi/bulk/approve', { ids })
+    const res = await api.post<any[]>('/api/authorization/bulk/approve', { ids })
     const failed = res.filter((r: any) => r.error)
     if (failed.length) {
       toast.warning(`${failed.length} submission gagal diotorisasi`)
@@ -244,7 +244,7 @@ async function bulkReject() {
   const ids = selectedRows.value.map(r => r.id)
   bulkLoading.value = true
   try {
-    await api.post('/api/otorisasi/bulk/reject', { ids, notes: bulkRejectNotes.value })
+    await api.post('/api/authorization/bulk/reject', { ids, notes: bulkRejectNotes.value })
     toast.warning(`${ids.length} submission ditolak`)
     bulkRejectNotes.value = ''
     await load()

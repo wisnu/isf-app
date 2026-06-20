@@ -190,7 +190,7 @@ function validate(): string | null {
 async function loadSubmission(id: number) {
   try {
     const res = await api.get<{ id: number; payload: Record<string, any> }>(
-      `/api/otorisasi/submission/${id}`,
+      `/api/authorization/submission/${id}`,
     )
     const p = res.payload
     if (p.actual_date) actualDate.value = p.actual_date
@@ -257,12 +257,12 @@ async function submit() {
 
     if (isEditMode.value && editId.value !== null) {
       res = await api.put<{ status: string; bypassed_auth: boolean }>(
-        `/api/otorisasi/save-and-submit/${editId.value}`,
+        `/api/authorization/save-and-submit/${editId.value}`,
         { payload: innerPayload },
       )
     } else {
       res = await api.post<{ status: string; bypassed_auth: boolean }>(
-        '/api/otorisasi/save-and-submit/',
+        '/api/authorization/save-and-submit/',
         { entity_type: 'penghimpunan', module: 'keuangan', payload: innerPayload },
       )
     }
@@ -286,7 +286,7 @@ async function fetchUserLimit() {
   limitLoading.value = true
   try {
     const res = await api.get<{ nilai_limit: number; has_limit: boolean }>(
-      '/api/otorisasi/user-limit/?entity_type=penghimpunan',
+      '/api/authorization/user-limit/?entity_type=penghimpunan',
     )
     nilaiLimit.value = res.nilai_limit
     hasLimit.value = res.has_limit

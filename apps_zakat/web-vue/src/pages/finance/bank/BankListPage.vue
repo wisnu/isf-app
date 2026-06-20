@@ -260,7 +260,7 @@ async function submitForm() {
       product_id: form.is_amil_account || !form.product_id ? null : Number(form.product_id),
       cash_code: form.cash_code.trim() || null,
     }
-    await api.post('/api/otorisasi/save-and-submit/', {
+    await api.post('/api/authorization/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload,
@@ -310,7 +310,7 @@ async function openDelete(accountNo: string) {
 async function submitDelete() {
   submitting.value = true
   try {
-    await api.post('/api/otorisasi/save-and-submit/', {
+    await api.post('/api/authorization/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload: { action: 'delete', account_no: editingAccountNo.value },

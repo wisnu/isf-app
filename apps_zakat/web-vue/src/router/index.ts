@@ -450,6 +450,18 @@ const router = createRouter({
       meta: { title: 'Input Transaksi Umum', menu_key: 'finance.transactions.general' as MenuKey },
     },
     {
+      path: '/finance/transactions/amil-income',
+      name: 'finance-transactions-amil-income',
+      component: () => import('@/pages/finance/amil-income/AmilIncomeListPage.vue'),
+      meta: { title: 'Penerimaan Amil', menu_key: 'finance.transactions.amil_income' as MenuKey },
+    },
+    {
+      path: '/finance/transactions/amil-income/create',
+      name: 'finance-transactions-amil-income-create',
+      component: () => import('@/pages/finance/amil-income/AmilIncomeCreatePage.vue'),
+      meta: { title: 'Input Penerimaan Amil', menu_key: 'finance.transactions.amil_income' as MenuKey },
+    },
+    {
       path: '/finance/transactions/receivable',
       name: 'finance-transactions-receivable',
       component: () => import('@/pages/finance/receivable/ReceivableListPage.vue'),

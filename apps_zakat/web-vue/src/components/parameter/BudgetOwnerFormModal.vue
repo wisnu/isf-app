@@ -96,7 +96,7 @@ async function submit() {
         parent_owner_id: form.parent_owner_id ? Number(form.parent_owner_id) : null,
         status:        form.status,
       }
-      await api.post('/api/otorisasi/save-and-submit/', {
+      await api.post('/api/authorization/save-and-submit/', {
         entity_type: 'budget_owner',
         module:      'keuangan',
         payload,
@@ -109,7 +109,7 @@ async function submit() {
         owner_name: form.owner_name.trim(),
         status:    form.status,
       }
-      await api.post('/api/otorisasi/save-and-submit/', {
+      await api.post('/api/authorization/save-and-submit/', {
         entity_type: 'budget_owner',
         module:      'keuangan',
         payload,
