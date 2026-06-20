@@ -261,7 +261,7 @@ async def create_budget(
 
     # Submit via otorisasi save-and-submit
     params = {"user_id": s["user_id"], "branch_code": s["branch"] or "001"}
-    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/"
+    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
             url,
@@ -295,7 +295,7 @@ async def update_budget(
 
     # Submit via otorisasi save-and-submit (update existing submission)
     params = {"user_id": s["user_id"]}
-    url = f"{settings.api_python_base_url}/api/otorisasi/save-and-submit/{budget_id}"
+    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/{budget_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.put(
             url,
@@ -380,7 +380,7 @@ async def import_budget(
     data_fields["entity_type"] = "budget_import"
 
     downstream = await post_multipart_api_python(
-        "/api/otorisasi/save-and-submit/",
+        "/api/authorization/save-and-submit/",
         data=data_fields,
         file_content=file_data,
         file_field="file",

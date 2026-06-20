@@ -5,7 +5,7 @@ import { api } from '@/lib/api/client'
 import { dmyt, dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
-import type { SubmissionItem, SubmissionRow } from '@/types/otorisasi'
+import type { SubmissionItem, SubmissionRow } from '@/types/authorization'
 
 const props = defineProps<{ submission: SubmissionRow | null; open: boolean; readonly?: boolean }>()
 const emit = defineEmits<{

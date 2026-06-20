@@ -11,7 +11,7 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { api } from '@/lib/api/client'
 import { dmyt } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
-import type { SubmissionRow } from '@/types/otorisasi'
+import type { SubmissionRow } from '@/types/authorization'
 
 const toast = useToast()
 

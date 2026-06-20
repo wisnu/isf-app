@@ -10,7 +10,7 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { api } from '@/lib/api/client'
 import { dmy, dmyt } from '@/lib/date'
-import type { SubmissionRow } from '@/types/otorisasi'
+import type { SubmissionRow } from '@/types/authorization'
 
 interface ListResponse {
   rows: SubmissionRow[]
