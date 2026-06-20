@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 const STORAGE_KEY = 'isf-notif-read'
 
@@ -95,3 +95,7 @@ export const useNotificationsStore = defineStore('notifications', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useNotificationsStore, import.meta.hot))
+}

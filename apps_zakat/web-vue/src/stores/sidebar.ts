@@ -1,5 +1,5 @@
 import { shallowRef } from 'vue'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 const STORAGE_KEY = 'isf-sidebar-collapsed'
 
@@ -17,3 +17,7 @@ export const useSidebarStore = defineStore('sidebar', () => {
 
   return { collapsed, init, toggle }
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useSidebarStore, import.meta.hot))
+}

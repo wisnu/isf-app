@@ -1,5 +1,5 @@
 import { computed, shallowRef } from 'vue'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { api, ApiError } from '@/lib/api/client'
 import type { MenuKey } from '@/lib/menu/registry'
@@ -118,3 +118,9 @@ export const useAuthStore = defineStore('auth', () => {
     refreshProfile,
   }
 })
+
+// Preserve store state across Vite HMR — prevents the app shell (header +
+// sidebar) from vanishing when components are hot-reloaded during dev.
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot))
+}
