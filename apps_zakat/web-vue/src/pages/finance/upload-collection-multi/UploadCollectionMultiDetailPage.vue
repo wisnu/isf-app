@@ -58,7 +58,7 @@ const fmt = (n: number) => idr.format(n)
 onMounted(async () => {
   try {
     detail.value = await api.get<BatchDetail>(
-      `/api/transaction/upload/penghimpunan/batches/${batchId}`,
+      `/api/transaction/upload/fund-collection/batches/${batchId}`,
     )
   } catch (e: unknown) {
     errorMsg.value = e instanceof ApiError ? e.message : String(e)
@@ -71,10 +71,10 @@ async function confirmApprove() {
   approving.value = true
   approveError.value = null
   try {
-    await api.post(`/api/transaction/upload/penghimpunan/batches/${batchId}/approve`, {})
+    await api.post(`/api/transaction/upload/fund-collection/batches/${batchId}/approve`, {})
     toast.success('Batch berhasil diotorisasi')
     detail.value = await api.get<BatchDetail>(
-      `/api/transaction/upload/penghimpunan/batches/${batchId}`,
+      `/api/transaction/upload/fund-collection/batches/${batchId}`,
     )
     showConfirm.value = false
   } catch (e: unknown) {

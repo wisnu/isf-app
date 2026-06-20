@@ -103,7 +103,7 @@ async function load() {
 
     const [txRes, subRes] = await Promise.all([
       api.get<{ rows: Omit<PenghimpunanRow, '_rowKind'>[]; pagination: { page: number; limit: number; total: number; total_pages: number } }>(
-        `/api/penghimpunan/?${params}`,
+        `/api/fund-collection/?${params}`,
       ).catch(() => ({ rows: [], pagination: { page: 1, limit: 25, total: 0, total_pages: 1 } })),
       api.get<{ rows: any[] }>('/api/otorisasi/my-submissions/?entity_type=penghimpunan').catch(
         () => ({ rows: [] }),

@@ -66,7 +66,7 @@ async def _resolve_payment(
     raise ValueError(f'payment_type tidak dikenal: {req.payment_type}')
 
 
-async def create_penghimpunan(
+async def create_fund_collection(
     req: PenghimpunanCreate,
     user_id: str,
     branch_code: str,

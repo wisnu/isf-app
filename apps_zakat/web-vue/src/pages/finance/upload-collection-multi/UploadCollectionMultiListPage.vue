@@ -74,7 +74,7 @@ async function load() {
     const p = new URLSearchParams({ begin: begin.value, end: end.value })
     if (statusFilter.value) p.set('status', statusFilter.value)
     batches.value = await api.get<Batch[]>(
-      `/api/transaction/upload/penghimpunan/batches?${p}`,
+      `/api/transaction/upload/fund-collection/batches?${p}`,
     )
     hasLoaded.value = true
   } catch (e: unknown) {

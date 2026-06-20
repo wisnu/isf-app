@@ -8,9 +8,9 @@ from app.services.auth import require_menu
 from app.services.proxy import get_api_python
 from app.shared.config import settings
 
-router = APIRouter(prefix='/penyaluran', tags=['penyaluran'])
+router = APIRouter(prefix='/fund-collection', tags=['fund-collection'])
 
-_MENU = 'finance.transactions.fund_distribution'
+_MENU = 'finance.transactions.fund_collection'
 
 
 def _session(request: Request) -> dict:
@@ -21,14 +21,8 @@ def _session(request: Request) -> dict:
     return {'user_id': user_id, 'branch': branch}
 
 
-@router.get('/lookup/ashnaf')
-async def lookup_ashnaf(_: str = Depends(require_menu(_MENU))):
-    downstream = await get_api_python('/api/transaction/penyaluran/lookup/ashnaf')
-    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
-
-
-@router.get('/lookup/rekening')
-async def lookup_rekening(
+@router.get('/lookup/account')
+async def lookup_account(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     type: str = Query(default='bank'),
@@ -37,38 +31,38 @@ async def lookup_rekening(
     params: dict = {'type': type}
     if s['branch']:
         params['branch'] = s['branch']
-    downstream = await get_api_python('/api/transaction/penyaluran/lookup/rekening', params=params)
+    downstream = await get_api_python('/api/transaction/fund-collection/lookup/account', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/lookup/produk')
-async def lookup_produk(
+@router.get('/lookup/product')
+async def lookup_product(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     currency: str = Query(default='IDR'),
 ):
     s = _session(request)
     params = {'branch_code': s['branch'] or '001', 'currency': currency}
-    downstream = await get_api_python('/api/transaction/penyaluran/lookup/produk', params=params)
+    downstream = await get_api_python('/api/transaction/fund-collection/lookup/product', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/lookup/fund-product-account')
-async def lookup_fund_product_account(
+@router.get('/lookup/donor')
+async def lookup_donor(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
-    bank_account_no: str = Query(...),
+    q: str = Query(...),
 ):
     s = _session(request)
-    params = {'bank_account_no': bank_account_no, 'branch_code': s['branch'] or '001'}
-    downstream = await get_api_python(
-        '/api/transaction/penyaluran/lookup/fund-product-account', params=params
-    )
+    params: dict = {'q': q}
+    if s['branch']:
+        params['branch'] = s['branch']
+    downstream = await get_api_python('/api/transaction/fund-collection/lookup/donor', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.get('/')
-async def list_penyaluran(
+async def list_fund_collection(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     begin: str = Query(...),
@@ -83,28 +77,28 @@ async def list_penyaluran(
         params['branch'] = s['branch']
     if search:
         params['search'] = search
-    downstream = await get_api_python('/api/transaction/penyaluran/', params=params)
+    downstream = await get_api_python('/api/transaction/fund-collection/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.get('/{transaction_id}')
-async def detail_penyaluran(
+async def detail_fund_collection(
     transaction_id: int,
     _: str = Depends(require_menu(_MENU)),
 ):
-    downstream = await get_api_python(f'/api/transaction/penyaluran/{transaction_id}')
+    downstream = await get_api_python(f'/api/transaction/fund-collection/{transaction_id}')
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.post('/')
-async def create_penyaluran(
+async def create_fund_collection(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
 ):
     s = _session(request)
     body = await request.json()
     params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
-    url = f"{settings.api_python_base_url}/api/transaction/penyaluran/"
+    url = f"{settings.api_python_base_url}/api/transaction/fund-collection/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())

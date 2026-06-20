@@ -101,7 +101,7 @@ async function load() {
     if (search.value.trim()) params.set('search', search.value.trim())
 
     const [txRes, subRes] = await Promise.all([
-      api.get<ListResponse>(`/api/penyaluran/?${params}`).catch(() => ({
+      api.get<ListResponse>(`/api/fund-distribution/?${params}`).catch(() => ({
         rows: [],
         pagination: { page: 1, limit: 25, total: 0, total_pages: 1 },
       })),

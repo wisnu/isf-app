@@ -111,8 +111,8 @@ const paymentTabs = [
 
 async function loadLookups() {
   const [ashnaf, products] = await Promise.all([
-    api.get<AshnafOption[]>('/api/penyaluran/lookup/ashnaf').catch(() => []),
-    api.get<ProductOption[]>('/api/penyaluran/lookup/produk').catch(() => []),
+    api.get<AshnafOption[]>('/api/fund-distribution/lookup/ashnaf').catch(() => []),
+    api.get<ProductOption[]>('/api/fund-distribution/lookup/product').catch(() => []),
   ])
   ashnafOptions.value = ashnaf
   productOptions.value = products
@@ -121,7 +121,7 @@ async function loadLookups() {
 async function loadRekening() {
   const typeMap: Record<string, string> = { B: 'bank', K: 'petty', C: 'cabang', A: 'bank' }
   const rows = await api
-    .get<RekeningOption[]>(`/api/penyaluran/lookup/rekening?type=${typeMap[paymentType.value]}`)
+    .get<RekeningOption[]>(`/api/fund-distribution/lookup/account?type=${typeMap[paymentType.value]}`)
     .catch(() => [])
   rekeningOptions.value = rows
 }
@@ -132,7 +132,7 @@ async function onBankSelected(accountNo: string) {
   fundAccountOptions.value = []
   if (!accountNo) return
   const rows = await api
-    .get<FundAccountOption[]>(`/api/penyaluran/lookup/fund-product-account?bank_account_no=${accountNo}`)
+    .get<FundAccountOption[]>(`/api/fund-distribution/lookup/fund-product-account?bank_account_no=${accountNo}`)
     .catch(() => [])
   fundAccountOptions.value = rows
   if (rows.length === 1) fundAccountNo.value = rows[0].account_no

@@ -30,7 +30,7 @@ class ApproveRequest(BaseModel):
     inputer: str
 
 
-@router.post('/upload/penghimpunan/parse')
+@router.post('/upload/fund-collection/parse')
 async def parse_endpoint(
     file: UploadFile = File(...),
     branch_code: str = '',
@@ -50,7 +50,7 @@ async def parse_endpoint(
     return ok({'rows': [r.model_dump() for r in rows], 'filename': filename})
 
 
-@router.post('/upload/penghimpunan/draft')
+@router.post('/upload/fund-collection/draft')
 async def draft_endpoint(
     file: UploadFile = File(...),
     branch_code: str = '',
@@ -68,7 +68,7 @@ async def draft_endpoint(
     return ok(result.model_dump())
 
 
-@router.get('/upload/penghimpunan/template')
+@router.get('/upload/fund-collection/template')
 async def template_endpoint():
     xlsx = build_template()
     return Response(
@@ -78,7 +78,7 @@ async def template_endpoint():
     )
 
 
-@router.get('/upload/penghimpunan/batches')
+@router.get('/upload/fund-collection/batches')
 async def batches_endpoint(
     begin: str | None = Query(default=None),
     end: str | None = Query(default=None),
@@ -88,7 +88,7 @@ async def batches_endpoint(
     return ok([b.model_dump() for b in batches])
 
 
-@router.get('/upload/penghimpunan/batches/{batch_id}')
+@router.get('/upload/fund-collection/batches/{batch_id}')
 async def batch_detail_endpoint(batch_id: int):
     detail = await service.get_batch_detail(batch_id)
     if not detail:
@@ -99,7 +99,7 @@ async def batch_detail_endpoint(batch_id: int):
     return ok(detail.model_dump())
 
 
-@router.post('/upload/penghimpunan/batches/{batch_id}/approve')
+@router.post('/upload/fund-collection/batches/{batch_id}/approve')
 async def approve_endpoint(batch_id: int, req: ApproveRequest, background_tasks: BackgroundTasks):
     batch = await txrepo.get_batch_header(batch_id)
     if not batch:
@@ -119,13 +119,13 @@ async def approve_endpoint(batch_id: int, req: ApproveRequest, background_tasks:
 
 # ── Penyaluran Dana (DD001) ───────────────────────────────────────────────────
 
-@router.get('/penyaluran/lookup/ashnaf')
-async def penyaluran_lookup_ashnaf():
+@router.get('/fund-distribution/lookup/ashnaf')
+async def fund_distribution_lookup_ashnaf():
     return ok(ASHNAF_LIST)
 
 
-@router.get('/penyaluran/lookup/rekening')
-async def penyaluran_lookup_rekening(
+@router.get('/fund-distribution/lookup/account')
+async def fund_distribution_lookup_rekening(
     type: str = Query(default='bank'),
     branch: str | None = Query(default=None),
 ):
@@ -134,8 +134,8 @@ async def penyaluran_lookup_rekening(
     return ok([r.model_dump() for r in rows])
 
 
-@router.get('/penyaluran/lookup/produk')
-async def penyaluran_lookup_produk(
+@router.get('/fund-distribution/lookup/product')
+async def fund_distribution_lookup_produk(
     branch_code: str = Query(...),
     currency: str = Query(default='IDR'),
 ):
@@ -143,8 +143,8 @@ async def penyaluran_lookup_produk(
     return ok([r.model_dump() for r in rows])
 
 
-@router.get('/penyaluran/lookup/fund-product-account')
-async def penyaluran_lookup_fund_product_account(
+@router.get('/fund-distribution/lookup/fund-product-account')
+async def fund_distribution_lookup_fund_product_account(
     bank_account_no: str = Query(...),
     branch_code: str = Query(...),
 ):
@@ -152,8 +152,8 @@ async def penyaluran_lookup_fund_product_account(
     return ok([r.model_dump() for r in rows])
 
 
-@router.get('/penyaluran/')
-async def penyaluran_list(
+@router.get('/fund-distribution/')
+async def fund_distribution_list(
     begin: str = Query(...),
     end: str = Query(...),
     search: str | None = Query(default=None),
@@ -173,8 +173,8 @@ async def penyaluran_list(
     })
 
 
-@router.get('/penyaluran/{transaction_id}')
-async def penyaluran_detail(transaction_id: int):
+@router.get('/fund-distribution/{transaction_id}')
+async def fund_distribution_detail(transaction_id: int):
     row = await fetch_one(
         """SELECT t.transactionid, t.transactionno,
               to_char(t.actualdate,'YYYY-MM-DD') AS actual_date,
@@ -205,14 +205,14 @@ async def penyaluran_detail(transaction_id: int):
     return ok({**dict(row), 'items': [dict(i) for i in items]})
 
 
-@router.post('/penyaluran/')
-async def penyaluran_create(
+@router.post('/fund-distribution/')
+async def fund_distribution_create(
     req: PenyaluranCreate,
     branch_code: str = Query(default=''),
     user_id: str = Query(default=''),
 ):
     try:
-        result = await psvc.create_penyaluran(req, user_id, branch_code)
+        result = await psvc.create_fund_distribution(req, user_id, branch_code)
     except ValueError as exc:
         return JSONResponse(status_code=422, content=err('VALIDATION_ERROR', str(exc)))
     except Exception as exc:
@@ -222,8 +222,8 @@ async def penyaluran_create(
 
 # ── Penghimpunan Dana (SD001) ─────────────────────────────────────────────────
 
-@router.get('/penghimpunan/lookup/rekening')
-async def penghimpunan_lookup_rekening(
+@router.get('/fund-collection/lookup/account')
+async def fund_collection_lookup_rekening(
     type: str = Query(default='bank'),
     branch: str | None = Query(default=None),
 ):
@@ -232,8 +232,8 @@ async def penghimpunan_lookup_rekening(
     return ok([r.model_dump() for r in rows])
 
 
-@router.get('/penghimpunan/lookup/produk')
-async def penghimpunan_lookup_produk(
+@router.get('/fund-collection/lookup/product')
+async def fund_collection_lookup_produk(
     branch_code: str = Query(...),
     currency: str = Query(default='IDR'),
 ):
@@ -241,8 +241,8 @@ async def penghimpunan_lookup_produk(
     return ok([r.model_dump() for r in rows])
 
 
-@router.get('/penghimpunan/lookup/donor')
-async def penghimpunan_lookup_donor(
+@router.get('/fund-collection/lookup/donor')
+async def fund_collection_lookup_donor(
     q: str = Query(...),
     branch: str | None = Query(default=None),
 ):
@@ -250,8 +250,8 @@ async def penghimpunan_lookup_donor(
     return ok(rows)
 
 
-@router.get('/penghimpunan/')
-async def penghimpunan_list(
+@router.get('/fund-collection/')
+async def fund_collection_list(
     begin: str = Query(...),
     end: str = Query(...),
     search: str | None = Query(default=None),
@@ -271,8 +271,8 @@ async def penghimpunan_list(
     })
 
 
-@router.get('/penghimpunan/{transaction_id}')
-async def penghimpunan_detail(transaction_id: int):
+@router.get('/fund-collection/{transaction_id}')
+async def fund_collection_detail(transaction_id: int):
     row = await fetch_one(
         """SELECT t.transactionid, t.transactionno,
               to_char(t.actualdate,'YYYY-MM-DD') AS actual_date,
@@ -303,14 +303,14 @@ async def penghimpunan_detail(transaction_id: int):
     return ok({**dict(row), 'items': [dict(i) for i in items]})
 
 
-@router.post('/penghimpunan/')
-async def penghimpunan_create(
+@router.post('/fund-collection/')
+async def fund_collection_create(
     req: PenghimpunanCreate,
     branch_code: str = Query(default=''),
     user_id: str = Query(default=''),
 ):
     try:
-        result = await phsvc.create_penghimpunan(req, user_id, branch_code)
+        result = await phsvc.create_fund_collection(req, user_id, branch_code)
     except ValueError as exc:
         return JSONResponse(status_code=422, content=err('VALIDATION_ERROR', str(exc)))
     except Exception as exc:

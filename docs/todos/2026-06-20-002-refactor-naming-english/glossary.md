@@ -108,3 +108,4 @@ them requires data migration and/or breaks domain meaning. Treat as opaque.
 | `account_interface` = KKC (petty cash) | DB value |
 | **Islamic terms**: `ashnaf`, `zakat_fitrah`, `infaq`, `wakaf`/`waqf`, `qurban`, `amil` | domain vocabulary, keep |
 | Actual **DB column names** (`no_rekening`, `ownerid`, `valuta_code`, `transactionid`, …) | legacy DB — alias in `SELECT ... AS english`, never `ALTER` |
+| **Upload-batch product-key fields** (`no_rekening`, `tanggal`, `keterangan`, `no_ref`, `total_kredit`, `zakat_profesi/maal/fitrah/perusahaan`, `infaq_terikat`, `anak_yatim/asuh`, `titipan_wakaf/qurban`, `pesan`) in `transaction/schema.py` ParsedRow | FROZEN 2026-06-20: coupled to `PRODUCT_ID_MAP`/`FIELD_MAP` via getattr/dict-key, shared with `hc_zis_commit.py`, persisted in batch JSONB. Discriminator-like → rename would risk parse→commit pipeline. Only `/upload/penghimpunan`→`/upload/fund-collection` PATH renamed. |

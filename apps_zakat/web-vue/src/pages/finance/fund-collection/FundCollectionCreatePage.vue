@@ -124,20 +124,20 @@ const paymentTabs = [
 
 async function loadLookups() {
   productOptions.value = await api
-    .get<ProductOption[]>(`/api/penghimpunan/lookup/produk?branch_code=${encodeURIComponent(productBranchCode.value)}`)
+    .get<ProductOption[]>(`/api/fund-collection/lookup/product?branch_code=${encodeURIComponent(productBranchCode.value)}`)
     .catch(() => [])
 }
 
 async function loadRekening() {
   const typeMap: Record<string, string> = { B: 'bank', K: 'petty', C: 'cabang', A: 'bank' }
   rekeningOptions.value = await api
-    .get<RekeningOption[]>(`/api/penghimpunan/lookup/rekening?type=${typeMap[paymentType.value]}`)
+    .get<RekeningOption[]>(`/api/fund-collection/lookup/account?type=${typeMap[paymentType.value]}`)
     .catch(() => [])
 }
 
 async function loadDonors() {
   donorOptions.value = await api
-    .get<DonorOption[]>('/api/penghimpunan/lookup/donor?q=')
+    .get<DonorOption[]>('/api/fund-collection/lookup/donor?q=')
     .catch(() => [])
 }
 

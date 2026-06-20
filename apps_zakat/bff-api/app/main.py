@@ -17,8 +17,8 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.report import router as report_router
 from app.routers.tenants import router as tenants_router
 from app.routers.histori_transaksi import router as histori_transaksi_router
-from app.routers.penyaluran import router as penyaluran_router
-from app.routers.penghimpunan import router as penghimpunan_router
+from app.routers.fund_distribution import router as fund_distribution_router
+from app.routers.fund_collection import router as fund_collection_router
 from app.routers.receivable import router as receivable_router
 from app.routers.cash_advance import router as cash_advance_router
 from app.routers.cash_advance_settlement import router as cash_advance_settlement_router
@@ -108,8 +108,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(transaction_router, prefix="/api")
     app.include_router(transaksi_router, prefix="/api")
     app.include_router(histori_transaksi_router, prefix="/api")
-    app.include_router(penyaluran_router, prefix="/api")
-    app.include_router(penghimpunan_router, prefix="/api")
+    app.include_router(fund_distribution_router, prefix="/api")
+    app.include_router(fund_collection_router, prefix="/api")
     app.include_router(receivable_router, prefix="/api")
     app.include_router(cash_advance_router, prefix="/api")
     app.include_router(cash_advance_settlement_router, prefix="/api")

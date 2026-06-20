@@ -22,7 +22,7 @@ def _branch_for_session(request: Request) -> str:
     return '' if access == 'all' else primary
 
 
-@router.post('/upload/penghimpunan/parse')
+@router.post('/upload/fund-collection/parse')
 async def parse(
     request: Request,
     _: str = Depends(require_menu(_UPLOAD_MENU)),
@@ -31,7 +31,7 @@ async def parse(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        '/api/transaction/upload/penghimpunan/parse',
+        '/api/transaction/upload/fund-collection/parse',
         data={'branch_code': branch_code},
         file_content=data,
         filename=file.filename or 'upload',
@@ -40,7 +40,7 @@ async def parse(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.post('/upload/penghimpunan/draft')
+@router.post('/upload/fund-collection/draft')
 async def draft(
     request: Request,
     _: str = Depends(require_menu(_UPLOAD_MENU)),
@@ -50,7 +50,7 @@ async def draft(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        '/api/transaction/upload/penghimpunan/draft',
+        '/api/transaction/upload/fund-collection/draft',
         data={'branch_code': branch_code, 'upload_user': user_id},
         file_content=data,
         filename=file.filename or 'upload',
@@ -59,12 +59,12 @@ async def draft(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/upload/penghimpunan/template')
+@router.get('/upload/fund-collection/template')
 async def template(
     request: Request,
     _: str = Depends(require_menu(_UPLOAD_MENU)),
 ):
-    downstream = await get_api_python('/api/transaction/upload/penghimpunan/template')
+    downstream = await get_api_python('/api/transaction/upload/fund-collection/template')
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(
@@ -74,7 +74,7 @@ async def template(
     )
 
 
-@router.get('/upload/penghimpunan/batches')
+@router.get('/upload/fund-collection/batches')
 async def batches(
     request: Request,
     _: str = Depends(require_menu(_APPROVE_MENU)),
@@ -89,23 +89,23 @@ async def batches(
         params['end'] = end
     if status:
         params['status'] = status
-    downstream = await get_api_python('/api/transaction/upload/penghimpunan/batches', params=params)
+    downstream = await get_api_python('/api/transaction/upload/fund-collection/batches', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/upload/penghimpunan/batches/{batch_id}')
+@router.get('/upload/fund-collection/batches/{batch_id}')
 async def batch_detail(
     request: Request,
     batch_id: int,
     _: str = Depends(require_menu(_APPROVE_MENU)),
 ):
     downstream = await get_api_python(
-        f'/api/transaction/upload/penghimpunan/batches/{batch_id}'
+        f'/api/transaction/upload/fund-collection/batches/{batch_id}'
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.post('/upload/penghimpunan/batches/{batch_id}/approve')
+@router.post('/upload/fund-collection/batches/{batch_id}/approve')
 async def approve(
     request: Request,
     batch_id: int,
@@ -113,7 +113,7 @@ async def approve(
 ):
     user_id = request.session.get('user_id', '')
     branch_code = _branch_for_session(request)
-    url = f"{settings.api_python_base_url}/api/transaction/upload/penghimpunan/batches/{batch_id}/approve"
+    url = f"{settings.api_python_base_url}/api/transaction/upload/fund-collection/batches/{batch_id}/approve"
     async with httpx.AsyncClient(timeout=60.0) as client:
         downstream = await client.post(url, json={
             'authorized_user': user_id,

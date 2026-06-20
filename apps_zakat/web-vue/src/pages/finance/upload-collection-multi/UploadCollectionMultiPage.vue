@@ -68,7 +68,7 @@ function resetUpload() {
 
 async function downloadTemplate() {
   await api.downloadBlob(
-    '/api/transaction/upload/penghimpunan/template',
+    '/api/transaction/upload/fund-collection/template',
     'template-upload-penghimpunan.xlsx',
   )
 }
@@ -80,7 +80,7 @@ async function parseFile() {
   try {
     const form = new FormData()
     form.append('file', selectedFile.value)
-    const result = await api.upload<{ rows: ParsedRow[] }>('/api/transaction/upload/penghimpunan/parse', form)
+    const result = await api.upload<{ rows: ParsedRow[] }>('/api/transaction/upload/fund-collection/parse', form)
     rows.value = result.rows
     phase.value = 'preview'
   } catch (e: unknown) {
