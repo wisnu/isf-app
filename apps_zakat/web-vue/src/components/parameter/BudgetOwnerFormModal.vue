@@ -2,7 +2,6 @@
 import { onMounted, reactive, ref, shallowRef } from 'vue'
 import { X } from 'lucide-vue-next'
 
-import Button from '@/components/ui/Button.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { api, ApiError } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
@@ -133,7 +132,7 @@ async function submit() {
     <div class="w-full max-w-2xl bg-background rounded-xl shadow-xl border border-border flex flex-col max-h-[90vh]">
       <!-- Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-        <h2 class="text-sm font-semibold">
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">
           {{ mode === 'create' ? 'Tambah Pemilik Anggaran' : 'Ubah Pemilik Anggaran' }}
         </h2>
         <button class="text-muted-foreground hover:text-foreground" @click="emit('close')">
@@ -146,24 +145,24 @@ async function submit() {
         <!-- Kode + Nama -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium">Kode Pemilik <span class="text-red-500">*</span></label>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Kode Pemilik <span class="text-red-500">*</span></label>
             <input
               v-model="form.ownercode"
               :disabled="mode === 'edit'"
               type="text"
               maxlength="10"
-              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="mis. PRD"
             />
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium">Nama Pemilik <span class="text-red-500">*</span></label>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nama Pemilik <span class="text-red-500">*</span></label>
             <input
               v-model="form.ownername"
               type="text"
               maxlength="100"
-              class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Nama lengkap pemilik anggaran"
             />
           </div>
@@ -171,7 +170,7 @@ async function submit() {
 
         <!-- Tipe (is_detail) -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium">Tipe <span class="text-red-500">*</span></label>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipe <span class="text-red-500">*</span></label>
           <div class="flex gap-4">
             <label class="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
@@ -199,7 +198,7 @@ async function submit() {
 
         <!-- Parent -->
         <div v-if="form.is_detail === 'T'" class="flex flex-col gap-1">
-          <label class="text-xs font-medium">
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
             Pemilik Induk <span class="text-red-500">*</span>
           </label>
           <SearchSelect
@@ -214,10 +213,10 @@ async function submit() {
 
         <!-- Status -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium">Status</label>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</label>
           <select
             v-model="form.status"
-            class="h-9 w-full rounded-lg px-2.5 text-xs border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="A">Aktif</option>
             <option value="N">Tidak Aktif</option>
@@ -235,10 +234,15 @@ async function submit() {
 
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-3 border-t border-border shrink-0">
-        <Button variant="outline" size="sm" @click="emit('close')">Batal</Button>
-        <Button size="sm" :disabled="submitting" @click="submit">
-          {{ submitting ? 'Menyimpan...' : 'Simpan' }}
-        </Button>
+        <button
+          class="border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+          @click="emit('close')"
+        >Batal</button>
+        <button
+          class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="submitting"
+          @click="submit"
+        >{{ submitting ? 'Menyimpan...' : 'Simpan' }}</button>
       </div>
     </div>
   </div>

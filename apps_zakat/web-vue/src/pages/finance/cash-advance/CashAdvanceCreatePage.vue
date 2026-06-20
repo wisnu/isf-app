@@ -1,11 +1,9 @@
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import { onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
-import Input from '@/components/ui/Input.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
 import { api } from '@/lib/api/client'
@@ -107,72 +105,121 @@ onMounted(loadCashAccounts)
 </script>
 
 <template>
-  <div class="space-y-4">
-    <PageHeader title="Input Penyerahan Uang Muka" subtitle="Penyerahan uang muka kepada karyawan" />
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Back button -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-transactions-cash-advance' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+      <span class="text-xs text-slate-400">Penyerahan uang muka kepada karyawan</span>
+    </div>
 
-    <div class="rounded-xl border border-border bg-surface p-6 space-y-4 max-w-2xl">
-      <!-- Tanggal -->
-      <div>
-        <label class="block text-sm font-medium mb-1.5">Tanggal <span class="text-red-500">*</span></label>
-        <DateField v-model="form.actual_date" />
+    <!-- Form card -->
+    <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden max-w-2xl">
+      <!-- Card header bar -->
+      <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+        <h2 class="font-bold text-xs tracking-widest text-white uppercase">Penyerahan Uang Muka</h2>
       </div>
+      <!-- Card body -->
+      <div class="p-4 space-y-3">
+        <!-- Tanggal -->
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Tanggal <span class="text-red-500">*</span>
+          </label>
+          <DateField v-model="form.actual_date" />
+        </div>
 
-      <!-- Karyawan & Rekening Kas -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Karyawan <span class="text-red-500">*</span></label>
-          <SearchSelect
-            :model-value="selectedEmployee"
-            :options="employeeOptions"
-            :loading="false"
-            placeholder="Ketik nama atau nomor..."
-            option-label="employee_name"
-            @update:model-value="handleEmployeeSelect"
-            @search="searchEmployees"
-          />
+        <!-- Karyawan & Rekening Kas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Karyawan <span class="text-red-500">*</span>
+            </label>
+            <SearchSelect
+              :model-value="selectedEmployee"
+              :options="employeeOptions"
+              :loading="false"
+              placeholder="Ketik nama atau nomor..."
+              option-label="employee_name"
+              @update:model-value="handleEmployeeSelect"
+              @search="searchEmployees"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Rekening Kas <span class="text-red-500">*</span>
+            </label>
+            <SearchSelect
+              :model-value="selectedCashAccount"
+              :options="cashAccountOptions"
+              :loading="false"
+              placeholder="Pilih rekening kas..."
+              option-label="cash_account_name"
+              @update:model-value="handleCashAccountSelect"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Rekening Kas <span class="text-red-500">*</span></label>
-          <SearchSelect
-            :model-value="selectedCashAccount"
-            :options="cashAccountOptions"
-            :loading="false"
-            placeholder="Pilih rekening kas..."
-            option-label="cash_account_name"
-            @update:model-value="handleCashAccountSelect"
-          />
-        </div>
-      </div>
 
-      <!-- Nominal & No. Referensi -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Nominal <span class="text-red-500">*</span></label>
-          <AmountInput v-model="form.amount" placeholder="Masukkan nominal..." />
+        <!-- Nominal & No. Referensi -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Nominal <span class="text-red-500">*</span>
+            </label>
+            <AmountInput v-model="form.amount" placeholder="Masukkan nominal..." />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi</label>
+            <input
+              v-model="form.reference_no"
+              placeholder="Contoh: CHK-2026-001"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1.5">No. Referensi</label>
-          <Input v-model="form.reference_no" placeholder="Contoh: CHK-2026-001" />
-        </div>
-      </div>
 
-      <!-- Keterangan & Penerima Dari -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Keterangan</label>
-          <Input v-model="form.description" placeholder="Deskripsi singkat..." />
+        <!-- Keterangan & Penerima Dari -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Keterangan</label>
+            <input
+              v-model="form.description"
+              placeholder="Deskripsi singkat..."
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Penerima Dari</label>
+            <input
+              v-model="form.received_from"
+              placeholder="Nama atau unit..."
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Penerima Dari</label>
-          <Input v-model="form.received_from" placeholder="Nama atau unit..." />
-        </div>
-      </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <Button variant="outline" :disabled="loading" @click="router.push({ name: 'finance-transactions-cash-advance' })">
-          Batal
-        </Button>
-        <Button :loading="loading" @click="submit">Simpan</Button>
+        <!-- Actions -->
+        <div class="flex gap-2 pt-1">
+          <button
+            class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+            :disabled="loading"
+            @click="router.push({ name: 'finance-transactions-cash-advance' })"
+          >
+            Batal
+          </button>
+          <button
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading"
+            @click="submit"
+          >
+            {{ loading ? 'Menyimpan...' : 'Simpan' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

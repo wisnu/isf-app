@@ -3,8 +3,6 @@ import { X } from 'lucide-vue-next'
 import { ref, shallowRef, watch, onMounted } from 'vue'
 
 import Modal from '@/components/ui/Modal.vue'
-import Button from '@/components/ui/Button.vue'
-import Input from '@/components/ui/Input.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
@@ -160,7 +158,7 @@ onMounted(loadCashAccounts)
 <template>
   <Modal :open="true" class="max-w-2xl" @close="emit('close')">
     <div class="flex items-center justify-between border-b border-border px-6 py-4">
-      <h2 class="text-lg font-semibold">Input Pengembalian / LPJ Uang Muka</h2>
+      <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Input Pengembalian / LPJ Uang Muka</h2>
       <button class="rounded p-1 hover:bg-muted transition-colors" @click="emit('close')">
         <X class="w-4 h-4" />
       </button>
@@ -169,13 +167,13 @@ onMounted(loadCashAccounts)
     <div class="space-y-4 px-6 py-5">
       <!-- Tanggal -->
       <div>
-        <label class="block text-sm font-medium mb-1.5">Tanggal <span class="text-red-500">*</span></label>
+        <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tanggal <span class="text-red-500">*</span></label>
         <DateField v-model="actualDate" />
       </div>
 
       <!-- Karyawan -->
       <div>
-        <label class="block text-sm font-medium mb-1.5">Karyawan <span class="text-red-500">*</span></label>
+        <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Karyawan <span class="text-red-500">*</span></label>
         <SearchSelect
           :model-value="selectedEmployee"
           :options="employeeOptions"
@@ -189,7 +187,7 @@ onMounted(loadCashAccounts)
 
       <!-- Pilih Uang Muka -->
       <div>
-        <label class="block text-sm font-medium mb-1.5">Uang Muka Yang Di-LPJ <span class="text-red-500">*</span></label>
+        <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Uang Muka Yang Di-LPJ <span class="text-red-500">*</span></label>
         <SearchSelect
           :model-value="selectedOpenCA"
           :options="openCAOptions"
@@ -219,14 +217,18 @@ onMounted(loadCashAccounts)
       <!-- Nominal & Rekening Kas -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5">Nominal Pengembalian <span class="text-red-500">*</span></label>
-          <AmountInput v-model="amount" placeholder="Masukkan nominal..." />
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nominal Pengembalian <span class="text-red-500">*</span></label>
+          <AmountInput
+            v-model="amount"
+            placeholder="Masukkan nominal..."
+            class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-800"
+          />
           <p v-if="selectedOpenCA && amount !== selectedOpenCA.amount" class="mt-1 text-[10px] text-amber-600">
             Partial LPJ — berbeda dari nominal CA
           </p>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">Rekening Kas <span class="text-red-500">*</span></label>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Rekening Kas <span class="text-red-500">*</span></label>
           <SearchSelect
             :model-value="selectedCashAccount"
             :options="cashAccountOptions"
@@ -241,20 +243,37 @@ onMounted(loadCashAccounts)
       <!-- No. Referensi & Keterangan -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium mb-1.5">No. Referensi</label>
-          <Input v-model="referenceNo" placeholder="No. kwitansi / bukti setor..." />
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi</label>
+          <input
+            v-model="referenceNo"
+            type="text"
+            placeholder="No. kwitansi / bukti setor..."
+            class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5">Keterangan</label>
-          <Input v-model="description" placeholder="Deskripsi singkat..." />
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Keterangan</label>
+          <input
+            v-model="description"
+            type="text"
+            placeholder="Deskripsi singkat..."
+            class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
       </div>
     </div>
 
     <!-- Footer -->
     <div class="flex items-center justify-end gap-3 border-t border-border px-6 py-3">
-      <Button variant="outline" @click="emit('close')">Batal</Button>
-      <Button :loading="loading" @click="submitForm">Simpan</Button>
+      <button
+        class="border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+        @click="emit('close')"
+      >Batal</button>
+      <button
+        class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="loading"
+        @click="submitForm"
+      >{{ loading ? 'Menyimpan...' : 'Simpan' }}</button>
     </div>
   </Modal>
 </template>

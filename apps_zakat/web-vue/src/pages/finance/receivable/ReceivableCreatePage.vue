@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { CreditCard } from 'lucide-vue-next'
+import { ArrowLeft } from 'lucide-vue-next'
 import { shallowRef, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { api } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
@@ -140,156 +138,180 @@ async function submit() {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <PageHeader title="Input Piutang (Pinjam/Bayar)" subtitle="Buat transaksi pinjam atau bayar piutang" />
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Back button -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-transactions-receivable' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+      <span class="text-xs text-slate-400">Buat transaksi pinjam atau bayar piutang</span>
+    </div>
 
-    <div class="rounded-lg border bg-white dark:bg-zinc-900 p-6 space-y-4 max-w-2xl">
-      <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
+    <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Jenis Transaksi <span class="text-red-500">*</span></label>
-          <select v-model="transactionType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
-            <option value="P">Pinjam (EAR)</option>
-            <option value="B">Bayar (PEAR)</option>
-          </select>
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Tanggal Transaksi <span class="text-red-500">*</span></label>
-          <DateField v-model="txDate" />
-        </div>
+    <!-- Form card -->
+    <div class="max-w-2xl rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+      <!-- Card header bar -->
+      <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+        <h2 class="font-bold text-xs tracking-widest text-white uppercase">Input Piutang (Pinjam / Bayar)</h2>
       </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Channel <span class="text-red-500">*</span></label>
-          <select v-model="channelType" class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring">
-            <option value="C">Kas/Bank</option>
-            <option value="G">Rekening Ledger</option>
-          </select>
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">
-            <template v-if="channelType === 'C'">Rekening Kas/Bank <span class="text-red-500">*</span></template>
-            <template v-else>GL Account Code <span class="text-red-500">*</span></template>
-          </label>
-          <div v-show="channelType === 'C'">
-            <SearchSelect
-              :model-value="cashAccount"
-              :options="cashAccountOptions"
-              :loading="false"
-              placeholder="Cari rekening kas/bank..."
-              option-label="accountname"
-              option-value="cashaccountno"
-              @update:model-value="(v) => (cashAccount = v)"
-              @search="searchCashAccounts"
-            />
-            <p v-if="cashAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-              {{ cashAccount.cashaccountno }}
-              <span v-if="cashAccount.balance !== null"> · Saldo: {{ fmt(cashAccount.balance) }}</span>
-            </p>
+      <!-- Card body -->
+      <div class="p-4 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Jenis Transaksi <span class="text-red-500">*</span></label>
+            <select v-model="transactionType" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="P">Pinjam (EAR)</option>
+              <option value="B">Bayar (PEAR)</option>
+            </select>
           </div>
-          <div v-show="channelType === 'G'">
-            <SearchSelect
-              :model-value="glAccount"
-              :options="glAccountOptions"
-              :loading="false"
-              placeholder="Cari kode GL account..."
-              option-label="account_name"
-              option-value="account_code"
-              @update:model-value="(v) => (glAccount = v)"
-              @search="searchGLAccounts"
-            />
-            <p v-if="glAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-              {{ glAccount.account_code }}
-              <span v-if="glAccount.balance !== null"> · Saldo: {{ fmt(glAccount.balance) }}</span>
-            </p>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tanggal Transaksi <span class="text-red-500">*</span></label>
+            <DateField v-model="txDate" />
           </div>
         </div>
-      </div>
 
-      <div>
-        <label class="mb-1 block text-xs font-medium text-muted-foreground">Nama Debitur <span class="text-red-500">*</span></label>
-        <SearchSelect
-          :model-value="debtor"
-          :options="debtorOptions"
-          :loading="false"
-          placeholder="Cari nama debitur atau nomor..."
-          option-label="debtorname"
-          option-value="debtorid"
-          @update:model-value="onDebtorSelected"
-          @search="searchDebtors"
-        />
-        <p v-if="debtor" class="mt-1 text-[10px] text-muted-foreground font-mono">
-          {{ debtor.debtorcode }}
-        </p>
-      </div>
-
-      <div>
-        <label class="mb-1 block text-xs font-medium text-muted-foreground">Tipe Debitur</label>
-        <input
-          :value="debtorTypeLabel"
-          type="text"
-          readonly
-          class="w-full rounded-lg border border-input bg-muted px-2.5 py-2 text-xs text-muted-foreground cursor-not-allowed"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Nominal (Rp) <span class="text-red-500">*</span></label>
-          <input
-            v-model.number="amount"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Masukkan jumlah"
-            class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Channel <span class="text-red-500">*</span></label>
+            <select v-model="channelType" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="C">Kas/Bank</option>
+              <option value="G">Rekening Ledger</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <template v-if="channelType === 'C'">Rekening Kas/Bank <span class="text-red-500">*</span></template>
+              <template v-else>GL Account Code <span class="text-red-500">*</span></template>
+            </label>
+            <div v-show="channelType === 'C'">
+              <SearchSelect
+                :model-value="cashAccount"
+                :options="cashAccountOptions"
+                :loading="false"
+                placeholder="Cari rekening kas/bank..."
+                option-label="accountname"
+                option-value="cashaccountno"
+                @update:model-value="(v) => (cashAccount = v)"
+                @search="searchCashAccounts"
+              />
+              <p v-if="cashAccount" class="mt-1 text-[10px] text-slate-400 font-mono">
+                {{ cashAccount.cashaccountno }}
+                <span v-if="cashAccount.balance !== null"> · Saldo: {{ fmt(cashAccount.balance) }}</span>
+              </p>
+            </div>
+            <div v-show="channelType === 'G'">
+              <SearchSelect
+                :model-value="glAccount"
+                :options="glAccountOptions"
+                :loading="false"
+                placeholder="Cari kode GL account..."
+                option-label="account_name"
+                option-value="account_code"
+                @update:model-value="(v) => (glAccount = v)"
+                @search="searchGLAccounts"
+              />
+              <p v-if="glAccount" class="mt-1 text-[10px] text-slate-400 font-mono">
+                {{ glAccount.account_code }}
+                <span v-if="glAccount.balance !== null"> · Saldo: {{ fmt(glAccount.balance) }}</span>
+              </p>
+            </div>
+          </div>
         </div>
+
         <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">No. Referensi</label>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nama Debitur <span class="text-red-500">*</span></label>
+          <SearchSelect
+            :model-value="debtor"
+            :options="debtorOptions"
+            :loading="false"
+            placeholder="Cari nama debitur atau nomor..."
+            option-label="debtorname"
+            option-value="debtorid"
+            @update:model-value="onDebtorSelected"
+            @search="searchDebtors"
+          />
+          <p v-if="debtor" class="mt-1 text-[10px] text-slate-400 font-mono">
+            {{ debtor.debtorcode }}
+          </p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipe Debitur</label>
           <input
-            v-model="refNo"
+            :value="debtorTypeLabel"
             type="text"
-            maxlength="30"
-            placeholder="Nomor referensi (opsional)"
-            class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            readonly
+            class="w-full cursor-not-allowed rounded border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-500 dark:bg-zinc-800"
           />
         </div>
-      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Kasir</label>
-          <input
-            v-model="casher"
-            type="text"
-            maxlength="50"
-            placeholder="Nama kasir (opsional)"
-            class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nominal (Rp) <span class="text-red-500">*</span></label>
+            <input
+              v-model.number="amount"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Masukkan jumlah"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi</label>
+            <input
+              v-model="refNo"
+              type="text"
+              maxlength="30"
+              placeholder="Nomor referensi (opsional)"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-muted-foreground">Keterangan</label>
-          <input
-            v-model="description"
-            type="text"
-            maxlength="100"
-            placeholder="Deskripsi (opsional)"
-            class="w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-      </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <Button variant="ghost" :disabled="saving" @click="router.push({ name: 'finance-transactions-receivable' })">
-          Batal
-        </Button>
-        <Button :disabled="saving" @click="submit">
-          <CreditCard class="mr-1.5 h-4 w-4" />
-          {{ saving ? 'Menyimpan...' : 'Simpan Piutang' }}
-        </Button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Kasir</label>
+            <input
+              v-model="casher"
+              type="text"
+              maxlength="50"
+              placeholder="Nama kasir (opsional)"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Keterangan</label>
+            <input
+              v-model="description"
+              type="text"
+              maxlength="100"
+              placeholder="Deskripsi (opsional)"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button
+            class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+            @click="router.push({ name: 'finance-transactions-receivable' })"
+          >
+            Batal
+          </button>
+          <button
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="saving"
+            @click="submit"
+          >
+            {{ saving ? 'Menyimpan...' : 'Simpan Piutang' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

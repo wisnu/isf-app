@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { reactive, shallowRef } from 'vue'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
+import Alert from '@/components/ui/Alert.vue'
 import { api } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
 
@@ -54,75 +54,99 @@ async function submit() {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <PageHeader title="Tambah Akun COA" subtitle="Permintaan akan diproses melalui otorisasi supervisor" />
-
-    <div class="rounded-xl border border-border bg-surface p-6 space-y-4 max-w-md">
-      <div
-        v-if="formError"
-        class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/10 dark:border-red-800 dark:text-red-400"
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Tombol kembali (judul halaman ada di breadcrumb header) -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-coa' })"
       >
-        {{ formError }}
-      </div>
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+    </div>
+    <p class="text-xs text-slate-400">Permintaan akan diproses melalui otorisasi supervisor</p>
 
-      <!-- Kode + Tipe -->
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="mb-1 block text-xs font-medium">Kode Akun <span class="text-red-500">*</span></label>
-          <input
-            v-model="form.code"
-            placeholder="mis. 110101"
-            class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium">Tipe</label>
-          <select
-            v-model="form.type_code"
-            class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option v-for="t in TYPE_OPTIONS" :key="t.code" :value="t.code">{{ t.label }}</option>
-          </select>
-        </div>
-      </div>
+    <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
 
-      <!-- Nama -->
-      <div>
-        <label class="mb-1 block text-xs font-medium">Nama Akun <span class="text-red-500">*</span></label>
-        <input
-          v-model="form.name"
-          placeholder="Nama akun perkiraan"
-          class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+    <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden max-w-md">
+      <!-- Card header bar -->
+      <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+        <h2 class="font-bold text-xs tracking-widest text-white uppercase">Tambah Akun COA</h2>
       </div>
-
-      <!-- Parent + Akun Detail -->
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="mb-1 block text-xs font-medium">Kode Parent</label>
-          <input
-            v-model="form.parent"
-            placeholder="Opsional"
-            class="h-8 w-full rounded border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+      <!-- Card body -->
+      <div class="p-4 space-y-3">
+        <!-- Kode + Tipe -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Kode Akun <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="form.code"
+              placeholder="mis. 110101"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipe</label>
+            <select
+              v-model="form.type_code"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option v-for="t in TYPE_OPTIONS" :key="t.code" :value="t.code">{{ t.label }}</option>
+            </select>
+          </div>
         </div>
-        <div class="flex items-end pb-1">
-          <label class="flex items-center gap-1.5 text-xs font-medium cursor-pointer">
-            <input v-model="form.is_detail" type="checkbox" class="rounded" />
-            Akun Detail
+
+        <!-- Nama -->
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Nama Akun <span class="text-red-500">*</span>
           </label>
+          <input
+            v-model="form.name"
+            placeholder="Nama akun perkiraan"
+            class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
-      </div>
 
-      <p class="text-[10px] text-muted">Akun baru aktif setelah disetujui supervisor melalui sistem otorisasi.</p>
+        <!-- Parent + Akun Detail -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Kode Parent</label>
+            <input
+              v-model="form.parent"
+              placeholder="Opsional"
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div class="flex items-end pb-1.5">
+            <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide cursor-pointer">
+              <input v-model="form.is_detail" type="checkbox" class="rounded" />
+              Akun Detail
+            </label>
+          </div>
+        </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <Button variant="outline" size="sm" :disabled="submitting" @click="router.push({ name: 'finance-coa' })">
-          Batal
-        </Button>
-        <Button size="sm" :disabled="submitting" @click="submit">
-          {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
-        </Button>
+        <p class="text-[10px] text-slate-400">Akun baru aktif setelah disetujui supervisor melalui sistem otorisasi.</p>
+
+        <div class="flex gap-2 pt-1">
+          <button
+            class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="submitting"
+            @click="router.push({ name: 'finance-coa' })"
+          >
+            Batal
+          </button>
+          <button
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="submitting"
+            @click="submit"
+          >
+            {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

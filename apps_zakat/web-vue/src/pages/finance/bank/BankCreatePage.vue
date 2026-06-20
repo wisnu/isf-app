@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { reactive, ref, shallowRef } from 'vue'
 
-import Button from '@/components/ui/Button.vue'
+import Alert from '@/components/ui/Alert.vue'
 import DateField from '@/components/ui/DateField.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { api } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
@@ -133,117 +133,154 @@ loadLookups()
 </script>
 
 <template>
-  <div class="space-y-4">
-    <PageHeader title="Tambah Rekening Bank" subtitle="Permintaan akan diproses melalui otorisasi supervisor" />
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Tombol kembali (judul halaman ada di breadcrumb header) -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-bank' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+    </div>
+    <p class="text-xs text-slate-400">Permintaan akan diproses melalui otorisasi supervisor</p>
 
-    <div class="rounded-xl border border-border bg-surface p-6 space-y-4 max-w-2xl">
-      <!-- Loading skeleton -->
-      <div v-if="lookupLoading" class="space-y-4">
-        <div v-for="i in 5" :key="i" class="space-y-1.5">
-          <div class="h-3 w-24 rounded bg-muted/20 animate-pulse" />
-          <div class="h-9 w-full rounded-lg bg-muted/10 animate-pulse" />
-        </div>
+    <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
+
+    <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden max-w-2xl">
+      <!-- Card header bar -->
+      <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+        <h2 class="font-bold text-xs tracking-widest text-white uppercase">Tambah Rekening Bank</h2>
       </div>
-
-      <template v-else>
-        <div
-          v-if="formError"
-          class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/10 dark:border-red-800 dark:text-red-400"
-        >
-          {{ formError }}
-        </div>
-
-        <!-- Nama Rekening + No Rekening Bank -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium">Nama Rekening <span class="text-red-500">*</span></label>
-            <input
-              v-model="form.account_name"
-              placeholder="mis. ZAKAT FITRAH"
-              class="h-9 w-full rounded-lg border border-border bg-surface px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">No Rekening Bank <span class="text-red-500">*</span></label>
-            <input
-              v-model="form.bank_account_no"
-              placeholder="min. 8 karakter"
-              class="h-9 w-full rounded-lg border border-border bg-surface px-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+      <!-- Card body -->
+      <div class="p-4 space-y-3">
+        <!-- Loading skeleton -->
+        <div v-if="lookupLoading" class="space-y-4">
+          <div v-for="i in 5" :key="i" class="space-y-1.5">
+            <div class="h-3 w-24 rounded bg-slate-200/60 animate-pulse" />
+            <div class="h-9 w-full rounded bg-slate-100 animate-pulse" />
           </div>
         </div>
 
-        <!-- Nama Bank + Cabang BPZIS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium">Nama Bank <span class="text-red-500">*</span></label>
-            <SearchSelect v-model="form.bank_code" :options="lookupBanks" placeholder="Pilih bank..." />
+        <template v-else>
+          <!-- Nama Rekening + No Rekening Bank -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Nama Rekening <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="form.account_name"
+                placeholder="mis. ZAKAT FITRAH"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                No Rekening Bank <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="form.bank_account_no"
+                placeholder="min. 8 karakter"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">Cabang BPZIS <span class="text-red-500">*</span></label>
-            <SearchSelect v-model="form.branch_code" :options="lookupBranches" placeholder="Pilih cabang..." />
-          </div>
-        </div>
 
-        <!-- Valuta + GL Interface -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium">Valuta <span class="text-red-500">*</span></label>
-            <SearchSelect v-model="form.currency_code" :options="lookupCurrencies" placeholder="Pilih valuta..." />
+          <!-- Nama Bank + Cabang BPZIS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Nama Bank <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect v-model="form.bank_code" :options="lookupBanks" placeholder="Pilih bank..." />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Cabang BPZIS <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect v-model="form.branch_code" :options="lookupBranches" placeholder="Pilih cabang..." />
+            </div>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium">GL Interface <span class="text-red-500">*</span></label>
-            <SearchSelect v-model="form.account_interface" :options="lookupGlAccounts" placeholder="Cari akun GL..." />
-          </div>
-        </div>
 
-        <!-- Tgl Buka + Rekening Amil -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          <div>
-            <label class="mb-1 block text-xs font-medium">Tgl Buka</label>
-            <DateField v-model="form.opening_date" />
+          <!-- Valuta + GL Interface -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Valuta <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect v-model="form.currency_code" :options="lookupCurrencies" placeholder="Pilih valuta..." />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                GL Interface <span class="text-red-500">*</span>
+              </label>
+              <SearchSelect v-model="form.account_interface" :options="lookupGlAccounts" placeholder="Cari akun GL..." />
+            </div>
           </div>
-          <div class="flex items-center gap-2 pb-1">
-            <input id="is-amil" v-model="form.is_amil_account" type="checkbox" class="rounded" />
-            <label for="is-amil" class="text-sm cursor-pointer select-none">Rekening Amil?</label>
-          </div>
-        </div>
 
-        <!-- Default Produk + Kode Kas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="mb-1 block text-xs font-medium" :class="{ 'opacity-40': form.is_amil_account }">
-              Default Produk / Program
-            </label>
-            <SearchSelect
-              v-model="form.product_id"
-              :options="lookupProducts"
-              :all-label="'— Tidak ada —'"
-              placeholder="Pilih produk..."
-              :class="{ 'opacity-40 pointer-events-none': form.is_amil_account }"
-            />
+          <!-- Tgl Buka + Rekening Amil -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Tgl Buka</label>
+              <DateField v-model="form.opening_date" />
+            </div>
+            <div class="flex items-center gap-2 pb-1.5">
+              <input id="is-amil" v-model="form.is_amil_account" type="checkbox" class="rounded" />
+              <label for="is-amil" class="text-sm cursor-pointer select-none text-slate-600">Rekening Amil?</label>
+            </div>
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-muted">Kode Kas <span class="text-muted">(opsional)</span></label>
-            <input
-              v-model="form.cash_code"
-              placeholder="Kode kas unik (opsional)"
-              class="h-9 w-full rounded-lg border border-border bg-surface px-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+
+          <!-- Default Produk + Kode Kas -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                :class="{ 'opacity-40': form.is_amil_account }"
+              >
+                Default Produk / Program
+              </label>
+              <SearchSelect
+                v-model="form.product_id"
+                :options="lookupProducts"
+                :all-label="'— Tidak ada —'"
+                placeholder="Pilih produk..."
+                :class="{ 'opacity-40 pointer-events-none': form.is_amil_account }"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Kode Kas <span class="text-slate-400 normal-case">(opsional)</span>
+              </label>
+              <input
+                v-model="form.cash_code"
+                placeholder="Kode kas unik (opsional)"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
           </div>
-        </div>
 
-        <p class="text-[10px] text-muted">Rekening aktif setelah disetujui supervisor melalui sistem otorisasi.</p>
+          <p class="text-[10px] text-slate-400">Rekening aktif setelah disetujui supervisor melalui sistem otorisasi.</p>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <Button variant="outline" size="sm" :disabled="submitting" @click="router.push({ name: 'finance-bank' })">
-            Batal
-          </Button>
-          <Button size="sm" :disabled="submitting" @click="submit">
-            {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
-          </Button>
-        </div>
-      </template>
+          <div class="flex gap-2 pt-1">
+            <button
+              class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="submitting"
+              @click="router.push({ name: 'finance-bank' })"
+            >
+              Batal
+            </button>
+            <button
+              class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="submitting"
+              @click="submit"
+            >
+              {{ submitting ? 'Mengirim...' : 'Submit Otorisasi' }}
+            </button>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </template>

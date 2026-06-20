@@ -1,11 +1,9 @@
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import { onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
-import Input from '@/components/ui/Input.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
 import { api } from '@/lib/api/client'
@@ -136,97 +134,144 @@ onMounted(loadCashAccounts)
 </script>
 
 <template>
-  <div class="space-y-4">
-    <PageHeader title="Input Pengembalian / LPJ Uang Muka" subtitle="Catat pengembalian atau LPJ uang muka karyawan" />
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Back button -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-transactions-cash-advance-lpj' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+      <span class="text-xs text-slate-400">Catat pengembalian atau LPJ uang muka karyawan</span>
+    </div>
 
-    <div class="rounded-xl border border-border bg-surface p-6 space-y-4 max-w-2xl">
-      <!-- Tanggal -->
-      <div>
-        <label class="block text-sm font-medium mb-1.5">Tanggal <span class="text-red-500">*</span></label>
-        <DateField v-model="actualDate" />
+    <!-- Form card -->
+    <div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden max-w-2xl">
+      <!-- Card header bar -->
+      <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+        <h2 class="font-bold text-xs tracking-widest text-white uppercase">Pengembalian / LPJ Uang Muka</h2>
       </div>
-
-      <!-- Karyawan -->
-      <div>
-        <label class="block text-sm font-medium mb-1.5">Karyawan <span class="text-red-500">*</span></label>
-        <SearchSelect
-          :model-value="selectedEmployee"
-          :options="employeeOptions"
-          :loading="false"
-          placeholder="Ketik nama atau nomor karyawan..."
-          option-label="employee_name"
-          @update:model-value="(v) => (selectedEmployee = v)"
-          @search="searchEmployees"
-        />
-      </div>
-
-      <!-- Uang Muka Yang Di-LPJ -->
-      <div>
-        <label class="block text-sm font-medium mb-1.5">Uang Muka Yang Di-LPJ <span class="text-red-500">*</span></label>
-        <SearchSelect
-          :model-value="selectedOpenCA"
-          :options="openCAOptions"
-          :loading="loadingCA"
-          :disabled="!selectedEmployee"
-          placeholder="Pilih transaksi uang muka..."
-          option-label="transactionno"
-          @update:model-value="(v) => (selectedOpenCA = v)"
-        />
-        <div v-if="selectedOpenCA" class="mt-2 rounded bg-muted/50 border border-border px-3 py-2 text-xs space-y-1">
-          <div class="flex gap-4">
-            <span class="text-muted-foreground">Tanggal CA:</span>
-            <span>{{ dmy(selectedOpenCA.actualdate) }}</span>
-          </div>
-          <div class="flex gap-4">
-            <span class="text-muted-foreground">Nominal CA:</span>
-            <span class="font-semibold">{{ new Intl.NumberFormat('id-ID').format(selectedOpenCA.amount) }}</span>
-          </div>
-          <div v-if="selectedOpenCA.description" class="flex gap-4">
-            <span class="text-muted-foreground">Keterangan:</span>
-            <span>{{ selectedOpenCA.description }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nominal Pengembalian & Rekening Kas -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Card body -->
+      <div class="p-4 space-y-3">
+        <!-- Tanggal -->
         <div>
-          <label class="block text-sm font-medium mb-1.5">Nominal Pengembalian <span class="text-red-500">*</span></label>
-          <AmountInput v-model="amount" placeholder="Masukkan nominal..." />
-          <p v-if="selectedOpenCA && amount !== selectedOpenCA.amount" class="mt-1 text-[10px] text-amber-600">
-            Partial LPJ — berbeda dari nominal CA
-          </p>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Tanggal <span class="text-red-500">*</span>
+          </label>
+          <DateField v-model="actualDate" />
         </div>
+
+        <!-- Karyawan -->
         <div>
-          <label class="block text-sm font-medium mb-1.5">Rekening Kas <span class="text-red-500">*</span></label>
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Karyawan <span class="text-red-500">*</span>
+          </label>
           <SearchSelect
-            :model-value="selectedCashAccount"
-            :options="cashAccountOptions"
+            :model-value="selectedEmployee"
+            :options="employeeOptions"
             :loading="false"
-            placeholder="Pilih rekening kas..."
-            option-label="cash_account_name"
-            @update:model-value="(v) => (selectedCashAccount = v)"
+            placeholder="Ketik nama atau nomor karyawan..."
+            option-label="employee_name"
+            @update:model-value="(v) => (selectedEmployee = v)"
+            @search="searchEmployees"
           />
         </div>
-      </div>
 
-      <!-- No. Referensi & Keterangan -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Uang Muka Yang Di-LPJ -->
         <div>
-          <label class="block text-sm font-medium mb-1.5">No. Referensi</label>
-          <Input v-model="referenceNo" placeholder="No. kwitansi / bukti setor..." />
+          <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Uang Muka Yang Di-LPJ <span class="text-red-500">*</span>
+          </label>
+          <SearchSelect
+            :model-value="selectedOpenCA"
+            :options="openCAOptions"
+            :loading="loadingCA"
+            :disabled="!selectedEmployee"
+            placeholder="Pilih transaksi uang muka..."
+            option-label="transactionno"
+            @update:model-value="(v) => (selectedOpenCA = v)"
+          />
+          <div v-if="selectedOpenCA" class="mt-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs space-y-1 dark:bg-zinc-800">
+            <div class="flex gap-4">
+              <span class="text-slate-500">Tanggal CA:</span>
+              <span>{{ dmy(selectedOpenCA.actualdate) }}</span>
+            </div>
+            <div class="flex gap-4">
+              <span class="text-slate-500">Nominal CA:</span>
+              <span class="font-semibold">{{ new Intl.NumberFormat('id-ID').format(selectedOpenCA.amount) }}</span>
+            </div>
+            <div v-if="selectedOpenCA.description" class="flex gap-4">
+              <span class="text-slate-500">Keterangan:</span>
+              <span>{{ selectedOpenCA.description }}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1.5">Keterangan</label>
-          <Input v-model="description" placeholder="Deskripsi singkat..." />
-        </div>
-      </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <Button variant="outline" :disabled="loading" @click="router.push({ name: 'finance-transactions-cash-advance-lpj' })">
-          Batal
-        </Button>
-        <Button :loading="loading" @click="submit">Simpan</Button>
+        <!-- Nominal Pengembalian & Rekening Kas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Nominal Pengembalian <span class="text-red-500">*</span>
+            </label>
+            <AmountInput v-model="amount" placeholder="Masukkan nominal..." />
+            <p v-if="selectedOpenCA && amount !== selectedOpenCA.amount" class="mt-1 text-[10px] text-amber-600">
+              Partial LPJ — berbeda dari nominal CA
+            </p>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Rekening Kas <span class="text-red-500">*</span>
+            </label>
+            <SearchSelect
+              :model-value="selectedCashAccount"
+              :options="cashAccountOptions"
+              :loading="false"
+              placeholder="Pilih rekening kas..."
+              option-label="cash_account_name"
+              @update:model-value="(v) => (selectedCashAccount = v)"
+            />
+          </div>
+        </div>
+
+        <!-- No. Referensi & Keterangan -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi</label>
+            <input
+              v-model="referenceNo"
+              placeholder="No. kwitansi / bukti setor..."
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Keterangan</label>
+            <input
+              v-model="description"
+              placeholder="Deskripsi singkat..."
+              class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2 pt-1">
+          <button
+            class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+            :disabled="loading"
+            @click="router.push({ name: 'finance-transactions-cash-advance-lpj' })"
+          >
+            Batal
+          </button>
+          <button
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading"
+            @click="submit"
+          >
+            {{ loading ? 'Menyimpan...' : 'Simpan' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeft, Trash2 } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref, shallowRef, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -330,96 +331,105 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- 1080p: 2-panel layout — left sticky 420px, right flex-1 -->
-  <div class="w-full pb-6">
+  <div class="p-3 sm:p-4 space-y-3">
 
-    <!-- Page header -->
-    <header class="mb-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold tracking-tight">
+    <!-- Back button -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-transactions-fund-distribution' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" />
+        Kembali
+      </button>
+      <span class="text-xs text-slate-400">
         {{ isEditMode ? 'Edit Draft Penyaluran Dana' : 'Input Penyaluran Dana' }}
-      </h1>
-      <Button variant="ghost" :disabled="loading" @click="router.back()">Kembali</Button>
-    </header>
+      </span>
+    </div>
 
-    <Alert v-if="errorMsg" variant="destructive" class="mb-4">{{ errorMsg }}</Alert>
+    <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
 
     <!-- 2-panel body -->
-    <div class="flex w-full flex-col gap-5 xl:flex-row xl:items-start">
+    <div class="flex w-full flex-col gap-3 xl:flex-row xl:items-start">
 
       <!-- ── LEFT PANEL: sticky header + payment ────────────────────────── -->
-      <div class="flex w-full shrink-0 flex-col gap-4 xl:w-[420px] xl:sticky xl:top-4">
+      <div class="flex w-full shrink-0 flex-col gap-3 xl:w-[420px] xl:sticky xl:top-[64px]">
 
         <!-- Informasi Transaksi -->
-        <section class="space-y-3 rounded border bg-white p-5 dark:bg-zinc-900">
-          <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Informasi Transaksi
-          </h2>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="mb-1 block text-sm font-medium">
-                Tanggal <span class="text-red-500">*</span>
-              </label>
-              <DateField v-model="actualDate" />
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">No. Referensi</label>
-              <input
-                v-model="referenceNo"
-                placeholder="Opsional"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-              />
-            </div>
-            <div class="col-span-2">
-              <label class="mb-1 block text-sm font-medium">
-                Keterangan <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="description"
-                placeholder="Keterangan transaksi"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-              />
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">Dibayarkan Kepada</label>
-              <input
-                v-model="paidTo"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-              />
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">Diterima Dari</label>
-              <input
-                v-model="receivedFrom"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
-              />
+        <section class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+          <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+            <h2 class="font-bold text-xs tracking-widest text-white uppercase">Informasi Transaksi</h2>
+            <span class="bg-slate-600 text-white text-xs px-2 py-0.5 rounded">DRAFT</span>
+          </div>
+          <div class="p-4 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Tanggal <span class="text-red-500">*</span>
+                </label>
+                <DateField v-model="actualDate" />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Referensi</label>
+                <input
+                  v-model="referenceNo"
+                  placeholder="Opsional"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div class="col-span-2">
+                <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Keterangan <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                  v-model="description"
+                  rows="3"
+                  placeholder="Keterangan transaksi"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y min-h-[72px]"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Dibayarkan Kepada</label>
+                <input
+                  v-model="paidTo"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Diterima Dari</label>
+                <input
+                  v-model="receivedFrom"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
             </div>
           </div>
         </section>
 
         <!-- Jenis Pembayaran -->
-        <section class="space-y-3 rounded border bg-white p-5 dark:bg-zinc-900">
-          <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Jenis Pembayaran
-          </h2>
-          <!-- Tabs -->
-          <div class="flex gap-1.5">
-            <button
-              v-for="tab in paymentTabs"
-              :key="tab.v"
-              :class="[
-                'flex-1 rounded border py-1.5 text-xs font-medium transition',
-                paymentType === tab.v
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800',
-              ]"
-              @click="onPaymentTypeChange(tab.v)"
-            >{{ tab.label }}</button>
+        <section class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+          <div class="flex items-center justify-between bg-slate-700 px-4 py-2">
+            <h2 class="font-bold text-xs tracking-widest text-white uppercase">Jenis Pembayaran</h2>
           </div>
+          <div class="p-4 space-y-3">
+            <!-- Tabs -->
+            <div class="flex gap-1.5">
+              <button
+                v-for="tab in paymentTabs"
+                :key="tab.v"
+                :class="[
+                  'flex-1 rounded border py-1.5 text-xs font-medium transition',
+                  paymentType === tab.v
+                    ? 'border-indigo-500 bg-indigo-600 text-white'
+                    : 'border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800',
+                ]"
+                @click="onPaymentTypeChange(tab.v)"
+              >{{ tab.label }}</button>
+            </div>
 
-          <div class="space-y-3">
             <!-- Rekening Bank / Kas Kecil -->
             <div v-if="paymentType !== 'C' && paymentType !== 'A'">
-              <label class="mb-1 block text-sm font-medium">
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 {{ paymentType === 'B' ? 'Rekening Bank' : 'Rekening Kas Kecil' }}
                 <span class="text-red-500">*</span>
               </label>
@@ -432,22 +442,22 @@ onUnmounted(() => {
             </div>
             <!-- Aset / GL -->
             <div v-if="paymentType === 'A'">
-              <label class="mb-1 block text-sm font-medium">Kode Aset <span class="text-red-500">*</span></label>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Kode Aset <span class="text-red-500">*</span></label>
               <input
                 :value="paymentAccountNo ?? ''"
                 placeholder="Kode akun GL aset"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 @input="paymentAccountNo = ($event.target as HTMLInputElement).value"
               />
             </div>
             <!-- Kas Cabang -->
-            <div v-if="paymentType === 'C'" class="rounded border border-dashed p-3 text-xs text-zinc-500">
+            <div v-if="paymentType === 'C'" class="rounded border border-dashed border-slate-200 p-3 text-xs text-slate-500">
               Kas cabang dipilih otomatis berdasarkan cabang pengguna.
             </div>
 
             <!-- Sumber Dana -->
             <div>
-              <label class="mb-1 block text-sm font-medium">
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Sumber Dana <span class="text-red-500">*</span>
               </label>
               <SearchSelect
@@ -456,35 +466,35 @@ onUnmounted(() => {
                 placeholder="Pilih sumber dana..."
                 @update:model-value="fundAccountNo = $event as string || null"
               />
-              <p v-if="paymentType === 'B' && !paymentAccountNo" class="mt-1 text-xs text-zinc-400">
+              <p v-if="paymentType === 'B' && !paymentAccountNo" class="mt-1 text-xs text-slate-400">
                 Pilih rekening bank terlebih dahulu.
               </p>
             </div>
 
             <!-- Cabang Produk -->
             <div>
-              <label class="mb-1 block text-sm font-medium">Cabang Produk</label>
+              <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Cabang Produk</label>
               <input
                 v-model="productBranchCode"
-                class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </section>
 
         <!-- Limit info -->
-        <div v-if="!isEditMode && items.length > 0" class="rounded border px-4 py-3 text-sm space-y-1">
+        <div v-if="!isEditMode && items.length > 0" class="rounded-lg border border-slate-200 px-4 py-3 text-sm space-y-1">
           <div class="flex justify-between font-medium">
-            <span class="text-zinc-500">Total transaksi</span>
+            <span class="text-slate-500">Total transaksi</span>
             <span>{{ fmtRp(totalAmount) }}</span>
           </div>
           <template v-if="!limitLoading">
-            <div v-if="hasLimit" class="flex justify-between text-xs text-zinc-400">
+            <div v-if="hasLimit" class="flex justify-between text-xs text-slate-400">
               <span>Limit Anda</span>
               <span>{{ fmtRp(nilaiLimit) }}</span>
             </div>
             <div :class="['flex items-center gap-1.5 text-xs font-medium mt-1',
-                          willBypass ? 'text-green-600' : 'text-amber-600']">
+                          willBypass ? 'text-emerald-600' : 'text-amber-600']">
               <span>{{ willBypass ? '✓' : 'ⓘ' }}</span>
               <span>{{
                 willBypass
@@ -498,45 +508,54 @@ onUnmounted(() => {
         </div>
 
         <!-- Action buttons (kiri bawah) -->
-        <div class="flex gap-3">
-          <Button variant="ghost" class="flex-1" :disabled="loading" @click="router.back()">Batal</Button>
-          <Button class="flex-1" :disabled="loading || items.length === 0" @click="submit">
-            {{ loading ? 'Menyimpan...' : isEditMode ? 'Update & Submit' : 'Simpan & Submit' }}
-          </Button>
+        <div class="flex gap-2">
+          <button
+            class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+            :disabled="loading"
+            @click="router.push({ name: 'finance-transactions-fund-distribution' })"
+          >Batal</button>
+          <button
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading || items.length === 0"
+            @click="submit"
+          >{{ loading ? 'Menyimpan...' : isEditMode ? 'Update & Submit' : 'Simpan & Submit' }}</button>
         </div>
       </div>
 
       <!-- ── RIGHT PANEL: Detail Distribusi (scrollable) ────────────────── -->
-      <div class="flex-1 min-w-0">
-        <section class="rounded border bg-white dark:bg-zinc-900">
+      <div class="min-w-0 flex-1">
+        <section class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
           <!-- Header distribusi -->
-          <div class="flex items-center justify-between border-b px-5 py-3">
-            <div>
-              <h2 class="font-semibold text-zinc-700 dark:text-zinc-300">Detail Distribusi</h2>
-              <p class="text-xs text-zinc-400">{{ items.length }} item · Total:
-                <span class="font-semibold text-zinc-700 dark:text-zinc-200">Rp {{ fmt(totalAmount) }}</span>
-              </p>
-            </div>
-            <Button variant="secondary" size="sm" @click="addItem">+ Tambah Item</Button>
+          <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+            <h2 class="font-bold text-xs tracking-widest text-white uppercase">Detail Distribusi</h2>
+            <span class="bg-slate-600 text-white text-xs px-2 py-0.5 rounded">{{ items.length }} item</span>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2 dark:bg-zinc-800/50">
+            <p class="text-xs text-slate-500">Total:
+              <span class="font-semibold text-slate-700 dark:text-zinc-200">Rp {{ fmt(totalAmount) }}</span>
+            </p>
+            <Button variant="outline" size="sm" @click="addItem">+ Tambah Item</Button>
           </div>
 
           <!-- Empty state — klikable -->
           <button
             v-if="items.length === 0"
-            class="w-full py-16 text-center text-sm text-zinc-400 hover:text-primary hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition rounded"
+            class="w-full py-16 text-center text-sm text-slate-400 hover:text-indigo-600 hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition rounded"
             @click="addItem"
           >
             <span>Klik "+ Tambah Item" untuk menambah produk penyaluran.</span>
-            <kbd class="ml-2 rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
+            <kbd class="ml-2 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
           </button>
 
           <!-- Items table -->
-          <div v-if="items.length > 0" class="divide-y">
+          <div v-if="items.length > 0" class="divide-y divide-slate-100">
             <!-- Table header -->
-            <div class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 bg-zinc-50 px-5 py-2 text-xs font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
-              <span>Produk <span class="text-red-400">*</span></span>
+            <div class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-zinc-800">
+              <span>Produk <span class="text-red-500">*</span></span>
               <span>Ashnaf</span>
-              <span>Jumlah (Rp) <span class="text-red-400">*</span></span>
+              <span>Jumlah (Rp) <span class="text-red-500">*</span></span>
               <span>Keterangan</span>
               <span>Kode Anggaran</span>
               <span></span>
@@ -546,7 +565,7 @@ onUnmounted(() => {
             <div
               v-for="item in items"
               :key="item._id"
-              class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 px-5 py-3 items-start hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+              class="grid grid-cols-[2fr_1fr_1fr_2fr_1.5fr_auto] gap-3 px-4 py-3 items-start hover:bg-indigo-50/40 dark:hover:bg-zinc-800/30"
             >
               <!-- Produk -->
               <div>
@@ -563,12 +582,12 @@ onUnmounted(() => {
                 <select
                   v-if="item.fund_entity === 1"
                   v-model="item.ashnaf"
-                  class="h-9 w-full rounded border px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">-- Pilih --</option>
                   <option v-for="a in ashnafOptions" :key="a.code" :value="a.code">{{ a.name }}</option>
                 </select>
-                <span v-else class="flex h-9 items-center text-xs text-zinc-400">—</span>
+                <span v-else class="flex h-9 items-center text-xs text-slate-400">—</span>
               </div>
 
               <!-- Jumlah -->
@@ -584,7 +603,7 @@ onUnmounted(() => {
                 <input
                   v-model="item.description"
                   placeholder="Opsional"
-                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -593,18 +612,18 @@ onUnmounted(() => {
                 <input
                   v-model="item.dist_item_account"
                   placeholder="Opsional"
-                  class="h-9 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800"
+                  class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <!-- Hapus -->
               <div class="flex h-9 items-center">
                 <button
-                  class="rounded p-1 text-zinc-400 hover:text-red-500"
-                  title="Hapus item"
+                  class="rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700"
+                  title="Hapus"
                   @click="removeItem(item._id)"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  <Trash2 class="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -613,17 +632,17 @@ onUnmounted(() => {
           <!-- Hint klikable: selalu tampil saat ada items -->
           <button
             v-if="items.length > 0"
-            class="flex w-full items-center gap-2 border-t px-5 py-2.5 text-left text-xs italic text-zinc-400 hover:text-primary hover:bg-zinc-50/60 dark:text-zinc-500 dark:hover:bg-zinc-800/40 transition"
+            class="flex w-full items-center gap-2 border-t border-slate-200 px-4 py-2.5 text-left text-xs italic text-slate-400 hover:text-indigo-600 hover:bg-slate-50/60 dark:text-zinc-500 dark:hover:bg-zinc-800/40 transition"
             @click="addItem"
           >
             <span>Klik "+ Tambah Item" untuk menambah produk penyaluran.</span>
-            <kbd class="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 not-italic text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
+            <kbd class="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 not-italic text-slate-500 dark:border-zinc-700 dark:bg-zinc-800">Alt+N</kbd>
           </button>
 
           <!-- Footer total -->
-          <div v-if="items.length > 0" class="flex items-center justify-end gap-3 border-t bg-zinc-50 px-5 py-3 dark:bg-zinc-800">
-            <span class="text-sm text-zinc-500">Total Penyaluran:</span>
-            <span class="text-xl font-bold text-zinc-800 dark:text-zinc-100">Rp {{ fmt(totalAmount) }}</span>
+          <div v-if="items.length > 0" class="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:bg-zinc-800">
+            <span class="text-sm text-slate-500">Total Penyaluran:</span>
+            <span class="text-xl font-bold text-slate-800 dark:text-zinc-100">Rp {{ fmt(totalAmount) }}</span>
           </div>
         </section>
       </div>
