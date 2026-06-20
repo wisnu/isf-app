@@ -15,8 +15,8 @@ interface AKSection { title: string; lines: AKLine[]; subtotal: number }
 interface AKPayload {
   sections: AKSection[]
   kenaikan_bersih: number
-  saldo_awal: number
-  saldo_akhir: number
+  opening_balance: number
+  closing_balance: number
   begin: string
   end: string
   konsolidasi: boolean
@@ -67,8 +67,8 @@ const tableRows = computed<AKTableRow[]>(() => {
     rows.push({ __kind: 'spacer' })
   }
   rows.push({ __kind: 'summary-kenaikan', value: data.value.kenaikan_bersih })
-  rows.push({ __kind: 'summary-saldo-awal', value: data.value.saldo_awal })
-  rows.push({ __kind: 'summary-saldo-akhir', value: data.value.saldo_akhir })
+  rows.push({ __kind: 'summary-saldo-awal', value: data.value.opening_balance })
+  rows.push({ __kind: 'summary-saldo-akhir', value: data.value.closing_balance })
   return rows
 })
 

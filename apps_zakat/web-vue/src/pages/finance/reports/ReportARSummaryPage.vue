@@ -13,12 +13,12 @@ import { useAuthStore } from '@/stores/auth'
 
 interface ARRow {
   accountno: string; accountname: string | null; debtor_description: string | null
-  saldo_awal: number; debet: number; kredit: number; saldo_akhir: number
+  opening_balance: number; debet: number; kredit: number; closing_balance: number
   _isTotal?: boolean
 }
 interface ARPayload {
   rows: ARRow[]
-  grand_total: { saldo_awal: number; debet: number; kredit: number; saldo_akhir: number }
+  grand_total: { opening_balance: number; debet: number; kredit: number; closing_balance: number }
   title: string; with_debtor: boolean; begin: string; end: string
 }
 interface BranchOption { code: string; name: string }
@@ -92,7 +92,7 @@ onMounted(async () => { await loadBranches() })
   <div class="space-y-4">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
-      <p class="text-sm text-muted">Saldo awal, mutasi debet/kredit &amp; saldo akhir per akun.</p>
+      <p class="text-sm text-muted">Saldo awal, movement debet/kredit &amp; saldo akhir per akun.</p>
     </div>
 
     <div class="rounded-xl border border-border bg-surface p-4 flex flex-wrap items-end gap-4">
@@ -145,7 +145,7 @@ onMounted(async () => { await loadBranches() })
         </template>
       </Column>
       <Column header="Saldo Awal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_awal) }}</span></template>
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.opening_balance) }}</span></template>
       </Column>
       <Column header="Debet" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
         <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.debet) }}</span></template>
@@ -154,7 +154,7 @@ onMounted(async () => { await loadBranches() })
         <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap">{{ fmt(r.kredit) }}</span></template>
       </Column>
       <Column header="Saldo Akhir" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap font-medium">{{ fmt(r.saldo_akhir) }}</span></template>
+        <template #body="{ data: r }"><span class="block text-right tabular-nums whitespace-nowrap font-medium">{{ fmt(r.closing_balance) }}</span></template>
       </Column>
       <template #empty>Tidak ada data untuk filter ini.</template>
     </AppDataTable>

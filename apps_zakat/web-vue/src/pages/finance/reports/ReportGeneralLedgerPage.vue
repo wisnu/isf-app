@@ -25,11 +25,11 @@ interface GLAccount {
   account_code: string
   account_name: string | null
   account_type: string
-  saldo_awal: number
+  opening_balance: number
   total_debit: number
   total_credit: number
   net: number
-  saldo_akhir: number
+  closing_balance: number
   rows: GLRow[]
 }
 interface GLPayload { accounts: GLAccount[]; begin: string; end: string; konsolidasi: boolean; capped: boolean }
@@ -173,8 +173,8 @@ onMounted(async () => {
       <div v-for="acc in data?.accounts ?? []" :key="acc.account_code" class="rounded-xl border border-border bg-surface overflow-hidden">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 bg-background/40 border-b border-border">
           <span class="font-semibold text-sm">{{ acc.account_code }} — {{ acc.account_name }}</span>
-          <span class="text-xs text-muted">Saldo Awal: <span class="tabular-nums text-foreground">{{ fmt(acc.saldo_awal) }}</span></span>
-          <span class="text-xs text-muted ml-auto">Saldo Akhir: <span class="tabular-nums font-medium text-foreground">{{ fmt(acc.saldo_akhir) }}</span></span>
+          <span class="text-xs text-muted">Saldo Awal: <span class="tabular-nums text-foreground">{{ fmt(acc.opening_balance) }}</span></span>
+          <span class="text-xs text-muted ml-auto">Saldo Akhir: <span class="tabular-nums font-medium text-foreground">{{ fmt(acc.closing_balance) }}</span></span>
         </div>
         <AppDataTable :value="acc.rows" :loading="loading && !data">
           <Column header="Tanggal">

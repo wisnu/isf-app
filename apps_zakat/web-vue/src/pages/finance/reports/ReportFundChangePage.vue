@@ -16,10 +16,10 @@ interface PDFund {
   total_penerimaan: number
   total_penyaluran: number
   surplus: number
-  saldo_awal: number
-  saldo_akhir: number
+  opening_balance: number
+  closing_balance: number
 }
-interface PDPayload { funds: PDFund[]; total_saldo_akhir: number; begin: string; end: string; konsolidasi: boolean }
+interface PDPayload { funds: PDFund[]; total_closing_balance: number; begin: string; end: string; konsolidasi: boolean }
 interface BranchOption { code: string; name: string }
 
 const auth = useAuthStore()
@@ -156,11 +156,11 @@ onMounted(async () => {
             </tr>
             <tr class="border-t border-border/30">
               <td class="px-4 py-1">Saldo Awal Dana</td>
-              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.saldo_awal) }}</td>
+              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.opening_balance) }}</td>
             </tr>
             <tr class="border-t-2 border-primary/40 bg-primary/5 font-bold">
               <td class="px-4 py-1.5">Saldo Akhir Dana</td>
-              <td class="px-4 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(f.saldo_akhir) }}</td>
+              <td class="px-4 py-1.5 text-right tabular-nums whitespace-nowrap">{{ fmt(f.closing_balance) }}</td>
             </tr>
           </tbody>
         </table>
@@ -168,7 +168,7 @@ onMounted(async () => {
 
       <div class="rounded-xl border border-primary/40 bg-primary/5 p-4 flex items-center justify-between md:col-span-2">
         <span class="font-bold">Total Saldo Akhir Seluruh Dana</span>
-        <span class="font-bold tabular-nums text-lg">{{ fmt(data.total_saldo_akhir) }}</span>
+        <span class="font-bold tabular-nums text-lg">{{ fmt(data.total_closing_balance) }}</span>
       </div>
     </div>
   </div>

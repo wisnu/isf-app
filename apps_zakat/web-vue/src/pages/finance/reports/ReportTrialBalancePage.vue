@@ -12,12 +12,12 @@ interface TBRow {
   account_code: string
   account_name: string | null
   branch_code: string | null
-  saldo_awal: number
+  opening_balance: number
   debit: number
   credit: number
-  saldo_akhir: number
+  closing_balance: number
 }
-interface TBSubtotal { saldo_awal: number; debit: number; credit: number; saldo_akhir: number }
+interface TBSubtotal { opening_balance: number; debit: number; credit: number; closing_balance: number }
 interface TBGroup { type: string; type_label: string; rows: TBRow[]; subtotal: TBSubtotal }
 interface TBPayload {
   groups: TBGroup[]
@@ -108,7 +108,7 @@ onMounted(async () => {
   <div class="space-y-4">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Trial Balance</h1>
-      <p class="text-sm text-muted">Neraca saldo per akun detail: saldo awal, mutasi debet/kredit, saldo akhir.</p>
+      <p class="text-sm text-muted">Neraca saldo per akun detail: saldo awal, movement debet/kredit, saldo akhir.</p>
     </div>
 
     <div class="rounded-xl border border-border bg-surface p-4 flex flex-wrap items-end gap-4">
@@ -138,7 +138,7 @@ onMounted(async () => {
 
     <Alert v-if="errorMsg" variant="destructive" class="text-sm">{{ errorMsg }}</Alert>
     <Alert v-if="data && data.with_journal" variant="default" class="text-xs">
-      Periode mencakup tanggal ≥ hari ini — mutasi memakai jurnal harian (dailybalance belum dihitung untuk tanggal tsb).
+      Periode mencakup tanggal ≥ hari ini — movement memakai jurnal harian (dailybalance belum dihitung untuk tanggal tsb).
     </Alert>
 
     <div v-if="!data && !loading" class="p-10 text-center text-sm text-muted italic">
@@ -168,25 +168,25 @@ onMounted(async () => {
               <td class="px-3 py-1 font-mono text-[10px] text-muted whitespace-nowrap">{{ r.account_code }}</td>
               <td class="px-3 py-1">{{ r.account_name }}</td>
               <td v-if="data.konsolidasi" class="px-3 py-1 font-mono text-[10px] text-muted">{{ r.branch_code }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_awal) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.opening_balance) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.debit) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.credit) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.saldo_akhir) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.closing_balance) }}</td>
             </tr>
             <tr class="border-y-2 border-border bg-background/30 font-semibold">
               <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">Total {{ grp.type_label }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_awal) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.opening_balance) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.debit) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.credit) }}</td>
-              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.saldo_akhir) }}</td>
+              <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.closing_balance) }}</td>
             </tr>
           </template>
           <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
             <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">GRAND TOTAL</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_awal) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.opening_balance) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debit) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.credit) }}</td>
-            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.saldo_akhir) }}</td>
+            <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.closing_balance) }}</td>
           </tr>
         </tbody>
       </table>

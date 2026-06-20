@@ -155,7 +155,7 @@ def build_general_transaction_xlsx(rows: list[dict], branch_label: str, period_l
     return buf.getvalue()
 
 
-# ── Transaksi Kas/Bank Harian (summary + mutasi + running balance) ───────────
+# ── Transaksi Kas/Bank Harian (summary + movement + running balance) ───────────
 
 _AUTHSTATUS = {"T": "SUDAH OTORISASI", "F": "BELUM OTORISASI"}
 
@@ -395,25 +395,25 @@ def build_trial_balance_xlsx(payload: dict, branch_label: str) -> bytes:
             ws.cell(row=r, column=1, value=item["account_code"])
             ws.cell(row=r, column=2, value=item.get("account_name") or "")
             ws.cell(row=r, column=3, value="" if konsolidasi else (item.get("branch_code") or ""))
-            _money(r, 4, item["saldo_awal"])
+            _money(r, 4, item["opening_balance"])
             _money(r, 5, item["debit"])
             _money(r, 6, item["credit"])
-            _money(r, 7, item["saldo_akhir"])
+            _money(r, 7, item["closing_balance"])
         r += 1
         st = grp["subtotal"]
         ws.cell(row=r, column=1, value=f"Total {grp['type_label']}").font = Font(bold=True)
-        _money(r, 4, st["saldo_awal"], bold=True)
+        _money(r, 4, st["opening_balance"], bold=True)
         _money(r, 5, st["debit"], bold=True)
         _money(r, 6, st["credit"], bold=True)
-        _money(r, 7, st["saldo_akhir"], bold=True)
+        _money(r, 7, st["closing_balance"], bold=True)
 
     r += 2
     gt = payload.get("grand_total", {})
     ws.cell(row=r, column=1, value="GRAND TOTAL").font = Font(bold=True)
-    _money(r, 4, gt.get("saldo_awal"), bold=True)
+    _money(r, 4, gt.get("opening_balance"), bold=True)
     _money(r, 5, gt.get("debit"), bold=True)
     _money(r, 6, gt.get("credit"), bold=True)
-    _money(r, 7, gt.get("saldo_akhir"), bold=True)
+    _money(r, 7, gt.get("closing_balance"), bold=True)
 
     ws.freeze_panes = "A5"
     buf = BytesIO()
@@ -526,10 +526,10 @@ def build_cash_flow_xlsx(payload: dict, branch_label: str) -> bytes:
     _money(r, payload.get("kenaikan_bersih"), bold=True)
     r += 1
     ws.cell(row=r, column=1, value="Saldo Kas & Setara Kas Awal Periode")
-    _money(r, payload.get("saldo_awal"))
+    _money(r, payload.get("opening_balance"))
     r += 1
     ws.cell(row=r, column=1, value="Saldo Kas & Setara Kas Akhir Periode").font = Font(bold=True)
-    _money(r, payload.get("saldo_akhir"), bold=True)
+    _money(r, payload.get("closing_balance"), bold=True)
 
     buf = BytesIO()
     wb.save(buf)
@@ -573,7 +573,7 @@ def build_general_ledger_xlsx(payload: dict, branch_label: str) -> bytes:
         ws.cell(row=r, column=1, value=f"{acc['account_code']} - {acc.get('account_name') or ''}").font = Font(bold=True)
         r += 1
         ws.cell(row=r, column=1, value="Saldo Awal").font = Font(italic=True)
-        _money(r, 7, acc["saldo_awal"])
+        _money(r, 7, acc["opening_balance"])
         r += 1
         # header kolom
         for col_idx, (title, _w) in enumerate(_GL_COLS, 1):
@@ -595,7 +595,7 @@ def build_general_ledger_xlsx(payload: dict, branch_label: str) -> bytes:
         _money(r, 7, acc["total_credit"], bold=True)
         r += 1
         ws.cell(row=r, column=3, value="Saldo Akhir").font = Font(bold=True)
-        _money(r, 7, acc["saldo_akhir"], bold=True)
+        _money(r, 7, acc["closing_balance"], bold=True)
         r += 2
 
     buf = BytesIO()
@@ -649,14 +649,14 @@ def build_fund_changes_xlsx(payload: dict, branch_label: str) -> bytes:
         _money(r, f["surplus"], bold=True)
         r += 1
         ws.cell(row=r, column=1, value="Saldo Awal Dana")
-        _money(r, f["saldo_awal"])
+        _money(r, f["opening_balance"])
         r += 1
         ws.cell(row=r, column=1, value="Saldo Akhir Dana").font = Font(bold=True)
-        _money(r, f["saldo_akhir"], bold=True)
+        _money(r, f["closing_balance"], bold=True)
         r += 2
 
     ws.cell(row=r, column=1, value="TOTAL SALDO AKHIR SELURUH DANA").font = Font(bold=True)
-    _money(r, payload.get("total_saldo_akhir"), bold=True)
+    _money(r, payload.get("total_closing_balance"), bold=True)
 
     buf = BytesIO()
     wb.save(buf)
@@ -833,7 +833,7 @@ def build_collection_xlsx(rows: list[dict], rekap: dict, branch_label: str, peri
     r += 1
     for f in (rekap or {}).get("funds", []):
         ws.cell(row=r, column=1, value=f["fund_label"])
-        for ci, k in ((2, "saldo_awal"), (3, "mutasi"), (4, "saldo_akhir")):
+        for ci, k in ((2, "opening_balance"), (3, "movement"), (4, "closing_balance")):
             c = ws.cell(row=r, column=ci, value=float(f.get(k) or 0)); c.number_format = "#,##0.00"
         ws.cell(row=r, column=5, value=f.get("donors") or 0)
         r += 1
@@ -903,17 +903,17 @@ def build_ar_summary_xlsx(payload: dict, branch_label: str) -> bytes:
         ws.cell(row=r, column=2, value=row.get("accountname") or "")
         if with_debtor:
             ws.cell(row=r, column=3, value=row.get("debtor_description") or "")
-        _money(r, base + 1, row["saldo_awal"])
+        _money(r, base + 1, row["opening_balance"])
         _money(r, base + 2, row["debet"])
         _money(r, base + 3, row["kredit"])
-        _money(r, base + 4, row["saldo_akhir"])
+        _money(r, base + 4, row["closing_balance"])
     r += 1
     gt = payload.get("grand_total", {})
     ws.cell(row=r, column=base, value="TOTAL").font = Font(bold=True)
-    _money(r, base + 1, gt.get("saldo_awal"), bold=True)
+    _money(r, base + 1, gt.get("opening_balance"), bold=True)
     _money(r, base + 2, gt.get("debet"), bold=True)
     _money(r, base + 3, gt.get("kredit"), bold=True)
-    _money(r, base + 4, gt.get("saldo_akhir"), bold=True)
+    _money(r, base + 4, gt.get("closing_balance"), bold=True)
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()

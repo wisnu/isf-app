@@ -18,8 +18,8 @@ interface CollRow {
   donorname: string | null; transactionno: string | null; inputer: string | null
 }
 interface CollPayload { rows: CollRow[]; total: number; total_amount: number; page: number; page_size: number }
-interface RekapFund { fund_label: string; saldo_awal: number; mutasi: number; saldo_akhir: number; donors: number; _isTotal?: boolean }
-interface RekapPayload { funds: RekapFund[]; grand_total: { saldo_awal: number; mutasi: number; saldo_akhir: number; donors: number } }
+interface RekapFund { fund_label: string; opening_balance: number; movement: number; closing_balance: number; donors: number; _isTotal?: boolean }
+interface RekapPayload { funds: RekapFund[]; grand_total: { opening_balance: number; movement: number; closing_balance: number; donors: number } }
 interface BranchOption { code: string; name: string }
 
 const auth = useAuthStore()
@@ -113,7 +113,7 @@ onMounted(async () => { await loadBranches() })
   <div class="space-y-4">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Laporan Penghimpunan Dana</h1>
-      <p class="text-sm text-muted">Rekap per dana (saldo awal/mutasi/akhir + donatur) &amp; daftar transaksi penerimaan.</p>
+      <p class="text-sm text-muted">Rekap per dana (saldo awal/movement/akhir + donatur) &amp; daftar transaksi penerimaan.</p>
     </div>
 
     <div class="rounded-xl border border-border bg-surface p-4 flex flex-wrap items-end gap-4">
@@ -160,13 +160,13 @@ onMounted(async () => { await loadBranches() })
           <template #body="{ data: r }"><span class="font-medium">{{ r.fund_label }}</span></template>
         </Column>
         <Column header="Saldo Awal" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.saldo_awal) }}</span></template>
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.opening_balance) }}</span></template>
         </Column>
         <Column header="Mutasi (Penerimaan)" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.mutasi) }}</span></template>
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.movement) }}</span></template>
         </Column>
         <Column header="Saldo Akhir" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.saldo_akhir) }}</span></template>
+          <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ fmt(r.closing_balance) }}</span></template>
         </Column>
         <Column header="Jml Donatur" :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
           <template #body="{ data: r }"><span class="block text-right tabular-nums">{{ r.donors }}</span></template>

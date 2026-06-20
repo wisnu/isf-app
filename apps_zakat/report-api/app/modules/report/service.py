@@ -481,10 +481,10 @@ async def cash_monthly(branch: str, year: int) -> dict | None:
 # ── Trial Balance (fTrialBalance) — neraca saldo per detail account ───────────
 #
 # Legacy-faithful (GetTrialBalancePerCabang.py, cabang `onlydetail`):
-#   saldo_awal  = balancecumulative max(datevalue <= begin-1)  per accountinstance
-#   saldo_akhir = balancecumulative max(datevalue <= end)
+#   opening_balance  = balancecumulative max(datevalue <= begin-1)  per accountinstance
+#   closing_balance = balancecumulative max(datevalue <= end)
 #   debit/kredit= SUM dailybalance.debit/credit dalam [begin, end]
-# Bila end >= today, tambah mutasi journalitem [begin, end] (langsung + lawan
+# Bila end >= today, tambah movement journalitem [begin, end] (langsung + lawan
 # fl_cpa_accountinstance) karena dailybalance belum dihitung utk tanggal itu.
 
 _ACCTYPE_LABEL = {
@@ -569,8 +569,8 @@ def _tb_per_instance_sql(branch: str | None, with_journal: bool) -> str:
             GROUP BY accountinstance_id
         ){journ_cte}
         SELECT a.account_code, a.account_name, a.account_type, i.branch_code,
-               SUM(COALESCE(bb.balancecumulative, 0))::float8 AS saldo_awal,
-               SUM(COALESCE(be.balancecumulative, 0))::float8 AS saldo_akhir,
+               SUM(COALESCE(bb.balancecumulative, 0))::float8 AS opening_balance,
+               SUM(COALESCE(be.balancecumulative, 0))::float8 AS closing_balance,
                SUM(COALESCE(m.debit, 0))::float8  AS debit,
                SUM(COALESCE(m.credit, 0))::float8 AS credit,
                {j_debit}, {j_credit}, {j_balance}
@@ -612,29 +612,29 @@ async def trial_balance(
         agg = by_acct.get(key)
         debit = r["debit"] + (r["j_debit"] if with_journal else 0.0)
         credit = r["credit"] + (r["j_credit"] if with_journal else 0.0)
-        saldo_akhir = r["saldo_akhir"] + (r["j_balance"] if with_journal else 0.0)
+        closing_balance = r["closing_balance"] + (r["j_balance"] if with_journal else 0.0)
         if agg is None:
             agg = {
                 "account_code": r["account_code"],
                 "account_name": r["account_name"],
                 "account_type": r["account_type"],
                 "branch_code": None if konsolidasi else r["branch_code"],
-                "saldo_awal": 0.0,
+                "opening_balance": 0.0,
                 "debit": 0.0,
                 "credit": 0.0,
-                "saldo_akhir": 0.0,
+                "closing_balance": 0.0,
             }
             by_acct[key] = agg
             order.append(key)
-        agg["saldo_awal"] += r["saldo_awal"]
+        agg["opening_balance"] += r["opening_balance"]
         agg["debit"] += debit
         agg["credit"] += credit
-        agg["saldo_akhir"] += saldo_akhir
+        agg["closing_balance"] += closing_balance
 
     # group per account_type
     groups: list[dict] = []
     by_type: dict[str, dict] = {}
-    grand = {"saldo_awal": 0.0, "debit": 0.0, "credit": 0.0, "saldo_akhir": 0.0}
+    grand = {"opening_balance": 0.0, "debit": 0.0, "credit": 0.0, "closing_balance": 0.0}
     for key in order:
         a = by_acct[key]
         atype = a["account_type"]
@@ -644,12 +644,12 @@ async def trial_balance(
                 "type": atype,
                 "type_label": _ACCTYPE_LABEL.get(atype, atype),
                 "rows": [],
-                "subtotal": {"saldo_awal": 0.0, "debit": 0.0, "credit": 0.0, "saldo_akhir": 0.0},
+                "subtotal": {"opening_balance": 0.0, "debit": 0.0, "credit": 0.0, "closing_balance": 0.0},
             }
             by_type[atype] = g
             groups.append(g)
         g["rows"].append(a)
-        for k in ("saldo_awal", "debit", "credit", "saldo_akhir"):
+        for k in ("opening_balance", "debit", "credit", "closing_balance"):
             g["subtotal"][k] += a[k]
             grand[k] += a[k]
 
@@ -788,7 +788,7 @@ async def balance_sheet(
 async def _balancesum_mutations(
     branch: str | None, begin: date, end: date, group_code: str
 ) -> dict:
-    """item_code(lower) → {net, debit, credit} mutasi journalitem dalam [begin,end]
+    """item_code(lower) → {net, debit, credit} movement journalitem dalam [begin,end]
     untuk BalanceSumGroup `group_code` (mis. AK_MUT / PD_MUT)."""
     args: list = [begin, end, group_code]
     branch_clause = ""
@@ -915,8 +915,8 @@ async def cash_flow(branch: str | None, begin: str, end: str, today: date) -> di
     return {
         "sections": sections,
         "kenaikan_bersih": kenaikan,
-        "saldo_awal": opening,
-        "saldo_akhir": opening + kenaikan,
+        "opening_balance": opening,
+        "closing_balance": opening + kenaikan,
         "begin": _dmy(begin),
         "end": _dmy(end),
         "konsolidasi": branch is None,
@@ -1020,7 +1020,7 @@ async def general_ledger(
                 "account_code": r["account_code"],
                 "account_name": r["account_name"],
                 "account_type": r["account_type"],
-                "saldo_awal": awal,
+                "opening_balance": awal,
                 "total_debit": 0.0,
                 "total_credit": 0.0,
                 "rows": [],
@@ -1051,7 +1051,7 @@ async def general_ledger(
             else a["total_credit"] - a["total_debit"]
         )
         a["net"] = net
-        a["saldo_akhir"] = a["saldo_awal"] + net
+        a["closing_balance"] = a["opening_balance"] + net
 
     return {
         "accounts": accounts,
@@ -1116,7 +1116,7 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
     def bb(item: str) -> float:
         return bal.get(item, 0.0) or 0.0
 
-    def _fund(name: str, penerimaan: list[dict], penyaluran: list[dict], saldo_awal: float) -> dict:
+    def _fund(name: str, penerimaan: list[dict], penyaluran: list[dict], opening_balance: float) -> dict:
         tp = sum(x["value"] for x in penerimaan)
         td = sum(x["value"] for x in penyaluran)
         surplus = tp - td
@@ -1127,8 +1127,8 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
             "total_penerimaan": tp,
             "total_penyaluran": td,
             "surplus": surplus,
-            "saldo_awal": saldo_awal,
-            "saldo_akhir": saldo_awal + surplus,
+            "opening_balance": opening_balance,
+            "closing_balance": opening_balance + surplus,
         }
 
     zakat = _fund(
@@ -1194,7 +1194,7 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
     funds = [zakat, infaq, nonhalal, amil]
     return {
         "funds": funds,
-        "total_saldo_akhir": sum(f["saldo_akhir"] for f in funds),
+        "total_closing_balance": sum(f["closing_balance"] for f in funds),
         "begin": _dmy(begin),
         "end": _dmy(end),
         "konsolidasi": branch is None,
@@ -1207,7 +1207,7 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
 async def _balancesum_member_mutations(
     branch: str | None, begin: date, end: date, group_code: str
 ) -> dict:
-    """item_code(lower) → {account_code: {name, net}} — mutasi per akun member."""
+    """item_code(lower) → {account_code: {name, net}} — movement per akun member."""
     args: list = [begin, end, group_code]
     branch_clause = ""
     if branch:
@@ -1587,7 +1587,7 @@ async def collection_rows(branch: str | None, begin: str, end: str, fund: str | 
 
 
 async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dict] | None:
-    """Per dana: saldo awal (actualdate<begin) + mutasi [begin,end] + akhir + jumlah donor."""
+    """Per dana: saldo awal (actualdate<begin) + movement [begin,end] + akhir + jumlah donor."""
     if not await ping_dwh():
         return None
     b = date.fromisoformat(begin)
@@ -1611,7 +1611,7 @@ async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dic
     )
     begin_map = {str(r["fund_entity"]).strip(): r["bal"] for r in begin_rows}
     out: list[dict] = []
-    grand = {"saldo_awal": 0.0, "mutasi": 0.0, "saldo_akhir": 0.0, "donors": 0}
+    grand = {"opening_balance": 0.0, "movement": 0.0, "closing_balance": 0.0, "donors": 0}
     for r in mut_rows:
         key = str(r["fund_entity"]).strip()
         awal = begin_map.get(key, 0.0)
@@ -1619,14 +1619,14 @@ async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dic
         out.append({
             "fund_entity": key,
             "fund_label": _FUND_LABEL.get(key, key),
-            "saldo_awal": awal,
-            "mutasi": mut,
-            "saldo_akhir": awal + mut,
+            "opening_balance": awal,
+            "movement": mut,
+            "closing_balance": awal + mut,
             "donors": int(r["donors"]),
         })
-        grand["saldo_awal"] += awal
-        grand["mutasi"] += mut
-        grand["saldo_akhir"] += awal + mut
+        grand["opening_balance"] += awal
+        grand["movement"] += mut
+        grand["closing_balance"] += awal + mut
         grand["donors"] += int(r["donors"])
     out.sort(key=lambda x: x["fund_entity"])
     return {"funds": out, "grand_total": grand}
@@ -1635,7 +1635,7 @@ async def collection_rekap(branch: str | None, begin: str, end: str) -> list[dic
 # ── Piutang Karyawan / Non-Karyawan / Rekap Uang Muka (Summary AR) ────────────
 #
 # fSummaryEmpAR (type E), fSummaryExtAR (type D + debtor), fSummaryEmpCA (type C).
-# Per akun AR: saldo awal (Σ mutasi bertanda < begin) + debet/kredit periode +
+# Per akun AR: saldo awal (Σ movement bertanda < begin) + debet/kredit periode +
 # saldo akhir (= awal + debet − kredit).
 
 _AR_TITLE = {
@@ -1665,7 +1665,7 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
             SELECT e.accountno,
                 SUM(CASE WHEN c.actualdate < $2::date
                          THEN (CASE WHEN d.mutationtype='D' THEN d.amount ELSE -d.amount END)
-                         ELSE 0 END) AS saldo_awal,
+                         ELSE 0 END) AS opening_balance,
                 SUM(CASE WHEN c.actualdate >= $2::date AND c.actualdate <= $3::date AND d.mutationtype='D'
                          THEN d.amount ELSE 0 END) AS debet,
                 SUM(CASE WHEN c.actualdate >= $2::date AND c.actualdate <= $3::date AND d.mutationtype='C'
@@ -1677,7 +1677,7 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
             GROUP BY e.accountno
         )
         SELECT ar.accountno, ar.accountname, ar.debtor_description,
-               COALESCE(m.saldo_awal, 0)::float8 AS saldo_awal,
+               COALESCE(m.opening_balance, 0)::float8 AS opening_balance,
                COALESCE(m.debet, 0)::float8 AS debet,
                COALESCE(m.kredit, 0)::float8 AS kredit
         FROM ar LEFT JOIN mut m ON m.accountno = ar.accountno
@@ -1685,22 +1685,22 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
     """
     rows = await fetch_all_dwh(sql, *args)
     out: list[dict] = []
-    tot = {"saldo_awal": 0.0, "debet": 0.0, "kredit": 0.0, "saldo_akhir": 0.0}
+    tot = {"opening_balance": 0.0, "debet": 0.0, "kredit": 0.0, "closing_balance": 0.0}
     for r in rows:
-        akhir = r["saldo_awal"] + r["debet"] - r["kredit"]
+        akhir = r["opening_balance"] + r["debet"] - r["kredit"]
         out.append({
             "accountno": r["accountno"],
             "accountname": r["accountname"],
             "debtor_description": r["debtor_description"],
-            "saldo_awal": r["saldo_awal"],
+            "opening_balance": r["opening_balance"],
             "debet": r["debet"],
             "kredit": r["kredit"],
-            "saldo_akhir": akhir,
+            "closing_balance": akhir,
         })
-        tot["saldo_awal"] += r["saldo_awal"]
+        tot["opening_balance"] += r["opening_balance"]
         tot["debet"] += r["debet"]
         tot["kredit"] += r["kredit"]
-        tot["saldo_akhir"] += akhir
+        tot["closing_balance"] += akhir
     return {
         "rows": out,
         "grand_total": tot,
