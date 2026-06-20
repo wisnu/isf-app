@@ -124,7 +124,7 @@ async def get_uang_muka_detail(
             t.description,
             ar.employeeid AS employee_id,
             fa.accountname as employee_name,
-            ca.cashaccountno as cash_account_no,
+            ca.accountno as cash_account_no,
             t.referenceno as reference_no,
             EXISTS(
                 SELECT 1 FROM transaction.transactionitem ti2
@@ -138,7 +138,9 @@ async def get_uang_muka_detail(
         JOIN transaction.accounttransactionitem ati ON ati.transactionitemid = ti.transactionitemid
         JOIN transaction.financialaccount fa ON fa.accountno = ati.accountno
         JOIN transaction.accountreceivable ar ON ar.accountno = ati.accountno
-        JOIN transaction.cashaccount ca ON ca.accountno = ti.accountno
+        LEFT JOIN transaction.transactionitem ti_cash
+            ON ti_cash.transactionid = t.transactionid AND ti_cash.mutationtype = 'C'
+        LEFT JOIN transaction.cashaccount ca ON ca.accountno = ti_cash.refaccountno
         WHERE t.transactionid = $1
           AND t.transactioncode = 'CA'
           AND ati.accounttitype = 'C'
@@ -231,7 +233,7 @@ async def create_from_payload(
             seq = await conn.fetchval("SELECT nextval('transaction.seq_transactionnumber')")
             # Get cash code from cash account
             cash_code = await conn.fetchval(
-                "SELECT cashcode FROM transaction.cashaccount WHERE cashaccountno = $1",
+                "SELECT cashcode FROM transaction.cashaccount WHERE accountno = $1",
                 cash_account_no
             )
             if not cash_code:
@@ -294,7 +296,7 @@ async def create_from_payload(
             # Row 2: Cash account (CREDIT, accounttitype='A', cattype default)
             item_id_2 = int(await conn.fetchval("SELECT nextval('transaction.seq_transactionitem')"))
             ca_account = await conn.fetchval(
-                "SELECT accountno FROM transaction.cashaccount WHERE cashaccountno = $1",
+                "SELECT accountno FROM transaction.cashaccount WHERE accountno = $1",
                 cash_account_no
             )
             await conn.execute(
@@ -393,12 +395,12 @@ async def lookup_cash_account(
     """Lookup cash account."""
     pool = get_pool()
 
-    where_parts = ["ca.isactive = true"]
+    where_parts = ["fa.status = 'A'"]
     params = []
     param_idx = 1
 
     if branch_code:
-        where_parts.append(f"ca.branchcode = ${param_idx}")
+        where_parts.append(f"fa.branchcode = ${param_idx}")
         params.append(branch_code)
         param_idx += 1
 
@@ -406,10 +408,11 @@ async def lookup_cash_account(
 
     rows = await pool.fetch(
         f"""
-        SELECT ca.cashaccountno AS cash_account_no, ca.cashaccountname AS cash_account_name, ca.accountno AS account_no
+        SELECT ca.accountno AS cash_account_no, fa.accountname AS cash_account_name, ca.accountno AS account_no
         FROM transaction.cashaccount ca
+        JOIN transaction.financialaccount fa ON fa.accountno = ca.accountno
         WHERE {where_clause}
-        ORDER BY ca.cashaccountname
+        ORDER BY fa.accountname
         LIMIT 100
         """,
         *params

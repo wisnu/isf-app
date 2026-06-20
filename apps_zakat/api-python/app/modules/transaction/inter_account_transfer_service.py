@@ -22,9 +22,9 @@ _LIST_SELECT = """
         COALESCE(t.description, '') AS description,
         COALESCE(t.referenceno, '') AS reference_no,
         fa_src.accountname AS source_account_name,
-        ca_src.bankaccountno AS source_cash_account_no,
+        ca_src.accountno AS source_cash_account_no,
         fa_dst.accountname AS dest_account_name,
-        ca_dst.bankaccountno AS dest_cash_account_no
+        ca_dst.accountno AS dest_cash_account_no
     FROM transaction.transaction t
     LEFT JOIN transaction.transactionitem ti_src
         ON ti_src.transactionid = t.transactionid AND ti_src.mutationtype = 'C'
@@ -79,20 +79,16 @@ async def list_transfers(
 
 
 async def get_transfer_detail(db: Connection, transaction_id: int) -> dict | None:
+    # Inject the two extra columns into the SELECT list (before FROM), then append WHERE.
+    # _LIST_SELECT already carries the full FROM + JOINs (incl. ti_src/ti_dst).
+    detail_select = _LIST_SELECT.replace(
+        "        ca_dst.accountno AS dest_cash_account_no\n",
+        "        ca_dst.accountno AS dest_cash_account_no,\n"
+        "        ti_src.refaccountno AS source_account_no,\n"
+        "        ti_dst.refaccountno AS dest_account_no\n",
+    )
     row = await db.fetchrow(
-        f"""{_LIST_SELECT.replace("fa_src.accountname", "fa_src.accountname").replace("fa_dst.accountname", "fa_dst.accountname")},
-            ti_src.refaccountno AS source_account_no,
-            ti_dst.refaccountno AS dest_account_no
-        FROM transaction.transaction t
-        LEFT JOIN transaction.transactionitem ti_src
-            ON ti_src.transactionid = t.transactionid AND ti_src.mutationtype = 'C'
-        LEFT JOIN transaction.financialaccount fa_src ON fa_src.accountno = ti_src.refaccountno
-        LEFT JOIN transaction.cashaccount ca_src ON ca_src.accountno = fa_src.accountno
-        LEFT JOIN transaction.transactionitem ti_dst
-            ON ti_dst.transactionid = t.transactionid AND ti_dst.mutationtype = 'D'
-        LEFT JOIN transaction.financialaccount fa_dst ON fa_dst.accountno = ti_dst.refaccountno
-        LEFT JOIN transaction.cashaccount ca_dst ON ca_dst.accountno = fa_dst.accountno
-        WHERE t.transactioncode = 'TI' AND t.transactionid = $1""",
+        f"{detail_select} WHERE t.transactioncode = 'TI' AND t.transactionid = $1",
         transaction_id,
     )
     return dict(row) if row else None
@@ -111,7 +107,7 @@ async def lookup_cash_accounts(search: str = "", branch_code: str = "") -> list[
         params.append(f"%{search.strip().lower()}%")
         conds.append(
             f"(LOWER(COALESCE(fa.accountname,'')) LIKE ${idx}"
-            f" OR LOWER(COALESCE(ca.cashaccountno,'')) LIKE ${idx})"
+            f" OR LOWER(COALESCE(ca.accountno,'')) LIKE ${idx})"
         )
         idx += 1
 
@@ -124,7 +120,7 @@ async def lookup_cash_accounts(search: str = "", branch_code: str = "") -> list[
 
     rows = await pool.fetch(
         f"""SELECT
-                ca.cashaccountno AS cash_account_no,
+                ca.accountno AS cash_account_no,
                 ca.accountno AS account_no,
                 fa.accountname AS account_name,
                 COALESCE(fa.branchcode, '') AS branch_code,
@@ -154,8 +150,8 @@ async def create_from_payload(
     pool = get_pool()
 
     actual_date = date.fromisoformat(payload['actual_date'])
-    source_account_no = payload['source_account_no']  # cashaccount.cashaccountno
-    dest_account_no = payload['dest_account_no']       # cashaccount.cashaccountno
+    source_account_no = payload['source_account_no']  # cashaccount.accountno
+    dest_account_no = payload['dest_account_no']       # cashaccount.accountno
     amount = float(payload['amount'])
     description = payload.get('description', '') or ''
     reference_no = payload.get('reference_no', '') or ''
@@ -172,7 +168,7 @@ async def create_from_payload(
                           COALESCE(ca.cashcode, '000') AS cashcode,
                           COALESCE(ca.accountinterface, ca.accountno) AS interface_accountno
                    FROM transaction.cashaccount ca
-                   WHERE ca.cashaccountno = $1""",
+                   WHERE ca.accountno = $1""",
                 source_account_no,
             )
             if not src_acct:
@@ -186,7 +182,7 @@ async def create_from_payload(
                 """SELECT ca.accountno,
                           COALESCE(ca.accountinterface, ca.accountno) AS interface_accountno
                    FROM transaction.cashaccount ca
-                   WHERE ca.cashaccountno = $1""",
+                   WHERE ca.accountno = $1""",
                 dest_account_no,
             )
             if not dst_acct:
