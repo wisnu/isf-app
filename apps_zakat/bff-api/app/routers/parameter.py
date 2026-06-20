@@ -9,7 +9,7 @@ from app.services.proxy import get_api_python
 router = APIRouter(prefix="/parameter", tags=["parameter"])
 
 
-@router.get("/pemilik-anggaran")
+@router.get("/budget-owner")
 async def list_owners(
     request:  Request,
     _:        str       = Depends(require_menu("finance.parameter.budget_owner")),
@@ -23,11 +23,11 @@ async def list_owners(
     params: dict = {"page": page, "limit": limit}
     if q:
         params["q"] = q
-    downstream = await get_api_python("/api/parameter/pemilik-anggaran", params=params)
+    downstream = await get_api_python("/api/parameter/budget-owner", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/pemilik-anggaran/lookup")
+@router.get("/budget-owner/lookup")
 async def lookup_owners(
     request: Request,
     _:       str       = Depends(require_menu("finance.parameter.budget_owner")),
@@ -39,18 +39,18 @@ async def lookup_owners(
     params: dict = {}
     if q:
         params["q"] = q
-    downstream = await get_api_python("/api/parameter/pemilik-anggaran/lookup", params=params)
+    downstream = await get_api_python("/api/parameter/budget-owner/lookup", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/pemilik-anggaran/{ownerid}")
+@router.get("/budget-owner/{owner_id}")
 async def get_owner(
     request:  Request,
-    ownerid:  int,
+    owner_id:  int,
     _:        str = Depends(require_menu("finance.parameter.budget_owner")),
 ):
     _, err = await current_user_id_or_401(request)
     if err:
         return err
-    downstream = await get_api_python(f"/api/parameter/pemilik-anggaran/{ownerid}")
+    downstream = await get_api_python(f"/api/parameter/budget-owner/{owner_id}")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

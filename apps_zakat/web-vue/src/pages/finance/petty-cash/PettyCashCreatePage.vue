@@ -26,9 +26,9 @@ async function loadLookups() {
   lookupLoading.value = true
   try {
     const [branches, currencies, gl] = await Promise.all([
-      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/kas-kecil/lookup/branches'),
-      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/kas-kecil/lookup/currencies'),
-      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/kas-kecil/lookup/gl_accounts'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/petty-cash/lookup/branches'),
+      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/petty-cash/lookup/currencies'),
+      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/petty-cash/lookup/gl_accounts'),
     ])
     lookupBranches.value = (branches.data ?? []).map((b) => ({
       value: b.branch_code,
@@ -78,7 +78,7 @@ async function submit() {
 
   submitting.value = true
   try {
-    await api.post<{ account_no: string }>('/api/kas-kecil/accounts', {
+    await api.post<{ account_no: string }>('/api/petty-cash/accounts', {
       account_name: form.account_name.trim(),
       account_interface: form.account_interface,
       currency_code: form.currency_code,

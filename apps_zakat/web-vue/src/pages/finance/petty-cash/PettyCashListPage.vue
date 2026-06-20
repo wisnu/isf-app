@@ -18,7 +18,7 @@ import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface KasKecilRow {
+interface PettyCashRow {
   account_no: string
   account_name: string | null
   cash_code: string | null
@@ -28,12 +28,12 @@ interface KasKecilRow {
   status: string | null
 }
 
-interface KasKecilList {
-  rows: KasKecilRow[]
+interface PettyCashList {
+  rows: PettyCashRow[]
   pagination: { page: number; page_size: number; total: number; total_pages: number }
 }
 
-interface KasKecilDetail {
+interface PettyCashDetail {
   account_no: string
   account_name: string | null
   cash_code: string | null
@@ -53,7 +53,7 @@ const pageSize = shallowRef(20)
 
 // ── List data ─────────────────────────────────────────────────────────────────
 
-const rows = ref<KasKecilRow[]>([])
+const rows = ref<PettyCashRow[]>([])
 const loading = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
 const page = shallowRef(1)
@@ -73,7 +73,7 @@ async function loadAccounts() {
   try {
     const params = new URLSearchParams({ page: String(page.value), page_size: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('search', searchInput.value.trim())
-    const res = await api.get<KasKecilList>(`/api/kas-kecil/accounts?${params}`)
+    const res = await api.get<PettyCashList>(`/api/petty-cash/accounts?${params}`)
     rows.value = res.rows
     totalPages.value = res.pagination.total_pages || 1
     totalRecords.value = res.pagination.total
@@ -100,9 +100,9 @@ async function loadLookups() {
   if (lookupLoaded.value) return
   try {
     const [branches, currencies, gl] = await Promise.all([
-      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/kas-kecil/lookup/branches'),
-      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/kas-kecil/lookup/currencies'),
-      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/kas-kecil/lookup/gl_accounts'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/petty-cash/lookup/branches'),
+      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/petty-cash/lookup/currencies'),
+      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/petty-cash/lookup/gl_accounts'),
     ])
     lookupBranches.value = (branches.data ?? []).map((b) => ({
       value: b.branch_code,
@@ -141,7 +141,7 @@ const form = reactive({
 })
 
 // For delete view — loaded detail
-const deleteDetail = ref<KasKecilDetail | null>(null)
+const deleteDetail = ref<PettyCashDetail | null>(null)
 
 function resetForm() {
   form.account_name = ''
@@ -161,7 +161,7 @@ async function openEdit(accountNo: string) {
   modalLoading.value = true
   await loadLookups()
   try {
-    const res = await api.get<KasKecilDetail>(`/api/kas-kecil/accounts/${accountNo}`)
+    const res = await api.get<PettyCashDetail>(`/api/petty-cash/accounts/${accountNo}`)
     form.account_name = res.account_name ?? ''
     form.branch_code = res.branch_code ?? ''
     form.currency_code = res.currency_code ?? ''
@@ -184,7 +184,7 @@ async function openDelete(accountNo: string) {
   modalOpen.value = true
   modalLoading.value = true
   try {
-    const res = await api.get<KasKecilDetail>(`/api/kas-kecil/accounts/${accountNo}`)
+    const res = await api.get<PettyCashDetail>(`/api/petty-cash/accounts/${accountNo}`)
     deleteDetail.value = res
   } catch {
     toast.error('Gagal memuat detail rekening')
@@ -218,7 +218,7 @@ async function submitForm() {
 
   submitting.value = true
   try {
-    await api.put<unknown>(`/api/kas-kecil/accounts/${editingAccountNo.value}`, {
+    await api.put<unknown>(`/api/petty-cash/accounts/${editingAccountNo.value}`, {
       account_name: form.account_name.trim(),
       account_interface: form.account_interface,
       currency_code: form.currency_code,
@@ -243,7 +243,7 @@ async function submitDelete() {
   submitting.value = true
   formError.value = null
   try {
-    await api.delete<unknown>(`/api/kas-kecil/accounts/${editingAccountNo.value}`)
+    await api.delete<unknown>(`/api/petty-cash/accounts/${editingAccountNo.value}`)
     toast.success('Rekening kas kecil berhasil dihapus')
     closeModal()
     await loadAccounts()

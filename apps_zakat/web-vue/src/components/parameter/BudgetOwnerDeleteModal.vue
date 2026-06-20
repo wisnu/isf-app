@@ -7,12 +7,12 @@ import { api, ApiError } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
 
 interface OwnerRow {
-  ownerid: number
-  ownercode: string
-  ownername: string
+  owner_id: number
+  owner_code: string
+  owner_name: string
   level: number
   is_detail: string
-  parentownerid: number | null
+  parent_owner_id: number | null
   status: string
 }
 
@@ -32,7 +32,7 @@ async function confirmDelete() {
       module:      'keuangan',
       payload: {
         action:  'delete',
-        ownerid: props.row.ownerid,
+        owner_id: props.row.owner_id,
       },
     })
     toast.success('Permintaan hapus pemilik anggaran dikirim untuk otorisasi')
@@ -67,11 +67,11 @@ async function confirmDelete() {
         <dl class="space-y-1.5 text-sm">
           <div class="flex gap-3">
             <dt class="w-28 text-xs text-muted-foreground shrink-0">Kode</dt>
-            <dd class="font-mono text-xs">{{ row.ownercode }}</dd>
+            <dd class="font-mono text-xs">{{ row.owner_code }}</dd>
           </div>
           <div class="flex gap-3">
             <dt class="w-28 text-xs text-muted-foreground shrink-0">Nama</dt>
-            <dd class="text-xs">{{ row.ownername }}</dd>
+            <dd class="text-xs">{{ row.owner_name }}</dd>
           </div>
           <div class="flex gap-3">
             <dt class="w-28 text-xs text-muted-foreground shrink-0">Tipe</dt>

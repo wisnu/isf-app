@@ -10,7 +10,7 @@ from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
 from app.routers.bank import router as bank_router
 from app.routers.budget import router as budget_router
-from app.routers.kas_kecil import router as kas_kecil_router
+from app.routers.petty_cash import router as petty_cash_router
 from app.routers.auth_google import router as google_router
 from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
@@ -28,6 +28,7 @@ from app.routers.parameter import router as parameter_router
 from app.routers.transaction import router as transaction_router
 from app.routers.transaksi import router as transaksi_router
 from app.routers.transaksi_umum import router as transaksi_umum_router
+from app.routers.amil_income import router as amil_income_router
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -101,7 +102,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(report_router, prefix="/api")
     app.include_router(bank_router, prefix="/api")
     app.include_router(budget_router, prefix="/api")
-    app.include_router(kas_kecil_router, prefix="/api")
+    app.include_router(petty_cash_router, prefix="/api")
     app.include_router(coa_router, prefix="/api")
     app.include_router(admin_router, prefix="/api")
     app.include_router(transaction_router, prefix="/api")
@@ -114,6 +115,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(uang_muka_pengembalian_router, prefix="/api")
     app.include_router(transfer_antar_rekening_router, prefix="/api")
     app.include_router(transaksi_umum_router, prefix="/api")
+    app.include_router(amil_income_router, prefix="/api")
     app.include_router(otorisasi_router, prefix="/api")
     app.include_router(parameter_router, prefix="/api")
     return app

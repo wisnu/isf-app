@@ -13,12 +13,12 @@ import BudgetOwnerFormModal from '@/components/parameter/BudgetOwnerFormModal.vu
 import BudgetOwnerDeleteModal from '@/components/parameter/BudgetOwnerDeleteModal.vue'
 
 interface OwnerRow {
-  ownerid: number
-  ownercode: string
-  ownername: string
+  owner_id: number
+  owner_code: string
+  owner_name: string
   level: number
   is_detail: string
-  parentownerid: number | null
+  parent_owner_id: number | null
   status: string
 }
 
@@ -51,7 +51,7 @@ async function loadData() {
   try {
     const params = new URLSearchParams({ page: String(page.value), limit: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('q', searchInput.value.trim())
-    const res = await api.get<ListResponse>(`/api/parameter/pemilik-anggaran?${params}`)
+    const res = await api.get<ListResponse>(`/api/parameter/budget-owner?${params}`)
     rows.value       = res.rows
     totalPages.value = res.pagination.total_pages || 1
     totalRec.value   = res.pagination.total
@@ -193,17 +193,17 @@ onMounted(loadData)
             </tr>
             <tr
               v-for="row in rows"
-              :key="row.ownerid"
+              :key="row.owner_id"
               class="border-b border-border last:border-0 hover:bg-background/60"
             >
-              <td class="px-4 py-1 font-mono">{{ row.ownercode }}</td>
+              <td class="px-4 py-1 font-mono">{{ row.owner_code }}</td>
               <td class="px-4 py-1">
                 <span
                   v-if="row.level > 1"
                   class="inline-block mr-1 text-muted-foreground"
                   :style="{ marginLeft: `${(row.level - 1) * 12}px` }"
                 >↳</span>
-                {{ row.ownername }}
+                {{ row.owner_name }}
               </td>
               <td class="px-4 py-1 text-center tabular-nums text-muted-foreground">{{ row.level }}</td>
               <td class="px-4 py-1 text-center">

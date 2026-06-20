@@ -7,19 +7,19 @@ import { api, ApiError } from '@/lib/api/client'
 import { useToast } from '@/lib/useToast'
 
 interface OwnerRow {
-  ownerid: number
-  ownercode: string
-  ownername: string
+  owner_id: number
+  owner_code: string
+  owner_name: string
   level: number
   is_detail: string
-  parentownerid: number | null
+  parent_owner_id: number | null
   status: string
 }
 
 interface LookupItem {
-  ownerid: number
-  ownercode: string
-  ownername: string
+  owner_id: number
+  owner_code: string
+  owner_name: string
   is_detail: string
 }
 
@@ -41,20 +41,20 @@ const formError   = shallowRef<string | null>(null)
 const parentOpts  = ref<SelectOption[]>([])
 
 const form = reactive({
-  ownercode:     '',
-  ownername:     '',
+  owner_code:     '',
+  owner_name:     '',
   is_detail:     'F' as 'F' | 'T',
-  parentownerid: '' as string,
+  parent_owner_id: '' as string,
   status:        'A' as 'A' | 'N',
 })
 
 onMounted(async () => {
   if (props.mode === 'edit' && props.initialData) {
-    form.ownername     = props.initialData.ownername
-    form.ownercode     = props.initialData.ownercode
+    form.owner_name     = props.initialData.owner_name
+    form.owner_code     = props.initialData.owner_code
     form.is_detail     = props.initialData.is_detail as 'F' | 'T'
-    form.parentownerid = props.initialData.parentownerid
-      ? String(props.initialData.parentownerid)
+    form.parent_owner_id = props.initialData.parent_owner_id
+      ? String(props.initialData.parent_owner_id)
       : ''
     form.status = props.initialData.status as 'A' | 'N'
   }
@@ -63,10 +63,10 @@ onMounted(async () => {
 
 async function loadParentLookup() {
   try {
-    const res = await api.get<{ data: LookupItem[] }>('/api/parameter/pemilik-anggaran/lookup')
+    const res = await api.get<{ data: LookupItem[] }>('/api/parameter/budget-owner/lookup')
     parentOpts.value = (res.data ?? []).map((item) => ({
-      value: String(item.ownerid),
-      label: `${item.ownercode} — ${item.ownername}`,
+      value: String(item.owner_id),
+      label: `${item.owner_code} — ${item.owner_name}`,
     }))
   } catch {
     toast.error('Gagal memuat daftar pemilik induk')
@@ -74,9 +74,9 @@ async function loadParentLookup() {
 }
 
 function validate(): string | null {
-  if (!form.ownercode.trim() && props.mode === 'create') return 'Kode Pemilik wajib diisi'
-  if (!form.ownername.trim()) return 'Nama Pemilik wajib diisi'
-  if (form.is_detail === 'T' && !form.parentownerid) return 'Pemilik Induk wajib dipilih untuk tipe Detail'
+  if (!form.owner_code.trim() && props.mode === 'create') return 'Kode Pemilik wajib diisi'
+  if (!form.owner_name.trim()) return 'Nama Pemilik wajib diisi'
+  if (form.is_detail === 'T' && !form.parent_owner_id) return 'Pemilik Induk wajib dipilih untuk tipe Detail'
   return null
 }
 
@@ -90,10 +90,10 @@ async function submit() {
     if (props.mode === 'create') {
       const payload = {
         action:        'create',
-        ownercode:     form.ownercode.trim().toUpperCase(),
-        ownername:     form.ownername.trim(),
+        owner_code:     form.owner_code.trim().toUpperCase(),
+        owner_name:     form.owner_name.trim(),
         is_detail:     form.is_detail,
-        parentownerid: form.parentownerid ? Number(form.parentownerid) : null,
+        parent_owner_id: form.parent_owner_id ? Number(form.parent_owner_id) : null,
         status:        form.status,
       }
       await api.post('/api/otorisasi/save-and-submit/', {
@@ -105,8 +105,8 @@ async function submit() {
     } else {
       const payload = {
         action:    'edit',
-        ownerid:   props.initialData!.ownerid,
-        ownername: form.ownername.trim(),
+        owner_id:   props.initialData!.owner_id,
+        owner_name: form.owner_name.trim(),
         status:    form.status,
       }
       await api.post('/api/otorisasi/save-and-submit/', {
@@ -147,7 +147,7 @@ async function submit() {
           <div class="flex flex-col gap-1">
             <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Kode Pemilik <span class="text-red-500">*</span></label>
             <input
-              v-model="form.ownercode"
+              v-model="form.owner_code"
               :disabled="mode === 'edit'"
               type="text"
               maxlength="10"
@@ -159,7 +159,7 @@ async function submit() {
           <div class="flex flex-col gap-1">
             <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nama Pemilik <span class="text-red-500">*</span></label>
             <input
-              v-model="form.ownername"
+              v-model="form.owner_name"
               type="text"
               maxlength="100"
               class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -202,7 +202,7 @@ async function submit() {
             Pemilik Induk <span class="text-red-500">*</span>
           </label>
           <SearchSelect
-            v-model="form.parentownerid"
+            v-model="form.parent_owner_id"
             :options="parentOpts"
             :disabled="mode === 'edit'"
             placeholder="Pilih pemilik induk..."

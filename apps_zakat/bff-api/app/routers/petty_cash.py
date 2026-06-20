@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app.services.auth import current_user_id_or_401, require_menu
 from app.services.proxy import get_api_python, post_api_python
 
-router = APIRouter(prefix="/kas-kecil", tags=["kas-kecil"])
+router = APIRouter(prefix="/petty-cash", tags=["petty-cash"])
 
 _MENU = "finance.petty_cash"
 
@@ -27,7 +27,7 @@ async def accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/kas-kecil/accounts", params=params)
+    downstream = await get_api_python("/api/petty-cash/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -41,7 +41,7 @@ async def get_account(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python(f"/api/kas-kecil/accounts/{account_no}")
+    downstream = await get_api_python(f"/api/petty-cash/accounts/{account_no}")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -55,7 +55,7 @@ async def create_account(
         return error_response
 
     body = await request.json()
-    downstream = await post_api_python("/api/kas-kecil/accounts", json_body=body)
+    downstream = await post_api_python("/api/petty-cash/accounts", json_body=body)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -71,7 +71,7 @@ async def update_account(
 
     body = await request.json()
     downstream = await post_api_python(
-        f"/api/kas-kecil/accounts/{account_no}",
+        f"/api/petty-cash/accounts/{account_no}",
         json_body=body,
         method="PUT",
     )
@@ -89,7 +89,7 @@ async def delete_account(
         return error_response
 
     downstream = await post_api_python(
-        f"/api/kas-kecil/accounts/{account_no}",
+        f"/api/petty-cash/accounts/{account_no}",
         json_body={},
         method="DELETE",
     )
@@ -105,7 +105,7 @@ async def lookup_branches(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/kas-kecil/lookup/branches")
+    downstream = await get_api_python("/api/petty-cash/lookup/branches")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -118,7 +118,7 @@ async def lookup_currencies(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/kas-kecil/lookup/currencies")
+    downstream = await get_api_python("/api/petty-cash/lookup/currencies")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -136,5 +136,5 @@ async def lookup_gl_accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/kas-kecil/lookup/gl_accounts", params=params or None)
+    downstream = await get_api_python("/api/petty-cash/lookup/gl_accounts", params=params or None)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
