@@ -64,6 +64,19 @@ Per domain: add `SELECT col AS english` in api-python service + update Pydantic 
 ## Phase 6 — (MOVED to Phase 1 per 2026-06-20 decision)
 Module consolidation now runs first as Phase 1a. This slot intentionally empty.
 
+## Phase 4/5 status (2026-06-20)
+- [x] Field normalization done per-domain in lockstep for: budget-owner, receivable, inter-account-transfer, cash-advance(+settlement), general-transaction, transaction-history (camelCase→snake_case), auth/identity (id_peran/nama_peran/kode_cabang→role_id/role_name/branch_code).
+- [x] **Frozen** (discriminator-coupled, documented in glossary §5): upload-batch ParsedRow product-key fields + HC-ZIS payload fields (PRODUCT_ID_MAP/FIELD_MAP + persisted JSONB), all `entity_type` values, `nominal` (distinct from amount in general-transaction).
+- [ ] **DEFERRED — report-api scope**: dashboard (`/keuangan`,`/penyaluran`) + report (`/neraca`,`/aruskas`,`/perubahan-dana`) endpoints + params (`bulan`,`tahun`,`tanggal`,`jenisperiode`). These proxy to **report-api** (:8010), a separate service outside the stated "BFF + api-python" scope; renaming only the bff half would create a half-translated contract. Needs a dedicated report-api pass.
+
+## Domains completed (12, each its own commit)
+petty-cash · budget-owner · receivable · inter-account-transfer · cash-advance · cash-advance-settlement · general-transaction · fund-collection · fund-distribution · transaction-history · hc-zis(path) · authorization · auth/identity. Plus Phase 1a consolidation.
+
+## Pre-existing bugs found (NOT introduced, NOT fixed — naming-only scope)
+- receivable list: `SELECT DISTINCT … ORDER BY t.actualdate` → 500 (present on main).
+- inter-account-transfer list/lookup: `ca_src.cashaccountno does not exist` → 500 (present on main).
+- cash-advance list: same DISTINCT/ORDER BY pattern → 500.
+
 ## Phase 7 — Verify & close
 - [ ] Grep guard: zero Indonesian tokens in `apps_zakat/{bff-api,web-vue/src}` paths/fields (penghimpunan, penyaluran, piutang, uang-muka, kas-kecil, transaksi, otorisasi, rekening, produk, pemilik-anggaran) — except frozen `entity_type` values.
 - [ ] All `testing/e2e-*.sh` green; browser smoke of each finance page (`/run` or run-isf-app skill).
