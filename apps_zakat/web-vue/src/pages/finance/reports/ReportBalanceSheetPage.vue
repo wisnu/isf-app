@@ -39,7 +39,7 @@ interface NeracaPayload {
   date: string
   date_prev: string
   period_type: string
-  konsolidasi: boolean
+  consolidated: boolean
 }
 interface BranchOption { code: string; name: string }
 

@@ -19,7 +19,7 @@ interface AKPayload {
   closing_balance: number
   begin: string
   end: string
-  konsolidasi: boolean
+  consolidated: boolean
 }
 interface BranchOption { code: string; name: string }
 

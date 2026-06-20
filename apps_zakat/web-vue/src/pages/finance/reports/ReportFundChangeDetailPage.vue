@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 interface PDDRow { account_code: string; account_name: string | null; value: number }
 interface PDDSection { title: string; rows: PDDRow[]; total: number }
 interface PDDFund { fund: string; sections: PDDSection[] }
-interface PDDPayload { funds: PDDFund[]; begin: string; end: string; konsolidasi: boolean }
+interface PDDPayload { funds: PDDFund[]; begin: string; end: string; consolidated: boolean }
 interface BranchOption { code: string; name: string }
 
 const auth = useAuthStore()

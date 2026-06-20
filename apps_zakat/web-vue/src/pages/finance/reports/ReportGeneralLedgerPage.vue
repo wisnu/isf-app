@@ -32,7 +32,7 @@ interface GLAccount {
   closing_balance: number
   rows: GLRow[]
 }
-interface GLPayload { accounts: GLAccount[]; begin: string; end: string; konsolidasi: boolean; capped: boolean }
+interface GLPayload { accounts: GLAccount[]; begin: string; end: string; consolidated: boolean; capped: boolean }
 interface BranchOption { code: string; name: string }
 interface AccountOption { code: string; name: string }
 

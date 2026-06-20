@@ -24,7 +24,7 @@ interface TBPayload {
   grand_total: TBSubtotal
   begin: string
   end: string
-  konsolidasi: boolean
+  consolidated: boolean
   with_journal: boolean
 }
 interface BranchOption { code: string; name: string }
@@ -152,7 +152,7 @@ onMounted(async () => {
           <tr>
             <th class="text-left px-3 py-1 font-semibold">Kode</th>
             <th class="text-left px-3 py-1 font-semibold min-w-[18rem]">Nama Account</th>
-            <th v-if="data.konsolidasi" class="text-left px-3 py-1 font-semibold">Cabang</th>
+            <th v-if="data.consolidated" class="text-left px-3 py-1 font-semibold">Cabang</th>
             <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Saldo Awal</th>
             <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Debet</th>
             <th class="text-right px-3 py-1 font-semibold whitespace-nowrap">Kredit</th>
@@ -162,19 +162,19 @@ onMounted(async () => {
         <tbody>
           <template v-for="grp in data.groups" :key="grp.type">
             <tr class="bg-background/40">
-              <td class="px-3 py-1 font-semibold" :colspan="data.konsolidasi ? 7 : 6">{{ grp.type_label }}</td>
+              <td class="px-3 py-1 font-semibold" :colspan="data.consolidated ? 7 : 6">{{ grp.type_label }}</td>
             </tr>
             <tr v-for="r in grp.rows" :key="grp.type + r.account_code + (r.branch_code ?? '')" class="border-b border-border/30 hover:bg-muted/5">
               <td class="px-3 py-1 font-mono text-[10px] text-muted whitespace-nowrap">{{ r.account_code }}</td>
               <td class="px-3 py-1">{{ r.account_name }}</td>
-              <td v-if="data.konsolidasi" class="px-3 py-1 font-mono text-[10px] text-muted">{{ r.branch_code }}</td>
+              <td v-if="data.consolidated" class="px-3 py-1 font-mono text-[10px] text-muted">{{ r.branch_code }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.opening_balance) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.debit) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.credit) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(r.closing_balance) }}</td>
             </tr>
             <tr class="border-y-2 border-border bg-background/30 font-semibold">
-              <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">Total {{ grp.type_label }}</td>
+              <td class="px-3 py-1" :colspan="data.consolidated ? 3 : 2">Total {{ grp.type_label }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.opening_balance) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.debit) }}</td>
               <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(grp.subtotal.credit) }}</td>
@@ -182,7 +182,7 @@ onMounted(async () => {
             </tr>
           </template>
           <tr class="border-y-2 border-primary/40 bg-primary/5 font-bold">
-            <td class="px-3 py-1" :colspan="data.konsolidasi ? 3 : 2">GRAND TOTAL</td>
+            <td class="px-3 py-1" :colspan="data.consolidated ? 3 : 2">GRAND TOTAL</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.opening_balance) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.debit) }}</td>
             <td class="px-3 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(data.grand_total.credit) }}</td>

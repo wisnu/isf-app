@@ -604,11 +604,11 @@ async def trial_balance(
         args.append(branch)
     rows = await fetch_all_dwh(sql, *args)
 
-    konsolidasi = branch is None
+    consolidated = branch is None
     by_acct: dict = {}
     order: list = []
     for r in rows:
-        key = r["account_code"] if konsolidasi else (r["account_code"], r["branch_code"])
+        key = r["account_code"] if consolidated else (r["account_code"], r["branch_code"])
         agg = by_acct.get(key)
         debit = r["debit"] + (r["j_debit"] if with_journal else 0.0)
         credit = r["credit"] + (r["j_credit"] if with_journal else 0.0)
@@ -618,7 +618,7 @@ async def trial_balance(
                 "account_code": r["account_code"],
                 "account_name": r["account_name"],
                 "account_type": r["account_type"],
-                "branch_code": None if konsolidasi else r["branch_code"],
+                "branch_code": None if consolidated else r["branch_code"],
                 "opening_balance": 0.0,
                 "debit": 0.0,
                 "credit": 0.0,
@@ -659,7 +659,7 @@ async def trial_balance(
         "grand_total": grand,
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": konsolidasi,
+        "consolidated": consolidated,
         "with_journal": with_journal,
     }
 
@@ -684,7 +684,7 @@ def _prev_period_end(t: date, period_type: str) -> date:
 
 def _neraca_balance_cte(label: str, date_param: int, branch_param: int | None) -> str:
     """CTE rollup saldo per parent account pada tanggal $date_param.
-    branch_param None → semua cabang (konsolidasi)."""
+    branch_param None → semua cabang (consolidated)."""
     branch_clause = f"AND ai.branch_code = ${branch_param}" if branch_param else ""
     return f"""
         maxd_{label} AS (
@@ -773,7 +773,7 @@ async def balance_sheet(
         "date": _dmy(tanggal),
         "date_prev": _dmy(prev.isoformat()),
         "period_type": "Tahunan" if jp == "T" else "Bulanan",
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
     }
 
 
@@ -865,14 +865,14 @@ async def cash_flow(branch: str | None, begin: str, end: str, today: date) -> di
         return (mut.get(item) or {}).get("credit", 0.0) or 0.0
 
     operasi = [
-        {"label": "Penerimaan Zakat", "value": mb("opspenerimaanzakat")},
-        {"label": "Penerimaan Infaq/Shadaqah", "value": mb("opspenerimaaninfaq")},
-        {"label": "Penerimaan Bagian Amil", "value": mb("opspenerimaanamil")},
-        {"label": "Penyaluran Zakat", "value": -mb("opspenyaluranzakat")},
+        {"label": "Penerimaan Zakat", "value": mb("opscollectionzakat")},
+        {"label": "Penerimaan Infaq/Shadaqah", "value": mb("opscollectioninfaq")},
+        {"label": "Penerimaan Bagian Amil", "value": mb("opscollectionamil")},
+        {"label": "Penyaluran Zakat", "value": -mb("opsdistributionzakat")},
         {"label": "Penyaluran Infaq/Shadaqah",
-         "value": -(mb("opspenyaluraninfaq") - mb("opsdepresiasikelolaaninfaq"))},
+         "value": -(mb("opsdistributioninfaq") - mb("opsdepresiasikelolaaninfaq"))},
         {"label": "Penggunaan Dana Amil",
-         "value": -(mb("opspenyaluranamil") - mb("opsdepresiasiassetamil"))},
+         "value": -(mb("opsdistributionamil") - mb("opsdepresiasiassetamil"))},
     ]
     investasi = [
         {"label": "Pembelian Aset Tetap", "value": -td("invassettetap")},
@@ -882,7 +882,7 @@ async def cash_flow(branch: str | None, begin: str, end: str, today: date) -> di
     ]
     pendanaan = [
         {"label": "Piutang Bergulir (Qardh)", "value": -mb("piutangbergulir")},
-        {"label": "Piutang Penyaluran", "value": -mb("piutangpenyaluran")},
+        {"label": "Piutang Penyaluran", "value": -mb("piutangdistribution")},
         {"label": "Persediaan", "value": -mb("persediaan")},
         {"label": "Barang Berharga", "value": -mb("barangberharga")},
         {"label": "Uang Muka", "value": -mb("uangmuka")},
@@ -919,7 +919,7 @@ async def cash_flow(branch: str | None, begin: str, end: str, today: date) -> di
         "closing_balance": opening + kenaikan,
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
     }
 
 
@@ -1057,7 +1057,7 @@ async def general_ledger(
         "accounts": accounts,
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
         "capped": capped,
     }
 
@@ -1116,16 +1116,16 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
     def bb(item: str) -> float:
         return bal.get(item, 0.0) or 0.0
 
-    def _fund(name: str, penerimaan: list[dict], penyaluran: list[dict], opening_balance: float) -> dict:
-        tp = sum(x["value"] for x in penerimaan)
-        td = sum(x["value"] for x in penyaluran)
+    def _fund(name: str, collection: list[dict], distribution: list[dict], opening_balance: float) -> dict:
+        tp = sum(x["value"] for x in collection)
+        td = sum(x["value"] for x in distribution)
         surplus = tp - td
         return {
             "fund": name,
-            "penerimaan": penerimaan,
-            "penyaluran": penyaluran,
-            "total_penerimaan": tp,
-            "total_penyaluran": td,
+            "collection": collection,
+            "distribution": distribution,
+            "total_collection": tp,
+            "total_distribution": td,
             "surplus": surplus,
             "opening_balance": opening_balance,
             "closing_balance": opening_balance + surplus,
@@ -1178,7 +1178,7 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
             {"label": "Bagian Amil dari Dana Zakat", "value": mb("amilporsizakat")},
             {"label": "Bagian Amil dari Infaq Terikat", "value": mb("amilporsiinfaqterikat")},
             {"label": "Bagian Amil dari Infaq Tidak Terikat", "value": mb("amilporsiinfaqtakterikat")},
-            {"label": "Penerimaan Langsung Amil", "value": mb("amilpenerimaanlangsung")},
+            {"label": "Penerimaan Langsung Amil", "value": mb("amilcollectionlangsung")},
             {"label": "Bagi Hasil Bank Syariah", "value": mb("bhsyariahcoll")},
             {"label": "Bagi Hasil Deposito/Investasi/Kelolaan",
              "value": mb("bhdepositocoll") + mb("bhinvestcoll") + mb("danakelolaancoll")},
@@ -1197,7 +1197,7 @@ async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
         "total_closing_balance": sum(f["closing_balance"] for f in funds),
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
     }
 
 
@@ -1343,7 +1343,7 @@ async def fund_changes_detail(branch: str | None, begin: str, end: str) -> dict 
                 _detail_section("Bagian Amil atas Penerimaan Zakat", mem("zakatamil")),
                 _detail_section("Bagian Amil atas Infaq Terikat", mem("amilporsiinfaqterikat")),
                 _detail_section("Bagian Amil atas Infaq Tidak Terikat", mem("amilporsiinfaqtakterikat")),
-                _detail_section("Penerimaan Amil Langsung", mem("amilpenerimaanlangsung")),
+                _detail_section("Penerimaan Amil Langsung", mem("amilcollectionlangsung")),
                 _detail_section("Penerimaan Bagi Hasil Syariah", mem("bhsyariahcoll")),
                 _detail_section(
                     "Penerimaan Hasil Kelolaan",
@@ -1359,7 +1359,7 @@ async def fund_changes_detail(branch: str | None, begin: str, end: str) -> dict 
         "funds": funds,
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
     }
 
 
@@ -1709,7 +1709,7 @@ async def ar_summary(ar_type: str, branch: str | None, begin: str, end: str) -> 
         "with_debtor": ar_type == "D",
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
     }
 
 
@@ -1816,7 +1816,7 @@ async def program_realization(branch, begin, end) -> dict | None:
         tot["amount"] += r["amount"]
         tot["report_amount"] += rep
         tot["outstanding"] += outstanding
-    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "konsolidasi": branch is None}
+    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "consolidated": branch is None}
 
 
 async def realization_memo(branch, begin, end, q) -> dict | None:
@@ -1848,7 +1848,7 @@ async def realization_memo(branch, begin, end, q) -> dict | None:
         tot["total_realisasi"] += r["total_realisasi"]
         tot["total_return"] += r["total_return"]
         tot["outstanding"] += outstanding
-    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "konsolidasi": branch is None}
+    return {"rows": out, "grand_total": tot, "begin": _dmy(begin), "end": _dmy(end), "consolidated": branch is None}
 
 
 # ── Grup D: List Transaksi UPZ (fLaporanUPZ) ─────────────────────────────────
@@ -1920,6 +1920,6 @@ async def upz_trx(branch: str | None, begin: str, end: str) -> dict | None:
         "grand_total": grand,
         "begin": _dmy(begin),
         "end": _dmy(end),
-        "konsolidasi": branch is None,
+        "consolidated": branch is None,
         "capped": capped,
     }

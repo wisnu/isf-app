@@ -11,15 +11,15 @@ import { useAuthStore } from '@/stores/auth'
 interface PDLine { label: string; value: number }
 interface PDFund {
   fund: string
-  penerimaan: PDLine[]
-  penyaluran: PDLine[]
-  total_penerimaan: number
-  total_penyaluran: number
+  collection: PDLine[]
+  distribution: PDLine[]
+  total_collection: number
+  total_distribution: number
   surplus: number
   opening_balance: number
   closing_balance: number
 }
-interface PDPayload { funds: PDFund[]; total_closing_balance: number; begin: string; end: string; konsolidasi: boolean }
+interface PDPayload { funds: PDFund[]; total_closing_balance: number; begin: string; end: string; consolidated: boolean }
 interface BranchOption { code: string; name: string }
 
 const auth = useAuthStore()
@@ -133,22 +133,22 @@ onMounted(async () => {
         <table class="w-full text-sm">
           <tbody>
             <tr><td class="px-4 py-1 font-semibold text-muted" colspan="2">Penerimaan</td></tr>
-            <tr v-for="(ln, i) in f.penerimaan" :key="'r' + i" class="border-b border-border/20">
+            <tr v-for="(ln, i) in f.collection" :key="'r' + i" class="border-b border-border/20">
               <td class="px-4 py-1 pl-7">{{ ln.label }}</td>
               <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(ln.value) }}</td>
             </tr>
             <tr class="border-y border-border/40 font-medium bg-background/20">
               <td class="px-4 py-1">Jumlah Penerimaan</td>
-              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.total_penerimaan) }}</td>
+              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.total_collection) }}</td>
             </tr>
             <tr><td class="px-4 py-1 pt-2 font-semibold text-muted" colspan="2">Penyaluran / Penggunaan</td></tr>
-            <tr v-for="(ln, i) in f.penyaluran" :key="'d' + i" class="border-b border-border/20">
+            <tr v-for="(ln, i) in f.distribution" :key="'d' + i" class="border-b border-border/20">
               <td class="px-4 py-1 pl-7">{{ ln.label }}</td>
               <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(ln.value) }}</td>
             </tr>
             <tr class="border-y border-border/40 font-medium bg-background/20">
               <td class="px-4 py-1">Jumlah Penyaluran/Penggunaan</td>
-              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.total_penyaluran) }}</td>
+              <td class="px-4 py-1 text-right tabular-nums whitespace-nowrap">{{ fmt(f.total_distribution) }}</td>
             </tr>
             <tr class="font-semibold">
               <td class="px-4 py-1">Surplus (Defisit)</td>

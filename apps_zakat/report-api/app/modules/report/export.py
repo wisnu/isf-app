@@ -386,7 +386,7 @@ def build_trial_balance_xlsx(payload: dict, branch_label: str) -> bytes:
             c.font = Font(bold=True)
 
     r = header_row
-    konsolidasi = payload.get("konsolidasi")
+    consolidated = payload.get("consolidated")
     for grp in payload.get("groups", []):
         r += 1
         ws.cell(row=r, column=1, value=grp["type_label"]).font = Font(bold=True, italic=True)
@@ -394,7 +394,7 @@ def build_trial_balance_xlsx(payload: dict, branch_label: str) -> bytes:
             r += 1
             ws.cell(row=r, column=1, value=item["account_code"])
             ws.cell(row=r, column=2, value=item.get("account_name") or "")
-            ws.cell(row=r, column=3, value="" if konsolidasi else (item.get("branch_code") or ""))
+            ws.cell(row=r, column=3, value="" if consolidated else (item.get("branch_code") or ""))
             _money(r, 4, item["opening_balance"])
             _money(r, 5, item["debit"])
             _money(r, 6, item["credit"])
@@ -629,21 +629,21 @@ def build_fund_changes_xlsx(payload: dict, branch_label: str) -> bytes:
         r += 1
         ws.cell(row=r, column=1, value="Penerimaan").font = Font(bold=True, italic=True)
         r += 1
-        for ln in f["penerimaan"]:
+        for ln in f["collection"]:
             ws.cell(row=r, column=1, value=f"   {ln['label']}")
             _money(r, ln["value"])
             r += 1
         ws.cell(row=r, column=1, value="Jumlah Penerimaan").font = Font(bold=True)
-        _money(r, f["total_penerimaan"], bold=True)
+        _money(r, f["total_collection"], bold=True)
         r += 1
         ws.cell(row=r, column=1, value="Penyaluran/Penggunaan").font = Font(bold=True, italic=True)
         r += 1
-        for ln in f["penyaluran"]:
+        for ln in f["distribution"]:
             ws.cell(row=r, column=1, value=f"   {ln['label']}")
             _money(r, ln["value"])
             r += 1
         ws.cell(row=r, column=1, value="Jumlah Penyaluran/Penggunaan").font = Font(bold=True)
-        _money(r, f["total_penyaluran"], bold=True)
+        _money(r, f["total_distribution"], bold=True)
         r += 1
         ws.cell(row=r, column=1, value="Surplus (Defisit)").font = Font(bold=True)
         _money(r, f["surplus"], bold=True)

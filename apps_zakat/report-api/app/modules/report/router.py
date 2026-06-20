@@ -316,7 +316,7 @@ async def cash_monthly_xlsx(
 
 
 # ── Trial Balance ────────────────────────────────────────────────────────────
-# branch kosong / 'ALL' → konsolidasi (semua cabang).
+# branch kosong / 'ALL' → consolidated (semua cabang).
 
 
 def _tb_branch(branch: str | None) -> str | None:
