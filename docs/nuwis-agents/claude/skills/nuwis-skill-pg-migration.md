@@ -3,13 +3,21 @@
 
 ---
 
-## Naming Convention
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+Nama file, view, kolom baru, dan **alias output** semua English snake_case.
 
 | File type | Format | Contoh |
 |---|---|---|
 | Schema migration | `V{NNN}__{snake_case}.sql` | `V043__add_dispatch_error_to_submission.sql` |
-| DWH view | `dwh/v_{snake_case}.sql` | `dwh/v_transaksi_kas_harian.sql` |
-| Seed | `seed/{feature}-seed.sql` | `seed/kas-masuk-seed.sql` |
+| DWH view | `dwh/v_{snake_case}.sql` | `dwh/v_cash_daily.sql` (JANGAN `v_transaksi_kas_harian`) |
+| Seed | `seed/{feature}-seed.sql` | `seed/cash-in-seed.sql` |
+
+- **Kolom tabel/ view baru**: English (`account_no`, `transaction_date`, `amount`) — bukan `no_rekening`, `tanggal`, `jumlah`.
+- **Kolom legacy berbahasa Indonesia** (di tabel `transaction.*` warisan): JANGAN `ALTER`/rename. Selalu **alias ke English di SELECT** view: `SELECT t.no_rekening AS account_no, CAST(t.tanggal AS DATE) AS date`.
+- **BEKU**: kode discriminator (`transactioncode` SD001/DD001/…, `fund_entity` 1–5, `accountreceivabletype` E/D/C) dan nilai `entity_type` — opaque, jangan terjemahkan.
+
+> Glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
 
 **Nomor migration**: 3 digit, increment dari file terakhir. Cek dengan:
 ```bash
@@ -108,40 +116,42 @@ CREATE INDEX IF NOT EXISTS idx_{tabel}_{kolom} ON {schema}.{tabel} ({kolom});
 ## Template: DWH View
 
 ```sql
--- dwh/v_{nama_view}.sql
+-- dwh/v_{view_name}.sql        (nama view English snake_case)
 -- Portal: {zakat | wakaf | portal-neutral}
--- Dipakai oleh: report-api endpoint /laporan/{nama}
--- Kolom filter tersedia: tanggal, branch_id
+-- Dipakai oleh: report-api endpoint /report/{name}
+-- Kolom filter tersedia: date, branch_id
 
-CREATE OR REPLACE VIEW dwh.v_{nama_view} AS
+-- ATURAN: kolom legacy berbahasa Indonesia di-ALIAS ke English di output.
+-- Kolom asli (no_rekening, tanggal, jumlah, nama_akun, …) JANGAN di-rename di tabel.
+CREATE OR REPLACE VIEW dwh.v_{view_name} AS
 SELECT
   t.id,
-  CAST(t.tanggal AS DATE)                  AS tanggal,
-  CAST(t.jumlah AS NUMERIC(20, 4))         AS jumlah,
-  t.keterangan,
+  CAST(t.tanggal AS DATE)                  AS date,          -- legacy: tanggal
+  CAST(t.jumlah AS NUMERIC(20, 4))         AS amount,        -- legacy: jumlah
+  t.keterangan                             AS description,   -- legacy: keterangan
 
   -- Relasi branch
   b.id                                     AS branch_id,
-  b.nama                                   AS nama_cabang,
-  b.kode                                   AS kode_cabang,
+  b.nama                                   AS branch_name,   -- legacy: nama
+  b.kode                                   AS branch_code,   -- legacy: kode
 
   -- Relasi COA / akun
-  a.kode_akun,
-  a.nama_akun,
+  a.kode_akun                              AS account_code,  -- legacy: kode_akun
+  a.nama_akun                              AS account_name,  -- legacy: nama_akun
 
   -- Audit
   t.inputer_id,
   t.created_at
 
-FROM {schema}.{tabel_utama} t
+FROM {schema}.{main_table} t
 INNER JOIN enterprise.branch b ON b.id = t.branch_id
-INNER JOIN accounting.chartofaccount a ON a.id = t.akun_id
+INNER JOIN accounting.chartofaccount a ON a.id = t.account_id
 
-WHERE t.{discriminator_col} = '{discriminator_val}'
+WHERE t.{discriminator_col} = '{discriminator_val}'   -- discriminator BEKU, jangan terjemahkan
   -- Tambahkan filter domain lain yang diperlukan
 ;
 
-COMMENT ON VIEW dwh.v_{nama_view} IS '{Deskripsi singkat view ini untuk laporan apa}';
+COMMENT ON VIEW dwh.v_{view_name} IS '{Deskripsi singkat view ini untuk laporan apa}';
 ```
 
 ---

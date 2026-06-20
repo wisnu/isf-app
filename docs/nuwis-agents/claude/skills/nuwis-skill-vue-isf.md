@@ -7,6 +7,22 @@ quick reference saat menulis halaman untuk isf-app.
 
 ---
 
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+Folder, route, path API, dan field data semua **English**. Bahasa Indonesia HANYA
+untuk teks tampilan (label, judul, toast, pesan).
+
+- **Path API** (string di `GET/POST/blob`): English kebab-case → `/api/fund-collection`, `/api/cash-advance`, `/api/report/balance-sheet`. JANGAN `/api/penghimpunan`, `/api/keuangan/...`.
+- **Field JSON** yang dibaca/dikirim (interface TS, binding template): English snake_case → `account_no`, `transaction_date`, `opening_balance`. JANGAN `rekening`, `tanggal`, `saldo_awal`.
+- **Query param**: `date`, `month`, `year` — JANGAN `tanggal`, `bulan`, `tahun`.
+- **Folder/file page**: `pages/finance/fund-collection/FundCollectionListPage.vue` (English).
+- **BEKU**: nilai literal `entity_type` di payload (`entity_type: 'penghimpunan'`) — jangan ubah.
+- **Bahasa Indonesia BOLEH** di: judul/label UI, `toast.success('... untuk otorisasi')`, teks `<template>`, komentar.
+
+> Glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
+
+---
+
 ## Stack yang Digunakan
 
 | Layer | Tool | Catatan |
@@ -134,17 +150,17 @@ import DateField from '@/components/ui/DateField.vue'
 import { GET, POST, blob } from '@/lib/api/client'
 
 const res = await GET<{ rows: Item[]; pagination: Pagination }>(
-  '/api/keuangan/kas',
+  '/api/cash',
   { page: 1, limit: 25 }
 )
 // res langsung berisi payload.data (client.ts sudah unwrap)
 
-// POST
-await POST('/api/keuangan/kas', { tanggal: '2026-01-15', jumlah: 100000 })
+// POST — field English snake_case
+await POST('/api/cash', { date: '2026-01-15', amount: 100000 })
 
-// Download file
-const b = await blob('/api/keuangan/laporan/kas/export', { tgl_awal, tgl_akhir })
-downloadBlob(b, 'laporan-kas.xlsx')
+// Download file — path & param English (begin/end)
+const b = await blob('/api/report/cash-daily/export.xlsx', { begin, end })
+downloadBlob(b, 'cash-daily.xlsx')
 
 // JANGAN:
 const res = await fetch('/api/...')
@@ -334,6 +350,190 @@ Gunakan palet yang konsisten untuk badge status di seluruh halaman:
 
 ---
 
+## Rule 12: Form Input / Create Page — Standar (referensi: Transaksi Umum)
+
+Semua halaman input/Create dan modal form **wajib** mengikuti style ini.
+Referensi kanonik: `pages/finance/general-transaction/GeneralTransactionCreatePage.vue`.
+Palet: **slate** (netral) + **indigo** (fokus/aksen) + **emerald** (simpan/positif) + **red** (hapus/negatif).
+
+### 12.1 Kerangka halaman
+
+```vue
+<template>
+  <div class="p-3 sm:p-4 space-y-3">
+    <!-- Tombol kembali (judul halaman ada di breadcrumb header — JANGAN tambah <h1>) -->
+    <div class="flex items-center gap-2">
+      <button
+        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800"
+        @click="router.push({ name: 'finance-...' })"
+      >
+        <ArrowLeft class="h-3.5 w-3.5" /> Kembali
+      </button>
+    </div>
+
+    <Alert v-if="formError" variant="destructive">{{ formError }}</Alert>
+
+    <!-- Card-card form di sini -->
+  </div>
+</template>
+```
+
+### 12.2 Card form — header gelap
+
+```vue
+<div class="rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden">
+  <!-- Header bar gelap: bg-slate-800 (utama) / bg-slate-700 (sekunder) -->
+  <div class="flex items-center justify-between bg-slate-800 px-4 py-2">
+    <h2 class="font-bold text-xs tracking-widest text-white uppercase">Judul Card</h2>
+    <!-- badge status opsional di kanan -->
+    <span class="bg-slate-600 text-white text-xs px-2 py-0.5 rounded">DRAFT</span>
+  </div>
+  <!-- Body -->
+  <div class="p-4 space-y-3">
+    <!-- field di sini -->
+  </div>
+</div>
+```
+
+### 12.3 Field — label + input
+
+```vue
+<div>
+  <label class="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+    Label Field <span class="text-red-500">*</span>
+  </label>
+
+  <!-- Text input -->
+  <input
+    v-model="x"
+    placeholder="Opsional"
+    class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  />
+
+  <!-- Textarea (selalu resizable vertikal) -->
+  <textarea
+    v-model="keterangan"
+    rows="3"
+    class="w-full border border-slate-200 rounded px-3 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y min-h-[72px]"
+  />
+
+  <!-- Tanggal — selalu DateField (lihat Rule 2) -->
+  <DateField v-model="tanggal" />
+
+  <!-- Dropdown panjang (rekening, produk, program, donatur, COA) — selalu SearchSelect.
+       JANGAN bikin pola "input + tombol Cari + list" manual. -->
+  <SearchSelect v-model="selectedValue" :options="options" placeholder="Cari kode / nama..." />
+
+  <!-- Dropdown pendek/enum tetap pakai <select> dengan style yang sama -->
+  <select v-model="enumVal" class="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <option v-for="o in OPTS" :key="o.value" :value="o.value">{{ o.label }}</option>
+  </select>
+</div>
+```
+
+Pola `SearchSelect`: `*SelectedValue = shallowRef('')` + `*Options = computed(() => rows.map(r => ({ value, label })))`
++ `load*Options()` muat di awal (mount / buka drawer) + `watch(*SelectedValue)` sinkron ke field yang disimpan.
+
+### 12.4 Tombol aksi — Batal & Simpan
+
+```vue
+<div class="flex gap-2 pt-1">
+  <button
+    class="flex-1 border-2 border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 px-4 py-2 rounded text-sm"
+    @click="router.push({ name: 'finance-...' })"
+  >Batal</button>
+  <button
+    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    :disabled="saving || !valid"
+    @click="submitForm"
+  >{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+</div>
+```
+
+### 12.5 Ikon aksi baris (edit/hapus) di tabel detail
+
+```vue
+<button class="rounded p-1.5 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700" title="Edit" @click="...">
+  <Pencil class="h-4 w-4" />
+</button>
+<button class="rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700" title="Hapus" @click="...">
+  <Trash2 class="h-4 w-4" />
+</button>
+```
+
+### 12.6 Ringkasan token
+
+| Elemen | Kelas |
+|---|---|
+| Wrapper halaman | `p-3 sm:p-4 space-y-3` |
+| Card | `rounded-lg border border-slate-200 bg-white dark:bg-zinc-900 overflow-hidden` |
+| Header card (utama/sekunder) | `bg-slate-800` / `bg-slate-700` + `px-4 py-2` |
+| Judul header card | `font-bold text-xs tracking-widest text-white uppercase` |
+| Body card | `p-4 space-y-3` |
+| Label field | `mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide` |
+| Wajib | `<span class="text-red-500">*</span>` |
+| Input/select | `rounded border border-slate-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500` |
+| Textarea | + `resize-y min-h-[72px]` |
+| Tombol Simpan | `bg-emerald-600 hover:bg-emerald-700 text-white font-bold` |
+| Tombol Batal | `border-2 border-slate-300 text-slate-600 font-semibold` |
+| Ikon edit / hapus | `text-indigo-500` `Pencil` / `text-red-500` `Trash2`, `h-4 w-4`, `p-1.5` |
+
+> Layout split (header kiri sticky + tabel detail kanan) **khusus** transaksi multi-baris
+> (jurnal/Transaksi Umum). Form satu-entitas cukup card tunggal/2-kolom — tetap pakai token di atas.
+
+---
+
+## Rule 13: Page Scaffold & Routing — Standar Membuat Halaman Baru
+
+Setiap halaman baru wajib lewat 3 langkah yang **harus sinkron** (3-way consistency):
+
+1. **`lib/menu/registry.ts`** — daftarkan key di `MENU_KEYS` (bahasa Inggris, mis. `finance.cash`).
+2. **`router/index.ts`** — tambah route bernama (named route, kebab, prefix domain Inggris):
+   ```ts
+   {
+     path: '/finance/cash/create',
+     name: 'finance-cash-create',
+     component: () => import('@/pages/finance/cash/CashCreatePage.vue'),
+     meta: { title: 'Tambah Kas', menu_key: 'finance.cash' as MenuKey },
+   },
+   ```
+3. **seed SQL** (`infra/db/migrations/isf_auth/seed-menu-*.sql`) — `menu` + `role_menu` (ditangani `nuwis-seed-gen`).
+
+### `meta` wajib
+- `title` — **string ini yang muncul di breadcrumb** app header. Wajib diisi & deskriptif.
+- `menu_key` — `as MenuKey`; dipakai guard `beforeEach` untuk RBAC (Rule 8).
+- `public: true` / `requiresNoTenant: true` hanya untuk login/no-tenant.
+
+### Breadcrumb — JANGAN render judul halaman sendiri
+App shell (`AppHeader.vue`) **otomatis** menampilkan breadcrumb `Induk / Judul`
+dari `meta.title` + prefix nama route (`parentMap`: `finance-…`→domain). Maka:
+
+- **JANGAN** ada `<PageHeader>` atau `<h1>` judul di halaman — itu duplikat breadcrumb.
+- **List page**: langsung render card tabel (Rule 1). Tanpa judul.
+- **Create / Detail page**: awali dengan **tombol Kembali** saja (Rule 12.1), bukan judul.
+  Sub-judul/mode ("Edit"/"Input") boleh sebagai teks kecil `text-xs text-slate-400`.
+- Beri nama route dengan prefix domain yang sudah ada (`finance-`, `dashboard-`, `parameter-`,
+  `admin-`, `profile-`) agar breadcrumb induk benar. Jika butuh crumb eksplisit, set
+  `meta.breadcrumb: string[]` (didukung AppHeader, default tidak dipakai).
+
+### Pilih kerangka per jenis halaman
+| Jenis halaman | Ikuti |
+|---|---|
+| Daftar/List (tabel + paginasi) | **Rule 1** (paginasi di atas, 1 card) + **Rule 11** (tabel) |
+| Form input / Create / Edit | **Rule 12** (card header gelap, token slate/indigo) |
+| Modal CRUD | **Rule 10** (shell) + **Rule 12** (isi field) |
+| Laporan / Report | **Rule 7** (no auto-load, tombol Tampilkan) |
+
+### Async, RBAC, tanggal, ikon
+Selalu: feedback async (Rule 4), `v-if` dari `auth.menus`+`MENU_KEYS` (Rule 8),
+`DateField`/`dmy()` (Rule 2), Lucide (Rule 5), `lib/api/client` (Rule 3).
+
+> Referensi halaman yang sudah sesuai standar: List → `*ListPage.vue` mana pun di
+> `pages/finance/`; Form → `general-transaction/GeneralTransactionCreatePage.vue`
+> dan `fund-distribution/FundDistributionCreatePage.vue`.
+
+---
+
 ## Rule 7: Report Page — Tidak Auto-Load
 
 ```vue
@@ -346,7 +546,7 @@ async function tampilkan() {
   // load data hanya saat user klik
   loading.value = true
   try {
-    const res = await GET('/api/.../laporan', { tgl_awal, tgl_akhir })
+    const res = await GET('/api/report/...', { begin, end })
     rows.value = res.rows
     hasData.value = true
   } finally {

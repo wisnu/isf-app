@@ -3,6 +3,19 @@
 
 ---
 
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+- **menu_key**: English dotted → `finance.transactions.fund_collection`. JANGAN `keuangan.penghimpunan`.
+- **route_path**: English kebab-case, cocok dengan Vue Router → `/finance/transactions/fund-collection`.
+- **entity_type** (di `otorisasi.entity_config`): pakai nilai yang **sudah ada/disepakati** (`penghimpunan`, `penyaluran`, `budget_owner`, …) — ini kode BEKU, harus identik dengan key dispatcher di `authorization/service.py:_register_defaults()` dan literal di frontend. Jangan terjemahkan.
+- **`id_peran`**: nama kolom DB asli di `isf_auth.role_menu` (BUKAN `role_code`) — pakai apa adanya.
+- **label** menu: Bahasa Indonesia (teks UI) — mis. `'Penerimaan Amil'`.
+
+> 3-way consistency wajib: `menu_key` di registry.ts ↔ route `meta.menu_key` ↔ seed SQL ini.
+> Glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
+
+---
+
 ## Database Target
 
 | Portal | Database | Schema |
@@ -56,14 +69,16 @@ ON CONFLICT (menu_key) DO UPDATE SET
 
 
 -- ── 2. Role assignments ──────────────────────────────────────────────────────
+-- Kolom di isf_auth.role_menu: id_peran (BUKAN role_code), menu_key
+-- PK: (id_peran, menu_key)
 
-INSERT INTO isf_auth.role_menu (role_code, menu_key)
+INSERT INTO isf_auth.role_menu (id_peran, menu_key)
 VALUES
   ('{ROLE1}', '{menu_key}'),
   ('{ROLE2}', '{menu_key}')
   -- Tambah semua role yang harus punya akses
 
-ON CONFLICT (role_code, menu_key) DO NOTHING;
+ON CONFLICT (id_peran, menu_key) DO NOTHING;
 ```
 
 ---
@@ -148,21 +163,39 @@ Jika ada ketidakcocokan, laporkan sebelum apply.
 
 ## Cara Apply
 
+**WAJIB pakai `-h localhost`** — peer auth di Unix socket akan gagal dengan "Peer authentication failed".
+
 ```bash
-# Zakat:
-psql -U transaction -d isf_auth_zakat -f infra/db/migrations/seed/{feature-slug}-seed.sql
+# Zakat — menu seed:
+PGPASSWORD=solusi psql -U transaction -h localhost -d isf_auth_zakat \
+  -f infra/db/migrations/seed/{feature-slug}-seed.sql
 
-# Wakaf:
-psql -U transaction -d isf_auth_wakaf -f infra/db/migrations/seed/{feature-slug}-seed.sql
+# Wakaf — menu seed:
+PGPASSWORD=solusi psql -U transaction -h localhost -d isf_auth_wakaf \
+  -f infra/db/migrations/seed/{feature-slug}-seed.sql
 
-# Verifikasi:
-psql -U transaction -d isf_auth_zakat -c \
-  "SELECT m.menu_key, m.label, rm.role_code
+# otorisasi.entity_config ada di BUSINESS DB (mziss_laz / mziss_wakaf), BUKAN auth DB:
+PGPASSWORD=solusi psql -U transaction -h localhost -d mziss_laz \
+  -f infra/db/migrations/seed/seed-entity-config-{slug}.sql
+
+# Verifikasi menu + role:
+PGPASSWORD=solusi psql -U transaction -h localhost -d isf_auth_zakat -c \
+  "SELECT m.menu_key, m.label, rm.id_peran
    FROM isf_auth.menu m
    LEFT JOIN isf_auth.role_menu rm ON rm.menu_key = m.menu_key
    WHERE m.menu_key LIKE '{domain}.%'
-   ORDER BY m.menu_key, rm.role_code;"
+   ORDER BY m.menu_key, rm.id_peran;"
 ```
 
 **Penting**: menus[] di session di-populate saat login. User harus logout + login
 setelah seed diapply agar menu baru muncul.
+
+---
+
+## Catatan Schema Kritis
+
+| Tabel | Kolom PK / FK | Catatan |
+|---|---|---|
+| `isf_auth.role_menu` | `id_peran` (BUKAN `role_code`) | PK: `(id_peran, menu_key)` |
+| `isf_auth.menu` | `menu_key` (PK) | FK dari role_menu |
+| `otorisasi.entity_config` | `entity_type` (PK) | Ada di **mziss_laz/mziss_wakaf**, bukan auth DB |
