@@ -21,24 +21,24 @@ interface JournalItem {
 }
 
 interface TransaksiDetail {
-  transactionid: number
-  transactionno: string | null
-  transactiondate: string
-  actualdate: string
+  transaction_id: number
+  transaction_no: string | null
+  transaction_date: string
+  actual_date: string
   amount: number
-  donorno: string | null
-  donorname: string | null
-  referenceno: string | null
+  donor_no: string | null
+  donor_name: string | null
+  reference_no: string | null
   description: string | null
   inputer: string | null
-  authstatus: string | null
-  isposted: string | null
-  authoperationmode: string | null
-  branchcode: string | null
-  channelaccountno: string | null
-  channelname: string | null
-  exttransactionid: number | null
-  titlesubsystem: string | null
+  auth_status: string | null
+  is_posted: string | null
+  auth_operation_mode: string | null
+  branch_code: string | null
+  channel_account_no: string | null
+  channel_name: string | null
+  external_transaction_id: number | null
+  title_subsystem: string | null
   journal_items: JournalItem[]
 }
 
@@ -62,18 +62,18 @@ const repostError = shallowRef<string | null>(null)
 const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 })
 const fmt = (n: number) => idr.format(n)
 
-const hasActions = computed(() => detail.value?.exttransactionid == null)
+const hasActions = computed(() => detail.value?.external_transaction_id == null)
 const canDelete = computed(() => {
   if (!detail.value) return false
-  if (detail.value.authstatus === 'F' && detail.value.authoperationmode === 'D') return false
+  if (detail.value.auth_status === 'F' && detail.value.auth_operation_mode === 'D') return false
   return true
 })
-const canRepost = computed(() => detail.value?.isposted === 'F')
+const canRepost = computed(() => detail.value?.is_posted === 'F')
 
 onMounted(async () => {
   try {
     detail.value = await api.get<TransaksiDetail>(
-      `/api/transaksi-histori/transactions/${txId}`,
+      `/api/transaction-history/transactions/${txId}`,
     )
   } catch (e: unknown) {
     errorMsg.value = e instanceof ApiError ? e.message : String(e)
@@ -86,7 +86,7 @@ async function doDelete() {
   deleting.value = true
   deleteError.value = null
   try {
-    await api.post(`/api/transaksi-histori/transactions/${txId}/delete`, {})
+    await api.post(`/api/transaction-history/transactions/${txId}/delete`, {})
     toast.success('Transaksi berhasil dihapus')
     showDeleteConfirm.value = false
     router.push({ name: 'finance-transactions-history' })
@@ -101,11 +101,11 @@ async function doRepost() {
   reposting.value = true
   repostError.value = null
   try {
-    await api.post(`/api/transaksi-histori/transactions/${txId}/repost`, {})
+    await api.post(`/api/transaction-history/transactions/${txId}/repost`, {})
     toast.success('Jurnal berhasil di-repost')
     showRepostConfirm.value = false
     detail.value = await api.get<TransaksiDetail>(
-      `/api/transaksi-histori/transactions/${txId}`,
+      `/api/transaction-history/transactions/${txId}`,
     )
   } catch (e: unknown) {
     repostError.value = e instanceof Error ? e.message : String(e)
@@ -130,33 +130,33 @@ async function doRepost() {
     <template v-else-if="detail">
       <!-- Header card -->
       <div class="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-border bg-surface p-4 text-sm">
-        <div><span class="text-muted">No Transaksi:</span> {{ detail.transactionno ?? '—' }}</div>
-        <div><span class="text-muted">Rekening:</span> {{ detail.channelname ?? detail.channelaccountno ?? '—' }}</div>
-        <div><span class="text-muted">Tgl Aktual:</span> {{ dmy(detail.actualdate) }}</div>
-        <div><span class="text-muted">Tgl Transaksi:</span> {{ dmy(detail.transactiondate) }}</div>
+        <div><span class="text-muted">No Transaksi:</span> {{ detail.transaction_no ?? '—' }}</div>
+        <div><span class="text-muted">Rekening:</span> {{ detail.channel_name ?? detail.channel_account_no ?? '—' }}</div>
+        <div><span class="text-muted">Tgl Aktual:</span> {{ dmy(detail.actual_date) }}</div>
+        <div><span class="text-muted">Tgl Transaksi:</span> {{ dmy(detail.transaction_date) }}</div>
         <div><span class="text-muted">Nominal:</span> Rp {{ fmt(detail.amount) }}</div>
         <div><span class="text-muted">Inputer:</span> {{ detail.inputer ?? '—' }}</div>
-        <div><span class="text-muted">No Donatur:</span> {{ detail.donorno ?? '—' }}</div>
-        <div><span class="text-muted">Nama Donatur:</span> {{ detail.donorname ?? '—' }}</div>
-        <div><span class="text-muted">No Ref:</span> {{ detail.referenceno ?? '—' }}</div>
+        <div><span class="text-muted">No Donatur:</span> {{ detail.donor_no ?? '—' }}</div>
+        <div><span class="text-muted">Nama Donatur:</span> {{ detail.donor_name ?? '—' }}</div>
+        <div><span class="text-muted">No Ref:</span> {{ detail.reference_no ?? '—' }}</div>
         <div><span class="text-muted">Keterangan:</span> {{ detail.description ?? '—' }}</div>
-        <div><span class="text-muted">Cabang:</span> {{ detail.branchcode ?? '—' }}</div>
+        <div><span class="text-muted">Cabang:</span> {{ detail.branch_code ?? '—' }}</div>
         <div>
           <span class="text-muted">Auth Status:</span>
           <span :class="['ml-1 rounded px-1 py-0.5 text-[9px] font-medium uppercase',
-            detail.authstatus === 'T' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800']">
-            {{ detail.authstatus === 'T' ? 'Terotorisasi' : 'Pending' }}
+            detail.auth_status === 'T' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800']">
+            {{ detail.auth_status === 'T' ? 'Terotorisasi' : 'Pending' }}
           </span>
         </div>
         <div>
           <span class="text-muted">Posted:</span>
           <span :class="['ml-1 rounded px-1 py-0.5 text-[9px] font-medium',
-            detail.isposted === 'T' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600']">
-            {{ detail.isposted === 'T' ? 'Posted' : 'Belum' }}
+            detail.is_posted === 'T' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600']">
+            {{ detail.is_posted === 'T' ? 'Posted' : 'Belum' }}
           </span>
         </div>
-        <div v-if="detail.titlesubsystem">
-          <span class="text-muted">Sub-sistem:</span> {{ detail.titlesubsystem }}
+        <div v-if="detail.title_subsystem">
+          <span class="text-muted">Sub-sistem:</span> {{ detail.title_subsystem }}
         </div>
       </div>
 
@@ -177,7 +177,7 @@ async function doRepost() {
         >
           <Trash2 class="mr-1 h-3.5 w-3.5" /> Hapus Transaksi
         </Button>
-        <span v-if="!canRepost && detail.isposted === 'T'" class="text-xs text-muted">
+        <span v-if="!canRepost && detail.is_posted === 'T'" class="text-xs text-muted">
           Jurnal sudah ada
         </span>
       </div>

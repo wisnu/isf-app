@@ -16,7 +16,7 @@ from app.routers.coa import router as coa_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.report import router as report_router
 from app.routers.tenants import router as tenants_router
-from app.routers.histori_transaksi import router as histori_transaksi_router
+from app.routers.transaction_history import router as transaction_history_router
 from app.routers.fund_distribution import router as fund_distribution_router
 from app.routers.fund_collection import router as fund_collection_router
 from app.routers.receivable import router as receivable_router
@@ -107,7 +107,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin_router, prefix="/api")
     app.include_router(transaction_router, prefix="/api")
     app.include_router(transaksi_router, prefix="/api")
-    app.include_router(histori_transaksi_router, prefix="/api")
+    app.include_router(transaction_history_router, prefix="/api")
     app.include_router(fund_distribution_router, prefix="/api")
     app.include_router(fund_collection_router, prefix="/api")
     app.include_router(receivable_router, prefix="/api")

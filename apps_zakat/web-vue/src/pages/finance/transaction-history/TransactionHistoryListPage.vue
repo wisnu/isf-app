@@ -25,22 +25,22 @@ interface SearchResult {
 }
 
 interface TransaksiRow {
-  transactionid: number
-  transactionno: string | null
-  transactiondate: string
-  actualdate: string
+  transaction_id: number
+  transaction_no: string | null
+  transaction_date: string
+  actual_date: string
   amount: number
-  donorno: string | null
-  donorname: string | null
-  referenceno: string | null
+  donor_no: string | null
+  donor_name: string | null
+  reference_no: string | null
   description: string | null
   inputer: string | null
-  authstatus: string | null
-  isposted: string | null
-  authoperationmode: string | null
-  branchcode: string | null
-  channelname: string | null
-  exttransactionid: number | null
+  auth_status: string | null
+  is_posted: string | null
+  auth_operation_mode: string | null
+  branch_code: string | null
+  channel_name: string | null
+  external_transaction_id: number | null
 }
 
 const STORAGE_KEY = 'histori-transaksi-state'
@@ -138,8 +138,8 @@ function restoreState() {
 onMounted(restoreState)
 
 function canDelete(row: TransaksiRow): boolean {
-  if (row.exttransactionid != null) return false
-  if (row.authstatus === 'F' && row.authoperationmode === 'D') return false
+  if (row.external_transaction_id != null) return false
+  if (row.auth_status === 'F' && row.auth_operation_mode === 'D') return false
   return true
 }
 
@@ -176,7 +176,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const d = await api.get<SearchResult>(`/api/transaksi-histori/search?${buildParams()}`)
+    const d = await api.get<SearchResult>(`/api/transaction-history/search?${buildParams()}`)
     rows.value = d.rows
     total.value = d.total
     totalPages.value = d.total_pages
@@ -194,7 +194,7 @@ async function exportXlsx() {
   exporting.value = true
   try {
     await api.downloadBlob(
-      '/api/transaksi-histori/search/export.xlsx',
+      '/api/transaction-history/search/export.xlsx',
       `histori-transaksi-${begin.value}-${end.value}.xlsx`,
       buildParams(true),
     )
@@ -221,7 +221,7 @@ async function confirmDelete() {
   deleteMsg.value = null
   const targetId = deleteConfirmId.value
   try {
-    await api.post(`/api/transaksi-histori/transactions/${targetId}/delete`, {})
+    await api.post(`/api/transaction-history/transactions/${targetId}/delete`, {})
     toast.success('Transaksi berhasil dihapus')
     deleteConfirmId.value = null
     await load()
@@ -312,8 +312,8 @@ async function confirmDelete() {
               >
                 <option value="none">(Semua kolom)</option>
                 <option value="transno">No Transaksi</option>
-                <option value="donorno">No Donatur</option>
-                <option value="donorname">Nama Donatur</option>
+                <option value="donor_no">No Donatur</option>
+                <option value="donor_name">Nama Donatur</option>
                 <option value="description">Keterangan</option>
                 <option value="refno">No Referensi</option>
               </select>
@@ -387,23 +387,23 @@ async function confirmDelete() {
               <tbody>
                 <tr
                   v-for="row in rows"
-                  :key="row.transactionid"
+                  :key="row.transaction_id"
                   class="border-b border-border/40 transition-colors hover:bg-muted/5 cursor-pointer"
-                  @click="goToDetail(row.transactionid)"
+                  @click="goToDetail(row.transaction_id)"
                 >
-                  <td class="px-3 py-1 font-mono text-[10px] text-muted">{{ row.transactionno ?? '—' }}</td>
-                  <td class="px-3 py-1 max-w-[110px] truncate" :title="row.channelname ?? ''">{{ row.channelname ?? '—' }}</td>
-                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.actualdate) }}</td>
-                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.transactiondate) }}</td>
+                  <td class="px-3 py-1 font-mono text-[10px] text-muted">{{ row.transaction_no ?? '—' }}</td>
+                  <td class="px-3 py-1 max-w-[110px] truncate" :title="row.channel_name ?? ''">{{ row.channel_name ?? '—' }}</td>
+                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.actual_date) }}</td>
+                  <td class="px-3 py-1 whitespace-nowrap">{{ dmy(row.transaction_date) }}</td>
                   <td class="px-3 py-1 text-right tabular-nums">{{ fmt(row.amount) }}</td>
-                  <td class="px-3 py-1 max-w-[130px] truncate" :title="row.donorname ?? ''">{{ row.donorname ?? '' }}</td>
+                  <td class="px-3 py-1 max-w-[130px] truncate" :title="row.donor_name ?? ''">{{ row.donor_name ?? '' }}</td>
                   <td class="px-3 py-1 max-w-[180px] truncate" :title="row.description ?? ''">{{ row.description ?? '' }}</td>
                   <td class="px-3 py-1">{{ row.inputer ?? '' }}</td>
                   <td class="px-3 py-1">
-                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium uppercase', authChip(row.authstatus)]">{{ authLabel(row.authstatus) }}</span>
+                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium uppercase', authChip(row.auth_status)]">{{ authLabel(row.auth_status) }}</span>
                   </td>
                   <td class="px-3 py-1">
-                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium', postedChip(row.isposted)]">{{ row.isposted === 'T' ? 'Posted' : 'Belum' }}</span>
+                    <span :class="['rounded px-1 py-0.5 text-[9px] font-medium', postedChip(row.is_posted)]">{{ row.is_posted === 'T' ? 'Posted' : 'Belum' }}</span>
                   </td>
                   <td class="px-3 py-1 text-center" @click.stop>
                     <Button
@@ -411,7 +411,7 @@ async function confirmDelete() {
                       size="sm"
                       variant="outline"
                       class="border-red-200 text-red-600 hover:bg-red-50 px-1.5 py-0.5 text-[10px]"
-                      @click="deleteConfirmId = row.transactionid; deleteMsg = null"
+                      @click="deleteConfirmId = row.transaction_id; deleteMsg = null"
                     >Hapus</Button>
                   </td>
                 </tr>

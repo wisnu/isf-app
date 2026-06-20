@@ -9,7 +9,7 @@ from app.modules.transaction_history.export import build_histori_xlsx
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix='/transaksi-histori', tags=['transaksi-histori'])
+router = APIRouter(prefix='/transaction-history', tags=['transaction-history'])
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 

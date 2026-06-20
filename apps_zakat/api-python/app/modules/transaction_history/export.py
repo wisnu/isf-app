@@ -2,7 +2,7 @@ from __future__ import annotations
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
-from app.modules.transaction_history.schema import TransaksiRow
+from app.modules.transaction_history.schema import TransactionRow
 
 _HEADERS = [
     'No Transaksi', 'Rekening', 'Tgl Transaksi', 'Tgl Aktual',
@@ -17,7 +17,7 @@ def _dmy(iso: str | None) -> str:
     return f'{iso[8:10]}-{iso[5:7]}-{iso[:4]}'
 
 
-def build_histori_xlsx(rows: list[TransaksiRow], begin: str, end: str) -> bytes:
+def build_histori_xlsx(rows: list[TransactionRow], begin: str, end: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = 'HistoriTransaksi'
@@ -29,19 +29,19 @@ def build_histori_xlsx(rows: list[TransaksiRow], begin: str, end: str) -> bytes:
         cell.font = hfont
         cell.alignment = Alignment(horizontal='center')
     for i, r in enumerate(rows, start=2):
-        ws.cell(row=i, column=1,  value=r.transactionno or '')
-        ws.cell(row=i, column=2,  value=r.channelname or r.channelaccountno or '')
-        ws.cell(row=i, column=3,  value=_dmy(r.transactiondate))
-        ws.cell(row=i, column=4,  value=_dmy(r.actualdate))
+        ws.cell(row=i, column=1,  value=r.transaction_no or '')
+        ws.cell(row=i, column=2,  value=r.channel_name or r.channel_account_no or '')
+        ws.cell(row=i, column=3,  value=_dmy(r.transaction_date))
+        ws.cell(row=i, column=4,  value=_dmy(r.actual_date))
         ws.cell(row=i, column=5,  value=r.amount)
-        ws.cell(row=i, column=6,  value=r.donorno or '')
-        ws.cell(row=i, column=7,  value=r.donorname or '')
-        ws.cell(row=i, column=8,  value=r.referenceno or '')
+        ws.cell(row=i, column=6,  value=r.donor_no or '')
+        ws.cell(row=i, column=7,  value=r.donor_name or '')
+        ws.cell(row=i, column=8,  value=r.reference_no or '')
         ws.cell(row=i, column=9,  value=r.description or '')
         ws.cell(row=i, column=10, value=r.inputer or '')
-        ws.cell(row=i, column=11, value=r.authstatus or '')
-        ws.cell(row=i, column=12, value=r.isposted or '')
-        ws.cell(row=i, column=13, value=r.branchcode or '')
+        ws.cell(row=i, column=11, value=r.auth_status or '')
+        ws.cell(row=i, column=12, value=r.is_posted or '')
+        ws.cell(row=i, column=13, value=r.branch_code or '')
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()

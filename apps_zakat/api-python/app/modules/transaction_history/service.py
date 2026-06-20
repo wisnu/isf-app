@@ -2,31 +2,31 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from app.modules.transaction_history import repository as repo
 from app.modules.transaction_history.schema import (
-    JournalItem, RepostResult, SearchPage, TransaksiDetail, TransaksiRow,
+    JournalItem, RepostResult, SearchPage, TransactionDetail, TransactionRow,
 )
 from app.shared.db import get_pool
 
 
-def _to_row(r: dict) -> TransaksiRow:
-    return TransaksiRow(
-        transactionid=int(r['transactionid']),
-        transactionno=r.get('transactionno'),
-        transactiondate=str(r.get('transactiondate') or '')[:10],
-        actualdate=str(r.get('actualdate') or '')[:10],
+def _to_row(r: dict) -> TransactionRow:
+    return TransactionRow(
+        transaction_id=int(r['transactionid']),
+        transaction_no=r.get('transactionno'),
+        transaction_date=str(r.get('transactiondate') or '')[:10],
+        actual_date=str(r.get('actualdate') or '')[:10],
         amount=float(r.get('amount') or 0),
-        donorno=r.get('donorno'),
-        donorname=r.get('donorname'),
-        referenceno=r.get('referenceno'),
+        donor_no=r.get('donorno'),
+        donor_name=r.get('donorname'),
+        reference_no=r.get('referenceno'),
         description=r.get('description'),
         inputer=r.get('inputer'),
-        authstatus=r.get('authstatus'),
-        isposted=r.get('isposted'),
-        authoperationmode=r.get('authoperationmode'),
-        branchcode=r.get('branchcode'),
-        channelaccountno=r.get('channelaccountno'),
-        channelname=r.get('channelname'),
-        exttransactionid=r.get('exttransactionid'),
-        titlesubsystem=r.get('titlesubsystem'),
+        auth_status=r.get('authstatus'),
+        is_posted=r.get('isposted'),
+        auth_operation_mode=r.get('authoperationmode'),
+        branch_code=r.get('branchcode'),
+        channel_account_no=r.get('channelaccountno'),
+        channel_name=r.get('channelname'),
+        external_transaction_id=r.get('exttransactionid'),
+        title_subsystem=r.get('titlesubsystem'),
     )
 
 
@@ -69,7 +69,7 @@ async def search(
     )
 
 
-async def detail(transaction_id: int) -> TransaksiDetail | None:
+async def detail(transaction_id: int) -> TransactionDetail | None:
     row = await repo.get_transaction(transaction_id)
     if not row:
         return None
@@ -81,16 +81,16 @@ async def detail(transaction_id: int) -> TransaksiDetail | None:
             fl_account=ji.get('fl_account'),
             account_name=ji.get('account_name'),
             branch_code=ji.get('branch_code'),
-            valuta_code=ji.get('valuta_code'),
+            currency_code=ji.get('valuta_code'),
             amount_debit=float(ji.get('amount_debit') or 0),
             amount_credit=float(ji.get('amount_credit') or 0),
             description=ji.get('description'),
-            subaccountcode=ji.get('subaccountcode'),
-            subaccountname=ji.get('subaccountname'),
+            subaccount_code=ji.get('subaccountcode'),
+            subaccount_name=ji.get('subaccountname'),
         )
         for ji in ji_raw
     ]
-    return TransaksiDetail(**_to_row(row).model_dump(), journal_items=journal_items)
+    return TransactionDetail(**_to_row(row).model_dump(), journal_items=journal_items)
 
 
 async def repost_journal(
@@ -174,7 +174,7 @@ async def repost_journal(
                 jblock_id, journal_no, transaction_id,
             )
             await conn.execute(
-                "UPDATE transaction.transaction SET journalno=$1, isposted='T' WHERE transactionid=$2",
+                "UPDATE transaction.transaction SET journalno=$1, is_posted='T' WHERE transaction_id=$2",
                 journal_no, transaction_id,
             )
 

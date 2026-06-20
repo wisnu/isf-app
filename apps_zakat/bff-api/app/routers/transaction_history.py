@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse, Response
 from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_api_python, stream_api_python
 
-router = APIRouter(prefix='/transaksi-histori', tags=['transaksi-histori'])
+router = APIRouter(prefix='/transaction-history', tags=['transaction-history'])
 
 _MENU = 'finance.transactions.history'
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -51,7 +51,7 @@ async def search(
         params['search_text'] = search_text
     if cash_account_no:
         params['cash_account_no'] = cash_account_no
-    downstream = await get_api_python('/api/transaksi-histori/search', params=params)
+    downstream = await get_api_python('/api/transaction-history/search', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -80,7 +80,7 @@ async def search_export(
     if cash_account_no:
         params['cash_account_no'] = cash_account_no
     downstream = await stream_api_python(
-        '/api/transaksi-histori/search/export.xlsx', params=params
+        '/api/transaction-history/search/export.xlsx', params=params
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -99,7 +99,7 @@ async def get_detail(
     _: str = Depends(require_menu(_MENU)),
 ):
     downstream = await get_api_python(
-        f'/api/transaksi-histori/transactions/{transaction_id}'
+        f'/api/transaction-history/transactions/{transaction_id}'
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -112,7 +112,7 @@ async def do_delete(
 ):
     inj = _inject(request)
     downstream = await post_api_python(
-        f'/api/transaksi-histori/transactions/{transaction_id}/delete',
+        f'/api/transaction-history/transactions/{transaction_id}/delete',
         json_body={
             'user_id': inj['user_id'],
             'branch_code': inj['branch'],
@@ -130,7 +130,7 @@ async def do_repost(
 ):
     inj = _inject(request)
     downstream = await post_api_python(
-        f'/api/transaksi-histori/transactions/{transaction_id}/repost',
+        f'/api/transaction-history/transactions/{transaction_id}/repost',
         json_body={
             'user_id': inj['user_id'],
             'branch_code': inj['branch'],

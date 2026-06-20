@@ -2,25 +2,25 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class TransaksiRow(BaseModel):
-    transactionid: int
-    transactionno: str | None
-    transactiondate: str   # ISO YYYY-MM-DD
-    actualdate: str        # ISO YYYY-MM-DD
+class TransactionRow(BaseModel):
+    transaction_id: int
+    transaction_no: str | None
+    transaction_date: str   # ISO YYYY-MM-DD
+    actual_date: str        # ISO YYYY-MM-DD
     amount: float
-    donorno: str | None
-    donorname: str | None
-    referenceno: str | None
+    donor_no: str | None
+    donor_name: str | None
+    reference_no: str | None
     description: str | None
     inputer: str | None
-    authstatus: str | None
-    isposted: str | None
-    authoperationmode: str | None
-    branchcode: str | None
-    channelaccountno: str | None
-    channelname: str | None
-    exttransactionid: int | None
-    titlesubsystem: str | None
+    auth_status: str | None
+    is_posted: str | None
+    auth_operation_mode: str | None
+    branch_code: str | None
+    channel_account_no: str | None
+    channel_name: str | None
+    external_transaction_id: int | None
+    title_subsystem: str | None
 
 
 class JournalItem(BaseModel):
@@ -28,15 +28,15 @@ class JournalItem(BaseModel):
     fl_account: str | None
     account_name: str | None
     branch_code: str | None
-    valuta_code: str | None
+    currency_code: str | None
     amount_debit: float
     amount_credit: float
     description: str | None
-    subaccountcode: str | None
-    subaccountname: str | None
+    subaccount_code: str | None
+    subaccount_name: str | None
 
 
-class TransaksiDetail(TransaksiRow):
+class TransactionDetail(TransactionRow):
     journal_items: list[JournalItem]
 
 
@@ -52,7 +52,7 @@ class RepostResult(BaseModel):
 
 
 class SearchPage(BaseModel):
-    rows: list[TransaksiRow]
+    rows: list[TransactionRow]
     total: int
     page: int
     page_size: int
