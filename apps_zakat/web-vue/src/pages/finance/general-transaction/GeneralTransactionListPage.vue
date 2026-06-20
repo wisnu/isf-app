@@ -17,7 +17,7 @@ import { useToast } from '@/lib/useToast'
 interface TxRow {
   _kind: 'tx'
   transactionid: number
-  transactionno: string
+  transaction_no: string
   actual_date: string
   description: string
   reference_no: string | null
@@ -88,7 +88,7 @@ const detailItems = computed<Record<string, unknown>[]>(() => {
 
 const deleteRowLabel = computed(() => {
   if (!deleteRow.value) return null
-  if (deleteRow.value._kind === 'tx') return deleteRow.value.transactionno
+  if (deleteRow.value._kind === 'tx') return deleteRow.value.transaction_no
   return `Draft #${deleteRow.value.id}`
 })
 
@@ -116,7 +116,7 @@ async function load() {
 
     const [txRes, subRes] = await Promise.all([
       api.get<{ rows: Omit<TxRow, '_kind'>[]; pagination: { total: number; total_pages: number } }>(
-        `/api/transaksi-umum/?${params}`
+        `/api/general-transaction/?${params}`
       ),
       api.get<{ rows: Omit<SubRow, '_kind'>[] }>(
         '/api/otorisasi/my-submissions/?entity_type=transaksi_umum'
@@ -140,7 +140,7 @@ async function openDetail(row: TxRow) {
   showDetail.value = true
   detailRow.value = { ...row }
   try {
-    const res = await api.get<{ id: number; items: unknown[] }>(`/api/transaksi-umum/${row.transactionid}`)
+    const res = await api.get<{ id: number; items: unknown[] }>(`/api/general-transaction/${row.transactionid}`)
     detailRow.value = { ...row, items: res?.items ?? [] } as TxRow & { items: unknown[] }
   } catch {
     // keep header
@@ -159,7 +159,7 @@ async function confirmDelete() {
   deleteLoading.value = true
   try {
     if (deleteRow.value._kind === 'tx') {
-      await api.delete(`/api/transaksi-umum/${deleteRow.value.transactionid}`)
+      await api.delete(`/api/general-transaction/${deleteRow.value.transactionid}`)
     } else {
       await api.delete(`/api/otorisasi/submission/${deleteRow.value.id}`)
     }
@@ -300,7 +300,7 @@ onMounted(load)
             :class="{ 'bg-slate-50/50': mergedRows.indexOf(row) % 2 === 1 }"
             @click="openDetail(row as TxRow)"
           >
-            <td class="px-3 py-1.5 font-mono text-sm">{{ row.transactionno }}</td>
+            <td class="px-3 py-1.5 font-mono text-sm">{{ row.transaction_no }}</td>
             <td class="px-3 py-1.5 text-sm">{{ dmy(row.actual_date) }}</td>
             <td class="px-3 py-1.5 text-sm max-w-xs truncate" :title="row.description">{{ row.description }}</td>
             <td class="px-3 py-1.5 text-right font-mono text-sm">{{ row.amount.toLocaleString('id-ID') }}</td>
@@ -339,7 +339,7 @@ onMounted(load)
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div>
             <div class="text-xs text-slate-500">No. Transaksi</div>
-            <div class="font-mono font-medium text-slate-800">{{ detailRow.transactionno }}</div>
+            <div class="font-mono font-medium text-slate-800">{{ detailRow.transaction_no }}</div>
           </div>
           <div>
             <div class="text-xs text-slate-500">Tanggal</div>

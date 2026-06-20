@@ -254,7 +254,7 @@ async function loadKasBankOptions() {
   kbLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/kasbank?search=`
+      `/api/general-transaction/lookup/cash-bank?search=`
     )
     kbResults.value = res?.rows ?? []
   } finally {
@@ -282,7 +282,7 @@ async function searchDonor() {
   phShowDonorResults.value = false
   try {
     const res = await api.get<{ rows: DonorRow[] }>(
-      `/api/transaksi-umum/lookup/donor?search=${encodeURIComponent(phDonorSearch.value)}`
+      `/api/general-transaction/lookup/donor?search=${encodeURIComponent(phDonorSearch.value)}`
     )
     phDonorResults.value = res?.rows ?? []
     phShowDonorResults.value = true
@@ -308,7 +308,7 @@ async function loadProdukOptions() {
   phProdukLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/produk?search=&fund_entity=${phFundEntity.value}`
+      `/api/general-transaction/lookup/product?search=&fund_entity=${phFundEntity.value}`
     )
     phProdukResults.value = res?.rows ?? []
   } finally {
@@ -340,7 +340,7 @@ async function loadProgramOptions() {
   pyProgramLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/penyaluran?search=`
+      `/api/general-transaction/lookup/distribution?search=`
     )
     pyProgramResults.value = res?.rows ?? []
   } finally {
@@ -364,7 +364,7 @@ async function loadSumberOptions() {
   pySumberLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/transaksi-umum/lookup/produk?search=`
+      `/api/general-transaction/lookup/product?search=`
     )
     pySumberResults.value = res?.rows ?? []
   } finally {
@@ -576,7 +576,7 @@ async function submitForm() {
 
   saving.value = true
   try {
-    await api.post('/api/transaksi-umum/', {
+    await api.post('/api/general-transaction/', {
       actual_date: formDate.value,
       description: formDescription.value.trim(),
       reference_no: formReferenceNo.value.trim(),

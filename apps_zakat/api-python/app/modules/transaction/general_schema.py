@@ -130,7 +130,7 @@ TransaksiUmumItem = Annotated[
 ]
 
 
-class TransaksiUmumCreate(BaseModel):
+class GeneralCreate(BaseModel):
     actual_date: str       # YYYY-MM-DD
     description: str
     reference_no: str = ''

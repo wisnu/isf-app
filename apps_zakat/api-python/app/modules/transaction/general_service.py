@@ -56,13 +56,13 @@ async def list_transaksi_umum(
             f"""
             SELECT
                 t.transactionid,
-                t.transactionno,
+                t.transactionno AS transaction_no,
                 CAST(t.actualdate AS VARCHAR) AS actual_date,
                 t.description,
                 t.referenceno                AS reference_no,
                 t.branchcode                 AS branch_code,
                 t.inputer,
-                t.authstatus,
+                t.authstatus AS auth_status,
                 t.amount
             FROM transaction.transaction t
             WHERE {where}
@@ -83,13 +83,13 @@ async def get_transaksi_umum(transaction_id: int) -> dict | None:
             """
             SELECT
                 t.transactionid,
-                t.transactionno,
+                t.transactionno AS transaction_no,
                 CAST(t.actualdate AS VARCHAR) AS actual_date,
                 t.description,
                 t.referenceno                AS reference_no,
                 t.branchcode                 AS branch_code,
                 t.inputer,
-                t.authstatus,
+                t.authstatus AS auth_status,
                 t.amount
             FROM transaction.transaction t
             WHERE t.transactionid = $1 AND t.transactioncode = 'GT'

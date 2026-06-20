@@ -7,13 +7,13 @@ from fastapi.responses import JSONResponse
 from app.modules.authorization import service as otorisasi_service
 from app.shared.response import err, ok
 from . import general_service
-from .general_schema import TransaksiUmumCreate
+from .general_schema import GeneralCreate
 
-router = APIRouter(prefix='/transaksi/umum', tags=['transaksi-umum'])
+router = APIRouter(prefix='/transaction/general', tags=['general-transaction'])
 
 
 # Lookup endpoints
-@router.get('/lookup/kasbank')
+@router.get('/lookup/cash-bank')
 async def lookup_kasbank(
     search: str = Query(default=''),
     branch_code: str = Query(default=''),
@@ -23,7 +23,7 @@ async def lookup_kasbank(
     return ok({'rows': rows})
 
 
-@router.get('/lookup/produk')
+@router.get('/lookup/product')
 async def lookup_produk(
     search: str = Query(default=''),
     branch_code: str = Query(default=''),
@@ -36,7 +36,7 @@ async def lookup_produk(
     return ok({'rows': rows})
 
 
-@router.get('/lookup/penyaluran')
+@router.get('/lookup/distribution')
 async def lookup_penyaluran(search: str = Query(default='')):
     """Search distribution/penyaluran programs."""
     rows = await general_service.lookup_penyaluran(search=search)
@@ -90,7 +90,7 @@ async def get_transaksi_umum(transaction_id: int):
 
 
 @router.post('')
-async def create_transaksi_umum(body: TransaksiUmumCreate):
+async def create_general(body: GeneralCreate):
     """Create GT transaction via otorisasi save-and-submit.
 
     Supports 4 item types:

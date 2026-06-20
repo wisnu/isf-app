@@ -9,7 +9,7 @@ from app.services.auth import require_menu
 from app.services.proxy import get_api_python
 from app.shared.config import settings
 
-router = APIRouter(prefix='/transaksi-umum', tags=['transaksi-umum'])
+router = APIRouter(prefix='/general-transaction', tags=['general-transaction'])
 
 _MENU = 'finance.transactions.general'
 
@@ -23,7 +23,7 @@ def _session(request: Request) -> dict:
 
 
 @router.get('/')
-async def list_transaksi_umum(
+async def list_general_transaction(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     page: int = Query(default=1, ge=1),
@@ -43,12 +43,12 @@ async def list_transaksi_umum(
     if search:
         params['search'] = search
 
-    downstream = await get_api_python('/api/transaksi/umum', params=params)
+    downstream = await get_api_python('/api/transaction/general', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/lookup/kasbank')
-async def lookup_kasbank(
+@router.get('/lookup/cash-bank')
+async def lookup_cash_bank(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     search: str = Query(default=''),
@@ -60,18 +60,18 @@ async def lookup_kasbank(
         params['search'] = search
     if s['branch']:
         params['branch_code'] = s['branch']
-    downstream = await get_api_python('/api/transaksi/umum/lookup/kasbank', params=params)
+    downstream = await get_api_python('/api/transaction/general/lookup/cash-bank', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/lookup/produk')
-async def lookup_produk(
+@router.get('/lookup/product')
+async def lookup_product(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     search: str = Query(default=''),
     fund_entity: int = Query(default=0),
 ):
-    """Proxy lookup produk penghimpunan ke api-python."""
+    """Proxy lookup product penghimpunan ke api-python."""
     s = _session(request)
     params: dict = {}
     if search:
@@ -80,21 +80,21 @@ async def lookup_produk(
         params['fund_entity'] = fund_entity
     if s['branch']:
         params['branch_code'] = s['branch']
-    downstream = await get_api_python('/api/transaksi/umum/lookup/produk', params=params)
+    downstream = await get_api_python('/api/transaction/general/lookup/product', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/lookup/penyaluran')
-async def lookup_penyaluran(
+@router.get('/lookup/distribution')
+async def lookup_distribution(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     search: str = Query(default=''),
 ):
-    """Proxy lookup program penyaluran ke api-python."""
+    """Proxy lookup program distribution ke api-python."""
     params: dict = {}
     if search:
         params['search'] = search
-    downstream = await get_api_python('/api/transaksi/umum/lookup/penyaluran', params=params)
+    downstream = await get_api_python('/api/transaction/general/lookup/distribution', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -108,22 +108,22 @@ async def lookup_donor(
     params: dict = {}
     if search:
         params['search'] = search
-    downstream = await get_api_python('/api/transaksi/umum/lookup/donor', params=params)
+    downstream = await get_api_python('/api/transaction/general/lookup/donor', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.get('/{transaction_id}')
-async def get_transaksi_umum(
+async def get_general_transaction(
     request: Request,
     transaction_id: int,
     _: str = Depends(require_menu(_MENU)),
 ):
-    downstream = await get_api_python(f'/api/transaksi/umum/{transaction_id}')
+    downstream = await get_api_python(f'/api/transaction/general/{transaction_id}')
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.post('/')
-async def create_transaksi_umum(
+async def create_general_transaction(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
 ):
@@ -132,7 +132,7 @@ async def create_transaksi_umum(
     body['inputer_id'] = s['user_id']
     body['branch_code'] = s['branch'] or '001'
 
-    url = f"{settings.api_python_base_url}/api/transaksi/umum"
+    url = f"{settings.api_python_base_url}/api/transaction/general"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
