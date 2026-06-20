@@ -673,9 +673,9 @@ async def trial_balance(
 _NERACA_MAXLEVEL = 99  # level "semua"
 
 
-def _prev_period_end(t: date, jenisperiode: str) -> date:
+def _prev_period_end(t: date, period_type: str) -> date:
     """Akhir periode sebelumnya. Tahunan → 31 Des thn lalu; Bulanan → akhir bln lalu."""
-    if jenisperiode == "T":
+    if period_type == "T":
         first = date(t.year, 1, 1)
     else:
         first = date(t.year, t.month, 1)
@@ -706,13 +706,13 @@ def _neraca_balance_cte(label: str, date_param: int, branch_param: int | None) -
         )"""
 
 
-async def neraca(
-    branch: str | None, tanggal: str, jenisperiode: str, level: int, today: date
+async def balance_sheet(
+    branch: str | None, tanggal: str, period_type: str, level: int, today: date
 ) -> dict | None:
     t = date.fromisoformat(tanggal)
     if t > today:
         raise ReportValidationError("Tanggal tidak boleh lebih besar dari hari ini.")
-    jp = "T" if (jenisperiode or "T").upper().startswith("T") else "B"
+    jp = "T" if (period_type or "T").upper().startswith("T") else "B"
     prev = _prev_period_end(t, jp)
     maxlevel = level if level and level > 0 else _NERACA_MAXLEVEL
     if not await ping_dwh():
@@ -770,9 +770,9 @@ async def neraca(
         "total_pasiva_prev": tot_p_prev,
         "selisih": selisih,
         "status_balance": "BALANCE" if abs(selisih) < 0.01 else "TIDAK BALANCE",
-        "tanggal": _dmy(tanggal),
-        "tanggal_prev": _dmy(prev.isoformat()),
-        "jenisperiode": "Tahunan" if jp == "T" else "Bulanan",
+        "date": _dmy(tanggal),
+        "date_prev": _dmy(prev.isoformat()),
+        "period_type": "Tahunan" if jp == "T" else "Bulanan",
         "konsolidasi": branch is None,
     }
 
@@ -843,7 +843,7 @@ async def _balancesum_balance(
     return {r["item_code"]: r["bal"] for r in rows}
 
 
-async def aruskas(branch: str | None, begin: str, end: str, today: date) -> dict | None:
+async def cash_flow(branch: str | None, begin: str, end: str, today: date) -> dict | None:
     b = date.fromisoformat(begin)
     e = date.fromisoformat(end)
     if b > e:
@@ -1098,7 +1098,7 @@ async def _zakat_collection_split(
     return corporate, personal
 
 
-async def perubahan_dana(branch: str | None, begin: str, end: str) -> dict | None:
+async def fund_changes(branch: str | None, begin: str, end: str) -> dict | None:
     b = date.fromisoformat(begin)
     e = date.fromisoformat(end)
     if b > e:
@@ -1286,7 +1286,7 @@ def _detail_section(title: str, members: dict) -> dict:
     return {"title": title, "rows": rows, "total": sum(r["value"] for r in rows)}
 
 
-async def perubahan_dana_detail(branch: str | None, begin: str, end: str) -> dict | None:
+async def fund_changes_detail(branch: str | None, begin: str, end: str) -> dict | None:
     b = date.fromisoformat(begin)
     e = date.fromisoformat(end)
     if b > e:

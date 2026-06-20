@@ -424,20 +424,20 @@ def build_trial_balance_xlsx(payload: dict, branch_label: str) -> bytes:
 # ── Neraca ───────────────────────────────────────────────────────────────────
 
 
-def build_neraca_xlsx(payload: dict, branch_label: str) -> bytes:
+def build_balance_sheet_xlsx(payload: dict, branch_label: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "data"
 
     ws.cell(row=1, column=1, value="NERACA").font = Font(bold=True, size=14)
-    ws.cell(row=2, column=1, value=f"Per Tanggal {payload.get('tanggal')} · Periode {payload.get('jenisperiode')}")
+    ws.cell(row=2, column=1, value=f"Per Tanggal {payload.get('date')} · Periode {payload.get('period_type')}")
     ws.cell(row=3, column=1, value="Cabang").font = Font(bold=True)
     ws.cell(row=3, column=2, value=branch_label)
 
     header_row = 5
     ws.cell(row=header_row, column=1, value="Akun").font = Font(bold=True)
-    c2 = ws.cell(row=header_row, column=6, value=f"Nilai per {payload.get('tanggal')}")
-    c3 = ws.cell(row=header_row, column=7, value=f"Nilai per {payload.get('tanggal_prev')}")
+    c2 = ws.cell(row=header_row, column=6, value=f"Nilai per {payload.get('date')}")
+    c3 = ws.cell(row=header_row, column=7, value=f"Nilai per {payload.get('date_prev')}")
     for c in (c2, c3):
         c.font = Font(bold=True)
         c.alignment = Alignment(horizontal="right")
@@ -492,7 +492,7 @@ def build_neraca_xlsx(payload: dict, branch_label: str) -> bytes:
 # ── Arus Kas ─────────────────────────────────────────────────────────────────
 
 
-def build_aruskas_xlsx(payload: dict, branch_label: str) -> bytes:
+def build_cash_flow_xlsx(payload: dict, branch_label: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "data"
@@ -606,7 +606,7 @@ def build_general_ledger_xlsx(payload: dict, branch_label: str) -> bytes:
 # ── Perubahan Dana ───────────────────────────────────────────────────────────
 
 
-def build_perubahan_dana_xlsx(payload: dict, branch_label: str) -> bytes:
+def build_fund_changes_xlsx(payload: dict, branch_label: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "data"
@@ -666,7 +666,7 @@ def build_perubahan_dana_xlsx(payload: dict, branch_label: str) -> bytes:
 # ── Perubahan Dana Detail ────────────────────────────────────────────────────
 
 
-def build_perubahan_dana_detail_xlsx(payload: dict, branch_label: str) -> bytes:
+def build_fund_changes_detail_xlsx(payload: dict, branch_label: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "data"

@@ -445,15 +445,15 @@ async def trial_balance_export(
 # branch None (resolved) → konsolidasi (hanya user branch_access='all').
 
 
-def _neraca_params(resolved: str | None, tanggal: str, jenisperiode: str, level: int) -> dict:
-    params: dict = {"tanggal": tanggal, "jenisperiode": jenisperiode, "level": level}
+def _balance_sheet_params(resolved: str | None, date: str, period_type: str, level: int) -> dict:
+    params: dict = {"date": date, "period_type": period_type, "level": level}
     if resolved:
         params["branch"] = resolved
     return params
 
 
-@router.get("/neraca/branches")
-async def neraca_branches(
+@router.get("/balance-sheet/branches")
+async def balance_sheet_branches(
     request: Request,
     _: str = Depends(require_menu(_NERACA_MENU)),
 ):
@@ -461,12 +461,12 @@ async def neraca_branches(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/neraca")
-async def neraca(
+@router.get("/balance-sheet")
+async def balance_sheet(
     request: Request,
     _: str = Depends(require_menu(_NERACA_MENU)),
-    tanggal: str = Query(...),
-    jenisperiode: str = Query(default="T"),
+    date: str = Query(...),
+    period_type: str = Query(default="T"),
     level: int = Query(default=0),
     branch: str | None = Query(default=None),
 ):
@@ -474,17 +474,17 @@ async def neraca(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/neraca", params=_neraca_params(resolved, tanggal, jenisperiode, level)
+        "/api/report/balance-sheet", params=_balance_sheet_params(resolved, date, period_type, level)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/neraca/export.xlsx")
-async def neraca_export(
+@router.get("/balance-sheet/export.xlsx")
+async def balance_sheet_export(
     request: Request,
     _: str = Depends(require_menu(_NERACA_MENU)),
-    tanggal: str = Query(...),
-    jenisperiode: str = Query(default="T"),
+    date: str = Query(...),
+    period_type: str = Query(default="T"),
     level: int = Query(default=0),
     branch: str | None = Query(default=None),
 ):
@@ -492,8 +492,8 @@ async def neraca_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/neraca/export.xlsx",
-        params=_neraca_params(resolved, tanggal, jenisperiode, level),
+        "/api/report/balance-sheet/export.xlsx",
+        params=_balance_sheet_params(resolved, date, period_type, level),
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -518,8 +518,8 @@ def _ak_params(resolved: str | None, begin: str, end: str) -> dict:
     return params
 
 
-@router.get("/aruskas/branches")
-async def aruskas_branches(
+@router.get("/cash-flow/branches")
+async def cash_flow_branches(
     request: Request,
     _: str = Depends(require_menu(_ARUSKAS_MENU)),
 ):
@@ -527,8 +527,8 @@ async def aruskas_branches(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/aruskas")
-async def aruskas(
+@router.get("/cash-flow")
+async def cash_flow(
     request: Request,
     _: str = Depends(require_menu(_ARUSKAS_MENU)),
     begin: str = Query(...),
@@ -538,12 +538,12 @@ async def aruskas(
     resolved, error = _resolve_branch(request, branch)
     if error is not None:
         return error
-    downstream = await get_report_api("/api/report/aruskas", params=_ak_params(resolved, begin, end))
+    downstream = await get_report_api("/api/report/cash-flow", params=_ak_params(resolved, begin, end))
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/aruskas/export.xlsx")
-async def aruskas_export(
+@router.get("/cash-flow/export.xlsx")
+async def cash_flow_export(
     request: Request,
     _: str = Depends(require_menu(_ARUSKAS_MENU)),
     begin: str = Query(...),
@@ -554,7 +554,7 @@ async def aruskas_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/aruskas/export.xlsx", params=_ak_params(resolved, begin, end)
+        "/api/report/cash-flow/export.xlsx", params=_ak_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -654,8 +654,8 @@ async def general_ledger_export(
 # ── Perubahan Dana ───────────────────────────────────────────────────────────
 
 
-@router.get("/perubahan-dana/branches")
-async def perubahan_dana_branches(
+@router.get("/fund-changes/branches")
+async def fund_changes_branches(
     request: Request,
     _: str = Depends(require_menu(_PD_MENU)),
 ):
@@ -663,8 +663,8 @@ async def perubahan_dana_branches(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/perubahan-dana")
-async def perubahan_dana(
+@router.get("/fund-changes")
+async def fund_changes(
     request: Request,
     _: str = Depends(require_menu(_PD_MENU)),
     begin: str = Query(...),
@@ -675,13 +675,13 @@ async def perubahan_dana(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/perubahan-dana", params=_tb_params(resolved, begin, end)
+        "/api/report/fund-changes", params=_tb_params(resolved, begin, end)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/perubahan-dana/export.xlsx")
-async def perubahan_dana_export(
+@router.get("/fund-changes/export.xlsx")
+async def fund_changes_export(
     request: Request,
     _: str = Depends(require_menu(_PD_MENU)),
     begin: str = Query(...),
@@ -692,7 +692,7 @@ async def perubahan_dana_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/perubahan-dana/export.xlsx", params=_tb_params(resolved, begin, end)
+        "/api/report/fund-changes/export.xlsx", params=_tb_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -710,8 +710,8 @@ async def perubahan_dana_export(
 # ── Perubahan Dana Detail ────────────────────────────────────────────────────
 
 
-@router.get("/perubahan-dana-detail/branches")
-async def perubahan_dana_detail_branches(
+@router.get("/fund-changes-detail/branches")
+async def fund_changes_detail_branches(
     request: Request,
     _: str = Depends(require_menu(_PDD_MENU)),
 ):
@@ -719,8 +719,8 @@ async def perubahan_dana_detail_branches(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/perubahan-dana-detail")
-async def perubahan_dana_detail(
+@router.get("/fund-changes-detail")
+async def fund_changes_detail(
     request: Request,
     _: str = Depends(require_menu(_PDD_MENU)),
     begin: str = Query(...),
@@ -731,13 +731,13 @@ async def perubahan_dana_detail(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/perubahan-dana-detail", params=_tb_params(resolved, begin, end)
+        "/api/report/fund-changes-detail", params=_tb_params(resolved, begin, end)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/perubahan-dana-detail/export.xlsx")
-async def perubahan_dana_detail_export(
+@router.get("/fund-changes-detail/export.xlsx")
+async def fund_changes_detail_export(
     request: Request,
     _: str = Depends(require_menu(_PDD_MENU)),
     begin: str = Query(...),
@@ -748,7 +748,7 @@ async def perubahan_dana_detail_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/perubahan-dana-detail/export.xlsx", params=_tb_params(resolved, begin, end)
+        "/api/report/fund-changes-detail/export.xlsx", params=_tb_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())

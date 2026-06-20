@@ -36,9 +36,9 @@ interface NeracaPayload {
   total_pasiva_prev: number
   selisih: number
   status_balance: string
-  tanggal: string
-  tanggal_prev: string
-  jenisperiode: string
+  date: string
+  date_prev: string
+  period_type: string
   konsolidasi: boolean
 }
 interface BranchOption { code: string; name: string }
@@ -73,7 +73,7 @@ const idr = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFr
 const fmt = (n: number) => idr.format(Math.round(n ?? 0))
 
 const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.value)}` : '')
-const baseQS = () => `tanggal=${tanggal.value}&jenisperiode=${jenisperiode.value}&level=${level.value}${branchQS()}`
+const baseQS = () => `date=${tanggal.value}&period_type=${jenisperiode.value}&level=${level.value}${branchQS()}`
 
 // Rows dengan sentinel total di akhir
 const aktivaRows = computed<NeracaTableRow[]>(() => {
@@ -95,7 +95,7 @@ function isTotal(r: NeracaTableRow): r is NeracaTotalRow { return '__isTotal' in
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/neraca/branches')
+    branches.value = await api.get<BranchOption[]>('/api/report/balance-sheet/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {
@@ -107,7 +107,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<NeracaPayload>(`/api/report/neraca?${baseQS()}`)
+    data.value = await api.get<NeracaPayload>(`/api/report/balance-sheet?${baseQS()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -122,7 +122,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/neraca/export.xlsx?${baseQS()}`, `neraca-${ts}.xlsx`)
+    await api.downloadBlob(`/api/report/balance-sheet/export.xlsx?${baseQS()}`, `neraca-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {
@@ -192,7 +192,7 @@ onMounted(async () => {
           {{ data.status_balance }}
         </span>
         <span class="text-muted">Selisih Aktiva − Pasiva: <span class="tabular-nums font-medium text-foreground">{{ fmt(data.selisih) }}</span></span>
-        <span class="text-muted ml-auto text-xs">Per {{ data.tanggal }} · Pembanding {{ data.tanggal_prev }} ({{ data.jenisperiode }})</span>
+        <span class="text-muted ml-auto text-xs">Per {{ data.date }} · Pembanding {{ data.date_prev }} ({{ data.period_type }})</span>
       </div>
 
       <!-- Tabel AKTIVA -->
@@ -214,7 +214,7 @@ onMounted(async () => {
             </template>
           </Column>
           <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-            <template #header>Nilai per {{ data.tanggal }}</template>
+            <template #header>Nilai per {{ data.date }}</template>
             <template #body="{ data: r }">
               <span v-if="isTotal(r)"
                     class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-semibold"
@@ -224,7 +224,7 @@ onMounted(async () => {
             </template>
           </Column>
           <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-            <template #header>Nilai per {{ data.tanggal_prev }}</template>
+            <template #header>Nilai per {{ data.date_prev }}</template>
             <template #body="{ data: r }">
               <span v-if="isTotal(r)"
                     class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-semibold"
@@ -253,7 +253,7 @@ onMounted(async () => {
             </template>
           </Column>
           <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-            <template #header>Nilai per {{ data.tanggal }}</template>
+            <template #header>Nilai per {{ data.date }}</template>
             <template #body="{ data: r }">
               <span v-if="isTotal(r)"
                     class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-bold text-primary">{{ fmt(r.balance) }}</span>
@@ -262,7 +262,7 @@ onMounted(async () => {
             </template>
           </Column>
           <Column :pt="{ headerCell: { class: 'text-right px-3 py-1 font-semibold whitespace-nowrap' } }">
-            <template #header>Nilai per {{ data.tanggal_prev }}</template>
+            <template #header>Nilai per {{ data.date_prev }}</template>
             <template #body="{ data: r }">
               <span v-if="isTotal(r)"
                     class="block text-right tabular-nums whitespace-nowrap px-3 py-1 font-bold text-primary">{{ fmt(r.balance_prev) }}</span>

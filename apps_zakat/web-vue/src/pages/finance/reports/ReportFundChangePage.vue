@@ -46,7 +46,7 @@ const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.valu
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/perubahan-dana/branches')
+    branches.value = await api.get<BranchOption[]>('/api/report/fund-changes/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {
@@ -58,7 +58,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<PDPayload>(`/api/report/perubahan-dana?begin=${begin.value}&end=${end.value}${branchQS()}`)
+    data.value = await api.get<PDPayload>(`/api/report/fund-changes?begin=${begin.value}&end=${end.value}${branchQS()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -73,7 +73,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/perubahan-dana/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`, `perubahandana-${ts}.xlsx`)
+    await api.downloadBlob(`/api/report/fund-changes/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`, `perubahandana-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {

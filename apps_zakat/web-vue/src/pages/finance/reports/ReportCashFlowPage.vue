@@ -74,7 +74,7 @@ const tableRows = computed<AKTableRow[]>(() => {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/aruskas/branches')
+    branches.value = await api.get<BranchOption[]>('/api/report/cash-flow/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {
@@ -86,7 +86,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<AKPayload>(`/api/report/aruskas?begin=${begin.value}&end=${end.value}${branchQS()}`)
+    data.value = await api.get<AKPayload>(`/api/report/cash-flow?begin=${begin.value}&end=${end.value}${branchQS()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -102,7 +102,7 @@ async function exportXlsx() {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
     await api.downloadBlob(
-      `/api/report/aruskas/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`,
+      `/api/report/cash-flow/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`,
       `aruskas-${ts}.xlsx`,
     )
   } catch (e) {

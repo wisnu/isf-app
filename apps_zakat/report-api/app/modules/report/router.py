@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
 from app.modules.report.export import (
-    build_aruskas_xlsx,
+    build_cash_flow_xlsx,
     build_amil_cash_xlsx,
     build_distribution_xlsx,
     build_collection_xlsx,
@@ -15,19 +15,19 @@ from app.modules.report.export import (
     build_upz_xlsx,
     build_cash_monthly_xlsx,
     build_general_ledger_xlsx,
-    build_perubahan_dana_xlsx,
-    build_perubahan_dana_detail_xlsx,
+    build_fund_changes_xlsx,
+    build_fund_changes_detail_xlsx,
     build_cash_mutation_xlsx,
     build_cash_summary_xlsx,
     build_general_transaction_xlsx,
     build_journal_daily_xlsx,
-    build_neraca_xlsx,
+    build_balance_sheet_xlsx,
     build_trial_balance_xlsx,
 )
 from app.modules.report.service import (
     CAP,
     ReportValidationError,
-    aruskas,
+    cash_flow,
     amil_cash,
     amil_cash_count,
     amil_cash_rows,
@@ -62,9 +62,9 @@ from app.modules.report.service import (
     list_branches,
     list_cash_accounts,
     list_detail_accounts,
-    neraca,
-    perubahan_dana,
-    perubahan_dana_detail,
+    balance_sheet,
+    fund_changes,
+    fund_changes_detail,
     trial_balance,
 )
 from app.shared.response import err, ok
@@ -368,15 +368,15 @@ async def trial_balance_xlsx(
 # ── Neraca ───────────────────────────────────────────────────────────────────
 
 
-@router.get("/neraca")
-async def neraca_ep(
-    tanggal: str = Query(...),
-    jenisperiode: str = Query(default="T"),
+@router.get("/balance-sheet")
+async def balance_sheet_ep(
+    date: str = Query(...),
+    period_type: str = Query(default="T"),
     level: int = Query(default=0),
     branch: str | None = Query(default=None),
 ):
     try:
-        data = await neraca(_tb_branch(branch), tanggal, jenisperiode, level, _date.today())
+        data = await balance_sheet(_tb_branch(branch), date, period_type, level, _date.today())
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -384,16 +384,16 @@ async def neraca_ep(
     return ok(data)
 
 
-@router.get("/neraca/export.xlsx")
-async def neraca_xlsx(
-    tanggal: str = Query(...),
-    jenisperiode: str = Query(default="T"),
+@router.get("/balance-sheet/export.xlsx")
+async def balance_sheet_xlsx(
+    date: str = Query(...),
+    period_type: str = Query(default="T"),
     level: int = Query(default=0),
     branch: str | None = Query(default=None),
 ):
     b = _tb_branch(branch)
     try:
-        data = await neraca(b, tanggal, jenisperiode, level, _date.today())
+        data = await balance_sheet(b, date, period_type, level, _date.today())
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -403,8 +403,8 @@ async def neraca_xlsx(
         label = f"{b} - {binfo[0]['name']}" if binfo else b
     else:
         label = "KONSOLIDASI"
-    xlsx = build_neraca_xlsx(data, label)
-    filename = f"neraca-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    xlsx = build_balance_sheet_xlsx(data, label)
+    filename = f"balance_sheet-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,
@@ -415,14 +415,14 @@ async def neraca_xlsx(
 # ── Arus Kas ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/aruskas")
-async def aruskas_ep(
+@router.get("/cash-flow")
+async def cash_flow_ep(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     try:
-        data = await aruskas(_tb_branch(branch), begin, end, _date.today())
+        data = await cash_flow(_tb_branch(branch), begin, end, _date.today())
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -430,15 +430,15 @@ async def aruskas_ep(
     return ok(data)
 
 
-@router.get("/aruskas/export.xlsx")
-async def aruskas_xlsx(
+@router.get("/cash-flow/export.xlsx")
+async def cash_flow_xlsx(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     b = _tb_branch(branch)
     try:
-        data = await aruskas(b, begin, end, _date.today())
+        data = await cash_flow(b, begin, end, _date.today())
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -448,8 +448,8 @@ async def aruskas_xlsx(
         label = f"{b} - {binfo[0]['name']}" if binfo else b
     else:
         label = "KONSOLIDASI"
-    xlsx = build_aruskas_xlsx(data, label)
-    filename = f"aruskas-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
+    xlsx = build_cash_flow_xlsx(data, label)
+    filename = f"cash_flow-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
         media_type=_XLSX_MIME,
@@ -515,14 +515,14 @@ async def general_ledger_xlsx(
 # ── Perubahan Dana ───────────────────────────────────────────────────────────
 
 
-@router.get("/perubahan-dana")
-async def perubahan_dana_ep(
+@router.get("/fund-changes")
+async def fund_changes_ep(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     try:
-        data = await perubahan_dana(_tb_branch(branch), begin, end)
+        data = await fund_changes(_tb_branch(branch), begin, end)
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -530,15 +530,15 @@ async def perubahan_dana_ep(
     return ok(data)
 
 
-@router.get("/perubahan-dana/export.xlsx")
-async def perubahan_dana_xlsx(
+@router.get("/fund-changes/export.xlsx")
+async def fund_changes_xlsx(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     b = _tb_branch(branch)
     try:
-        data = await perubahan_dana(b, begin, end)
+        data = await fund_changes(b, begin, end)
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -548,7 +548,7 @@ async def perubahan_dana_xlsx(
         label = f"{b} - {binfo[0]['name']}" if binfo else b
     else:
         label = "KONSOLIDASI"
-    xlsx = build_perubahan_dana_xlsx(data, label)
+    xlsx = build_fund_changes_xlsx(data, label)
     filename = f"perubahandana-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
@@ -560,14 +560,14 @@ async def perubahan_dana_xlsx(
 # ── Perubahan Dana Detail ────────────────────────────────────────────────────
 
 
-@router.get("/perubahan-dana-detail")
-async def perubahan_dana_detail_ep(
+@router.get("/fund-changes-detail")
+async def fund_changes_detail_ep(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     try:
-        data = await perubahan_dana_detail(_tb_branch(branch), begin, end)
+        data = await fund_changes_detail(_tb_branch(branch), begin, end)
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -575,15 +575,15 @@ async def perubahan_dana_detail_ep(
     return ok(data)
 
 
-@router.get("/perubahan-dana-detail/export.xlsx")
-async def perubahan_dana_detail_xlsx(
+@router.get("/fund-changes-detail/export.xlsx")
+async def fund_changes_detail_xlsx(
     begin: str = Query(...),
     end: str = Query(...),
     branch: str | None = Query(default=None),
 ):
     b = _tb_branch(branch)
     try:
-        data = await perubahan_dana_detail(b, begin, end)
+        data = await fund_changes_detail(b, begin, end)
     except ReportValidationError as ex:
         return JSONResponse(status_code=422, content=err("INVALID_PARAM", str(ex)))
     if data is None:
@@ -593,7 +593,7 @@ async def perubahan_dana_detail_xlsx(
         label = f"{b} - {binfo[0]['name']}" if binfo else b
     else:
         label = "KONSOLIDASI"
-    xlsx = build_perubahan_dana_detail_xlsx(data, label)
+    xlsx = build_fund_changes_detail_xlsx(data, label)
     filename = f"perubahandanadetail-{datetime.now():%Y%m%d-%H%M%S}.xlsx"
     return Response(
         content=xlsx,
