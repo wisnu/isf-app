@@ -13,12 +13,12 @@ import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CashAccountOption {
-  cashaccountno: string
+  cash_account_no: string
   accountno: string
-  accountname: string
-  branchcode: string
+  account_name: string
+  branch_code: string
   balance: number | null
-  cashaccounttype: string
+  cash_account_type: string
 }
 
 interface SelectOption {
@@ -42,7 +42,7 @@ const formRefNo = shallowRef('')
 // Raw account data (used for balance display and submit payload)
 const allAccounts = shallowRef<CashAccountOption[]>([])
 
-// SearchSelect v-model: plain cashaccountno string
+// SearchSelect v-model: plain cash_account_no string
 const sourceSelectedValue = shallowRef('')
 const destSelectedValue = shallowRef('')
 
@@ -52,25 +52,25 @@ const fmt = (n: number) => idr.format(n)
 // ── Options ───────────────────────────────────────────────────────────────────
 const accountOptions = computed<SelectOption[]>(() =>
   allAccounts.value.map((a) => ({
-    value: a.cashaccountno,
-    label: `${a.cashaccountno}  ${a.accountname}`,
+    value: a.cash_account_no,
+    label: `${a.cash_account_no}  ${a.account_name}`,
   }))
 )
 
 // ── Derived selected objects (for metadata display & submit) ──────────────────
 const sourceAccount = computed<CashAccountOption | null>(
-  () => allAccounts.value.find((a) => a.cashaccountno === sourceSelectedValue.value) ?? null
+  () => allAccounts.value.find((a) => a.cash_account_no === sourceSelectedValue.value) ?? null
 )
 
 const destAccount = computed<CashAccountOption | null>(
-  () => allAccounts.value.find((a) => a.cashaccountno === destSelectedValue.value) ?? null
+  () => allAccounts.value.find((a) => a.cash_account_no === destSelectedValue.value) ?? null
 )
 
 // ── Load accounts on mount ────────────────────────────────────────────────────
 async function loadAccounts() {
   try {
     const res = await api.get<{ rows: CashAccountOption[] }>(
-      '/api/transaksi/transfer-antar-rekening/lookup/cash-accounts?search='
+      '/api/transaction/inter-account-transfer/lookup/cash-accounts?search='
     )
     allAccounts.value = res.rows ?? []
   } catch {
@@ -84,7 +84,7 @@ onMounted(loadAccounts)
 async function submit() {
   if (!sourceAccount.value) { formError.value = 'Rekening Sumber wajib dipilih'; return }
   if (!destAccount.value) { formError.value = 'Rekening Tujuan wajib dipilih'; return }
-  if (sourceAccount.value.cashaccountno === destAccount.value.cashaccountno) {
+  if (sourceAccount.value.cash_account_no === destAccount.value.cash_account_no) {
     formError.value = 'Rekening Sumber dan Tujuan tidak boleh sama'
     return
   }
@@ -97,11 +97,11 @@ async function submit() {
   formError.value = null
   try {
     const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/transaksi/transfer-antar-rekening/',
+      '/api/transaction/inter-account-transfer/',
       {
         actual_date: formDate.value,
-        source_account_no: sourceAccount.value.cashaccountno,
-        dest_account_no: destAccount.value.cashaccountno,
+        source_account_no: sourceAccount.value.cash_account_no,
+        dest_account_no: destAccount.value.cash_account_no,
         amount: formAmount.value,
         description: formDescription.value,
         reference_no: formRefNo.value,
@@ -140,7 +140,7 @@ async function submit() {
           placeholder="Cari nama rekening atau nomor..."
         />
         <p v-if="sourceAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-          {{ sourceAccount.cashaccountno }}
+          {{ sourceAccount.cash_account_no }}
           <span v-if="sourceAccount.balance !== null"> · Saldo: {{ fmt(sourceAccount.balance) }}</span>
         </p>
       </div>
@@ -154,7 +154,7 @@ async function submit() {
           placeholder="Cari nama rekening atau nomor..."
         />
         <p v-if="destAccount" class="mt-1 text-[10px] text-muted-foreground font-mono">
-          {{ destAccount.cashaccountno }}
+          {{ destAccount.cash_account_no }}
           <span v-if="destAccount.balance !== null"> · Saldo: {{ fmt(destAccount.balance) }}</span>
         </p>
       </div>

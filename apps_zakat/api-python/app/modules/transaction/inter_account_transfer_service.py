@@ -13,18 +13,18 @@ from app.shared.db import get_pool
 _LIST_SELECT = """
     SELECT
         t.transactionid,
-        t.transactionno,
-        CAST(t.actualdate AS VARCHAR) AS actualdate,
+        t.transactionno AS transaction_no,
+        CAST(t.actualdate AS VARCHAR) AS actual_date,
         CAST(t.amount AS FLOAT) AS amount,
-        t.authstatus,
-        t.branchcode,
+        t.authstatus AS auth_status,
+        t.branchcode AS branch_code,
         t.inputer,
         COALESCE(t.description, '') AS description,
         COALESCE(t.referenceno, '') AS reference_no,
         fa_src.accountname AS source_account_name,
-        ca_src.cashaccountno AS source_cashaccountno,
+        ca_src.cashaccountno AS source_cash_account_no,
         fa_dst.accountname AS dest_account_name,
-        ca_dst.cashaccountno AS dest_cashaccountno
+        ca_dst.cashaccountno AS dest_cash_account_no
     FROM transaction.transaction t
     LEFT JOIN transaction.transactionitem ti_src
         ON ti_src.transactionid = t.transactionid AND ti_src.mutationtype = 'C'
@@ -81,8 +81,8 @@ async def list_transfers(
 async def get_transfer_detail(db: Connection, transaction_id: int) -> dict | None:
     row = await db.fetchrow(
         f"""{_LIST_SELECT.replace("fa_src.accountname", "fa_src.accountname").replace("fa_dst.accountname", "fa_dst.accountname")},
-            ti_src.refaccountno AS source_accountno,
-            ti_dst.refaccountno AS dest_accountno
+            ti_src.refaccountno AS source_account_no,
+            ti_dst.refaccountno AS dest_account_no
         FROM transaction.transaction t
         LEFT JOIN transaction.transactionitem ti_src
             ON ti_src.transactionid = t.transactionid AND ti_src.mutationtype = 'C'
@@ -124,12 +124,12 @@ async def lookup_cash_accounts(search: str = "", branch_code: str = "") -> list[
 
     rows = await pool.fetch(
         f"""SELECT
-                ca.cashaccountno,
-                ca.accountno,
-                fa.accountname,
-                COALESCE(fa.branchcode, '') AS branchcode,
+                ca.cashaccountno AS cash_account_no,
+                ca.accountno AS account_no,
+                fa.accountname AS account_name,
+                COALESCE(fa.branchcode, '') AS branch_code,
                 CAST(fa.balance AS FLOAT) AS balance,
-                COALESCE(ca.cashaccounttype, '') AS cashaccounttype
+                COALESCE(ca.cashaccounttype, '') AS cash_account_type
             FROM transaction.cashaccount ca
             JOIN transaction.financialaccount fa ON fa.accountno = ca.accountno
             {where}

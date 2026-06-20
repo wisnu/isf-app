@@ -8,7 +8,7 @@ from app.services.auth import require_menu
 from app.services.proxy import get_api_python
 from app.shared.config import settings
 
-router = APIRouter(prefix='/transaksi/transfer-antar-rekening', tags=['transfer-antar-rekening'])
+router = APIRouter(prefix='/transaction/inter-account-transfer', tags=['inter-account-transfer'])
 
 _MENU = 'finance.transactions.fund_transfer'
 
@@ -33,7 +33,7 @@ async def lookup_cash_accounts(
         params['search'] = search
     if s['branch']:
         params['branch_code'] = s['branch']
-    downstream = await get_api_python('/api/transaksi/transfer-antar-rekening/lookup/cash-accounts', params=params)
+    downstream = await get_api_python('/api/transaction/inter-account-transfer/lookup/cash-accounts', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -54,7 +54,7 @@ async def list_transfers(
         params['date_from'] = date_from
     if date_to:
         params['date_to'] = date_to
-    downstream = await get_api_python('/api/transaksi/transfer-antar-rekening', params=params)
+    downstream = await get_api_python('/api/transaction/inter-account-transfer', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -63,7 +63,7 @@ async def get_transfer(
     transaction_id: int,
     _: str = Depends(require_menu(_MENU)),
 ):
-    downstream = await get_api_python(f'/api/transaksi/transfer-antar-rekening/{transaction_id}')
+    downstream = await get_api_python(f'/api/transaction/inter-account-transfer/{transaction_id}')
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -74,7 +74,7 @@ async def create_transfer(
 ):
     s = _session(request)
     body = await request.json()
-    url = f"{settings.api_python_base_url}/api/transaksi/transfer-antar-rekening"
+    url = f"{settings.api_python_base_url}/api/transaction/inter-account-transfer"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params={
             'user_id': s['user_id'],

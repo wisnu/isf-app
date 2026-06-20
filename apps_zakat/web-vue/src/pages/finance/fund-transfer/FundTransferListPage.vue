@@ -16,18 +16,18 @@ import type { MenuKey } from '@/lib/menu/registry'
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface TransferRow {
   transactionid: number
-  transactionno: string | null
-  actualdate: string
+  transaction_no: string | null
+  actual_date: string
   amount: number
-  authstatus: string
-  branchcode: string
+  auth_status: string
+  branch_code: string
   inputer: string
   description: string | null
   reference_no: string | null
   source_account_name: string | null
-  source_cashaccountno: string | null
+  source_cash_account_no: string | null
   dest_account_name: string | null
-  dest_cashaccountno: string | null
+  dest_cash_account_no: string | null
 }
 
 interface ListResponse {
@@ -79,7 +79,7 @@ async function load() {
       page: String(page.value),
       limit: String(pageSize.value),
     })
-    const res = await api.get<ListResponse>(`/api/transaksi/transfer-antar-rekening/?${params}`)
+    const res = await api.get<ListResponse>(`/api/transaction/inter-account-transfer/?${params}`)
     rows.value = res.rows ?? []
     totalRec.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -190,20 +190,20 @@ function authClass(status: string) {
               :key="row.transactionid"
               class="hover:bg-muted/30 transition-colors"
             >
-              <td class="px-4 py-2 text-xs font-mono">{{ row.transactionno ?? '-' }}</td>
-              <td class="px-4 py-2 text-xs">{{ dmy(row.actualdate) }}</td>
+              <td class="px-4 py-2 text-xs font-mono">{{ row.transaction_no ?? '-' }}</td>
+              <td class="px-4 py-2 text-xs">{{ dmy(row.actual_date) }}</td>
               <td class="px-4 py-2 text-xs">
-                <span class="font-mono text-[10px] text-muted-foreground">{{ row.source_cashaccountno }}</span>
+                <span class="font-mono text-[10px] text-muted-foreground">{{ row.source_cash_account_no }}</span>
                 <span v-if="row.source_account_name" class="ml-1">{{ row.source_account_name }}</span>
               </td>
               <td class="px-4 py-2 text-xs">
-                <span class="font-mono text-[10px] text-muted-foreground">{{ row.dest_cashaccountno }}</span>
+                <span class="font-mono text-[10px] text-muted-foreground">{{ row.dest_cash_account_no }}</span>
                 <span v-if="row.dest_account_name" class="ml-1">{{ row.dest_account_name }}</span>
               </td>
               <td class="px-4 py-2 text-xs text-right font-tabular">{{ fmt(row.amount) }}</td>
               <td class="px-4 py-2 text-xs text-center">
-                <span :class="['inline-block px-2 py-1 rounded text-[10px] font-semibold', authClass(row.authstatus)]">
-                  {{ authLabel(row.authstatus) }}
+                <span :class="['inline-block px-2 py-1 rounded text-[10px] font-semibold', authClass(row.auth_status)]">
+                  {{ authLabel(row.auth_status) }}
                 </span>
               </td>
               <td class="px-4 py-2 text-xs">{{ row.inputer }}</td>
