@@ -467,6 +467,57 @@ Pola `SearchSelect`: `*SelectedValue = shallowRef('')` + `*Options = computed(()
 
 ---
 
+## Rule 13: Page Scaffold & Routing — Standar Membuat Halaman Baru
+
+Setiap halaman baru wajib lewat 3 langkah yang **harus sinkron** (3-way consistency):
+
+1. **`lib/menu/registry.ts`** — daftarkan key di `MENU_KEYS` (bahasa Inggris, mis. `finance.cash`).
+2. **`router/index.ts`** — tambah route bernama (named route, kebab, prefix domain Inggris):
+   ```ts
+   {
+     path: '/finance/cash/create',
+     name: 'finance-cash-create',
+     component: () => import('@/pages/finance/cash/CashCreatePage.vue'),
+     meta: { title: 'Tambah Kas', menu_key: 'finance.cash' as MenuKey },
+   },
+   ```
+3. **seed SQL** (`infra/db/migrations/isf_auth/seed-menu-*.sql`) — `menu` + `role_menu` (ditangani `nuwis-seed-gen`).
+
+### `meta` wajib
+- `title` — **string ini yang muncul di breadcrumb** app header. Wajib diisi & deskriptif.
+- `menu_key` — `as MenuKey`; dipakai guard `beforeEach` untuk RBAC (Rule 8).
+- `public: true` / `requiresNoTenant: true` hanya untuk login/no-tenant.
+
+### Breadcrumb — JANGAN render judul halaman sendiri
+App shell (`AppHeader.vue`) **otomatis** menampilkan breadcrumb `Induk / Judul`
+dari `meta.title` + prefix nama route (`parentMap`: `finance-…`→domain). Maka:
+
+- **JANGAN** ada `<PageHeader>` atau `<h1>` judul di halaman — itu duplikat breadcrumb.
+- **List page**: langsung render card tabel (Rule 1). Tanpa judul.
+- **Create / Detail page**: awali dengan **tombol Kembali** saja (Rule 12.1), bukan judul.
+  Sub-judul/mode ("Edit"/"Input") boleh sebagai teks kecil `text-xs text-slate-400`.
+- Beri nama route dengan prefix domain yang sudah ada (`finance-`, `dashboard-`, `parameter-`,
+  `admin-`, `profile-`) agar breadcrumb induk benar. Jika butuh crumb eksplisit, set
+  `meta.breadcrumb: string[]` (didukung AppHeader, default tidak dipakai).
+
+### Pilih kerangka per jenis halaman
+| Jenis halaman | Ikuti |
+|---|---|
+| Daftar/List (tabel + paginasi) | **Rule 1** (paginasi di atas, 1 card) + **Rule 11** (tabel) |
+| Form input / Create / Edit | **Rule 12** (card header gelap, token slate/indigo) |
+| Modal CRUD | **Rule 10** (shell) + **Rule 12** (isi field) |
+| Laporan / Report | **Rule 7** (no auto-load, tombol Tampilkan) |
+
+### Async, RBAC, tanggal, ikon
+Selalu: feedback async (Rule 4), `v-if` dari `auth.menus`+`MENU_KEYS` (Rule 8),
+`DateField`/`dmy()` (Rule 2), Lucide (Rule 5), `lib/api/client` (Rule 3).
+
+> Referensi halaman yang sudah sesuai standar: List → `*ListPage.vue` mana pun di
+> `pages/finance/`; Form → `general-transaction/GeneralTransactionCreatePage.vue`
+> dan `fund-distribution/FundDistributionCreatePage.vue`.
+
+---
+
 ## Rule 7: Report Page — Tidak Auto-Load
 
 ```vue
