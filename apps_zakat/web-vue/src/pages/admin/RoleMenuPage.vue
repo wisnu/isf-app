@@ -14,8 +14,8 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { api, ApiError } from '@/lib/api/client'
 
 interface RoleInfo {
-  id_peran: string
-  nama_peran: string
+  role_id: string
+  role_name: string
   user_count: number
 }
 
@@ -27,7 +27,7 @@ interface MenuInfo {
 }
 
 interface MappingPair {
-  id_peran: string
+  role_id: string
   menu_key: string
 }
 
@@ -57,7 +57,7 @@ const current = shallowRef<Set<string>>(new Set())
 const searchRole = shallowRef('')
 const visibleGroups = shallowRef<Set<string>>(new Set())
 
-const pairKey = (id_peran: string, menu_key: string) => `${id_peran}|${menu_key}`
+const pairKey = (role_id: string, menu_key: string) => `${role_id}|${menu_key}`
 
 const dirty = computed(() => {
   const added: MappingPair[] = []
@@ -65,13 +65,13 @@ const dirty = computed(() => {
   for (const k of current.value) {
     if (!original.value.has(k)) {
       const [rp, mk] = k.split('|')
-      added.push({ id_peran: rp, menu_key: mk })
+      added.push({ role_id: rp, menu_key: mk })
     }
   }
   for (const k of original.value) {
     if (!current.value.has(k)) {
       const [rp, mk] = k.split('|')
-      removed.push({ id_peran: rp, menu_key: mk })
+      removed.push({ role_id: rp, menu_key: mk })
     }
   }
   return { added, removed, count: added.length + removed.length }
@@ -97,30 +97,30 @@ const filteredRoles = computed(() => {
   if (!q) return roles.value
   return roles.value.filter(
     (r) =>
-      r.id_peran.toLowerCase().includes(q) ||
-      r.nama_peran.toLowerCase().includes(q)
+      r.role_id.toLowerCase().includes(q) ||
+      r.role_name.toLowerCase().includes(q)
   )
 })
 
-function isChecked(id_peran: string, menu_key: string): boolean {
-  return current.value.has(pairKey(id_peran, menu_key))
+function isChecked(role_id: string, menu_key: string): boolean {
+  return current.value.has(pairKey(role_id, menu_key))
 }
 
-function isCellDirty(id_peran: string, menu_key: string): boolean {
-  const k = pairKey(id_peran, menu_key)
+function isCellDirty(role_id: string, menu_key: string): boolean {
+  const k = pairKey(role_id, menu_key)
   return original.value.has(k) !== current.value.has(k)
 }
 
-function toggleCell(id_peran: string, menu_key: string) {
-  const k = pairKey(id_peran, menu_key)
+function toggleCell(role_id: string, menu_key: string) {
+  const k = pairKey(role_id, menu_key)
   const next = new Set(current.value)
   if (next.has(k)) next.delete(k)
   else next.add(k)
   current.value = next
 }
 
-function toggleRowAll(id_peran: string) {
-  const visibleKeys = filteredMenus.value.map((m) => pairKey(id_peran, m.menu_key))
+function toggleRowAll(role_id: string) {
+  const visibleKeys = filteredMenus.value.map((m) => pairKey(role_id, m.menu_key))
   const allOn = visibleKeys.every((k) => current.value.has(k))
   const next = new Set(current.value)
   if (allOn) {
@@ -132,7 +132,7 @@ function toggleRowAll(id_peran: string) {
 }
 
 function toggleColumnAll(menu_key: string) {
-  const visibleKeys = filteredRoles.value.map((r) => pairKey(r.id_peran, menu_key))
+  const visibleKeys = filteredRoles.value.map((r) => pairKey(r.role_id, menu_key))
   const allOn = visibleKeys.every((k) => current.value.has(k))
   const next = new Set(current.value)
   if (allOn) {
@@ -150,7 +150,7 @@ async function load() {
     const snap = await api.get<Snapshot>('/api/admin/role-menu')
     roles.value = snap.roles
     menus.value = snap.menus
-    const keys = new Set(snap.mapping.map((p) => pairKey(p.id_peran, p.menu_key)))
+    const keys = new Set(snap.mapping.map((p) => pairKey(p.role_id, p.menu_key)))
     original.value = keys
     current.value = new Set(keys)
     // Default semua group menu visible
@@ -176,7 +176,7 @@ async function save() {
   successMsg.value = null
   const mapping: MappingPair[] = [...current.value].map((k) => {
     const [rp, mk] = k.split('|')
-    return { id_peran: rp, menu_key: mk }
+    return { role_id: rp, menu_key: mk }
   })
   try {
     const result = await api.put<UpdateResponse>('/api/admin/role-menu', { mapping })
@@ -265,7 +265,7 @@ onBeforeRouteLeave(() => {
         <FilterGroup label="Cari role">
           <div class="relative">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
-            <Input v-model="searchRole" placeholder="id_peran atau nama..." class="pl-8 text-xs h-8" />
+            <Input v-model="searchRole" placeholder="role_id atau nama..." class="pl-8 text-xs h-8" />
           </div>
         </FilterGroup>
         <FilterGroup label="Group menu">
@@ -315,37 +315,37 @@ onBeforeRouteLeave(() => {
             <tbody>
               <tr
                 v-for="role in filteredRoles"
-                :key="role.id_peran"
+                :key="role.role_id"
                 class="border-b border-border hover:bg-background/50 transition-colors"
               >
                 <td
                   class="p-2 sticky left-0 bg-surface"
                   :title="`${role.user_count} user`"
                 >
-                  <div class="font-mono font-semibold text-[11px]">{{ role.id_peran }}</div>
-                  <div class="text-[10px] text-muted">{{ role.nama_peran }}</div>
+                  <div class="font-mono font-semibold text-[11px]">{{ role.role_id }}</div>
+                  <div class="text-[10px] text-muted">{{ role.role_name }}</div>
                 </td>
                 <td
                   v-for="m in filteredMenus"
                   :key="m.menu_key"
                   class="p-2 text-center transition-colors"
-                  :class="isCellDirty(role.id_peran, m.menu_key)
+                  :class="isCellDirty(role.role_id, m.menu_key)
                     ? 'bg-amber-100 dark:bg-amber-900/30'
                     : ''"
                 >
                   <input
                     type="checkbox"
-                    :checked="isChecked(role.id_peran, m.menu_key)"
+                    :checked="isChecked(role.role_id, m.menu_key)"
                     :disabled="saving"
                     class="cursor-pointer disabled:cursor-not-allowed"
-                    @change="toggleCell(role.id_peran, m.menu_key)"
+                    @change="toggleCell(role.role_id, m.menu_key)"
                   />
                 </td>
                 <td class="p-2 text-center">
                   <button
                     type="button"
                     class="text-[10px] underline text-muted hover:text-foreground transition-colors"
-                    @click="toggleRowAll(role.id_peran)"
+                    @click="toggleRowAll(role.role_id)"
                   >
                     Toggle
                   </button>

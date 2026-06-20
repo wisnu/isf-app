@@ -2,13 +2,13 @@ from pydantic import BaseModel
 
 
 class RoleInfo(BaseModel):
-    id_peran: str
-    nama_peran: str
+    role_id: str
+    role_name: str
     level: int | None = None
 
 
 class BranchInfo(BaseModel):
-    kode_cabang: str
+    branch_code: str
     is_primary: bool = False
 
 

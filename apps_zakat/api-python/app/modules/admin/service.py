@@ -26,7 +26,7 @@ class ValidationError(Exception):
 async def list_role_menu() -> RoleMenuSnapshot:
     role_rows = await fetch_all(
         """
-        SELECT p.id_peran, p.nama_peran,
+        SELECT p.id_peran AS role_id, p.nama_peran AS role_name,
                (SELECT count(DISTINCT id_user) FROM enterprise.listperanuser WHERE id_peran = p.id_peran) AS user_count
         FROM enterprise.peran p
         WHERE p.status_peran = 'A'
@@ -38,7 +38,7 @@ async def list_role_menu() -> RoleMenuSnapshot:
         "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' ORDER BY sort_order, menu_key"
     )
     mapping_rows = await fetch_all_isf_auth(
-        "SELECT id_peran, menu_key FROM isf_auth.role_menu ORDER BY id_peran, menu_key"
+        "SELECT id_peran AS role_id, menu_key FROM isf_auth.role_menu ORDER BY id_peran, menu_key"
     )
 
     return RoleMenuSnapshot(
@@ -59,7 +59,7 @@ async def replace_role_menu(
     hanya dibaca-tulis pada satu DB masing-masing.
     """
     # 3. Cek duplikat (in-memory, sebelum DB)
-    pairs = [(m.id_peran, m.menu_key) for m in mapping]
+    pairs = [(m.role_id, m.menu_key) for m in mapping]
     if len(set(pairs)) != len(pairs):
         seen: set[tuple[str, str]] = set()
         dupes: list[tuple[str, str]] = []
@@ -75,7 +75,7 @@ async def replace_role_menu(
         )
 
     # 1. Validate id_peran semua valid — read-only dari enterprise pool.
-    input_perans = list({m.id_peran for m in mapping})
+    input_perans = list({m.role_id for m in mapping})
     if input_perans:
         valid_rows = await fetch_all(
             "SELECT id_peran FROM enterprise.peran WHERE id_peran = ANY($1::text[]) AND status_peran = 'A'",
@@ -121,14 +121,14 @@ async def replace_role_menu(
             if mapping:
                 await conn.executemany(
                     "INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES ($1, $2, $3)",
-                    [(m.id_peran, m.menu_key, updated_by) for m in mapping],
+                    [(m.role_id, m.menu_key, updated_by) for m in mapping],
                 )
 
     return RoleMenuUpdateResponse(
         updated=True,
         total_rows=len(mapping),
         diff=RoleMenuDiff(
-            added=[MappingPair(id_peran=a, menu_key=b) for a, b in sorted(added_pairs)],
-            removed=[MappingPair(id_peran=a, menu_key=b) for a, b in sorted(removed_pairs)],
+            added=[MappingPair(role_id=a, menu_key=b) for a, b in sorted(added_pairs)],
+            removed=[MappingPair(role_id=a, menu_key=b) for a, b in sorted(removed_pairs)],
         ),
     )

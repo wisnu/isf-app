@@ -43,7 +43,7 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
 
     primary_branch = user.get("kode_cabang")
     branches = [
-        BranchInfo(kode_cabang=b["kode_cabang"], is_primary=(b["kode_cabang"] == primary_branch))
+        BranchInfo(branch_code=b["kode_cabang"], is_primary=(b["kode_cabang"] == primary_branch))
         for b in branch_rows
     ]
 
@@ -51,7 +51,7 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
         user_id=user["id_user"],
         status="active" if user.get("status_profil") == "A" else "inactive",
         roles=[
-            RoleInfo(id_peran=r["id_peran"], nama_peran=r["nama_peran"], level=r["level_peranuser"])
+            RoleInfo(role_id=r["id_peran"], role_name=r["nama_peran"], level=r["level_peranuser"])
             for r in role_rows
         ],
         branches=branches,

@@ -2,8 +2,8 @@ from pydantic import BaseModel
 
 
 class RoleInfo(BaseModel):
-    id_peran: str
-    nama_peran: str
+    role_id: str
+    role_name: str
     user_count: int
 
 
@@ -15,7 +15,7 @@ class MenuInfo(BaseModel):
 
 
 class MappingPair(BaseModel):
-    id_peran: str
+    role_id: str
     menu_key: str
 
 

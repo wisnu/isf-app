@@ -117,10 +117,10 @@ async def login(payload: LoginPayload, request: Request):
 
     request.session["user_id"] = result.user_id
     request.session["active_tenant_id"] = default["id"]
-    request.session["roles"] = [r["id_peran"] for r in profile["roles"]]
-    request.session["branches"] = [b["kode_cabang"] for b in profile["branches"]]
+    request.session["roles"] = [r["role_id"] for r in profile["roles"]]
+    request.session["branches"] = [b["branch_code"] for b in profile["branches"]]
     primary = profile.get("primary_branch") or next(
-        (b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None
+        (b["branch_code"] for b in profile["branches"] if b.get("is_primary")), None
     )
     request.session["primary_branch"] = primary
     request.session["branch_access"] = profile.get("branch_access", "single")
@@ -128,8 +128,8 @@ async def login(payload: LoginPayload, request: Request):
 
     user_public = await build_user_public(
         db, result.user_id,
-        roles=[r["id_peran"] for r in profile["roles"]],
-        branches=[b["kode_cabang"] for b in profile["branches"]],
+        roles=[r["role_id"] for r in profile["roles"]],
+        branches=[b["branch_code"] for b in profile["branches"]],
         primary_branch=primary,
         menus=list(profile["menus"]),
         branch_access=profile.get("branch_access", "single"),
@@ -204,10 +204,10 @@ async def refresh_profile(request: Request):
             status_code=503, content=err("IDENTITY_UNAVAILABLE", "Identity unavailable")
         )
 
-    request.session["roles"] = [r["id_peran"] for r in profile["roles"]]
-    request.session["branches"] = [b["kode_cabang"] for b in profile["branches"]]
+    request.session["roles"] = [r["role_id"] for r in profile["roles"]]
+    request.session["branches"] = [b["branch_code"] for b in profile["branches"]]
     request.session["primary_branch"] = next(
-        (b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None
+        (b["branch_code"] for b in profile["branches"] if b.get("is_primary")), None
     )
     request.session["menus"] = list(profile["menus"])
 

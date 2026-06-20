@@ -143,9 +143,9 @@ async def google_callback(
         return _redirect_with_error(frontend_base, "identity_unavailable")
 
     request.session["user_id"] = user_id
-    request.session["roles"] = [r["id_peran"] for r in profile["roles"]]
-    request.session["branches"] = [b["kode_cabang"] for b in profile["branches"]]
-    primary = next((b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None)
+    request.session["roles"] = [r["role_id"] for r in profile["roles"]]
+    request.session["branches"] = [b["branch_code"] for b in profile["branches"]]
+    primary = next((b["branch_code"] for b in profile["branches"] if b.get("is_primary")), None)
     request.session["primary_branch"] = primary
     request.session["menus"] = list(profile["menus"])
 

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 class MappingPairIn(BaseModel):
-    id_peran: str
+    role_id: str
     menu_key: str
 
 
