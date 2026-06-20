@@ -62,11 +62,11 @@ async def list_pengembalian(
     rows = await db.fetch(
         f"""SELECT DISTINCT
                 t.transactionid,
-                t.transactionno,
-                CAST(t.actualdate AS VARCHAR) AS actualdate,
+                t.transactionno AS transaction_no,
+                CAST(t.actualdate AS VARCHAR) AS actual_date,
                 t.amount,
-                t.authstatus,
-                t.branchcode,
+                t.authstatus AS auth_status,
+                t.branchcode AS branch_code,
                 t.inputer,
                 t.description,
                 t.referenceno AS reference_no,
@@ -85,7 +85,7 @@ async def list_pengembalian(
     return [dict(r) for r in rows], int(total or 0)
 
 
-async def lookup_open_uang_muka(
+async def lookup_open_cash_advance(
     employee_id: int,
     branch_code: str = "",
 ) -> list[dict]:
@@ -100,8 +100,8 @@ async def lookup_open_uang_muka(
     rows = await pool.fetch(
         f"""SELECT
                 t.transactionid,
-                t.transactionno,
-                CAST(t.actualdate AS VARCHAR) AS actualdate,
+                t.transactionno AS transaction_no,
+                CAST(t.actualdate AS VARCHAR) AS actual_date,
                 t.description,
                 ti.amount,
                 ti.transactionitemid

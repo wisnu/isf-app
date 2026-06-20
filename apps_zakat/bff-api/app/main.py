@@ -20,8 +20,8 @@ from app.routers.histori_transaksi import router as histori_transaksi_router
 from app.routers.penyaluran import router as penyaluran_router
 from app.routers.penghimpunan import router as penghimpunan_router
 from app.routers.receivable import router as receivable_router
-from app.routers.uang_muka import router as uang_muka_router
-from app.routers.uang_muka_pengembalian import router as uang_muka_pengembalian_router
+from app.routers.cash_advance import router as cash_advance_router
+from app.routers.cash_advance_settlement import router as cash_advance_settlement_router
 from app.routers.inter_account_transfer import router as inter_account_transfer_router
 from app.routers.otorisasi import router as otorisasi_router
 from app.routers.parameter import router as parameter_router
@@ -111,8 +111,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(penyaluran_router, prefix="/api")
     app.include_router(penghimpunan_router, prefix="/api")
     app.include_router(receivable_router, prefix="/api")
-    app.include_router(uang_muka_router, prefix="/api")
-    app.include_router(uang_muka_pengembalian_router, prefix="/api")
+    app.include_router(cash_advance_router, prefix="/api")
+    app.include_router(cash_advance_settlement_router, prefix="/api")
     app.include_router(inter_account_transfer_router, prefix="/api")
     app.include_router(transaksi_umum_router, prefix="/api")
     app.include_router(amil_income_router, prefix="/api")

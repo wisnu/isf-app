@@ -65,7 +65,7 @@ async function searchEmployees(query: string) {
   }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaksi/uang-muka/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch (e) {
@@ -77,7 +77,7 @@ async function searchEmployees(query: string) {
 async function loadCashAccounts() {
   try {
     const res = await api.get<{ rows: CashAccountLookup[] }>(
-      '/api/transaksi/uang-muka/lookup/cash-account'
+      '/api/transaction/cash-advance/lookup/cash-account'
     )
     cashAccountOptions.value = res.rows ?? []
   } catch (e) {
@@ -145,7 +145,7 @@ async function submitForm() {
       fund_entity: 4,
     }
 
-    await api.post('/api/transaksi/uang-muka', payload)
+    await api.post('/api/transaction/cash-advance', payload)
     toast.success('Transaksi uang muka berhasil disimpan')
     emit('saved')
   } catch (e: unknown) {

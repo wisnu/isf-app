@@ -20,11 +20,11 @@ import type { MenuKey } from '@/lib/menu/registry'
 interface PengembalianRow {
   transaction_id: number
   transaction_no: string | null
-  actualdate: string
+  actual_date: string
   employee_name: string
   employee_id: number
   amount: number
-  authstatus: string
+  auth_status: string
   branch_code: string
   inputer: string
   description: string | null
@@ -80,7 +80,7 @@ async function searchEmployees(query: string) {
   if (!query.trim()) { employeeOptions.value = []; return }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaksi/uang-muka/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch { employeeOptions.value = [] }
@@ -97,7 +97,7 @@ async function load() {
       limit: String(pageSize.value),
     })
     if (selectedEmployee.value) params.set('employee_id', String(selectedEmployee.value.employee_id))
-    const res = await api.get<ListResponse>(`/api/transaksi/uang-muka-pengembalian?${params}`)
+    const res = await api.get<ListResponse>(`/api/transaction/cash-advance-settlement?${params}`)
     rows.value = res.rows ?? []
     totalRec.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -209,11 +209,11 @@ onMounted(load)
         class="border-b border-border hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
       >
         <td class="px-4 py-3 font-mono">{{ row.transaction_no ?? '-' }}</td>
-        <td class="px-4 py-3">{{ dmy(row.actualdate) }}</td>
+        <td class="px-4 py-3">{{ dmy(row.actual_date) }}</td>
         <td class="px-4 py-3">{{ row.employee_name }}</td>
         <td class="px-4 py-3 text-right">{{ fmt(row.amount) }}</td>
         <td class="px-4 py-3 text-center">
-          <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
+          <StatusBadge :status="row.auth_status === 'T' ? 'AUTHORIZED' : 'PENDING'" />
         </td>
         <td class="px-4 py-3">{{ row.inputer }}</td>
       </tr>

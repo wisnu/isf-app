@@ -25,7 +25,7 @@ interface UangMukaRow {
   employee_name: string
   employee_id: number
   amount: number
-  authstatus: string        // 'T'=Authorized, 'F'=Pending
+  auth_status: string        // 'T'=Authorized, 'F'=Pending
   branch_code: string
   inputer: string
   description: string | null
@@ -87,7 +87,7 @@ async function searchEmployees(query: string) {
   }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaksi/uang-muka/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch (e) {
@@ -108,7 +108,7 @@ async function load() {
     })
     if (selectedEmployee.value) params.set('employee_id', String(selectedEmployee.value.employee_id))
 
-    const res = await api.get<ListResponse>(`/api/transaksi/uang-muka?${params}`)
+    const res = await api.get<ListResponse>(`/api/transaction/cash-advance?${params}`)
     rows.value = res.rows ?? []
     totalRec.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -216,7 +216,7 @@ onMounted(load)
         <td class="px-4 py-3">{{ row.employee_name }}</td>
         <td class="px-4 py-3 text-right">{{ fmt(row.amount) }}</td>
         <td class="px-4 py-3 text-center">
-          <StatusBadge :status="row.authstatus === 'T' ? 'AUTHORIZED' : 'PENDING'" />
+          <StatusBadge :status="row.auth_status === 'T' ? 'AUTHORIZED' : 'PENDING'" />
         </td>
         <td class="px-4 py-3">{{ row.inputer }}</td>
       </tr>

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 
-class UangMukaPengembalianCreate(BaseModel):
+class CashAdvanceSettlementCreate(BaseModel):
     """Request to create Pengembalian Uang Muka via otorisasi."""
     actual_date: str          # ISO YYYY-MM-DD
     ref_transaction_no: str   # No transaksi penyerahan (CA), e.g. KK-2026-001-LAZ-0000289

@@ -18,8 +18,8 @@ interface EmployeeLookup {
 
 interface OpenUangMuka {
   transactionid: number
-  transactionno: string
-  actualdate: string
+  transaction_no: string
+  actual_date: string
   description: string | null
   amount: number
   transactionitemid: number
@@ -58,7 +58,7 @@ async function searchEmployees(query: string) {
   if (!query.trim()) { employeeOptions.value = []; return }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaksi/uang-muka/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch { employeeOptions.value = [] }
@@ -70,7 +70,7 @@ async function loadOpenCA(emp: EmployeeLookup) {
   selectedOpenCA.value = null
   try {
     const res = await api.get<{ rows: OpenUangMuka[] }>(
-      `/api/transaksi/uang-muka-pengembalian/lookup/open-uang-muka?employee_id=${emp.employee_id}`
+      `/api/transaction/cash-advance-settlement/lookup/open-cash-advance?employee_id=${emp.employee_id}`
     )
     openCAOptions.value = res.rows ?? []
     if (!openCAOptions.value.length) {
@@ -85,12 +85,12 @@ async function loadOpenCA(emp: EmployeeLookup) {
 
 async function loadCashAccounts() {
   try {
-    const res = await api.get<{ rows: { cashaccountno: string; cashaccountname: string }[] }>(
-      '/api/transaksi/uang-muka/lookup/cash-account'
+    const res = await api.get<{ rows: { cash_account_no: string; cash_account_name: string }[] }>(
+      '/api/transaction/cash-advance/lookup/cash-account'
     )
     cashAccountOptions.value = (res.rows ?? []).map(r => ({
-      cash_account_no: r.cashaccountno,
-      cash_account_name: r.cashaccountname,
+      cash_account_no: r.cash_account_no,
+      cash_account_name: r.cash_account_name,
     }))
   } catch { /* silently fail */ }
 }
@@ -132,7 +132,7 @@ async function submitForm() {
     const emp = selectedEmployee.value!
     const payload = {
       actual_date: actualDate.value,
-      ref_transaction_no: ca.transactionno,
+      ref_transaction_no: ca.transaction_no,
       ref_transaction_item_id: ca.transactionitemid,
       ref_amount: ca.amount,
       employee_id: emp.employee_id,
@@ -142,7 +142,7 @@ async function submitForm() {
       reference_no: referenceNo.value,
       description: description.value,
     }
-    await api.post('/api/transaksi/uang-muka-pengembalian', payload)
+    await api.post('/api/transaction/cash-advance-settlement', payload)
     toast.success('Pengembalian uang muka berhasil disimpan')
     emit('saved')
   } catch (e: unknown) {
@@ -194,14 +194,14 @@ onMounted(loadCashAccounts)
           :loading="loadingCA"
           :disabled="!selectedEmployee"
           placeholder="Pilih transaksi uang muka..."
-          option-label="transactionno"
+          option-label="transaction_no"
           @update:model-value="(v) => (selectedOpenCA = v)"
         />
         <!-- Ref detail (readonly) -->
         <div v-if="selectedOpenCA" class="mt-2 rounded bg-muted/50 border border-border px-3 py-2 text-xs space-y-1">
           <div class="flex gap-4">
             <span class="text-muted-foreground">Tanggal CA:</span>
-            <span>{{ dmy(selectedOpenCA.actualdate) }}</span>
+            <span>{{ dmy(selectedOpenCA.actual_date) }}</span>
           </div>
           <div class="flex gap-4">
             <span class="text-muted-foreground">Nominal CA:</span>

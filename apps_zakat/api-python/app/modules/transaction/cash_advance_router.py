@@ -7,12 +7,12 @@ from app.shared.db import get_pool
 from app.shared.response import ok
 from . import cash_advance_service
 from .cash_advance_schema import (
-    UangMukaCreate,
-    UangMukaUpdate,
+    CashAdvanceCreate,
+    CashAdvanceUpdate,
 )
 
 
-router = APIRouter(prefix="/transaksi/uang-muka", tags=["transaksi-uang-muka"])
+router = APIRouter(prefix="/transaction/cash-advance", tags=["cash-advance"])
 
 
 # ============================================================================
@@ -101,7 +101,7 @@ async def get_uang_muka(
 
 @router.post("")
 async def create_uang_muka(
-    payload: UangMukaCreate,
+    payload: CashAdvanceCreate,
     request: Request,
 ):
     """Create new Uang Muka via otorisasi save-and-submit."""
@@ -125,7 +125,7 @@ async def create_uang_muka(
 @router.put("/{transaction_id}")
 async def update_uang_muka(
     transaction_id: int,
-    payload: UangMukaUpdate,
+    payload: CashAdvanceUpdate,
     request: Request,
 ):
     raise HTTPException(status_code=501, detail="Not yet implemented")

@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 from asyncpg import Connection
 
 from app.shared.db import get_pool
-from .cash_advance_schema import UangMukaCreate, UangMukaUpdate
+from .cash_advance_schema import CashAdvanceCreate, CashAdvanceUpdate
 
 
 async def list_uang_muka(
@@ -82,15 +82,15 @@ async def list_uang_muka(
         f"""
         SELECT DISTINCT
             t.transactionid,
-            t.transactionno,
-            CAST(t.actualdate AS VARCHAR) as actualdate,
+            t.transactionno AS transaction_no,
+            CAST(t.actualdate AS VARCHAR) as actual_date,
             t.amount,
-            t.authstatus,
-            t.branchcode,
+            t.authstatus AS auth_status,
+            t.branchcode AS branch_code,
             t.inputer,
             t.description,
             fa.accountname as employee_name,
-            ar.employeeid
+            ar.employeeid AS employee_id
         FROM transaction.transaction t
         JOIN transaction.transactionitem ti ON ti.transactionid = t.transactionid
         JOIN transaction.accounttransactionitem ati ON ati.transactionitemid = ti.transactionitemid
@@ -115,14 +115,14 @@ async def get_uang_muka_detail(
         """
         SELECT
             t.transactionid,
-            t.transactionno,
-            CAST(t.actualdate AS VARCHAR) as actualdate,
+            t.transactionno AS transaction_no,
+            CAST(t.actualdate AS VARCHAR) as actual_date,
             t.amount,
-            t.authstatus,
-            t.branchcode,
+            t.authstatus AS auth_status,
+            t.branchcode AS branch_code,
             t.inputer,
             t.description,
-            ar.employeeid,
+            ar.employeeid AS employee_id,
             fa.accountname as employee_name,
             ca.cashaccountno as cash_account_no,
             t.referenceno as reference_no,
@@ -375,7 +375,7 @@ async def lookup_employee(
 
     rows = await pool.fetch(
         f"""
-        SELECT e.employeeid, e.employeename, e.employeenumber
+        SELECT e.employeeid AS employee_id, e.employeename AS employee_name, e.employeenumber AS employee_number
         FROM enterprise.employee e
         WHERE {where_clause}
         ORDER BY e.employeename
@@ -406,7 +406,7 @@ async def lookup_cash_account(
 
     rows = await pool.fetch(
         f"""
-        SELECT ca.cashaccountno, ca.cashaccountname, ca.accountno
+        SELECT ca.cashaccountno AS cash_account_no, ca.cashaccountname AS cash_account_name, ca.accountno AS account_no
         FROM transaction.cashaccount ca
         WHERE {where_clause}
         ORDER BY ca.cashaccountname
@@ -437,7 +437,7 @@ async def lookup_budget(
 
     rows = await pool.fetch(
         f"""
-        SELECT b.budgetid, b.budgetcode, b.description, bo.ownername
+        SELECT b.budgetid AS budget_id, b.budgetcode AS budget_code, b.description, bo.ownername AS owner_name
         FROM transaction.budget b
         LEFT JOIN transaction.budgetowner bo ON bo.budgetownerid = b.budgetownerid
         WHERE {where_clause}

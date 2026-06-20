@@ -6,7 +6,7 @@ from datetime import date
 from typing import Optional
 
 
-class UangMukaCreate(BaseModel):
+class CashAdvanceCreate(BaseModel):
     """Request to create Uang Muka Penyerahan transaction."""
     actual_date: str  # ISO YYYY-MM-DD
     employee_id: int  # Employee ID
@@ -21,7 +21,7 @@ class UangMukaCreate(BaseModel):
     fund_entity: int = 4  # Hardcoded Amil (do NOT change)
 
 
-class UangMukaUpdate(BaseModel):
+class CashAdvanceUpdate(BaseModel):
     """Request to update Uang Muka (only DRAFT/REJECTED)."""
     actual_date: Optional[str] = None  # ISO YYYY-MM-DD
     amount: Optional[float] = Field(None, gt=0)
@@ -29,28 +29,28 @@ class UangMukaUpdate(BaseModel):
     reference_no: Optional[str] = None
 
 
-class UangMukaListRow(BaseModel):
+class CashAdvanceListRow(BaseModel):
     """Single row in Uang Muka list."""
     transactionid: int
-    transactionno: str
-    actualdate: str  # ISO YYYY-MM-DD
+    transaction_no: str
+    actual_date: str  # ISO YYYY-MM-DD
     amount: float
-    authstatus: str  # 'T'=authorized, 'P'=pending, 'R'=rejected
-    branchcode: str
+    auth_status: str  # 'T'=authorized, 'P'=pending, 'R'=rejected
+    branch_code: str
     inputer: str
     description: str
     employee_name: str
     employee_id: int
 
 
-class UangMukaDetail(BaseModel):
+class CashAdvanceDetail(BaseModel):
     """Full detail of Uang Muka transaction."""
     transactionid: int
-    transactionno: str
-    actualdate: str  # ISO YYYY-MM-DD
+    transaction_no: str
+    actual_date: str  # ISO YYYY-MM-DD
     amount: float
-    authstatus: str
-    branchcode: str
+    auth_status: str
+    branch_code: str
     inputer: str
     description: str
     employee_id: int
@@ -62,21 +62,21 @@ class UangMukaDetail(BaseModel):
 
 class EmployeeLookupRow(BaseModel):
     """Employee lookup row."""
-    employeeid: int
-    employeename: str
-    employeenumber: str
+    employee_id: int
+    employee_name: str
+    employee_number: str
 
 
 class CashAccountLookupRow(BaseModel):
     """Cash account lookup row."""
-    cashaccountno: str
-    cashaccountname: str
+    cash_account_no: str
+    cash_account_name: str
     accountno: str
 
 
 class BudgetLookupRow(BaseModel):
     """Budget lookup row."""
-    budgetid: int
-    budgetcode: str
+    budget_id: int
+    budget_code: str
     description: str
-    ownername: str
+    owner_name: str
