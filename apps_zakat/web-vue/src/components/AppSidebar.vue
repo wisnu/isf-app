@@ -6,6 +6,7 @@ import {
   BarChart3,
   Banknote,
   BookOpen,
+  Calendar,
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
