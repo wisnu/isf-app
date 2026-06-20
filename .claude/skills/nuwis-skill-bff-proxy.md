@@ -3,6 +3,21 @@
 
 ---
 
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+BFF adalah permukaan kontrak ke frontend → semua **English**.
+
+- **Prefix & route path**: English kebab-case → `prefix='/fund-collection'`, `@router.get('/lookup/account')`. JANGAN `/penghimpunan`, `/lookup/rekening`, `/transaksi-umum`.
+- **Downstream path** ke api-python harus cocok persis dengan prefix English api-python → `get_api_python('/api/transaction/fund-collection/...')`. JANGAN `/api/transaksi/...`.
+- **Query param & JSON field**: English snake_case (`date`, `month`, `year`, `account_no`) — JANGAN `tanggal`, `bulan`, `tahun`.
+- **File router**: `fund_collection.py`, `cash_advance.py` (English snake_case).
+- **BEKU**: nilai `entity_type` di payload otorisasi (`'penghimpunan'`, `'budget_owner'`, …) dan `menu_key` (`finance.transactions.fund_collection`) — sudah disepakati English/kode, jangan ubah.
+- Bahasa Indonesia hanya di pesan error & komentar.
+
+> Glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
+
+---
+
 ## Peran BFF dalam isf-app
 
 ```
@@ -123,30 +138,30 @@ async def delete_{resource}(
 ```python
 from app.core.proxy import stream_report_api
 
-# Preview data (JSON):
-@router.get("/laporan/{nama}")
-async def laporan_{nama}(
-    tgl_awal: str,
-    tgl_akhir: str,
-    session=Depends(require_menu("{menu_key_laporan}"))
+# Preview data (JSON):  — path slug & params English (begin/end, bukan tgl_awal/tgl_akhir)
+@router.get("/report/{name}")
+async def report_{name}(
+    begin: str,
+    end: str,
+    session=Depends(require_menu("{menu_key_report}"))
 ):
     return await proxy_get(
-        f"/laporan/{nama}",
-        params={"tgl_awal": tgl_awal, "tgl_akhir": tgl_akhir},
+        f"/report/{name}",
+        params={"begin": begin, "end": end},
         session=session,
         service="report"  # ← arahkan ke report-api
     )
 
 # Download XLSX:
-@router.get("/laporan/{nama}/export")
-async def export_{nama}(
-    tgl_awal: str,
-    tgl_akhir: str,
-    session=Depends(require_menu("{menu_key_laporan}"))
+@router.get("/report/{name}/export.xlsx")
+async def export_{name}(
+    begin: str,
+    end: str,
+    session=Depends(require_menu("{menu_key_report}"))
 ):
     return await stream_report_api(
-        f"/laporan/{nama}/export",
-        params={"tgl_awal": tgl_awal, "tgl_akhir": tgl_akhir},
+        f"/report/{name}/export.xlsx",
+        params={"begin": begin, "end": end},
         session=session
     )
     # stream_report_api sets Content-Disposition header otomatis

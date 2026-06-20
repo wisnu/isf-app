@@ -5,6 +5,21 @@ Skill ini mencakup pola spesifik proyek untuk modul di `apps_{portal}/api-python
 
 ---
 
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+Semua identifier publik **English**; Bahasa Indonesia hanya untuk teks UI/pesan/komentar.
+
+- **URL path**: English kebab-case → `/fund-collection`, `/cash-advance`, `/inter-account-transfer`. JANGAN `/penghimpunan`, `/transaksi/uang-muka`.
+- **Python** (folder/file/fungsi/class/var): English snake_case → `fund_collection_service.py`, `def list_receivable()`, `class FundCollectionCreate`. JANGAN `penghimpunan_service.py`, `def list_piutang()`.
+- **JSON field** (request & response): English snake_case → `account_no`, `transaction_date`, `description`.
+- **Kolom DB legacy berbahasa Indonesia**: JANGAN rename kolom. **Alias di SELECT**: `SELECT no_rekening AS account_no, tanggal AS date, valuta_code AS currency_code`. Sisi WHERE/ORDER/INSERT tetap pakai nama kolom asli.
+- **BEKU — jangan diterjemahkan**: nilai `entity_type` (`penghimpunan`, `penyaluran`, `piutang`, …), kode `transactioncode` (SD001/DD001/KK/EAR/PEAR/TI/GT/CI), istilah Islam (`ashnaf`, `zakat_fitrah`, `infaq`, `wakaf`, `qurban`, `amil`).
+- **Bahasa Indonesia BOLEH** hanya di: `raise HTTPException(..., detail="...")`, komentar, nama file export `.xlsx`.
+
+> Glossary lengkap Indonesia→English: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
+
+---
+
 ## Struktur Modul Standar
 
 ```
@@ -108,16 +123,18 @@ async def list_{resource}(
     offset = (page - 1) * limit
 
     # Gunakan CAST, bukan ::
+    # JSON field English. Tabel baru → kolom English. Tabel legacy berkolom
+    # Indonesia → alias di SELECT, mis. `no_rekening AS account_no, tanggal AS date`.
     rows = await db.fetch(
         """
         SELECT
           id,
-          nama,
-          CAST(tanggal AS VARCHAR) AS tanggal,
-          CAST(jumlah AS NUMERIC(20, 4)) AS jumlah,
-          keterangan
-        FROM {schema}.{tabel}
-        WHERE ($1 = '' OR nama ILIKE '%' || $1 || '%')
+          name,
+          CAST(date AS VARCHAR) AS date,
+          CAST(amount AS NUMERIC(20, 4)) AS amount,
+          description
+        FROM {schema}.{table}
+        WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')
         ORDER BY id DESC
         LIMIT $2 OFFSET $3
         """,
@@ -125,7 +142,7 @@ async def list_{resource}(
     )
 
     total = await db.fetchval(
-        "SELECT COUNT(*) FROM {schema}.{tabel} WHERE ($1 = '' OR nama ILIKE '%' || $1 || '%')",
+        "SELECT COUNT(*) FROM {schema}.{table} WHERE ($1 = '' OR name ILIKE '%' || $1 || '%')",
         search
     )
 
@@ -140,13 +157,13 @@ async def create_{resource}(
     async with db.transaction():
         row = await db.fetchrow(
             """
-            INSERT INTO {schema}.{tabel} (nama, tanggal, jumlah, inputer_id, branch_id)
+            INSERT INTO {schema}.{table} (name, date, amount, inputer_id, branch_id)
             VALUES ($1, $2, $3, $4, $5)
-            RETURNING id, nama, CAST(tanggal AS VARCHAR) AS tanggal, jumlah, inputer_id
+            RETURNING id, name, CAST(date AS VARCHAR) AS date, amount, inputer_id
             """,
-            payload.nama,
-            payload.tanggal,
-            payload.jumlah,
+            payload.name,
+            payload.date,
+            payload.amount,
             inputer_id,
             branch_id
         )
@@ -164,24 +181,24 @@ from decimal import Decimal
 from typing import Optional
 
 class Create{Resource}(BaseModel):
-    nama: str = Field(min_length=1, max_length=255)
-    tanggal: date
-    jumlah: Decimal = Field(gt=0, decimal_places=4)
-    keterangan: Optional[str] = None
+    name: str = Field(min_length=1, max_length=255)
+    date: date
+    amount: Decimal = Field(gt=0, decimal_places=4)
+    description: Optional[str] = None
     # Diinject oleh BFF — required di schema tapi diisi oleh server
     inputer_id: str
     branch_id: Optional[int] = None
 
 class Update{Resource}(BaseModel):
-    nama: Optional[str] = None
-    keterangan: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 class {Resource}Row(BaseModel):
     id: int
-    nama: str
-    tanggal: str   # ISO YYYY-MM-DD (sudah VARCHAR dari CAST)
-    jumlah: Decimal
-    keterangan: Optional[str]
+    name: str
+    date: str   # ISO YYYY-MM-DD (sudah VARCHAR dari CAST)
+    amount: Decimal
+    description: Optional[str]
 ```
 
 ---
@@ -239,10 +256,10 @@ SELECT CAST(tanggal AS VARCHAR) AS tanggal
 rows = await db.fetch(
     """
     SELECT * FROM transaction.accounttransactionitem
-    WHERE accounttitype = 'D'  -- ← hardcoded, bukan $1
-      AND tanggal BETWEEN $1 AND $2
+    WHERE accounttitype = 'D'  -- ← hardcoded discriminator (BEKU), bukan $1
+      AND CAST(tanggal AS DATE) BETWEEN $1 AND $2   -- kolom legacy 'tanggal' (jangan rename)
     """,
-    tgl_awal, tgl_akhir
+    begin, end
 )
 ```
 
@@ -301,15 +318,15 @@ app.include_router({domain}_router)
 Untuk laporan, modul ada di `apps_{portal}/report-api/app/modules/`:
 
 ```python
-# service.py — query DWH view, read-only
-async def get_laporan_{nama}(db, tgl_awal: date, tgl_akhir: date) -> list[dict]:
+# service.py — query DWH view, read-only. Param & alias English (begin/end, date).
+async def get_report_{name}(db, begin: date, end: date) -> list[dict]:
     rows = await db.fetch(
         """
-        SELECT * FROM dwh.v_{nama_view}
-        WHERE tanggal BETWEEN $1 AND $2
-        ORDER BY tanggal, id
+        SELECT * FROM dwh.v_{view_name}
+        WHERE date BETWEEN $1 AND $2
+        ORDER BY date, id
         """,
-        tgl_awal, tgl_akhir
+        begin, end
     )
     return [dict(r) for r in rows]
 

@@ -7,6 +7,22 @@ quick reference saat menulis halaman untuk isf-app.
 
 ---
 
+## Naming Convention — Bahasa Inggris (WAJIB)
+
+Folder, route, path API, dan field data semua **English**. Bahasa Indonesia HANYA
+untuk teks tampilan (label, judul, toast, pesan).
+
+- **Path API** (string di `GET/POST/blob`): English kebab-case → `/api/fund-collection`, `/api/cash-advance`, `/api/report/balance-sheet`. JANGAN `/api/penghimpunan`, `/api/keuangan/...`.
+- **Field JSON** yang dibaca/dikirim (interface TS, binding template): English snake_case → `account_no`, `transaction_date`, `opening_balance`. JANGAN `rekening`, `tanggal`, `saldo_awal`.
+- **Query param**: `date`, `month`, `year` — JANGAN `tanggal`, `bulan`, `tahun`.
+- **Folder/file page**: `pages/finance/fund-collection/FundCollectionListPage.vue` (English).
+- **BEKU**: nilai literal `entity_type` di payload (`entity_type: 'penghimpunan'`) — jangan ubah.
+- **Bahasa Indonesia BOLEH** di: judul/label UI, `toast.success('... untuk otorisasi')`, teks `<template>`, komentar.
+
+> Glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`
+
+---
+
 ## Stack yang Digunakan
 
 | Layer | Tool | Catatan |
@@ -134,17 +150,17 @@ import DateField from '@/components/ui/DateField.vue'
 import { GET, POST, blob } from '@/lib/api/client'
 
 const res = await GET<{ rows: Item[]; pagination: Pagination }>(
-  '/api/keuangan/kas',
+  '/api/cash',
   { page: 1, limit: 25 }
 )
 // res langsung berisi payload.data (client.ts sudah unwrap)
 
-// POST
-await POST('/api/keuangan/kas', { tanggal: '2026-01-15', jumlah: 100000 })
+// POST — field English snake_case
+await POST('/api/cash', { date: '2026-01-15', amount: 100000 })
 
-// Download file
-const b = await blob('/api/keuangan/laporan/kas/export', { tgl_awal, tgl_akhir })
-downloadBlob(b, 'laporan-kas.xlsx')
+// Download file — path & param English (begin/end)
+const b = await blob('/api/report/cash-daily/export.xlsx', { begin, end })
+downloadBlob(b, 'cash-daily.xlsx')
 
 // JANGAN:
 const res = await fetch('/api/...')
@@ -530,7 +546,7 @@ async function tampilkan() {
   // load data hanya saat user klik
   loading.value = true
   try {
-    const res = await GET('/api/.../laporan', { tgl_awal, tgl_akhir })
+    const res = await GET('/api/report/...', { begin, end })
     rows.value = res.rows
     hasData.value = true
   } finally {

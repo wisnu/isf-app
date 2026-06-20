@@ -69,10 +69,10 @@ section "{Resource}: Create"
 CREATE=$(curl -sf -X POST "$BASE_URL/api/{domain}/{resource}" \
   -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
-    "tanggal": "2026-01-15",
+    "date": "2026-01-15",
     "{field1}": "{value1}",
-    "jumlah": 100000,
-    "keterangan": "e2e test - hapus jika perlu"
+    "amount": 100000,
+    "description": "e2e test - hapus jika perlu"
   }')
 NEW_ID=$(echo "$CREATE" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])")
 [ -n "$NEW_ID" ] && [ "$NEW_ID" != "None" ] \
@@ -115,19 +115,19 @@ NOT_FOUND=$(curl -s -o /dev/null -w "%{http_code}" \
 # ── Laporan Preview ───────────────────────────────────────────────────────────
 section "Laporan: {Nama}"
 
-LAPORAN=$(curl -sf \
-  "$BASE_URL/api/{domain}/laporan/{nama}?tgl_awal=2026-01-01&tgl_akhir=2026-01-31" \
+REPORT=$(curl -sf \
+  "$BASE_URL/api/report/{name}?begin=2026-01-01&end=2026-01-31" \
   -H "$AUTH")
-ROW_COUNT=$(echo "$LAPORAN" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['rows']))")
-pass "Laporan preview OK — rows=$ROW_COUNT"
+ROW_COUNT=$(echo "$REPORT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['rows']))")
+pass "Report preview OK — rows=$ROW_COUNT"
 
 # ── Export XLSX ───────────────────────────────────────────────────────────────
-section "Laporan: Export XLSX"
+section "Report: Export XLSX"
 
-EXPORT_STATUS=$(curl -s -o /tmp/laporan-test.xlsx -w "%{http_code}" \
-  "$BASE_URL/api/{domain}/laporan/{nama}/export?tgl_awal=2026-01-01&tgl_akhir=2026-01-31" \
+EXPORT_STATUS=$(curl -s -o /tmp/report-test.xlsx -w "%{http_code}" \
+  "$BASE_URL/api/report/{name}/export.xlsx?begin=2026-01-01&end=2026-01-31" \
   -H "$AUTH")
-FILE_SIZE=$(wc -c < /tmp/laporan-test.xlsx 2>/dev/null || echo 0)
+FILE_SIZE=$(wc -c < /tmp/report-test.xlsx 2>/dev/null || echo 0)
 
 if [ "$EXPORT_STATUS" = "200" ] && [ "$FILE_SIZE" -gt 1000 ]; then
   pass "Export XLSX OK — size=${FILE_SIZE} bytes, saved to /tmp/laporan-test.xlsx"

@@ -148,6 +148,15 @@ Every async operation must have all three:
 - Check menu access via `menus[]` — session snapshot from login
 - `menus[]` is populated at login time; new `role_menu` rows only take effect after **logout + login**
 
+### 11. English Naming Across the Stack
+All public identifiers are **English**; Indonesian is allowed **only** in user-facing text (labels, titles, toasts), error messages (`raise ... detail=`), and comments.
+- **URL paths**: English kebab-case — `/fund-collection`, `/cash-advance`, `/report/balance-sheet`. Never `/penghimpunan`, `/transaksi/...`, `/keuangan/...`.
+- **Python** (folders/files/functions/classes): English snake_case — `fund_collection_service.py`, `list_receivable()`. **JSON fields** (request/response): English snake_case — `account_no`, `transaction_date`, `opening_balance`.
+- **Frontend**: API path strings, TS interfaces, and template bindings all English; page folders `pages/finance/fund-collection/`.
+- **Legacy Indonesian DB columns**: never `ALTER`/rename — **alias in SELECT** (`no_rekening AS account_no`, `tanggal AS date`). WHERE/ORDER/INSERT keep the real column name.
+- **FROZEN (do not translate)**: `entity_type` values (`penghimpunan`, `penyaluran`, `budget_owner`, …) — they key `otorisasi.entity_config` + dispatcher registry + FE literals; `transactioncode` (SD001/DD001/KK/EAR/PEAR/TI/GT/CI); `fund_entity` 1–5; Islamic terms (`ashnaf`, `zakat_fitrah`, `infaq`, `wakaf`, `qurban`, `amil`).
+- Canonical glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`. The nuwis-* builder skills encode this per-layer.
+
 ---
 
 ## Actual Folder Structure
