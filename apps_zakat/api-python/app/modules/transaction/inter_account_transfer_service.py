@@ -22,9 +22,9 @@ _LIST_SELECT = """
         COALESCE(t.description, '') AS description,
         COALESCE(t.referenceno, '') AS reference_no,
         fa_src.accountname AS source_account_name,
-        ca_src.cashaccountno AS source_cash_account_no,
+        ca_src.bankaccountno AS source_cash_account_no,
         fa_dst.accountname AS dest_account_name,
-        ca_dst.cashaccountno AS dest_cash_account_no
+        ca_dst.bankaccountno AS dest_cash_account_no
     FROM transaction.transaction t
     LEFT JOIN transaction.transactionitem ti_src
         ON ti_src.transactionid = t.transactionid AND ti_src.mutationtype = 'C'

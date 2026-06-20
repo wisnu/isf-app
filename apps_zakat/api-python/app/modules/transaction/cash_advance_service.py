@@ -97,7 +97,7 @@ async def list_uang_muka(
         JOIN transaction.financialaccount fa ON fa.accountno = ati.accountno
         JOIN transaction.accountreceivable ar ON ar.accountno = ati.accountno
         WHERE {where_clause}
-        ORDER BY t.actualdate DESC, t.transactionid DESC
+        ORDER BY actual_date DESC, transactionid DESC
         LIMIT ${limit_param_idx} OFFSET ${offset_param_idx}
         """,
         *params

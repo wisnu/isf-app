@@ -88,7 +88,7 @@ async def list_receivable(
             t.description
         FROM transaction.transaction t
         WHERE {where_clause}
-        ORDER BY t.actualdate DESC, t.transactionid DESC
+        ORDER BY actual_date DESC, id DESC
         LIMIT ${limit_param_idx} OFFSET ${offset_param_idx}
         """,
         *params
