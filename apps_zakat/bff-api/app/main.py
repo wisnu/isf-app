@@ -26,7 +26,7 @@ from app.routers.inter_account_transfer import router as inter_account_transfer_
 from app.routers.otorisasi import router as otorisasi_router
 from app.routers.parameter import router as parameter_router
 from app.routers.transaction import router as transaction_router
-from app.routers.transaksi import router as transaksi_router
+from app.routers.hc_zis import router as hc_zis_router
 from app.routers.general_transaction import router as general_transaction_router
 from app.routers.amil_income import router as amil_income_router
 from app.services.audit import AuditWriter
@@ -106,7 +106,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(coa_router, prefix="/api")
     app.include_router(admin_router, prefix="/api")
     app.include_router(transaction_router, prefix="/api")
-    app.include_router(transaksi_router, prefix="/api")
+    app.include_router(hc_zis_router, prefix="/api")
     app.include_router(transaction_history_router, prefix="/api")
     app.include_router(fund_distribution_router, prefix="/api")
     app.include_router(fund_collection_router, prefix="/api")

@@ -105,7 +105,7 @@ async function loadData() {
     if (dateTo.value) params.set('date_to', dateTo.value)
     if (batchPeriodSearch.value.trim()) params.set('batch_period_desc', batchPeriodSearch.value.trim())
 
-    const res = await api.get<ListResponse>(`/api/transaksi/upload/hc-zis/batches?${params}`)
+    const res = await api.get<ListResponse>(`/api/transaction/upload/hc-zis/batches?${params}`)
     rows.value = res.rows
     totalRec.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -126,7 +126,7 @@ const selectedBatch = ref<BatchDetail | null>(null)
 async function openDetail(batch: Batch) {
   detailLoading.value = true
   try {
-    const detail = await api.get<BatchDetail>(`/api/transaksi/upload/hc-zis/batches/${batch.id}`)
+    const detail = await api.get<BatchDetail>(`/api/transaction/upload/hc-zis/batches/${batch.id}`)
     selectedBatch.value = detail
     showDetail.value = true
   } catch (e) {
@@ -153,7 +153,7 @@ async function submitUpdateDate() {
   updateLoading.value = true
   try {
     await api.put(
-      `/api/transaksi/upload/hc-zis/batches/${updateDateBatch.value.id}/date`,
+      `/api/transaction/upload/hc-zis/batches/${updateDateBatch.value.id}/date`,
       { tanggal_transaksi: newDate.value },
     )
     toast.success('Tanggal berhasil diperbarui')
@@ -180,7 +180,7 @@ async function submitDelete() {
   if (!deleteBatch.value) return
   deleteLoading.value = true
   try {
-    await api.delete(`/api/transaksi/upload/hc-zis/batches/${deleteBatch.value.id}`)
+    await api.delete(`/api/transaction/upload/hc-zis/batches/${deleteBatch.value.id}`)
     toast.success('Data berhasil dihapus')
     showDelete.value = false
     loadData()

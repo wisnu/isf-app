@@ -70,7 +70,7 @@ function resetUpload() {
 
 async function downloadTemplate() {
   try {
-    const blob = await api.blob('/api/transaksi/upload/hc-zis/template')
+    const blob = await api.blob('/api/transaction/upload/hc-zis/template')
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -95,7 +95,7 @@ async function parseFile() {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     const result = await api.upload<HCZisParseResult>(
-      `/api/transaksi/upload/hc-zis/parse?tanggal_transaksi=${tanggalTransaksi.value}`,
+      `/api/transaction/upload/hc-zis/parse?tanggal_transaksi=${tanggalTransaksi.value}`,
       formData,
     )
     parseResult.value = result
@@ -121,7 +121,7 @@ async function submitUntukOtorisasi() {
       items: parseResult.value.items,
     }
     const result = await api.post<{ id: number }>(
-      '/api/transaksi/upload/hc-zis/submit',
+      '/api/transaction/upload/hc-zis/submit',
       payload,
     )
     submissionId.value = result.id

@@ -9,7 +9,7 @@ from . import hc_zis_service
 from .hc_zis_schema import HCZisSubmitRequest, HCZisUpdateDateRequest
 
 
-router = APIRouter(prefix="/transaksi", tags=["transaksi-hc-zis"])
+router = APIRouter(prefix="/transaction", tags=["transaction-hc-zis"])
 
 
 @router.post("/upload/hc-zis/parse")

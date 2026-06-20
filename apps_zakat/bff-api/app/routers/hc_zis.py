@@ -8,7 +8,7 @@ from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_multipart_api_python
 from app.shared.config import settings
 
-router = APIRouter(prefix='/transaksi', tags=['transaksi'])
+router = APIRouter(prefix='/transaction', tags=['transaction-hc-zis'])
 
 _MENU_UPLOAD = 'finance.upload.zis_routine'
 _MENU_LIST = 'finance.upload.zis_routine_list'
@@ -32,7 +32,7 @@ async def parse_hc_zis(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        f'/api/transaksi/upload/hc-zis/parse?tanggal_transaksi={tanggal_transaksi}&branch_code={branch_code}',
+        f'/api/transaction/upload/hc-zis/parse?tanggal_transaksi={tanggal_transaksi}&branch_code={branch_code}',
         data={},
         file_content=data,
         filename=file.filename or 'upload.xlsx',
@@ -51,7 +51,7 @@ async def submit_hc_zis(
     branch_code = _branch_for_session(request)
     body = await request.json()
 
-    url = f"{settings.api_python_base_url}/api/transaksi/upload/hc-zis/submit"
+    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/submit"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.post(
             url,
@@ -85,7 +85,7 @@ async def list_hc_zis_batches(
     if date_to:
         params['date_to'] = date_to
 
-    downstream = await get_api_python('/api/transaksi/upload/hc-zis/batches', params=params)
+    downstream = await get_api_python('/api/transaction/upload/hc-zis/batches', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -97,7 +97,7 @@ async def get_hc_zis_batch(
 ):
     """Ambil detail batch HC ZIS + rows."""
     downstream = await get_api_python(
-        f'/api/transaksi/upload/hc-zis/batches/{batch_id}'
+        f'/api/transaction/upload/hc-zis/batches/{batch_id}'
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -113,7 +113,7 @@ async def update_hc_zis_batch_date(
     branch_code = _branch_for_session(request)
     body = await request.json()
 
-    url = f"{settings.api_python_base_url}/api/transaksi/upload/hc-zis/batches/{batch_id}/date"
+    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/batches/{batch_id}/date"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.put(
             url,
@@ -133,7 +133,7 @@ async def delete_hc_zis_batch(
     user_id = request.session.get('user_id', '')
     branch_code = _branch_for_session(request)
 
-    url = f"{settings.api_python_base_url}/api/transaksi/upload/hc-zis/batches/{batch_id}"
+    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/batches/{batch_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.delete(
             url,
