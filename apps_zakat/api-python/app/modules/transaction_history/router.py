@@ -3,9 +3,9 @@ from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
-from app.modules.transaksi_histori import service
-from app.modules.transaksi_histori.delete import delete_transaction
-from app.modules.transaksi_histori.export import build_histori_xlsx
+from app.modules.transaction_history import service
+from app.modules.transaction_history.delete import delete_transaction
+from app.modules.transaction_history.export import build_histori_xlsx
 from app.shared.db import ping
 from app.shared.response import err, ok
 

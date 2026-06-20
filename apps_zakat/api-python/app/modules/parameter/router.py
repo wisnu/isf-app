@@ -10,7 +10,7 @@ from . import service
 router = APIRouter(prefix="/parameter", tags=["parameter"])
 
 
-@router.get("/pemilik-anggaran")
+@router.get("/budget-owner")
 async def list_owners(
     page:  int          = Query(default=1,    ge=1),
     limit: int          = Query(default=25,   ge=1, le=100),
@@ -22,7 +22,7 @@ async def list_owners(
     return ok(data)
 
 
-@router.get("/pemilik-anggaran/lookup")
+@router.get("/budget-owner/lookup")
 async def lookup_owners(q: str | None = Query(default=None, max_length=100)):
     if not await ping():
         return JSONResponse(503, content=err("DB_UNAVAILABLE", "Database tidak tersedia"))
@@ -30,9 +30,9 @@ async def lookup_owners(q: str | None = Query(default=None, max_length=100)):
     return ok({"data": data})
 
 
-@router.get("/pemilik-anggaran/{ownerid}")
-async def get_owner(ownerid: int):
+@router.get("/budget-owner/{owner_id}")
+async def get_owner(owner_id: int):
     if not await ping():
         return JSONResponse(503, content=err("DB_UNAVAILABLE", "Database tidak tersedia"))
-    data = await service.get_budget_owner(ownerid)
+    data = await service.get_budget_owner(owner_id)
     return ok(data)

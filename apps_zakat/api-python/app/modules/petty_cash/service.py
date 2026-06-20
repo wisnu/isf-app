@@ -4,15 +4,15 @@ from datetime import date
 
 from fastapi import HTTPException
 
-from app.modules.kas_kecil.schema import (
+from app.modules.petty_cash.schema import (
     BranchLookupItem,
     CurrencyLookupItem,
     GlAccountLookupItem,
-    KasKecilCreate,
-    KasKecilDetail,
-    KasKecilList,
-    KasKecilRow,
-    KasKecilUpdate,
+    PettyCashCreate,
+    PettyCashDetail,
+    PettyCashList,
+    PettyCashRow,
+    PettyCashUpdate,
     Pagination,
 )
 from app.shared.db import execute, fetch_all, fetch_one
@@ -29,8 +29,8 @@ def _parse_date(val: str | None) -> date | None:
         return None
 
 
-def _to_row(r: dict) -> KasKecilRow:
-    return KasKecilRow(
+def _to_row(r: dict) -> PettyCashRow:
+    return PettyCashRow(
         account_no=r["accountno"] or "",
         account_name=r["accountname"],
         cash_code=r["cashcode"],
@@ -59,11 +59,11 @@ def _build_where(search: str | None) -> tuple[str, list]:
     return "WHERE " + " AND ".join(conds), params
 
 
-async def list_kas_kecil(
+async def list_petty_cash(
     search: str | None = None,
     page: int = 1,
     page_size: int = 25,
-) -> KasKecilList:
+) -> PettyCashList:
     page = max(1, page)
     page_size = max(1, min(500, page_size))
     where, params = _build_where(search)
@@ -102,7 +102,7 @@ async def list_kas_kecil(
 
     total_pages = (total_count + page_size - 1) // page_size if total_count else 0
 
-    return KasKecilList(
+    return PettyCashList(
         rows=[_to_row(r) for r in page_rows],
         pagination=Pagination(
             page=page,
@@ -115,7 +115,7 @@ async def list_kas_kecil(
 
 # ── Detail ────────────────────────────────────────────────────────────────────
 
-async def get_kas_kecil_detail(account_no: str) -> KasKecilDetail | None:
+async def get_petty_cash_detail(account_no: str) -> PettyCashDetail | None:
     row = await fetch_one(
         """
         SELECT
@@ -144,7 +144,7 @@ async def get_kas_kecil_detail(account_no: str) -> KasKecilDetail | None:
         except AttributeError:
             opening_date = str(row["openingdate"])[:10]
 
-    return KasKecilDetail(
+    return PettyCashDetail(
         account_no=row["accountno"] or "",
         account_name=row["accountname"],
         cash_code=row["cashcode"],
@@ -188,7 +188,7 @@ async def _validate_cash_code_unique(cash_code: str, exclude_account_no: str | N
         )
 
 
-async def create_kas_kecil(payload: KasKecilCreate) -> str:
+async def create_petty_cash(payload: PettyCashCreate) -> str:
     if payload.cash_code:
         await _validate_cash_code_unique(payload.cash_code)
 
@@ -227,7 +227,7 @@ async def create_kas_kecil(payload: KasKecilCreate) -> str:
 
 # ── Update ────────────────────────────────────────────────────────────────────
 
-async def update_kas_kecil(account_no: str, payload: KasKecilUpdate) -> None:
+async def update_petty_cash(account_no: str, payload: PettyCashUpdate) -> None:
     if payload.cash_code:
         await _validate_cash_code_unique(payload.cash_code, exclude_account_no=account_no)
 
@@ -262,7 +262,7 @@ async def update_kas_kecil(account_no: str, payload: KasKecilUpdate) -> None:
 
 # ── Delete ────────────────────────────────────────────────────────────────────
 
-async def delete_kas_kecil(account_no: str) -> None:
+async def delete_petty_cash(account_no: str) -> None:
     await execute(
         "DELETE FROM transaction.cashaccount WHERE accountno = $1",
         account_no,

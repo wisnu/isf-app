@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import transfer_antar_rekening_service as svc
-from .transfer_antar_rekening_schema import TransferAntarRekeningCreate
+from . import inter_account_transfer_service as svc
+from .inter_account_transfer_schema import TransferAntarRekeningCreate
 
 _MENU = 'keuangan.transaksi.transfer-antar-rekening'
 
@@ -75,7 +75,7 @@ async def create_transfer(
     request: Request,
 ):
     """Create Transfer Antar Rekening via otorisasi save-and-submit."""
-    from app.modules.otorisasi import service as otorisasi_svc
+    from app.modules.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session['user_id']

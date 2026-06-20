@@ -10,12 +10,12 @@ from app.modules.transaction import service
 from app.modules.transaction.commit import approve_batch_background
 from app.modules.transaction import repository as txrepo
 from app.modules.transaction.template import build_template
-from app.modules.transaction import penyaluran_repo as prp
-from app.modules.transaction import penyaluran_service as psvc
-from app.modules.transaction.penyaluran_schema import ASHNAF_LIST, PenyaluranCreate
-from app.modules.transaction import penghimpunan_repo as phrp
-from app.modules.transaction import penghimpunan_service as phsvc
-from app.modules.transaction.penghimpunan_schema import PenghimpunanCreate
+from app.modules.transaction import fund_distribution_repo as prp
+from app.modules.transaction import fund_distribution_service as psvc
+from app.modules.transaction.fund_distribution_schema import ASHNAF_LIST, PenyaluranCreate
+from app.modules.transaction import fund_collection_repo as phrp
+from app.modules.transaction import fund_collection_service as phsvc
+from app.modules.transaction.fund_collection_schema import PenghimpunanCreate
 from app.shared.db import fetch_all, fetch_one
 from app.shared.response import err, ok
 

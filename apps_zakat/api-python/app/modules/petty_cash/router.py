@@ -1,21 +1,21 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.kas_kecil.schema import KasKecilCreate, KasKecilUpdate
-from app.modules.kas_kecil.service import (
-    create_kas_kecil,
-    delete_kas_kecil,
-    get_kas_kecil_detail,
+from app.modules.petty_cash.schema import PettyCashCreate, PettyCashUpdate
+from app.modules.petty_cash.service import (
+    create_petty_cash,
+    delete_petty_cash,
+    get_petty_cash_detail,
     get_lookup_branches,
     get_lookup_currencies,
     get_lookup_gl_accounts,
-    list_kas_kecil,
-    update_kas_kecil,
+    list_petty_cash,
+    update_petty_cash,
 )
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/kas-kecil", tags=["kas-kecil"])
+router = APIRouter(prefix="/petty-cash", tags=["petty-cash"])
 
 
 @router.get("/accounts")
@@ -29,7 +29,7 @@ async def accounts(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    data = await list_kas_kecil(search=search, page=page, page_size=page_size)
+    data = await list_petty_cash(search=search, page=page, page_size=page_size)
     return ok(data.model_dump())
 
 
@@ -40,34 +40,34 @@ async def get_account(account_no: str):
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    detail = await get_kas_kecil_detail(account_no)
+    detail = await get_petty_cash_detail(account_no)
     if detail is None:
         raise HTTPException(status_code=404, detail="Rekening kas kecil tidak ditemukan")
     return ok(detail.model_dump())
 
 
 @router.post("/accounts", status_code=201)
-async def create_account(payload: KasKecilCreate):
+async def create_account(payload: PettyCashCreate):
     if not await ping():
         return JSONResponse(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    account_no = await create_kas_kecil(payload)
+    account_no = await create_petty_cash(payload)
     return ok({"account_no": account_no})
 
 
 @router.put("/accounts/{account_no}")
-async def update_account(account_no: str, payload: KasKecilUpdate):
+async def update_account(account_no: str, payload: PettyCashUpdate):
     if not await ping():
         return JSONResponse(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    existing = await get_kas_kecil_detail(account_no)
+    existing = await get_petty_cash_detail(account_no)
     if existing is None:
         raise HTTPException(status_code=404, detail="Rekening kas kecil tidak ditemukan")
-    await update_kas_kecil(account_no, payload)
+    await update_petty_cash(account_no, payload)
     return ok({})
 
 
@@ -78,10 +78,10 @@ async def delete_account(account_no: str):
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    existing = await get_kas_kecil_detail(account_no)
+    existing = await get_petty_cash_detail(account_no)
     if existing is None:
         raise HTTPException(status_code=404, detail="Rekening kas kecil tidak ditemukan")
-    await delete_kas_kecil(account_no)
+    await delete_petty_cash(account_no)
     return ok({})
 
 

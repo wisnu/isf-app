@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import piutang_service
-from .piutang_schema import PiutangCreate
+from . import receivable_service
+from .receivable_schema import PiutangCreate
 
 
 router = APIRouter(prefix="/transaksi/piutang", tags=["transaksi-piutang"])
@@ -29,7 +29,7 @@ async def list_piutang(
 ):
     """List Piutang transactions (Pinjam/Bayar) with optional filters."""
     async with get_pool().acquire() as db:
-        rows, total = await piutang_service.list_piutang(
+        rows, total = await receivable_service.list_piutang(
             db,
             branch_code=branch_code,
             page=page,
@@ -59,7 +59,7 @@ async def lookup_debtors(
 ):
     """Lookup debtors by name/code (from DEBTOR_ALL view)."""
     async with get_pool().acquire() as db:
-        rows = await piutang_service.lookup_debtors(
+        rows = await receivable_service.lookup_debtors(
             db,
             branch_code=branch_code,
             search=q,
@@ -75,7 +75,7 @@ async def list_external_debtors(
 ):
     """List all external debtors."""
     async with get_pool().acquire() as db:
-        rows = await piutang_service.list_external_debtors(
+        rows = await receivable_service.list_external_debtors(
             db,
             branch_code=branch_code,
             limit=limit,
@@ -89,7 +89,7 @@ async def get_piutang(
 ):
     """Get Piutang detail by transaction ID."""
     async with get_pool().acquire() as db:
-        row = await piutang_service.get_piutang_detail(db, transaction_id)
+        row = await receivable_service.get_piutang_detail(db, transaction_id)
     if not row:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     return ok(row)
@@ -106,7 +106,7 @@ async def create_piutang(
     request: Request,
 ):
     """Create new Piutang (Pinjam/Bayar) via otorisasi save-and-submit."""
-    from app.modules.otorisasi import service as otorisasi_svc
+    from app.modules.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]

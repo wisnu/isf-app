@@ -12,32 +12,35 @@ def register_dispatcher(entity_type: str, fn) -> None:
 
 def _register_defaults() -> None:
     """Dipanggil di app startup untuk daftarkan semua dispatcher."""
-    from app.modules.transaction import penghimpunan_service, penyaluran_service
+    from app.modules.transaction import fund_collection_service, fund_distribution_service
     from app.modules.bank import service as bank_service
-    register_dispatcher('penghimpunan', penghimpunan_service.create_from_payload)
-    register_dispatcher('penyaluran', penyaluran_service.create_from_payload)
+    register_dispatcher('penghimpunan', fund_collection_service.create_from_payload)
+    register_dispatcher('penyaluran', fund_distribution_service.create_from_payload)
     register_dispatcher('bank', bank_service.create_from_payload)
     from app.modules.parameter import service as parameter_service
     register_dispatcher('budget_owner', parameter_service.create_from_payload)
     # HC ZIS dispatchers
-    from app.modules.transaksi import hc_zis_commit
+    from app.modules.transaction import hc_zis_commit
     register_dispatcher('hc_zis_upload', hc_zis_commit.create_from_payload)
     register_dispatcher('hc_zis_delete', hc_zis_commit.delete_from_payload)
     register_dispatcher('hc_zis_update_date', hc_zis_commit.update_date_from_payload)
     # Uang Muka dispatcher
-    from app.modules.transaksi import uang_muka_service
-    register_dispatcher('uang_muka', uang_muka_service.create_from_payload)
-    from app.modules.transaksi import uang_muka_pengembalian_service
-    register_dispatcher('uang_muka_pengembalian', uang_muka_pengembalian_service.create_from_payload)
+    from app.modules.transaction import cash_advance_service
+    register_dispatcher('uang_muka', cash_advance_service.create_from_payload)
+    from app.modules.transaction import cash_advance_settlement_service
+    register_dispatcher('uang_muka_pengembalian', cash_advance_settlement_service.create_from_payload)
     # Transfer Antar Rekening dispatcher
-    from app.modules.transaksi import transfer_antar_rekening_service
-    register_dispatcher('transfer_antar_rekening', transfer_antar_rekening_service.create_from_payload)
+    from app.modules.transaction import inter_account_transfer_service
+    register_dispatcher('transfer_antar_rekening', inter_account_transfer_service.create_from_payload)
     # Piutang dispatcher
-    from app.modules.transaksi import piutang_service
-    register_dispatcher('piutang', piutang_service.create_from_payload)
+    from app.modules.transaction import receivable_service
+    register_dispatcher('piutang', receivable_service.create_from_payload)
     # Transaksi Umum (GT) dispatcher
-    from app.modules.transaksi import transaksi_umum_service
-    register_dispatcher('transaksi_umum', transaksi_umum_service.create_from_payload)
+    from app.modules.transaction import general_service
+    register_dispatcher('transaksi_umum', general_service.create_from_payload)
+    # Penerimaan Amil (CI) dispatcher
+    from app.modules.transaction import amil_income_service
+    register_dispatcher('amil_income', amil_income_service.create_from_payload)
     # coa, kas dispatcher ditambahkan saat modul master tersedia
 
 
@@ -164,6 +167,7 @@ ENTITY_TRANSACTION_CODE: dict[str, str] = {
     'upload_penghimpunan': 'SDULBA',
     'uang_muka':           'KK',
     'piutang':             'EAR',
+    'amil_income':         'CI',
 }
 
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 from datetime import date, datetime, timezone
 
-from app.modules.transaction.penyaluran_repo import get_cashaccount, get_branch_cash
-from app.modules.transaction.penyaluran_schema import (
+from app.modules.transaction.fund_distribution_repo import get_cashaccount, get_branch_cash
+from app.modules.transaction.fund_distribution_schema import (
     CHANNEL_CODE_MAP, PenyaluranCreate, CreateResult,
 )
 from app.shared.db import get_pool

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class KasKecilRow(BaseModel):
+class PettyCashRow(BaseModel):
     account_no: str
     account_name: str | None
     cash_code: str | None
@@ -20,12 +20,12 @@ class Pagination(BaseModel):
     total_pages: int
 
 
-class KasKecilList(BaseModel):
-    rows: list[KasKecilRow]
+class PettyCashList(BaseModel):
+    rows: list[PettyCashRow]
     pagination: Pagination
 
 
-class KasKecilDetail(BaseModel):
+class PettyCashDetail(BaseModel):
     account_no: str
     account_name: str | None
     cash_code: str | None
@@ -37,7 +37,7 @@ class KasKecilDetail(BaseModel):
     opening_date: str | None  # ISO YYYY-MM-DD
 
 
-class KasKecilCreate(BaseModel):
+class PettyCashCreate(BaseModel):
     account_name: str
     cash_code: str | None = None
     account_interface: str
@@ -46,7 +46,7 @@ class KasKecilCreate(BaseModel):
     opening_date: str | None = None  # ISO YYYY-MM-DD
 
 
-class KasKecilUpdate(BaseModel):
+class PettyCashUpdate(BaseModel):
     account_name: str
     cash_code: str | None = None
     account_interface: str

@@ -4,10 +4,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.otorisasi import service as otorisasi_service
+from app.modules.authorization import service as otorisasi_service
 from app.shared.response import err, ok
-from . import transaksi_umum_service
-from .transaksi_umum_schema import TransaksiUmumCreate
+from . import general_service
+from .general_schema import TransaksiUmumCreate
 
 router = APIRouter(prefix='/transaksi/umum', tags=['transaksi-umum'])
 
@@ -19,7 +19,7 @@ async def lookup_kasbank(
     branch_code: str = Query(default=''),
 ):
     """Search cash/bank accounts (rekening kas/bank)."""
-    rows = await transaksi_umum_service.lookup_kasbank(search=search, branch_code=branch_code)
+    rows = await general_service.lookup_kasbank(search=search, branch_code=branch_code)
     return ok({'rows': rows})
 
 
@@ -30,7 +30,7 @@ async def lookup_produk(
     fund_entity: int = Query(default=0),
 ):
     """Search product accounts for penghimpunan (collection)."""
-    rows = await transaksi_umum_service.lookup_produk(
+    rows = await general_service.lookup_produk(
         search=search, branch_code=branch_code, fund_entity=fund_entity
     )
     return ok({'rows': rows})
@@ -39,14 +39,14 @@ async def lookup_produk(
 @router.get('/lookup/penyaluran')
 async def lookup_penyaluran(search: str = Query(default='')):
     """Search distribution/penyaluran programs."""
-    rows = await transaksi_umum_service.lookup_penyaluran(search=search)
+    rows = await general_service.lookup_penyaluran(search=search)
     return ok({'rows': rows})
 
 
 @router.get('/lookup/donor')
 async def lookup_donor(search: str = Query(default='')):
     """Search donors."""
-    rows = await transaksi_umum_service.lookup_donor(search=search)
+    rows = await general_service.lookup_donor(search=search)
     return ok({'rows': rows})
 
 
@@ -59,7 +59,7 @@ async def list_transaksi_umum(
     date_to: str = Query(default=''),
     search: str = Query(default=''),
 ):
-    rows, total = await transaksi_umum_service.list_transaksi_umum(
+    rows, total = await general_service.list_transaksi_umum(
         branch_code=branch_code,
         page=page,
         limit=limit,
@@ -80,7 +80,7 @@ async def list_transaksi_umum(
 
 @router.get('/{transaction_id}')
 async def get_transaksi_umum(transaction_id: int):
-    row = await transaksi_umum_service.get_transaksi_umum(transaction_id)
+    row = await general_service.get_transaksi_umum(transaction_id)
     if not row:
         return JSONResponse(
             status_code=404,

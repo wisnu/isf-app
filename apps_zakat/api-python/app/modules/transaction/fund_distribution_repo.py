@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date as _date
 from app.shared.db import fetch_all, fetch_one, get_pool
-from app.modules.transaction.penyaluran_schema import (
+from app.modules.transaction.fund_distribution_schema import (
     FundProductAccountRow, ProductRow, RekeningRow,
     PenyaluranListRow, FUND_ENTITY_MAP,
 )

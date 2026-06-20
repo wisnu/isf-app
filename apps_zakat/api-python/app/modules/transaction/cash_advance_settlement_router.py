@@ -5,8 +5,8 @@ from fastapi import APIRouter, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import uang_muka_pengembalian_service
-from .uang_muka_pengembalian_schema import UangMukaPengembalianCreate
+from . import cash_advance_settlement_service
+from .cash_advance_settlement_schema import UangMukaPengembalianCreate
 
 router = APIRouter(prefix="/transaksi/uang-muka-pengembalian", tags=["transaksi-uang-muka-pengembalian"])
 
@@ -21,7 +21,7 @@ async def list_pengembalian(
     branch_code: str = "",
 ):
     async with get_pool().acquire() as db:
-        rows, total = await uang_muka_pengembalian_service.list_pengembalian(
+        rows, total = await cash_advance_settlement_service.list_pengembalian(
             db,
             branch_code=branch_code,
             page=page,
@@ -46,7 +46,7 @@ async def create_pengembalian(
     payload: UangMukaPengembalianCreate,
     request: Request,
 ):
-    from app.modules.otorisasi import service as otorisasi_svc
+    from app.modules.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]
@@ -68,7 +68,7 @@ async def lookup_open_uang_muka(
     branch_code: str = "",
 ):
     """List open (belum di-LPJ) CA transactions for a given employee."""
-    rows = await uang_muka_pengembalian_service.lookup_open_uang_muka(
+    rows = await cash_advance_settlement_service.lookup_open_uang_muka(
         employee_id=employee_id,
         branch_code=branch_code,
     )

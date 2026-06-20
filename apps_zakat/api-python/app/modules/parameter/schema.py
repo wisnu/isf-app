@@ -4,25 +4,25 @@ from pydantic import BaseModel
 
 
 class BudgetOwnerRow(BaseModel):
-    ownerid: int
-    ownercode: str
-    ownername: str
+    owner_id: int
+    owner_code: str
+    owner_name: str
     level: int
     is_detail: str
-    parentownerid: int | None
+    parent_owner_id: int | None
     status: str
 
 
 class BudgetOwnerDetail(BudgetOwnerRow):
-    tglubah: str | None = None
-    userpengubah: str | None = None
-    terminalubah: str | None = None
+    updated_date: str | None = None
+    updated_by: str | None = None
+    updated_terminal: str | None = None
 
 
 class BudgetOwnerLookup(BaseModel):
-    ownerid: int
-    ownercode: str
-    ownername: str
+    owner_id: int
+    owner_code: str
+    owner_name: str
     is_detail: str
 
 

@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import uang_muka_service
-from .uang_muka_schema import (
+from . import cash_advance_service
+from .cash_advance_schema import (
     UangMukaCreate,
     UangMukaUpdate,
 )
@@ -32,7 +32,7 @@ async def list_uang_muka(
 ):
     """List Uang Muka transactions."""
     async with get_pool().acquire() as db:
-        rows, total = await uang_muka_service.list_uang_muka(
+        rows, total = await cash_advance_service.list_uang_muka(
             db,
             branch_code=branch_code,
             page=page,
@@ -60,7 +60,7 @@ async def lookup_employee(
     branch_code: str = "",
 ):
     """Lookup employee by name/number."""
-    rows = await uang_muka_service.lookup_employee(search=search, branch_code=branch_code)
+    rows = await cash_advance_service.lookup_employee(search=search, branch_code=branch_code)
     return ok({"rows": rows})
 
 
@@ -69,7 +69,7 @@ async def lookup_cash_account(
     branch_code: str = "",
 ):
     """Lookup cash account."""
-    rows = await uang_muka_service.lookup_cash_account(branch_code=branch_code)
+    rows = await cash_advance_service.lookup_cash_account(branch_code=branch_code)
     return ok({"rows": rows})
 
 
@@ -78,7 +78,7 @@ async def lookup_budget(
     search: str = "",
 ):
     """Lookup budget."""
-    rows = await uang_muka_service.lookup_budget(search=search)
+    rows = await cash_advance_service.lookup_budget(search=search)
     return ok({"rows": rows})
 
 
@@ -88,7 +88,7 @@ async def get_uang_muka(
 ):
     """Get Uang Muka detail by ID."""
     async with get_pool().acquire() as db:
-        row = await uang_muka_service.get_uang_muka_detail(db, transaction_id)
+        row = await cash_advance_service.get_uang_muka_detail(db, transaction_id)
     if not row:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     return ok(row)
@@ -105,7 +105,7 @@ async def create_uang_muka(
     request: Request,
 ):
     """Create new Uang Muka via otorisasi save-and-submit."""
-    from app.modules.otorisasi import service as otorisasi_svc
+    from app.modules.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]

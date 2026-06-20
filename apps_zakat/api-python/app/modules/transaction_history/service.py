@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from app.modules.transaksi_histori import repository as repo
-from app.modules.transaksi_histori.schema import (
+from app.modules.transaction_history import repository as repo
+from app.modules.transaction_history.schema import (
     JournalItem, RepostResult, SearchPage, TransaksiDetail, TransaksiRow,
 )
 from app.shared.db import get_pool

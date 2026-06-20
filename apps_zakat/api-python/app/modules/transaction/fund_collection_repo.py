@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date as _date
 from app.shared.db import fetch_all, fetch_one
-from app.modules.transaction.penghimpunan_schema import PenghimpunanListRow
+from app.modules.transaction.fund_collection_schema import PenghimpunanListRow
 
 
 def build_list_where(

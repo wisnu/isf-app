@@ -27,7 +27,8 @@ async def list_budget_owners(page: int = 1, limit: int = 25, q: str | None = Non
     p_offset = len(params) + 2
     rows = await fetch_all(
         f"""
-        SELECT ownerid, ownercode, ownername, level, is_detail, parentownerid, status
+        SELECT ownerid AS owner_id, ownercode AS owner_code, ownername AS owner_name,
+               level, is_detail, parentownerid AS parent_owner_id, status
         FROM transaction.budgetowner
         {where}
         ORDER BY ownercode
@@ -45,15 +46,17 @@ async def list_budget_owners(page: int = 1, limit: int = 25, q: str | None = Non
 
 # ── Detail ────────────────────────────────────────────────────────────────────
 
-async def get_budget_owner(ownerid: int) -> dict:
+async def get_budget_owner(owner_id: int) -> dict:
     row = await fetch_one(
         """
-        SELECT ownerid, ownercode, ownername, level, is_detail, parentownerid, status,
-               CAST(tglubah AS TEXT) AS tglubah, userpengubah, terminalubah
+        SELECT ownerid AS owner_id, ownercode AS owner_code, ownername AS owner_name,
+               level, is_detail, parentownerid AS parent_owner_id, status,
+               CAST(tglubah AS TEXT) AS updated_date, userpengubah AS updated_by,
+               terminalubah AS updated_terminal
         FROM transaction.budgetowner
         WHERE ownerid = $1
         """,
-        ownerid,
+        owner_id,
     )
     if not row:
         raise HTTPException(404, "Pemilik anggaran tidak ditemukan")
@@ -67,7 +70,7 @@ async def lookup_groups(q: str | None = None) -> list[dict]:
         p = f"%{q.strip().lower()}%"
         rows = await fetch_all(
             """
-            SELECT ownerid, ownercode, ownername, is_detail
+            SELECT ownerid AS owner_id, ownercode AS owner_code, ownername AS owner_name, is_detail
             FROM transaction.budgetowner
             WHERE is_detail = 'F' AND status = 'A'
               AND (LOWER(ownercode) LIKE $1 OR LOWER(ownername) LIKE $1)
@@ -79,7 +82,7 @@ async def lookup_groups(q: str | None = None) -> list[dict]:
     else:
         rows = await fetch_all(
             """
-            SELECT ownerid, ownercode, ownername, is_detail
+            SELECT ownerid AS owner_id, ownercode AS owner_code, ownername AS owner_name, is_detail
             FROM transaction.budgetowner
             WHERE is_detail = 'F' AND status = 'A'
             ORDER BY ownername
@@ -105,18 +108,18 @@ async def create_from_payload(payload: dict, user_id: str, branch_code: str) -> 
 
 
 async def _create(payload: dict, user_id: str, branch_code: str) -> int:
-    ownercode     = (payload.get("ownercode") or "").strip()
-    ownername     = (payload.get("ownername") or "").strip()
+    ownercode     = (payload.get("owner_code") or "").strip()
+    ownername     = (payload.get("owner_name") or "").strip()
     is_detail     = payload.get("is_detail", "T")
-    parentownerid = payload.get("parentownerid") or None
+    parentownerid = payload.get("parent_owner_id") or None
     status        = payload.get("status", "A")
 
     if not ownercode:
-        raise HTTPException(422, "ownercode wajib diisi")
+        raise HTTPException(422, "owner_code wajib diisi")
     if not ownername:
-        raise HTTPException(422, "ownername wajib diisi")
+        raise HTTPException(422, "owner_name wajib diisi")
     if is_detail == "T" and not parentownerid:
-        raise HTTPException(422, "parentownerid wajib diisi untuk node detail")
+        raise HTTPException(422, "parent_owner_id wajib diisi untuk node detail")
 
     existing = await fetch_one(
         "SELECT ownerid FROM transaction.budgetowner WHERE ownercode = $1", ownercode
@@ -174,14 +177,14 @@ async def _insert_hierarchy(ownerid: int, parentownerid: int | None) -> None:
 
 
 async def _update(payload: dict, user_id: str, branch_code: str) -> None:
-    ownerid   = payload.get("ownerid")
-    ownername = (payload.get("ownername") or "").strip()
+    ownerid   = payload.get("owner_id")
+    ownername = (payload.get("owner_name") or "").strip()
     status    = payload.get("status", "A")
 
     if not ownerid:
-        raise HTTPException(422, "ownerid wajib diisi")
+        raise HTTPException(422, "owner_id wajib diisi")
     if not ownername:
-        raise HTTPException(422, "ownername wajib diisi")
+        raise HTTPException(422, "owner_name wajib diisi")
 
     existing = await fetch_one(
         "SELECT ownerid FROM transaction.budgetowner WHERE ownerid = $1", ownerid
@@ -201,9 +204,9 @@ async def _update(payload: dict, user_id: str, branch_code: str) -> None:
 
 
 async def _delete(payload: dict) -> None:
-    ownerid = payload.get("ownerid")
+    ownerid = payload.get("owner_id")
     if not ownerid:
-        raise HTTPException(422, "ownerid wajib diisi")
+        raise HTTPException(422, "owner_id wajib diisi")
 
     has_children = await fetch_one(
         "SELECT EXISTS(SELECT 1 FROM transaction.budgetowner WHERE parentownerid = $1) AS x",
