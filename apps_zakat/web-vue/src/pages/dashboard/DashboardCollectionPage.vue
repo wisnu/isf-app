@@ -14,7 +14,7 @@ const tahun = shallowRef(new Date().getFullYear())
 
 // KPI cards
 const kpis = {
-  realisasi: 1_250_000_000,
+  realization: 1_250_000_000,
   target: 1_500_000_000,
   pctTarget: 83.3,
   donaturAktif: 342,
@@ -23,7 +23,7 @@ const kpis = {
   konfirmasiPending: 7,
 }
 
-// Trend 6 bulan: realisasi vs target
+// Trend 6 bulan: realization vs target
 const trendLabels = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05']
 const trendRealisasi = [980_000_000, 1_050_000_000, 1_100_000_000, 1_180_000_000, 1_200_000_000, 1_250_000_000]
 const trendTarget = [1_200_000_000, 1_200_000_000, 1_200_000_000, 1_500_000_000, 1_500_000_000, 1_500_000_000]
@@ -57,7 +57,7 @@ function formatIdr(v: number): string {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KpiCard
         label="Realisasi Penghimpunan"
-        :amount="kpis.realisasi"
+        :amount="kpis.realization"
         :delta-pct="kpis.pctTarget"
         format="currency"
       />
@@ -81,11 +81,11 @@ function formatIdr(v: number): string {
       />
     </div>
 
-    <!-- Row 2: Trend realisasi vs target (full width) -->
+    <!-- Row 2: Trend realization vs target (full width) -->
     <TrendChart
       :labels="trendLabels"
-      :penerimaan="trendRealisasi"
-      :penyaluran="trendTarget"
+      :collection="trendRealisasi"
+      :distribution="trendTarget"
     />
 
     <!-- Row 3: Top Donatur -->

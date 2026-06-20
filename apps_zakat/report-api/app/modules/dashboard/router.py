@@ -4,16 +4,16 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.modules.dashboard.service import (
-    get_keuangan,
-    get_keuangan_anggaran,
-    get_keuangan_asnaf,
-    get_keuangan_kpis,
-    get_keuangan_rekening,
-    get_keuangan_trend,
-    get_penyaluran,
-    get_penyaluran_anggaran,
-    get_penyaluran_kpis,
-    get_penyaluran_memo,
+    get_finance,
+    get_finance_budget,
+    get_finance_asnaf,
+    get_finance_kpis,
+    get_finance_account,
+    get_finance_trend,
+    get_fund_distribution,
+    get_fund_distribution_budget,
+    get_fund_distribution_kpis,
+    get_fund_distribution_memo,
     get_summary,
 )
 from app.shared.response import err, ok
@@ -34,12 +34,12 @@ def summary(tenant_id: str):
     return ok(data.model_dump())
 
 
-@router.get("/keuangan")
-async def keuangan(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/finance")
+async def finance(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_keuangan(bulan, tahun)
+    data = await get_finance(month, year)
     if data is None:
         return JSONResponse(
             status_code=503,
@@ -48,12 +48,12 @@ async def keuangan(
     return ok(data.model_dump())
 
 
-@router.get("/penyaluran")
-async def penyaluran(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/fund-distribution")
+async def fund_distribution(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_penyaluran(bulan, tahun)
+    data = await get_fund_distribution(month, year)
     if data is None:
         return JSONResponse(
             status_code=503,
@@ -64,81 +64,81 @@ async def penyaluran(
 
 # ── Per-chart endpoints (FE fetches each widget independently) ───────────────
 
-@router.get("/keuangan/kpis")
-async def keuangan_kpis(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/finance/kpis")
+async def finance_kpis(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_keuangan_kpis(bulan, tahun)
+    data = await get_finance_kpis(month, year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/keuangan/trend")
-async def keuangan_trend(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/finance/trend")
+async def finance_trend(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_keuangan_trend(bulan, tahun)
+    data = await get_finance_trend(month, year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/keuangan/asnaf")
-async def keuangan_asnaf(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/finance/asnaf")
+async def finance_asnaf(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_keuangan_asnaf(bulan, tahun)
+    data = await get_finance_asnaf(month, year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/keuangan/anggaran")
-async def keuangan_anggaran(
-    tahun: int = _date.today().year,
+@router.get("/finance/budget")
+async def finance_budget(
+    year: int = _date.today().year,
 ):
-    data = await get_keuangan_anggaran(tahun)
+    data = await get_finance_budget(year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/keuangan/rekening")
-async def keuangan_rekening():
-    data = await get_keuangan_rekening()
+@router.get("/finance/account")
+async def finance_account():
+    data = await get_finance_account()
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/penyaluran/kpis")
-async def penyaluran_kpis(
-    bulan: int = _date.today().month,
-    tahun: int = _date.today().year,
+@router.get("/fund-distribution/kpis")
+async def fund_distribution_kpis(
+    month: int = _date.today().month,
+    year: int = _date.today().year,
 ):
-    data = await get_penyaluran_kpis(bulan, tahun)
+    data = await get_fund_distribution_kpis(month, year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/penyaluran/anggaran")
-async def penyaluran_anggaran(
-    tahun: int = _date.today().year,
+@router.get("/fund-distribution/budget")
+async def fund_distribution_budget(
+    year: int = _date.today().year,
 ):
-    data = await get_penyaluran_anggaran(tahun)
+    data = await get_fund_distribution_budget(year)
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)
 
 
-@router.get("/penyaluran/memo")
-async def penyaluran_memo():
-    data = await get_penyaluran_memo()
+@router.get("/fund-distribution/memo")
+async def fund_distribution_memo():
+    data = await get_fund_distribution_memo()
     if data is None:
         return JSONResponse(status_code=503, content=_DB_UNAVAILABLE)
     return ok(data)

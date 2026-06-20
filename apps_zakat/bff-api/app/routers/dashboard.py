@@ -10,12 +10,12 @@ from app.shared.response import err
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
-def _period_params(bulan: int | None, tahun: int | None) -> dict:
+def _period_params(month: int | None, year: int | None) -> dict:
     params: dict = {}
-    if bulan is not None:
-        params["bulan"] = bulan
-    if tahun is not None:
-        params["tahun"] = tahun
+    if month is not None:
+        params["month"] = month
+    if year is not None:
+        params["year"] = year
     return params
 
 
@@ -37,121 +37,121 @@ async def summary(request: Request):
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/keuangan")
-async def keuangan(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/finance")
+async def finance(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
 
     params = {}
-    if bulan is not None:
-        params["bulan"] = bulan
-    if tahun is not None:
-        params["tahun"] = tahun
+    if month is not None:
+        params["month"] = month
+    if year is not None:
+        params["year"] = year
 
-    downstream = await get_report_api("/api/dashboard/keuangan", params=params)
+    downstream = await get_report_api("/api/dashboard/finance", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/penyaluran")
-async def penyaluran(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/fund-distribution")
+async def fund_distribution(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
 
     params = {}
-    if bulan is not None:
-        params["bulan"] = bulan
-    if tahun is not None:
-        params["tahun"] = tahun
+    if month is not None:
+        params["month"] = month
+    if year is not None:
+        params["year"] = year
 
-    downstream = await get_report_api("/api/dashboard/penyaluran", params=params)
+    downstream = await get_report_api("/api/dashboard/fund-distribution", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 # ── Per-chart endpoints (FE fetches each widget independently) ───────────────
 
-@router.get("/keuangan/kpis")
-async def keuangan_kpis(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/finance/kpis")
+async def finance_kpis(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/keuangan/kpis", params=_period_params(bulan, tahun)
+        "/api/dashboard/finance/kpis", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/keuangan/trend")
-async def keuangan_trend(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/finance/trend")
+async def finance_trend(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/keuangan/trend", params=_period_params(bulan, tahun)
+        "/api/dashboard/finance/trend", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/keuangan/asnaf")
-async def keuangan_asnaf(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/finance/asnaf")
+async def finance_asnaf(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/keuangan/asnaf", params=_period_params(bulan, tahun)
+        "/api/dashboard/finance/asnaf", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/keuangan/anggaran")
-async def keuangan_anggaran(request: Request, tahun: int = None):
+@router.get("/finance/anggaran")
+async def finance_anggaran(request: Request, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     params: dict = {}
-    if tahun is not None:
-        params["tahun"] = tahun
-    downstream = await get_report_api("/api/dashboard/keuangan/anggaran", params=params)
+    if year is not None:
+        params["year"] = year
+    downstream = await get_report_api("/api/dashboard/finance/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/keuangan/rekening")
-async def keuangan_rekening(request: Request):
+@router.get("/finance/rekening")
+async def finance_rekening(request: Request):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_report_api("/api/dashboard/keuangan/rekening")
+    downstream = await get_report_api("/api/dashboard/finance/rekening")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/penyaluran/kpis")
-async def penyaluran_kpis(request: Request, bulan: int = None, tahun: int = None):
+@router.get("/fund-distribution/kpis")
+async def fund_distribution_kpis(request: Request, month: int = None, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/penyaluran/kpis", params=_period_params(bulan, tahun)
+        "/api/dashboard/fund-distribution/kpis", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/penyaluran/anggaran")
-async def penyaluran_anggaran(request: Request, tahun: int = None):
+@router.get("/fund-distribution/anggaran")
+async def fund_distribution_anggaran(request: Request, year: int = None):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
     params: dict = {}
-    if tahun is not None:
-        params["tahun"] = tahun
-    downstream = await get_report_api("/api/dashboard/penyaluran/anggaran", params=params)
+    if year is not None:
+        params["year"] = year
+    downstream = await get_report_api("/api/dashboard/fund-distribution/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get("/penyaluran/memo")
-async def penyaluran_memo(request: Request):
+@router.get("/fund-distribution/memo")
+async def fund_distribution_memo(request: Request):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_report_api("/api/dashboard/penyaluran/memo")
+    downstream = await get_report_api("/api/dashboard/fund-distribution/memo")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

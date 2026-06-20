@@ -12,8 +12,8 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 const props = withDefaults(
   defineProps<{
     labels: string[]
-    penerimaan: number[]
-    penyaluran: number[]
+    collection: number[]
+    distribution: number[]
     loading?: boolean
     error?: boolean
     errorMessage?: string
@@ -43,7 +43,7 @@ const chartData = computed(() => ({
   datasets: [
     {
       label: 'Penerimaan',
-      data: props.penerimaan,
+      data: props.collection,
       borderColor: '#1976d2',
       backgroundColor: 'rgba(25, 118, 210, 0.10)',
       fill: true,
@@ -54,7 +54,7 @@ const chartData = computed(() => ({
     },
     {
       label: 'Penyaluran',
-      data: props.penyaluran,
+      data: props.distribution,
       borderColor: '#d97706',
       backgroundColor: 'rgba(217, 119, 6, 0.08)',
       fill: true,

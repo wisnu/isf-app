@@ -17,15 +17,15 @@ interface KpiCardData {
 
 interface TrendPoint {
   label: string
-  penerimaan: number
-  penyaluran: number
+  collection: number
+  distribution: number
 }
 
 interface AnggaranItem {
   owner_id: number
   owner_name: string
-  anggaran: number
-  realisasi: number
+  budget: number
+  realization: number
   pct: number
 }
 
@@ -40,23 +40,23 @@ const tahun = shallowRef(new Date().getFullYear())
 // Per-chart fetchers — masing-masing independen. Kegagalan/lambatnya satu
 // widget tidak menggagalkan widget lain.
 const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
-  () => api.get(`/api/dashboard/keuangan/kpis?bulan=${bulan.value}&tahun=${tahun.value}`),
+  () => api.get(`/api/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`),
 )
 const trendQ = useFetch<{ trend: TrendPoint[] }>(
-  () => api.get(`/api/dashboard/keuangan/trend?bulan=${bulan.value}&tahun=${tahun.value}`),
+  () => api.get(`/api/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`),
 )
 const asnafQ = useFetch<{ asnaf: AsnafItem[] }>(
-  () => api.get(`/api/dashboard/keuangan/asnaf?bulan=${bulan.value}&tahun=${tahun.value}`),
+  () => api.get(`/api/dashboard/finance/asnaf?month=${bulan.value}&year=${tahun.value}`),
 )
-const anggaranQ = useFetch<{ anggaran: AnggaranItem[] }>(
-  () => api.get(`/api/dashboard/keuangan/anggaran?tahun=${tahun.value}`),
+const budgetQ = useFetch<{ budget: AnggaranItem[] }>(
+  () => api.get(`/api/dashboard/finance/budget?year=${tahun.value}`),
 )
 
 function loadAll() {
   void kpisQ.load()
   void trendQ.load()
   void asnafQ.load()
-  void anggaranQ.load()
+  void budgetQ.load()
 }
 
 onMounted(loadAll)
@@ -84,23 +84,23 @@ watch([bulan, tahun], loadAll)
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KpiCard
         label="Penerimaan"
-        :amount="kpisQ.data.value?.kpis?.penerimaan?.total ?? 0"
-        :delta-pct="kpisQ.data.value?.kpis?.penerimaan?.delta_pct ?? 0"
+        :amount="kpisQ.data.value?.kpis?.collection?.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis?.collection?.delta_pct ?? 0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
         :error-message="kpisQ.error.value ?? undefined"
       />
       <KpiCard
         label="Penyaluran"
-        :amount="kpisQ.data.value?.kpis?.penyaluran?.total ?? 0"
-        :delta-pct="kpisQ.data.value?.kpis?.penyaluran?.delta_pct ?? 0"
+        :amount="kpisQ.data.value?.kpis?.distribution?.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis?.distribution?.delta_pct ?? 0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
         :error-message="kpisQ.error.value ?? undefined"
       />
       <KpiCard
         label="Saldo Kas/Bank"
-        :amount="kpisQ.data.value?.kpis?.saldo?.total ?? 0"
+        :amount="kpisQ.data.value?.kpis?.balance?.total ?? 0"
         :delta-pct="0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
@@ -108,7 +108,7 @@ watch([bulan, tahun], loadAll)
       />
       <KpiCard
         label="Pending Otorisasi"
-        :amount="kpisQ.data.value?.kpis?.otorisasi_pending?.total ?? 0"
+        :amount="kpisQ.data.value?.kpis?.authorization_pending?.total ?? 0"
         :delta-pct="0"
         format="count"
         :loading="kpisQ.loading.value"
@@ -120,8 +120,8 @@ watch([bulan, tahun], loadAll)
     <!-- Trend chart full width -->
     <TrendChart
       :labels="trendQ.data.value?.trend?.map((t) => t.label) ?? []"
-      :penerimaan="trendQ.data.value?.trend?.map((t) => t.penerimaan) ?? []"
-      :penyaluran="trendQ.data.value?.trend?.map((t) => t.penyaluran) ?? []"
+      :collection="trendQ.data.value?.trend?.map((t) => t.collection) ?? []"
+      :distribution="trendQ.data.value?.trend?.map((t) => t.distribution) ?? []"
       :loading="trendQ.loading.value"
       :error="!!trendQ.error.value"
       :error-message="trendQ.error.value ?? undefined"
@@ -137,10 +137,10 @@ watch([bulan, tahun], loadAll)
         :error-message="asnafQ.error.value ?? undefined"
       />
       <BudgetProgress
-        :items="anggaranQ.data.value?.anggaran ?? []"
-        :loading="anggaranQ.loading.value"
-        :error="!!anggaranQ.error.value"
-        :error-message="anggaranQ.error.value ?? undefined"
+        :items="budgetQ.data.value?.budget ?? []"
+        :loading="budgetQ.loading.value"
+        :error="!!budgetQ.error.value"
+        :error-message="budgetQ.error.value ?? undefined"
       />
     </div>
   </div>

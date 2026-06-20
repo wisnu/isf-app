@@ -17,17 +17,17 @@ interface KpiCardData {
 interface KpisBundle {
   period: string
   kpis: {
-    penerimaan: KpiCardData
-    penyaluran: KpiCardData
-    saldo: KpiCardData
-    otorisasi_pending: KpiCardData
+    collection: KpiCardData
+    distribution: KpiCardData
+    balance: KpiCardData
+    authorization_pending: KpiCardData
   }
 }
 
 interface TrendPoint {
   label: string
-  penerimaan: number
-  penyaluran: number
+  collection: number
+  distribution: number
 }
 
 interface TrendBundle {
@@ -37,13 +37,13 @@ interface TrendBundle {
 interface AnggaranItem {
   owner_id: number
   owner_name: string
-  anggaran: number
-  realisasi: number
+  budget: number
+  realization: number
   pct: number
 }
 
 interface AnggaranBundle {
-  anggaran: AnggaranItem[]
+  budget: AnggaranItem[]
 }
 
 interface RekeningItem {
@@ -55,7 +55,7 @@ interface RekeningItem {
 }
 
 interface RekeningBundle {
-  rekening: RekeningItem[]
+  account: RekeningItem[]
 }
 
 const bulan = shallowRef(new Date().getMonth() + 1)
@@ -64,27 +64,27 @@ const tahun = shallowRef(new Date().getFullYear())
 // Per-chart fetchers — masing-masing independen.
 const kpisQ = useFetch<KpisBundle>(() =>
   api.get<KpisBundle>(
-    `/api/dashboard/keuangan/kpis?bulan=${bulan.value}&tahun=${tahun.value}`,
+    `/api/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`,
   ),
 )
 const trendQ = useFetch<TrendBundle>(() =>
   api.get<TrendBundle>(
-    `/api/dashboard/keuangan/trend?bulan=${bulan.value}&tahun=${tahun.value}`,
+    `/api/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`,
   ),
 )
-const anggaranQ = useFetch<AnggaranBundle>(() =>
-  api.get<AnggaranBundle>(`/api/dashboard/keuangan/anggaran?tahun=${tahun.value}`),
+const budgetQ = useFetch<AnggaranBundle>(() =>
+  api.get<AnggaranBundle>(`/api/dashboard/finance/budget?year=${tahun.value}`),
 )
-const rekeningQ = useFetch<RekeningBundle>(() =>
-  api.get<RekeningBundle>('/api/dashboard/keuangan/rekening'),
+const accountQ = useFetch<RekeningBundle>(() =>
+  api.get<RekeningBundle>('/api/dashboard/finance/account'),
 )
 
 function loadAll() {
   // Parallel — kegagalan di satu chart tidak blok chart lain
   void kpisQ.load()
   void trendQ.load()
-  void anggaranQ.load()
-  void rekeningQ.load()
+  void budgetQ.load()
+  void accountQ.load()
 }
 
 onMounted(loadAll)
@@ -112,23 +112,23 @@ watch([bulan, tahun], loadAll)
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KpiCard
         label="Penerimaan"
-        :amount="kpisQ.data.value?.kpis.penerimaan.total ?? 0"
-        :delta-pct="kpisQ.data.value?.kpis.penerimaan.delta_pct ?? 0"
+        :amount="kpisQ.data.value?.kpis.collection.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis.collection.delta_pct ?? 0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
         :error-message="kpisQ.error.value ?? undefined"
       />
       <KpiCard
         label="Penyaluran"
-        :amount="kpisQ.data.value?.kpis.penyaluran.total ?? 0"
-        :delta-pct="kpisQ.data.value?.kpis.penyaluran.delta_pct ?? 0"
+        :amount="kpisQ.data.value?.kpis.distribution.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis.distribution.delta_pct ?? 0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
         :error-message="kpisQ.error.value ?? undefined"
       />
       <KpiCard
         label="Saldo Kas/Bank"
-        :amount="kpisQ.data.value?.kpis.saldo.total ?? 0"
+        :amount="kpisQ.data.value?.kpis.balance.total ?? 0"
         :delta-pct="0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
@@ -136,7 +136,7 @@ watch([bulan, tahun], loadAll)
       />
       <KpiCard
         label="Pending Otorisasi"
-        :amount="kpisQ.data.value?.kpis.otorisasi_pending.total ?? 0"
+        :amount="kpisQ.data.value?.kpis.authorization_pending.total ?? 0"
         :delta-pct="0"
         format="count"
         :loading="kpisQ.loading.value"
@@ -148,8 +148,8 @@ watch([bulan, tahun], loadAll)
     <!-- Row 2: Trend chart -->
     <TrendChart
       :labels="trendQ.data.value?.trend.map((t) => t.label) ?? []"
-      :penerimaan="trendQ.data.value?.trend.map((t) => t.penerimaan) ?? []"
-      :penyaluran="trendQ.data.value?.trend.map((t) => t.penyaluran) ?? []"
+      :collection="trendQ.data.value?.trend.map((t) => t.collection) ?? []"
+      :distribution="trendQ.data.value?.trend.map((t) => t.distribution) ?? []"
       :loading="trendQ.loading.value"
       :error="!!trendQ.error.value"
       :error-message="trendQ.error.value ?? undefined"
@@ -158,16 +158,16 @@ watch([bulan, tahun], loadAll)
     <!-- Row 3: Budget + Rekening -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <BudgetProgress
-        :items="anggaranQ.data.value?.anggaran ?? []"
-        :loading="anggaranQ.loading.value"
-        :error="!!anggaranQ.error.value"
-        :error-message="anggaranQ.error.value ?? undefined"
+        :items="budgetQ.data.value?.budget ?? []"
+        :loading="budgetQ.loading.value"
+        :error="!!budgetQ.error.value"
+        :error-message="budgetQ.error.value ?? undefined"
       />
       <RekeningList
-        :items="rekeningQ.data.value?.rekening ?? []"
-        :loading="rekeningQ.loading.value"
-        :error="!!rekeningQ.error.value"
-        :error-message="rekeningQ.error.value ?? undefined"
+        :items="accountQ.data.value?.account ?? []"
+        :loading="accountQ.loading.value"
+        :error="!!accountQ.error.value"
+        :error-message="accountQ.error.value ?? undefined"
       />
     </div>
   </div>

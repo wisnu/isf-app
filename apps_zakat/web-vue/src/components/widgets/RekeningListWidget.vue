@@ -55,15 +55,15 @@ const totalSaldo = computed(() =>
     <CardContent>
       <div v-if="loading" class="flex items-center justify-center gap-2 text-muted text-sm py-8">
         <Loader2 class="w-4 h-4 animate-spin" />
-        Memuat rekening...
+        Memuat account...
       </div>
       <div v-else-if="error" class="flex flex-col items-center gap-1 text-destructive text-sm py-8 text-center px-4">
         <AlertTriangle class="w-5 h-5 mb-1" />
-        <span class="font-medium">Gagal memuat rekening</span>
+        <span class="font-medium">Gagal memuat account</span>
         <span v-if="errorMessage" class="text-xs text-muted">{{ errorMessage }}</span>
       </div>
       <div v-else-if="items.length === 0" class="text-sm text-muted text-center py-8 italic">
-        Tidak ada rekening aktif.
+        Tidak ada account aktif.
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">

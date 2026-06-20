@@ -7,16 +7,16 @@ class KpiPair(BaseModel):
 
 
 class Kpis(BaseModel):
-    penerimaan: KpiPair
-    penyaluran: KpiPair
-    saldo: KpiPair
-    donatur_baru: KpiPair
+    collection: KpiPair
+    distribution: KpiPair
+    balance: KpiPair
+    new_donors: KpiPair
 
 
 class Trend(BaseModel):
     labels: list[str]
-    penerimaan: list[float]
-    penyaluran: list[float]
+    collection: list[float]
+    distribution: list[float]
 
 
 class AsnafItem(BaseModel):
@@ -65,19 +65,19 @@ class AsnafItem2(BaseModel):
 
 class TrendPoint(BaseModel):
     label: str        # "2026-01"
-    penerimaan: float
-    penyaluran: float
+    collection: float
+    distribution: float
 
 
-class AnggaranItem(BaseModel):
+class BudgetItem(BaseModel):
     owner_id: int
     owner_name: str
-    anggaran: float
-    realisasi: float
-    pct: float        # realisasi / anggaran * 100, capped at 999
+    budget: float
+    realization: float
+    pct: float        # realization / budget * 100, capped at 999
 
 
-class RekeningItem(BaseModel):
+class AccountItem(BaseModel):
     account_no: str
     account_name: str
     account_type: str        # "Bank" | "Kas Besar" | "Kas Kecil" | "Lainnya"
@@ -94,17 +94,17 @@ class MemoItem(BaseModel):
     memo_date: str | None   # "YYYY-MM-DD"
 
 
-class DashboardKeuangan(BaseModel):
+class DashboardFinance(BaseModel):
     period: str             # "2026-05"
     kpis: dict[str, KpiCardData]
     trend: list[TrendPoint]
     asnaf: list[AsnafItem2]
-    anggaran: list[AnggaranItem]
-    rekening: list[RekeningItem]
+    budget: list[BudgetItem]
+    account: list[AccountItem]
 
 
-class DashboardPenyaluran(BaseModel):
+class DashboardDistribution(BaseModel):
     period: str
     kpis: dict[str, KpiCardData]
-    anggaran: list[AnggaranItem]
-    memo_terbaru: list[MemoItem]
+    budget: list[BudgetItem]
+    recent_memo: list[MemoItem]

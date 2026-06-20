@@ -8,8 +8,8 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 interface AnggaranItem {
   owner_id: number
   owner_name: string
-  anggaran: number
-  realisasi: number
+  budget: number
+  realization: number
   pct: number
 }
 
@@ -46,15 +46,15 @@ function displayPct(pct: number): string {
     <CardContent class="p-5 pt-0">
       <div v-if="loading" class="flex items-center justify-center gap-2 text-muted text-sm py-8">
         <Loader2 class="w-4 h-4 animate-spin" />
-        Memuat anggaran...
+        Memuat budget...
       </div>
       <div v-else-if="error" class="flex flex-col items-center gap-1 text-destructive text-sm py-8 text-center px-4">
         <AlertTriangle class="w-5 h-5 mb-1" />
-        <span class="font-medium">Gagal memuat anggaran</span>
+        <span class="font-medium">Gagal memuat budget</span>
         <span v-if="errorMessage" class="text-xs text-muted">{{ errorMessage }}</span>
       </div>
       <div v-else-if="items.length === 0" class="text-sm text-muted text-center py-8 italic">
-        Tidak ada data anggaran periode ini.
+        Tidak ada data budget periode ini.
       </div>
       <div v-else class="space-y-3">
         <div v-for="item in items" :key="item.owner_id">

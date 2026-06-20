@@ -17,8 +17,8 @@ interface KpiCardData {
 interface AnggaranItem {
   owner_id: number
   owner_name: string
-  anggaran: number
-  realisasi: number
+  budget: number
+  realization: number
   pct: number
 }
 
@@ -35,18 +35,18 @@ const bulan = shallowRef(new Date().getMonth() + 1)
 const tahun = shallowRef(new Date().getFullYear())
 
 const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
-  () => api.get(`/api/dashboard/penyaluran/kpis?bulan=${bulan.value}&tahun=${tahun.value}`),
+  () => api.get(`/api/dashboard/fund-distribution/kpis?month=${bulan.value}&year=${tahun.value}`),
 )
-const anggaranQ = useFetch<{ anggaran: AnggaranItem[] }>(
-  () => api.get(`/api/dashboard/penyaluran/anggaran?tahun=${tahun.value}`),
+const budgetQ = useFetch<{ budget: AnggaranItem[] }>(
+  () => api.get(`/api/dashboard/fund-distribution/budget?year=${tahun.value}`),
 )
-const memoQ = useFetch<{ memo_terbaru: MemoItem[] }>(
-  () => api.get('/api/dashboard/penyaluran/memo'),
+const memoQ = useFetch<{ recent_memo: MemoItem[] }>(
+  () => api.get('/api/dashboard/fund-distribution/memo'),
 )
 
 function loadAll() {
   void kpisQ.load()
-  void anggaranQ.load()
+  void budgetQ.load()
   void memoQ.load()
 }
 
@@ -71,8 +71,8 @@ watch([bulan, tahun], loadAll)
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <KpiCard
         label="Total Penyaluran"
-        :amount="kpisQ.data.value?.kpis?.penyaluran?.total ?? 0"
-        :delta-pct="kpisQ.data.value?.kpis?.penyaluran?.delta_pct ?? 0"
+        :amount="kpisQ.data.value?.kpis?.distribution?.total ?? 0"
+        :delta-pct="kpisQ.data.value?.kpis?.distribution?.delta_pct ?? 0"
         :loading="kpisQ.loading.value"
         :error="!!kpisQ.error.value"
         :error-message="kpisQ.error.value ?? undefined"
@@ -88,7 +88,7 @@ watch([bulan, tahun], loadAll)
       />
       <KpiCard
         label="Pending Otorisasi"
-        :amount="kpisQ.data.value?.kpis?.otorisasi_pending?.total ?? 0"
+        :amount="kpisQ.data.value?.kpis?.authorization_pending?.total ?? 0"
         :delta-pct="0"
         format="count"
         :loading="kpisQ.loading.value"
@@ -100,13 +100,13 @@ watch([bulan, tahun], loadAll)
     <!-- Row 2: Budget progress + Memo list side by side -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <BudgetProgress
-        :items="anggaranQ.data.value?.anggaran ?? []"
-        :loading="anggaranQ.loading.value"
-        :error="!!anggaranQ.error.value"
-        :error-message="anggaranQ.error.value ?? undefined"
+        :items="budgetQ.data.value?.budget ?? []"
+        :loading="budgetQ.loading.value"
+        :error="!!budgetQ.error.value"
+        :error-message="budgetQ.error.value ?? undefined"
       />
       <MemoList
-        :items="memoQ.data.value?.memo_terbaru ?? []"
+        :items="memoQ.data.value?.recent_memo ?? []"
         :loading="memoQ.loading.value"
         :error="!!memoQ.error.value"
         :error-message="memoQ.error.value ?? undefined"
