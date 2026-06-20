@@ -8,7 +8,7 @@ from app.services.auth import require_menu
 from app.services.proxy import get_api_python
 from app.shared.config import settings
 
-router = APIRouter(prefix='/piutang', tags=['piutang'])
+router = APIRouter(prefix='/receivable', tags=['receivable'])
 
 _MENU = 'finance.transactions.receivable'
 
@@ -23,7 +23,7 @@ def _session(request: Request) -> dict:
 
 
 @router.get('/')
-async def list_piutang(
+async def list_receivable(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     page: int = Query(default=1, ge=1),
@@ -47,12 +47,12 @@ async def list_piutang(
     if date_to:
         params['date_to'] = date_to
 
-    downstream = await get_api_python('/api/transaksi/piutang/', params=params)
+    downstream = await get_api_python('/api/transaction/receivable/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 @router.post('/')
-async def create_piutang(
+async def create_receivable(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
 ):
@@ -63,14 +63,14 @@ async def create_piutang(
     body['inputer_id'] = s['user_id']
     body['branch_code'] = s['branch'] or '001'
 
-    url = f"{settings.api_python_base_url}/api/transaksi/piutang/"
+    url = f"{settings.api_python_base_url}/api/transaction/receivable/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
 
 
 @router.put('/{transaction_no}')
-async def update_piutang(
+async def update_receivable(
     request: Request,
     transaction_no: str,
     _: str = Depends(require_menu(_MENU)),
@@ -82,20 +82,20 @@ async def update_piutang(
     body['inputer_id'] = s['user_id']
     body['branch_code'] = s['branch'] or '001'
 
-    url = f"{settings.api_python_base_url}/api/transaksi/piutang/{transaction_no}"
+    url = f"{settings.api_python_base_url}/api/transaction/receivable/{transaction_no}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.put(url, json=body)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
 
 
-@router.get('/debitur/')
-async def lookup_debitur(
+@router.get('/debtor/')
+async def lookup_debtor(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     q: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
 ):
-    """Lookup debitur (karyawan + eksternal) untuk form selection."""
+    """Lookup debtor (karyawan + eksternal) untuk form selection."""
     s = _session(request)
     params: dict = {'limit': limit}
     if s['branch']:
@@ -103,18 +103,18 @@ async def lookup_debitur(
     if q:
         params['q'] = q
 
-    downstream = await get_api_python('/api/transaksi/piutang/debitur/', params=params)
+    downstream = await get_api_python('/api/transaction/receivable/debtor/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-@router.get('/debitur-external/')
-async def list_debitur_external(
+@router.get('/debtor-external/')
+async def list_debtor_external(
     request: Request,
     _: str = Depends(require_menu(_MENU)),
     q: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
 ):
-    """List debitur eksternal."""
+    """List debtor eksternal."""
     s = _session(request)
     params: dict = {'limit': limit}
     if s['branch']:
@@ -122,5 +122,5 @@ async def list_debitur_external(
     if q:
         params['q'] = q
 
-    downstream = await get_api_python('/api/transaksi/piutang/debitur-external/', params=params)
+    downstream = await get_api_python('/api/transaction/receivable/debtor-external/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

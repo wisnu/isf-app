@@ -11,10 +11,10 @@ import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DebtorOption {
-  debtorid: string
-  debtorcode: string
-  debtorname: string
-  debtortype: string
+  debtor_id: string
+  debtor_code: string
+  debtor_name: string
+  debtor_type: string
   branchcode: string
 }
 
@@ -65,7 +65,7 @@ async function searchDebtors(query: string) {
   if (!query.trim()) { debtorOptions.value = []; return }
   try {
     const res = await api.get<{ rows: DebtorOption[] }>(
-      `/api/piutang/debitur/?q=${encodeURIComponent(query.trim())}`,
+      `/api/receivable/debtor/?q=${encodeURIComponent(query.trim())}`,
     )
     debtorOptions.value = res.rows ?? []
   } catch { debtorOptions.value = [] }
@@ -73,14 +73,14 @@ async function searchDebtors(query: string) {
 
 function onDebtorSelected(d: DebtorOption | null) {
   debtor.value = d
-  debtorTypeLabel.value = d ? (d.debtortype === 'E' ? 'Karyawan' : 'Non-Karyawan') : ''
+  debtorTypeLabel.value = d ? (d.debtor_type === 'E' ? 'Karyawan' : 'Non-Karyawan') : ''
 }
 
 async function searchCashAccounts(query: string) {
   if (!query.trim()) { cashAccountOptions.value = []; return }
   try {
     const res = await api.get<{ rows: CashAccountOption[] }>(
-      `/api/piutang/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
+      `/api/receivable/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
     )
     cashAccountOptions.value = res.rows ?? []
   } catch { cashAccountOptions.value = [] }
@@ -90,7 +90,7 @@ async function searchGLAccounts(query: string) {
   if (!query.trim()) { glAccountOptions.value = []; return }
   try {
     const res = await api.get<{ rows: GLAccountOption[] }>(
-      `/api/piutang/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
+      `/api/receivable/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
     )
     glAccountOptions.value = res.rows ?? []
   } catch { glAccountOptions.value = [] }
@@ -111,7 +111,7 @@ async function submit() {
       actual_date: txDate.value,
       transaction_type: transactionType.value,
       channel_type: channelType.value,
-      debtor_id: debtor.value.debtorid,
+      debtor_id: debtor.value.debtor_id,
       amount: amount.value,
       reference_no: refNo.value,
       description: description.value,
@@ -123,7 +123,7 @@ async function submit() {
       payload.gl_account_code = glAccount.value.account_code
 
     const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/piutang/', payload,
+      '/api/receivable/', payload,
     )
     if (result.status === 'AUTHORIZED') toast.success('Piutang berhasil disimpan dan disetujui.')
     else toast.info(`Piutang dikirim untuk otorisasi. Status: ${result.status}`)
@@ -229,14 +229,14 @@ async function submit() {
             :model-value="debtor"
             :options="debtorOptions"
             :loading="false"
-            placeholder="Cari nama debitur atau nomor..."
-            option-label="debtorname"
-            option-value="debtorid"
+            placeholder="Cari nama debtor atau nomor..."
+            option-label="debtor_name"
+            option-value="debtor_id"
             @update:model-value="onDebtorSelected"
             @search="searchDebtors"
           />
           <p v-if="debtor" class="mt-1 text-[10px] text-slate-400 font-mono">
-            {{ debtor.debtorcode }}
+            {{ debtor.debtor_code }}
           </p>
         </div>
 

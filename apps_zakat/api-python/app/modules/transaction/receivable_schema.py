@@ -7,8 +7,8 @@ from typing import Optional
 from decimal import Decimal
 
 
-class PiutangCreate(BaseModel):
-    """Request to create Piutang (EAR=Pinjam or PEAR=Bayar) transaction."""
+class ReceivableCreate(BaseModel):
+    """Request to create Receivable (EAR=Pinjam or PEAR=Bayar) transaction."""
     actual_date: str  # ISO YYYY-MM-DD
     transaction_type: str  # 'P' = Pinjam (EAR), 'B' = Bayar (PEAR)
     channel_type: str  # 'C' = Kas/Bank, 'G' = GL Account
@@ -23,28 +23,28 @@ class PiutangCreate(BaseModel):
     fund_entity: int = 4  # Hardcoded Dana Amil — do NOT change
 
 
-class PiutangListItem(BaseModel):
-    """Single row in Piutang list."""
+class ReceivableListItem(BaseModel):
+    """Single row in Receivable list."""
     id: int
-    transactionno: str
-    transactioncode: str  # 'EAR' or 'PEAR'
-    transactiontype: str  # 'P' or 'B'
-    actualdate: str  # ISO YYYY-MM-DD
-    branchcode: str
+    transaction_no: str
+    transaction_code: str  # 'EAR' or 'PEAR'
+    transaction_type: str  # 'P' or 'B'
+    actual_date: str  # ISO YYYY-MM-DD
+    branch_code: str
     inputer: str
-    debtorname: str
-    debtortype: str  # 'E' or 'X'
-    accountname: str  # Account name (e.g., "Piutang Karyawan - Budi")
+    debtor_name: str
+    debtor_type: str  # 'E' or 'X'
+    account_name: str  # Account name (e.g., "Piutang Karyawan - Budi")
     amount: Decimal
-    currencycode: str  # 'IDR'
+    currency_code: str  # 'IDR'
     status: str  # Otorisasi status (AUTHORIZED, PENDING, etc.)
-    referenceno: Optional[str]
+    reference_no: Optional[str]
     description: Optional[str]
 
 
-class PiutangListResponse(BaseModel):
-    """Paginated list response for Piutang."""
-    rows: list[PiutangListItem]
+class ReceivableListResponse(BaseModel):
+    """Paginated list response for Receivable."""
+    rows: list[ReceivableListItem]
     pagination: dict
 
 

@@ -14,14 +14,14 @@ import { dmy } from '@/lib/date'
 import { useToast } from '@/lib/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface PiutangRow {
+interface ReceivableRow {
   _rowKind: 'transaction'
   id: number
-  transactionno: string | null
-  transactioncode: string
-  actualdate: string
-  debtorname: string
-  debtortype: string
+  transaction_no: string | null
+  transaction_code: string
+  actual_date: string
+  debtor_name: string
+  debtor_type: string
   amount: number
   status: string
   description: string | null
@@ -41,10 +41,10 @@ interface SubmissionRow {
   payload: Record<string, any>
 }
 
-type MergedRow = PiutangRow | SubmissionRow
+type MergedRow = ReceivableRow | SubmissionRow
 
 interface ListResponse {
-  rows: Omit<PiutangRow, '_rowKind'>[]
+  rows: Omit<ReceivableRow, '_rowKind'>[]
   pagination: { page: number; limit: number; total: number; total_pages: number }
 }
 
@@ -53,7 +53,7 @@ const router = useRouter()
 const toast = useToast()
 const today = new Date().toISOString().slice(0, 10)
 
-const txRows = ref<PiutangRow[]>([])
+const txRows = ref<ReceivableRow[]>([])
 const subRows = ref<SubmissionRow[]>([])
 const loading = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
@@ -99,7 +99,7 @@ async function load() {
     })
 
     const [txRes, subRes] = await Promise.all([
-      api.get<ListResponse>(`/api/piutang/?${params}`).catch(() => ({
+      api.get<ListResponse>(`/api/receivable/?${params}`).catch(() => ({
         rows: [],
         pagination: { page: 1, limit: 25, total: 0, total_pages: 1 },
       })),
@@ -304,11 +304,11 @@ onMounted(load)
             :key="`tx-${row.id}`"
             class="cursor-pointer border-b border-border last:border-0 hover:bg-background/60"
           >
-            <td class="px-4 py-2 font-mono text-xs">{{ row.transactionno ?? '-' }}</td>
-            <td class="px-4 py-2">{{ dmy(row.actualdate) }}</td>
-            <td class="px-4 py-2">{{ typeLabel(row.transactioncode) }}</td>
-            <td class="px-4 py-2 text-zinc-700 dark:text-zinc-300">{{ row.debtorname }}</td>
-            <td class="px-4 py-2">{{ debtorTypeLabel(row.debtortype) }}</td>
+            <td class="px-4 py-2 font-mono text-xs">{{ row.transaction_no ?? '-' }}</td>
+            <td class="px-4 py-2">{{ dmy(row.actual_date) }}</td>
+            <td class="px-4 py-2">{{ typeLabel(row.transaction_code) }}</td>
+            <td class="px-4 py-2 text-zinc-700 dark:text-zinc-300">{{ row.debtor_name }}</td>
+            <td class="px-4 py-2">{{ debtorTypeLabel(row.debtor_type) }}</td>
             <td class="px-4 py-2 text-right font-medium">{{ fmt(row.amount) }}</td>
             <td class="px-4 py-2 text-center">
               <span class="rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">

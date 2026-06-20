@@ -6,10 +6,10 @@ from fastapi import APIRouter, HTTPException, Request
 from app.shared.db import get_pool
 from app.shared.response import ok
 from . import receivable_service
-from .receivable_schema import PiutangCreate
+from .receivable_schema import ReceivableCreate
 
 
-router = APIRouter(prefix="/transaksi/piutang", tags=["transaksi-piutang"])
+router = APIRouter(prefix="/transaction/receivable", tags=["receivable"])
 
 
 # ============================================================================
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/transaksi/piutang", tags=["transaksi-piutang"])
 
 
 @router.get("")
-async def list_piutang(
+async def list_receivable(
     page: int = 1,
     limit: int = 25,
     transaction_type: str = "",
@@ -29,7 +29,7 @@ async def list_piutang(
 ):
     """List Piutang transactions (Pinjam/Bayar) with optional filters."""
     async with get_pool().acquire() as db:
-        rows, total = await receivable_service.list_piutang(
+        rows, total = await receivable_service.list_receivable(
             db,
             branch_code=branch_code,
             page=page,
@@ -51,7 +51,7 @@ async def list_piutang(
     })
 
 
-@router.get("/debitur/lookup")
+@router.get("/debtor/lookup")
 async def lookup_debtors(
     q: str = "",
     limit: int = 50,
@@ -68,7 +68,7 @@ async def lookup_debtors(
     return ok({"rows": rows})
 
 
-@router.get("/debitur-external/list")
+@router.get("/debtor-external/list")
 async def list_external_debtors(
     limit: int = 100,
     branch_code: str = "",
@@ -84,12 +84,12 @@ async def list_external_debtors(
 
 
 @router.get("/{transaction_id}")
-async def get_piutang(
+async def get_receivable(
     transaction_id: int,
 ):
-    """Get Piutang detail by transaction ID."""
+    """Get Receivable detail by transaction ID."""
     async with get_pool().acquire() as db:
-        row = await receivable_service.get_piutang_detail(db, transaction_id)
+        row = await receivable_service.get_receivable_detail(db, transaction_id)
     if not row:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     return ok(row)
@@ -101,11 +101,11 @@ async def get_piutang(
 
 
 @router.post("")
-async def create_piutang(
-    payload: PiutangCreate,
+async def create_receivable(
+    payload: ReceivableCreate,
     request: Request,
 ):
-    """Create new Piutang (Pinjam/Bayar) via otorisasi save-and-submit."""
+    """Create new Receivable (Pinjam/Bayar) via otorisasi save-and-submit."""
     from app.modules.authorization import service as otorisasi_svc
 
     session = request.state.session

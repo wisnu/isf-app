@@ -8,7 +8,7 @@ from asyncpg import Connection
 from app.shared.db import get_pool
 
 
-async def list_piutang(
+async def list_receivable(
     db: Connection,
     branch_code: str,
     page: int = 1,
@@ -72,19 +72,19 @@ async def list_piutang(
         f"""
         SELECT DISTINCT
             t.transactionid as id,
-            t.transactionno,
-            t.transactioncode,
-            CASE WHEN t.transactioncode = 'EAR' THEN 'P' ELSE 'B' END as transactiontype,
-            CAST(t.actualdate AS VARCHAR) as actualdate,
-            t.branchcode,
+            t.transactionno as transaction_no,
+            t.transactioncode as transaction_code,
+            CASE WHEN t.transactioncode = 'EAR' THEN 'P' ELSE 'B' END as transaction_type,
+            CAST(t.actualdate AS VARCHAR) as actual_date,
+            t.branchcode as branch_code,
             t.inputer,
-            COALESCE(t.donorname, 'Unknown') as debtorname,
-            '' as debtortype,
-            t.paidto as accountname,
+            COALESCE(t.donorname, 'Unknown') as debtor_name,
+            '' as debtor_type,
+            t.paidto as account_name,
             t.amount,
-            t.currencycode,
+            t.currencycode as currency_code,
             'AUTHORIZED' as status,
-            t.referenceno,
+            t.referenceno as reference_no,
             t.description
         FROM transaction.transaction t
         WHERE {where_clause}
@@ -97,27 +97,27 @@ async def list_piutang(
     return [dict(r) for r in rows], total
 
 
-async def get_piutang_detail(
+async def get_receivable_detail(
     db: Connection,
     transaction_id: int,
 ) -> dict | None:
-    """Get full detail of Piutang transaction."""
+    """Get full detail of Receivable transaction."""
     row = await db.fetchrow(
         """
         SELECT
             t.transactionid as id,
-            t.transactionno,
-            t.transactioncode,
-            CASE WHEN t.transactioncode = 'EAR' THEN 'P' ELSE 'B' END as transactiontype,
-            CAST(t.actualdate AS VARCHAR) as actualdate,
+            t.transactionno as transaction_no,
+            t.transactioncode as transaction_code,
+            CASE WHEN t.transactioncode = 'EAR' THEN 'P' ELSE 'B' END as transaction_type,
+            CAST(t.actualdate AS VARCHAR) as actual_date,
             t.amount,
-            t.authstatus,
-            t.branchcode,
+            t.authstatus as auth_status,
+            t.branchcode as branch_code,
             t.inputer,
             t.description,
-            t.paidto as accountname,
-            t.referenceno,
-            t.currencycode,
+            t.paidto as account_name,
+            t.referenceno as reference_no,
+            t.currencycode as currency_code,
             t.donorname as debtor_name
         FROM transaction.transaction t
         WHERE t.transactionid = $1
@@ -156,11 +156,11 @@ async def lookup_debtors(
     rows = await db.fetch(
         f"""
         SELECT
-            debtorid,
-            debtorcode,
-            debtorname,
-            debtortype,
-            branchcode
+            debtorid as debtor_id,
+            debtorcode as debtor_code,
+            debtorname as debtor_name,
+            debtortype as debtor_type,
+            branchcode as branch_code
         FROM transaction.debtor_all
         {where_clause}
         ORDER BY debtorname
@@ -192,11 +192,11 @@ async def list_external_debtors(
     rows = await db.fetch(
         f"""
         SELECT
-            ed.debtorid,
-            ed.debtorcode,
-            ed.debtorname,
-            ed.debtorphone,
-            ed.debtoraddress,
+            ed.debtorid as debtor_id,
+            ed.debtorcode as debtor_code,
+            ed.debtorname as debtor_name,
+            ed.debtorphone as debtor_phone,
+            ed.debtoraddress as debtor_address,
             ed.description
         FROM transaction.externaldebtor ed
         WHERE {where_clause}
