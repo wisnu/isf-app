@@ -22,13 +22,57 @@ Semua identifier publik **English**; Bahasa Indonesia hanya untuk teks UI/pesan/
 
 ## Struktur Modul Standar
 
+Modul diorganisasi berdasarkan domain → grup → entity:
+
 ```
-apps_{portal}/api-python/app/modules/{domain}/
-├── __init__.py        ← import router
-├── router.py          ← FastAPI endpoints + dependency injection
-├── service.py         ← business logic + asyncpg queries
-├── schema.py          ← Pydantic v2 request/response models
-└── repo.py            ← (opsional) raw queries jika service.py terlalu kompleks
+apps_{portal}/api-python/app/modules/
+├── finance/
+│   ├── master/
+│   │   ├── coa/
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py      ← FastAPI endpoints
+│   │   │   ├── service.py     ← business logic + asyncpg queries
+│   │   │   ├── schema.py      ← Pydantic v2 models
+│   │   │   └── export.py      ← (opsional) xlsx export
+│   │   ├── bank/
+│   │   ├── petty_cash/
+│   │   └── parameter/
+│   ├── budget/
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   └── schema.py
+│   ├── transaction/
+│   │   ├── _shared/           ← commit.py, parse.py, template.py, repository.py
+│   │   ├── fund_collection/   ← router.py, service.py, schema.py, repo.py
+│   │   ├── fund_distribution/
+│   │   ├── amil_income/
+│   │   ├── amil_expense/
+│   │   ├── cash_advance/
+│   │   └── ...
+│   ├── upload/
+│   │   ├── collection/        ← batch upload
+│   │   └── hc_zis/
+│   ├── inquiry/
+│   │   └── transaction_history/
+│   └── monitoring/
+│       └── authorization/
+├── administration/
+│   ├── router.py
+│   ├── service.py
+│   ├── schema.py
+│   └── identity/
+└── fundraising/
+    └── donors/
+
+```
+
+**File naming**: short names (`router.py`, `service.py`, `schema.py`, `repo.py`) — BUKAN `fund_collection_router.py` lagi. Prefix entity ada di folder name.
+
+**Router prefix**: tidak mengandung `/api` — `main.py` yang menambahkan:
+```python
+# main.py
+app.include_router(coa_router, prefix="/api")
+# router prefix = /finance/master/coa → full path = /api/finance/master/coa
 ```
 
 ---
@@ -40,15 +84,18 @@ apps_{portal}/api-python/app/modules/{domain}/
 > api-python adalah internal service — koneksi DB via `get_pool().acquire()` dari `app.shared.db`.
 
 ```python
-from fastapi import APIRouter, HTTPException, Request
+# apps_{portal}/api-python/app/modules/finance/master/coa/router.py  (contoh)
+from fastapi import APIRouter, HTTPException, Query
 from app.shared.db import get_pool
 from app.shared.response import ok
-from app.modules.{domain} import service, schema
+from . import service   # dari folder yang sama (finance/master/coa/service.py)
+from .schema import CoaCreate, CoaUpdate
 
-router = APIRouter(prefix="/{domain}", tags=["{domain}"])
+# Prefix WITHOUT /api — main.py adds prefix="/api" via include_router()
+router = APIRouter(prefix="/finance/master/coa", tags=["coa"])
 
-@router.get("")
-async def list_{resource}(
+@router.get("/accounts")
+async def list_coa(
     page: int = 1,
     limit: int = 25,
     search: str = "",
@@ -79,7 +126,7 @@ async def create_{resource}(
     user_id = session["user_id"]
     branch_code = session.get("primary_branch", "")
 
-    from app.modules.otorisasi import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
     result = await otorisasi_svc.save_and_submit(
         entity_type='{resource}',
         module='{menu_key}',
@@ -112,7 +159,7 @@ async def delete_{resource}(id: int):
 
 ```python
 from asyncpg import Connection
-from app.modules.{domain}.schema import Create{Resource}, Update{Resource}
+from .schema import Create{Resource}, Update{Resource}  # relative import
 
 async def list_{resource}(
     db: Connection,
@@ -168,6 +215,28 @@ async def create_{resource}(
             branch_id
         )
     return dict(row)
+```
+
+---
+
+## Import Antar Modul
+
+Gunakan path absolut saat import dari modul lain:
+
+```python
+# Import service dari modul lain (bukan parent):
+from app.modules.finance.monitoring.authorization import service as otorisasi_service
+from app.modules.finance.master.bank import service as bank_service
+from app.modules.finance.transaction.fund_distribution import service as fund_dist_service
+
+# Import shared transaction utilities:
+from app.modules.finance.transaction._shared.commit import commit_transaction
+from app.modules.finance.transaction._shared.repository import get_cashaccount
+
+# Import dari modul yang sama (relative):
+from . import service       # router.py mengimport service.py di folder yang sama
+from .schema import MyModel # router.py mengimport schema.py
+from .repo import get_data  # service.py mengimport repo.py
 ```
 
 ---

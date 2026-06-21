@@ -7,10 +7,11 @@
 
 BFF adalah permukaan kontrak ke frontend → semua **English**.
 
-- **Prefix & route path**: English kebab-case → `prefix='/fund-collection'`, `@router.get('/lookup/account')`. JANGAN `/penghimpunan`, `/lookup/rekening`, `/transaksi-umum`.
-- **Downstream path** ke api-python harus cocok persis dengan prefix English api-python → `get_api_python('/api/transaction/fund-collection/...')`. JANGAN `/api/transaksi/...`.
+- **Prefix & route path**: domain-grouped English kebab-case → `prefix='/api/finance/transaction/fund-collection'`, `@fund_collection_router.get('/lookup/account')`. JANGAN `/penghimpunan`, `/lookup/rekening`, `/transaksi-umum`.
+- **Downstream path** ke api-python harus cocok persis dengan prefix English api-python → `get_api_python('/api/finance/transaction/fund-collection/...')`. JANGAN `/api/transaksi/...` atau `/api/fund-collection/...` (tanpa domain prefix).
+- **URL scheme**: `/api/{domain}/{group}/{resource}` — contoh: `/api/finance/master/coa`, `/api/finance/transaction/fund-collection`, `/api/finance/monitoring/authorization`.
 - **Query param & JSON field**: English snake_case (`date`, `month`, `year`, `account_no`) — JANGAN `tanggal`, `bulan`, `tahun`.
-- **File router**: `fund_collection.py`, `cash_advance.py` (English snake_case).
+- **File module**: `modules/finance/master.py` (grup entity), `modules/finance/transaction.py` — BUKAN satu file per entity.
 - **BEKU**: nilai `entity_type` di payload otorisasi (`'penghimpunan'`, `'budget_owner'`, …) dan `menu_key` (`finance.transactions.fund_collection`) — sudah disepakati English/kode, jangan ubah.
 - Bahasa Indonesia hanya di pesan error & komentar.
 
@@ -39,13 +40,42 @@ Vue **tidak pernah** memanggil api-python atau report-api langsung.
 
 ```
 apps_{portal}/bff-api/app/
-├── routers/
-│   └── {domain}.py      ← tambah file baru per domain
-├── core/
-│   ├── auth.py          ← require_menu(), get_session()
-│   ├── proxy.py         ← proxy_get(), proxy_post(), stream_report_api()
-│   └── branch.py        ← _resolve_branch()
-└── main.py              ← include_router() semua domain
+├── modules/
+│   ├── core/
+│   │   ├── auth.py          ← auth routes + auth_google
+│   │   └── tenants.py
+│   ├── finance/
+│   │   ├── master.py        ← coa_router, bank_router, petty_cash_router, parameter_router
+│   │   ├── budget.py        ← budget_router
+│   │   ├── transaction.py   ← semua 9 transaction routers (fund_collection, fund_distribution, ...)
+│   │   ├── upload.py        ← upload_collection_router, hc_zis_router
+│   │   ├── inquiry.py       ← transaction_history_router
+│   │   ├── monitoring.py    ← authorization_router
+│   │   ├── reports.py       ← report_router
+│   │   └── dashboard.py     ← dashboard_router
+│   └── administration/
+│       └── admin.py         ← admin_router
+├── services/
+│   ├── auth.py              ← require_menu(), current_user_id_or_401()
+│   ├── proxy.py             ← get_api_python(), stream_report_api()
+│   └── identity_client.py
+└── main.py                  ← create_app() factory, include_router() semua modul
+```
+
+**Penting — setiap group file bisa punya beberapa named router:**
+```python
+# modules/finance/master.py
+coa_router       = APIRouter(prefix="/api/finance/master/coa", tags=["coa"])
+bank_router      = APIRouter(prefix="/api/finance/master/bank", tags=["bank"])
+petty_cash_router = APIRouter(prefix="/api/finance/master/petty-cash", ...)
+parameter_router = APIRouter(prefix="/api/finance/master/parameter", ...)
+```
+
+**main.py** import dan include tanpa tambahan prefix (router sudah carry full path):
+```python
+from app.modules.finance.master import coa_router, bank_router, petty_cash_router, parameter_router
+app.include_router(coa_router)   # path: /api/finance/master/coa/...
+app.include_router(bank_router)  # path: /api/finance/master/bank/...
 ```
 
 ---
@@ -53,70 +83,44 @@ apps_{portal}/bff-api/app/
 ## Template Router Lengkap
 
 ```python
-# apps_{portal}/bff-api/app/routers/{domain}.py
-from fastapi import APIRouter, Depends, Request, Query
-from typing import Optional
-from app.core.auth import require_menu, get_session
-from app.core.proxy import proxy_get, proxy_post, stream_report_api
-from app.core.branch import _resolve_branch
+# apps_{portal}/bff-api/app/modules/finance/master.py  (contoh group file)
+from __future__ import annotations
+from fastapi import APIRouter, Request, Query
+from fastapi.responses import JSONResponse
+from app.services.auth import require_menu, current_user_id_or_401
+from app.services.proxy import get_api_python
 
-router = APIRouter(prefix="/api/{domain}", tags=["{domain}"])
+# Satu file, beberapa named router — tiap router prefix full path
+coa_router = APIRouter(prefix="/api/finance/master/coa", tags=["coa"])
+bank_router = APIRouter(prefix="/api/finance/master/bank", tags=["bank"])
 
 
-# ── List (read) ──────────────────────────────────────────────────────────────
+# ── COA ──────────────────────────────────────────────────────────────────────
 
-@router.get("/{resource}")
-async def list_{resource}(
+@coa_router.get("/accounts")
+async def list_coa(
+    request: Request,
     page: int = Query(1),
     limit: int = Query(25),
     search: str = Query(""),
-    session=Depends(require_menu("{menu_key}"))
+    _: str = Depends(require_menu("finance.coa")),
 ):
-    return await proxy_get(
-        f"/api/{domain}/{resource}",
+    downstream = await get_api_python(
+        "/api/finance/master/coa/accounts",
         params={"page": page, "limit": limit, "search": search},
-        session=session
     )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
-# ── Detail ───────────────────────────────────────────────────────────────────
+# ── Bank ─────────────────────────────────────────────────────────────────────
 
-@router.get("/{resource}/{id}")
-async def get_{resource}(
-    id: int,
-    session=Depends(require_menu("{menu_key}"))
-):
-    return await proxy_get(f"/api/{domain}/{resource}/{id}", session=session)
-
-
-# ── Create ───────────────────────────────────────────────────────────────────
-
-@router.post("/{resource}")
-async def create_{resource}(
+@bank_router.get("/accounts")
+async def list_bank(
     request: Request,
-    session=Depends(require_menu("{menu_key}.tambah"))
+    _: str = Depends(require_menu("finance.bank")),
 ):
-    body = await request.json()
-    # BFF inject session data — api-python tidak bisa baca JWT langsung
-    body["inputer_id"] = session["user_id"]
-    body["branch_id"]  = _resolve_branch(session)
-    body["tenant_id"]  = session.get("active_tenant_id")
-    return await proxy_post(f"/api/{domain}/{resource}", body=body, session=session)
-
-
-# ── Update ───────────────────────────────────────────────────────────────────
-
-@router.put("/{resource}/{id}")
-async def update_{resource}(
-    id: int,
-    request: Request,
-    session=Depends(require_menu("{menu_key}.edit"))
-):
-    body = await request.json()
-    body["updated_by"] = session["user_id"]
-    return await proxy_post(
-        f"/api/{domain}/{resource}/{id}", body=body, session=session, method="PUT"
-    )
+    downstream = await get_api_python("/api/finance/master/bank/accounts")
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 # ── Delete ───────────────────────────────────────────────────────────────────

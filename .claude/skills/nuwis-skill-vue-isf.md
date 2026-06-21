@@ -15,7 +15,7 @@ untuk teks tampilan (label, judul, toast, pesan).
 - **Path API** (string di `GET/POST/blob`): English kebab-case → `/api/fund-collection`, `/api/cash-advance`, `/api/report/balance-sheet`. JANGAN `/api/penghimpunan`, `/api/keuangan/...`.
 - **Field JSON** yang dibaca/dikirim (interface TS, binding template): English snake_case → `account_no`, `transaction_date`, `opening_balance`. JANGAN `rekening`, `tanggal`, `saldo_awal`.
 - **Query param**: `date`, `month`, `year` — JANGAN `tanggal`, `bulan`, `tahun`.
-- **Folder/file page**: `pages/finance/fund-collection/FundCollectionListPage.vue` (English).
+- **Folder/file view**: `modules/finance/views/transaction/fund-collection/FundCollectionListView.vue` (English, suffix `View` bukan `Page`).
 - **BEKU**: nilai literal `entity_type` di payload (`entity_type: 'penghimpunan'`) — jangan ubah.
 - **Bahasa Indonesia BOLEH** di: judul/label UI, `toast.success('... untuk otorisasi')`, teks `<template>`, komentar.
 
@@ -29,11 +29,11 @@ untuk teks tampilan (label, judul, toast, pesan).
 |---|---|---|
 | Framework | Vue 3.5 + TypeScript | Selalu `<script setup lang="ts">` |
 | Components | PrimeVue 4 **unstyled** | Tidak ada default PrimeVue styles |
-| Primitives | reka-ui + `components/ui/` | Buttons, inputs, alerts, badges |
+| Primitives | reka-ui + `shared/components/` | Buttons, inputs, alerts, badges |
 | Styling | Tailwind CSS 4.0 | Layout + semua visual styling |
 | Icons | `lucide-vue-next` | BUKAN PrimeIcons |
-| HTTP | `lib/api/client.ts` | BUKAN fetch/axios langsung |
-| Date | `lib/date.ts` `dmy()` | BUKAN Intl/dayjs inline |
+| HTTP | `shared/api/client.ts` | BUKAN fetch/axios langsung |
+| Date | `shared/utils/date.ts` `dmy()` | BUKAN Intl/dayjs inline |
 | State | Pinia 2.2 | Tidak perlu store global — gunakan `ref` lokal jika cukup |
 
 ---
@@ -137,8 +137,8 @@ Default rows per page: **25**.
 ```
 
 ```typescript
-import { dmy } from '@/lib/date'
-import DateField from '@/components/ui/DateField.vue'
+import { dmy } from '@/shared/utils/date'
+import DateField from '@/shared/components/DateField.vue'
 ```
 
 ---
@@ -147,19 +147,19 @@ import DateField from '@/components/ui/DateField.vue'
 
 ```typescript
 // BENAR:
-import { GET, POST, blob } from '@/lib/api/client'
+import { GET, POST, blob } from '@/shared/api/client'
 
 const res = await GET<{ rows: Item[]; pagination: Pagination }>(
-  '/api/cash',
+  '/api/finance/master/cash',
   { page: 1, limit: 25 }
 )
 // res langsung berisi payload.data (client.ts sudah unwrap)
 
 // POST — field English snake_case
-await POST('/api/cash', { date: '2026-01-15', amount: 100000 })
+await POST('/api/finance/master/cash', { date: '2026-01-15', amount: 100000 })
 
 // Download file — path & param English (begin/end)
-const b = await blob('/api/report/cash-daily/export.xlsx', { begin, end })
+const b = await blob('/api/finance/report/cash-daily/export.xlsx', { begin, end })
 downloadBlob(b, 'cash-daily.xlsx')
 
 // JANGAN:
@@ -212,18 +212,18 @@ import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, ChevronRightIcon } from 'l
 
 ## Rule 6: Komponen UI yang Sudah Ada
 
-Cek `components/ui/` sebelum buat komponen baru:
+Cek `shared/components/` sebelum buat komponen baru:
 
 | Komponen | Import | Gunakan untuk |
 |---|---|---|
-| `Button` | `@/components/ui/Button.vue` | Semua tombol |
-| `Input` | `@/components/ui/Input.vue` | Text input |
-| `Card` | `@/components/ui/Card.vue` | Container card |
-| `Alert` | `@/components/ui/Alert.vue` | Error/warning messages |
-| `DateField` | `@/components/ui/DateField.vue` | Semua date input |
-| `SearchSelect` | `@/components/ui/SearchSelect.vue` | Dropdown dengan search (combobox) |
-| `Modal` | `@/components/ui/Modal.vue` | Dialog/modal |
-| `TablePagination` | `@/components/ui/TablePagination.vue` | Pagination display wrapper |
+| `Button` | `@/shared/components/Button.vue` | Semua tombol |
+| `Input` | `@/shared/components/Input.vue` | Text input |
+| `Card` | `@/shared/components/Card.vue` | Container card |
+| `Alert` | `@/shared/components/Alert.vue` | Error/warning messages |
+| `DateField` | `@/shared/components/DateField.vue` | Semua date input |
+| `SearchSelect` | `@/shared/components/SearchSelect.vue` | Dropdown dengan search (combobox) |
+| `Modal` | `@/shared/components/Modal.vue` | Dialog/modal |
+| `TablePagination` | `@/shared/components/TablePagination.vue` | Pagination display wrapper |
 
 ---
 
@@ -353,7 +353,7 @@ Gunakan palet yang konsisten untuk badge status di seluruh halaman:
 ## Rule 12: Form Input / Create Page — Standar (referensi: Transaksi Umum)
 
 Semua halaman input/Create dan modal form **wajib** mengikuti style ini.
-Referensi kanonik: `pages/finance/general-transaction/GeneralTransactionCreatePage.vue`.
+Referensi kanonik: `modules/finance/views/transaction/general/GeneralTransactionCreateView.vue`.
 Palet: **slate** (netral) + **indigo** (fokus/aksen) + **emerald** (simpan/positif) + **red** (hapus/negatif).
 
 ### 12.1 Kerangka halaman
@@ -487,14 +487,15 @@ Pola `SearchSelect`: `*SelectedValue = shallowRef('')` + `*Options = computed(()
 
 Setiap halaman baru wajib lewat 3 langkah yang **harus sinkron** (3-way consistency):
 
-1. **`lib/menu/registry.ts`** — daftarkan key di `MENU_KEYS` (bahasa Inggris, mis. `finance.cash`).
-2. **`router/index.ts`** — tambah route bernama (named route, kebab, prefix domain Inggris):
+1. **`shared/constants/menu-keys.ts`** — daftarkan key di `MENU_KEYS` (bahasa Inggris, mis. `finance.cash`).
+2. **`modules/{domain}/routes.ts`** — tambah route bernama (named route, kebab, prefix domain Inggris). Route **tidak** masuk `router/index.ts` langsung — masuk ke file routes modul yang sudah di-spread di `app/router/index.ts`:
    ```ts
+   // modules/finance/routes.ts
    {
-     path: '/finance/cash/create',
+     path: '/finance/master/cash/create',
      name: 'finance-cash-create',
-     component: () => import('@/pages/finance/cash/CashCreatePage.vue'),
-     meta: { title: 'Tambah Kas', menu_key: 'finance.cash' as MenuKey },
+     component: () => import('./views/master/cash/CashCreateView.vue'),
+     meta: { title: 'Tambah Kas', menu_key: 'finance.cash' as MenuKey, domain: 'finance' },
    },
    ```
 3. **seed SQL** (`infra/db/migrations/isf_auth/seed-menu-*.sql`) — `menu` + `role_menu` (ditangani `nuwis-seed-gen`).
@@ -526,11 +527,11 @@ dari `meta.title` + prefix nama route (`parentMap`: `finance-…`→domain). Mak
 
 ### Async, RBAC, tanggal, ikon
 Selalu: feedback async (Rule 4), `v-if` dari `auth.menus`+`MENU_KEYS` (Rule 8),
-`DateField`/`dmy()` (Rule 2), Lucide (Rule 5), `lib/api/client` (Rule 3).
+`DateField`/`dmy()` (Rule 2), Lucide (Rule 5), `shared/api/client` (Rule 3).
 
-> Referensi halaman yang sudah sesuai standar: List → `*ListPage.vue` mana pun di
-> `pages/finance/`; Form → `general-transaction/GeneralTransactionCreatePage.vue`
-> dan `fund-distribution/FundDistributionCreatePage.vue`.
+> Referensi halaman yang sudah sesuai standar: List → `*ListView.vue` mana pun di
+> `modules/finance/views/`; Form → `modules/finance/views/transaction/general/GeneralTransactionCreateView.vue`
+> dan `modules/finance/views/transaction/fund-distribution/FundDistributionCreateView.vue`.
 
 ---
 
@@ -546,7 +547,7 @@ async function tampilkan() {
   // load data hanya saat user klik
   loading.value = true
   try {
-    const res = await GET('/api/report/...', { begin, end })
+    const res = await GET('/api/finance/report/...', { begin, end })
     rows.value = res.rows
     hasData.value = true
   } finally {
@@ -573,8 +574,8 @@ async function tampilkan() {
 
 ```vue
 <script setup>
-import { useAuthStore } from '@/stores/auth'
-import { MENU_KEYS } from '@/lib/menu/registry'
+import { useAuthStore } from '@/app/stores/auth.store'
+import { MENU_KEYS } from '@/shared/constants/menu-keys'
 
 const auth = useAuthStore()
 </script>
@@ -597,7 +598,7 @@ const auth = useAuthStore()
 
 ## API Response Shape
 
-`lib/api/client.ts` sudah unwrap `payload.data` otomatis:
+`shared/api/client.ts` sudah unwrap `payload.data` otomatis:
 
 ```typescript
 // Backend return: { data: { rows: [...], pagination: {...} }, meta: {...} }
