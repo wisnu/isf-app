@@ -28,20 +28,19 @@ const breadcrumbs = computed<string[]>(() => {
 
   // Group mappings: route-name prefix → human label
   const parentMap: Record<string, string> = {
-    'dashboard':                     'Dashboard',
-    'finance-coa':                   'Master Data',
-    'finance-cash':                  'Master Data',
-    'finance-bank':                  'Master Data',
-    'finance-petty-cash':            'Master Data',
-    'parameter-budget-owner':        'Master Data',
-    'finance-budget':                'Anggaran',
-    'parameter-anggaran':            'Anggaran',
-    'finance-transactions':          'Transaksi',
-    'finance-upload':                'Upload',
-    'finance-reports':               'Laporan',
-    'finance-monitoring':            'Monitoring',
-    'admin':                         'Admin',
-    'profile':                       'Profil',
+    'dashboard':                       'Dashboard',
+    'finance-coa':                     'Master Data',
+    'finance-cash':                    'Master Data',
+    'finance-bank':                    'Master Data',
+    'finance-petty-cash':              'Master Data',
+    'finance-master':                  'Master Data',
+    'finance-budget':                  'Anggaran',
+    'finance-transactions':            'Transaksi',
+    'finance-upload':                  'Upload',
+    'finance-reports':                 'Laporan',
+    'finance-monitoring':              'Monitoring',
+    'administration':                  'Administrasi',
+    'profile':                         'Profil',
   }
 
   let parent: string | null = null
@@ -125,15 +124,18 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick, tru
 </script>
 
 <template>
-  <header class="bg-slate-900 h-12 px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0 border-b border-slate-700/60">
-
-    <!-- LEFT: hamburger + breadcrumb -->
-    <div class="flex items-center gap-2 min-w-0">
+  <header
+    class="flex items-center shrink-0 border-b border-[#e4e8f0] px-4 gap-3"
+    style="height:64px; background:rgba(238,240,245,.96); backdrop-filter:blur(14px);"
+  >
+    <!-- LEFT: hamburger + breadcrumb (static, not flex-1) -->
+    <div class="flex items-center gap-3 shrink-0">
       <!-- Sidebar toggle -->
       <button
         v-if="auth.user"
         type="button"
-        class="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 transition-colors shrink-0"
+        class="w-8 h-8 grid place-items-center rounded-[9px] border border-[#e8ecf4] bg-white text-slate-500
+               hover:bg-slate-50 hover:border-slate-300 transition-all shrink-0"
         :title="sidebar.collapsed ? 'Buka sidebar' : 'Tutup sidebar'"
         @click="sidebar.toggle"
       >
@@ -141,80 +143,66 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick, tru
       </button>
 
       <!-- Breadcrumb -->
-      <nav v-if="breadcrumbs.length" class="flex items-center gap-1 min-w-0" aria-label="Breadcrumb">
-        <template v-for="(crumb, idx) in breadcrumbs" :key="crumb">
-          <ChevronRight
-            v-if="idx > 0"
-            class="w-3 h-3 text-slate-600 shrink-0"
-            aria-hidden="true"
-          />
-          <span
-            :class="[
-              'text-xs truncate',
-              idx === breadcrumbs.length - 1
-                ? 'text-white font-medium'
-                : 'text-slate-400',
-            ]"
-          >
-            {{ crumb }}
-          </span>
-        </template>
-      </nav>
+      <div v-if="breadcrumbs.length" class="flex flex-col leading-tight">
+        <div class="flex items-center gap-1">
+          <template v-for="(crumb, idx) in breadcrumbs" :key="crumb">
+            <ChevronRight v-if="idx > 0" class="w-3 h-3 text-slate-300 shrink-0" aria-hidden="true" />
+            <span :class="['text-[11px] truncate', idx === breadcrumbs.length - 1 ? 'text-slate-400' : 'text-slate-400']">
+              {{ crumb }}
+            </span>
+          </template>
+        </div>
+        <span class="text-[17px] font-extrabold text-slate-900 leading-tight mt-px">
+          {{ breadcrumbs[breadcrumbs.length - 1] ?? '' }}
+        </span>
+      </div>
     </div>
 
-    <!-- RIGHT: today's date + user avatar + dropdown -->
-    <div v-if="auth.user" class="flex items-center gap-3 shrink-0">
+    <!-- RIGHT: date + user -->
+    <div v-if="auth.user" class="ml-auto flex items-center gap-2 shrink-0">
+      <span class="hidden sm:block text-[11px] text-slate-500 font-semibold tabular-nums">{{ todayLabel }}</span>
+      <div class="hidden sm:block w-px h-5 bg-slate-200" aria-hidden="true" />
 
-      <!-- Tanggal hari ini -->
-      <div class="hidden sm:flex items-center leading-none">
-        <span class="text-xs text-slate-300 font-semibold tabular-nums">{{ todayLabel }}</span>
-      </div>
-
-      <!-- Divider -->
-      <div class="hidden sm:block w-px h-5 bg-slate-700" aria-hidden="true" />
-
-      <!-- Avatar + name + dropdown -->
+      <!-- User chip -->
       <div class="relative" data-user-menu>
         <button
           type="button"
-          class="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+          class="flex items-center gap-2 px-2 py-1.5 rounded-[10px] border border-[#e4e8f0] bg-white hover:bg-slate-50 transition-all"
           :title="displayName"
           @click="toggleDropdown"
         >
-          <!-- Avatar circle -->
-          <div class="w-7 h-7 rounded-full bg-indigo-600 grid place-items-center shrink-0">
-            <span class="text-[10px] font-bold text-white leading-none">{{ userInitials }}</span>
+          <div class="w-7 h-7 rounded-full bg-blue-600 grid place-items-center shrink-0">
+            <span class="text-[10px] font-extrabold text-white leading-none">{{ userInitials }}</span>
           </div>
-
           <div class="hidden sm:flex flex-col items-start leading-none">
-            <span class="text-xs font-semibold text-white truncate max-w-[120px]">{{ displayName }}</span>
-            <span class="text-[10px] text-slate-400 truncate max-w-[120px] mt-0.5">{{ roleLabel }}</span>
+            <span class="text-[12px] font-bold text-slate-900 truncate max-w-[110px]">{{ displayName }}</span>
+            <span class="text-[10px] text-slate-400 truncate max-w-[110px] mt-0.5">{{ roleLabel }}</span>
           </div>
         </button>
 
-        <!-- Dropdown menu -->
+        <!-- Dropdown -->
         <div
           v-if="dropdownOpen"
-          class="absolute right-0 top-full mt-1.5 w-44 bg-slate-800 border border-slate-700 rounded shadow-lg z-50 py-1 overflow-hidden"
+          class="absolute right-0 top-full mt-2 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden"
           role="menu"
         >
           <button
             type="button"
-            class="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+            class="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] text-slate-700 hover:bg-slate-50 transition-colors"
             role="menuitem"
             @click="goChangePassword"
           >
-            <KeyRound class="w-3.5 h-3.5 shrink-0" />
+            <KeyRound class="w-3.5 h-3.5 shrink-0 text-slate-400" />
             <span>Ubah Password</span>
           </button>
-          <div class="my-1 border-t border-slate-700" aria-hidden="true" />
+          <div class="my-1 border-t border-slate-100" aria-hidden="true" />
           <button
             type="button"
-            class="flex items-center gap-2.5 w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+            class="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] text-slate-700 hover:bg-slate-50 transition-colors"
             role="menuitem"
             @click="doLogout"
           >
-            <LogOut class="w-3.5 h-3.5 shrink-0" />
+            <LogOut class="w-3.5 h-3.5 shrink-0 text-slate-400" />
             <span>Keluar</span>
           </button>
         </div>

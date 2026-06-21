@@ -1,449 +1,357 @@
 <script setup lang="ts">
-import {
-  ArrowLeftRight,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  BarChart3,
-  Banknote,
-  BookOpen,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  ClipboardCheck,
-  ClipboardList,
-  DollarSign,
-  FileText,
-  HandCoins,
-  Landmark,
-  RotateCcw,
-  LayoutDashboard,
-  Pencil,
-  PieChart,
-  Search,
-  Settings,
-  ShieldCheck,
-  Tag,
-  TrendingUp,
-  Upload,
-  Users,
-  Wallet,
-} from 'lucide-vue-next'
-import type { FunctionalComponent } from 'vue'
-import { onMounted, shallowRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Search } from 'lucide-vue-next'
 
 import { cn } from '@/shared/utils/utils'
 import { useSidebarStore } from '@/app/stores/sidebar.store'
 import { useAuthStore } from '@/app/stores/auth.store'
+import { DOMAIN_MAP } from '@/shared/constants/domains'
+import type { DomainId, NavGroup, NavItem, NavSection } from '@/shared/constants/domains'
 import type { MenuKey } from '@/shared/constants/menu-keys'
 
-interface MenuItem {
-  label?: string
-  to?: string
-  icon?: FunctionalComponent
-  disabled?: boolean
-  badge?: string
-  menu_key?: MenuKey | string
-  children?: MenuItem[]
-  section?: string
-}
-
-interface MenuGroup {
-  label: string
-  icon?: FunctionalComponent
-  items: MenuItem[]
-}
-
-const groups: MenuGroup[] = [
-  {
-    label: 'Menu',
-    items: [
-      {
-        label: 'Dashboard',
-        icon: LayoutDashboard,
-        children: [
-          { label: 'Overview',      to: '/',                          icon: LayoutDashboard, menu_key: 'dashboard.overview' },
-          { label: 'Keuangan',      to: '/dashboard/finance',         icon: BarChart3,       menu_key: 'dashboard.finance' },
-          { label: 'Penyaluran',    to: '/dashboard/distribution',    icon: PieChart,        menu_key: 'dashboard.distribution' },
-          { label: 'Penghimpunan',  to: '/dashboard/collection',      icon: HandCoins,       menu_key: 'dashboard.collection' },
-        ],
-      },
-      {
-        label: 'Master Data',
-        icon: BookOpen,
-        children: [
-          { label: 'Chart of Accounts', to: '/finance/coa',               icon: BookOpen,  menu_key: 'finance.coa' },
-          { label: 'Kas',               to: '/finance/cash',              icon: Banknote,  menu_key: 'finance.cash' },
-          { label: 'Bank',              to: '/finance/bank',              icon: Landmark,  menu_key: 'finance.bank' },
-          { label: 'Kas Kecil',         to: '/finance/petty-cash',        icon: Wallet,    menu_key: 'finance.petty_cash' },
-          { label: 'Pemilik Anggaran',  to: '/finance/master/budget-owner',    icon: Users,     menu_key: 'finance.parameter.budget_owner' },
-        ],
-      },
-      {
-        label: 'Anggaran',
-        icon: Wallet,
-        children: [
-          { label: 'Buat Anggaran Baru', to: '/finance/budget/import',           icon: Upload,    menu_key: 'finance.budget.import' },
-          { label: 'Revisi Anggaran',    to: '/finance/budget/revise',           icon: Pencil,    menu_key: 'finance.budget.revise' },
-          { label: 'Inquiry Anggaran',   to: '/finance/budget/inquiry',          icon: Search,    menu_key: 'finance.budget.inquiry' },
-          { label: 'Item Anggaran',      to: '/finance/budget/item',         icon: Tag,       menu_key: 'finance.parameter.budget.item' },
-          { label: 'Periode Anggaran',   to: '/finance/budget/period',      icon: Calendar,  menu_key: 'finance.parameter.budget.period' },
-        ],
-      },
-      {
-        label: 'Transaksi',
-        icon: ArrowLeftRight,
-        children: [
-          { label: 'Histori Transaksi',       to: '/finance/transactions/history',             icon: ClipboardList,   menu_key: 'finance.transactions.history' },
-          { label: 'Input Penghimpunan',      to: '/finance/transactions/fund-collection',     icon: ArrowUpCircle,   menu_key: 'finance.transactions.fund_collection' },
-          { label: 'Input Penyaluran',        to: '/finance/transactions/fund-distribution',   icon: ArrowDownCircle, menu_key: 'finance.transactions.fund_distribution' },
-          { label: 'Uang Muka',               to: '/finance/transactions/cash-advance',        icon: HandCoins,       menu_key: 'finance.transactions.cash_advance' },
-          { label: 'LPJ Uang Muka',           to: '/finance/transactions/cash-advance-lpj',    icon: RotateCcw,       menu_key: 'finance.transactions.cash_advance_lpj' },
-          { label: 'Transfer Antar Rekening', to: '/finance/transactions/fund-transfer',       icon: ArrowLeftRight,  menu_key: 'finance.transactions.fund_transfer' },
-          { label: 'Transaksi Umum',          to: '/finance/transactions/general',             icon: BookOpen,        menu_key: 'finance.transactions.general' as MenuKey },
-          { label: 'Penerimaan Amil',         to: '/finance/transactions/amil-income',         icon: BookOpen,        menu_key: 'finance.transactions.amil_income' as MenuKey },
-          { label: 'Pengeluaran Amil',       to: '/finance/transactions/amil-expense',       icon: BookOpen,        menu_key: 'finance.transactions.amil_expense' as MenuKey },
-          { label: 'Piutang',                 to: '/finance/transactions/receivable',          icon: DollarSign,      menu_key: 'finance.transactions.receivable' },
-        ],
-      },
-      {
-        label: 'Upload',
-        icon: Upload,
-        children: [
-          { label: 'Upload Penghimpunan', to: '/finance/upload/collection',      icon: Upload,         menu_key: 'finance.upload.collection' },
-          { label: 'Otorisasi Upload',    to: '/finance/upload/collection/list', icon: ClipboardCheck, menu_key: 'finance.upload.collection.approve' },
-          { label: 'Upload ZIS Rutin',    to: '/finance/upload/zis-routine',     icon: Upload,         menu_key: 'finance.upload.zis_routine' },
-          { label: 'Daftar Upload ZIS',   to: '/finance/upload/zis-routine/list',icon: ClipboardCheck, menu_key: 'finance.upload.zis_routine_list' },
-        ],
-      },
-      {
-        label: 'Laporan',
-        icon: FileText,
-        children: [
-          { section: 'Kas & Transaksi' },
-          { label: 'Transaksi Kas/Bank Harian',    to: '/finance/reports/daily-cash',           icon: Banknote,  menu_key: 'finance.reports.daily_cash' },
-          { label: 'Rekapitulasi Kas/Bank',         to: '/finance/reports/cash-summary',         icon: Banknote,  menu_key: 'finance.reports.cash_summary' },
-          { label: 'Monitoring Saldo Bulanan',      to: '/finance/reports/monthly-balance',      icon: Banknote,  menu_key: 'finance.reports.monthly_balance' },
-          { label: 'Jurnal Harian',                 to: '/finance/reports/daily-journal',        icon: BookOpen,  menu_key: 'finance.reports.daily_journal' },
-          { label: 'List Transaksi Umum',           to: '/finance/reports/general-transaction',  icon: BookOpen,  menu_key: 'finance.reports.general_transaction' },
-          { section: 'Akuntansi' },
-          { label: 'Trial Balance',                 to: '/finance/reports/trial-balance',        icon: FileText,  menu_key: 'finance.reports.trial_balance' },
-          { label: 'Neraca',                        to: '/finance/reports/balance-sheet',        icon: FileText,  menu_key: 'finance.reports.balance_sheet' },
-          { label: 'Arus Kas',                      to: '/finance/reports/cash-flow',            icon: FileText,  menu_key: 'finance.reports.cash_flow' },
-          { label: 'Buku Besar',                    to: '/finance/reports/general-ledger',       icon: FileText,  menu_key: 'finance.reports.general_ledger' },
-          { label: 'Perubahan Dana',                to: '/finance/reports/fund-changes',         icon: FileText,  menu_key: 'finance.reports.fund_changes' },
-          { label: 'Perubahan Dana Detail',         to: '/finance/reports/fund-changes-detail',  icon: FileText,  menu_key: 'finance.reports.fund_changes_detail' },
-          { section: 'Penghimpunan & Penyaluran' },
-          { label: 'Penghimpunan Dana',             to: '/finance/reports/fund-collection',      icon: FileText,  menu_key: 'finance.reports.fund_collection' },
-          { label: 'Penyaluran Dana',               to: '/finance/reports/fund-distribution',    icon: FileText,  menu_key: 'finance.reports.fund_distribution' },
-          { section: 'Amil' },
-          { label: 'Penerimaan Amil',               to: '/finance/reports/amil-receipt',         icon: FileText,  menu_key: 'finance.reports.amil_receipt' },
-          { label: 'Pengeluaran Amil',              to: '/finance/reports/amil-expense',         icon: FileText,  menu_key: 'finance.reports.amil_expense' },
-          { section: 'Piutang' },
-          { label: 'Piutang pada Karyawan',         to: '/finance/reports/employee-receivable',      icon: FileText,  menu_key: 'finance.reports.employee_receivable' },
-          { label: 'Piutang pada Non-Karyawan',     to: '/finance/reports/non-employee-receivable',  icon: FileText,  menu_key: 'finance.reports.non_employee_receivable' },
-          { section: 'Uang Muka Kegiatan' },
-          { label: 'Rekapitulasi Uang Muka',        to: '/finance/reports/activity-cash-advance',    icon: FileText,  menu_key: 'finance.reports.activity_cash_advance' },
-          { label: 'List Transaksi Uang Muka',      to: '/finance/reports/cash-advance-list',        icon: FileText,  menu_key: 'finance.reports.cash_advance_list' },
-          { label: 'Realisasi Project (Memo)',       to: '/finance/reports/memo-realization',         icon: FileText,  menu_key: 'finance.reports.memo_realization' },
-          { label: 'Piutang Realisasi Penyaluran',  to: '/finance/reports/receivable-realization',   icon: FileText,  menu_key: 'finance.reports.receivable_realization' },
-          { section: 'UPZ' },
-          { label: 'List Transaksi UPZ',            to: '/finance/reports/upz',                      icon: FileText,  menu_key: 'finance.reports.upz' },
-        ],
-      },
-      {
-        label: 'Monitoring',
-        icon: ShieldCheck,
-        children: [
-          { label: 'Otorisasi',          to: '/finance/monitoring/authorization', icon: ShieldCheck,   menu_key: 'finance.monitoring.authorization' },
-          { label: 'Riwayat Submission', to: '/finance/monitoring/history',       icon: ClipboardList, menu_key: 'finance.monitoring.history' },
-        ],
-      },
-      { label: 'Program',        icon: HandCoins,  disabled: true, badge: 'Fase 3' },
-      { label: 'Penghimpunan',   icon: TrendingUp, disabled: true, badge: 'Fase 3' },
-      { label: 'Manajemen User', icon: Users,      disabled: true, badge: 'Fase 4' },
-      { label: 'Back Office',    icon: Settings,   disabled: true, badge: 'Fase 4' },
-      { label: 'Audit Log',      icon: FileText,   disabled: true, badge: 'Fase 4' },
-    ],
-  },
-]
-
-const auth = useAuthStore()
+const route  = useRoute()
+const router = useRouter()
 const sidebar = useSidebarStore()
-const route = useRoute()
+const auth   = useAuthStore()
 
-// ── App version ───────────────────────────────────────────────────────────────
+// ── Active domain config ──────────────────────────────────────────────────────
+const activeDomain = computed(() => route.meta.domain as DomainId | undefined)
+const domainConfig = computed(() => activeDomain.value ? DOMAIN_MAP[activeDomain.value] : null)
 
-const appVersion = 'v0.2.0'
-
-// ── Menu visibility ────────────────────────────────────────────────────────────
-
+// ── RBAC ──────────────────────────────────────────────────────────────────────
 function hasMenu(key: string | undefined): boolean {
   if (!key) return true
   return auth.hasMenu(key as MenuKey)
 }
 
-function visibleChildren(children: MenuItem[]): MenuItem[] {
-  const out: MenuItem[] = []
-  let pendingSection: MenuItem | null = null
-
-  for (const child of children) {
-    if (child.section) {
-      pendingSection = child
-    } else if (!child.menu_key || hasMenu(child.menu_key)) {
-      if (pendingSection) { out.push(pendingSection); pendingSection = null }
-      out.push(child)
+function visibleItems(items: (NavItem | NavSection)[]): (NavItem | NavSection)[] {
+  const out: (NavItem | NavSection)[] = []
+  let pendingSection: NavSection | null = null
+  for (const item of items) {
+    if ('section' in item) {
+      pendingSection = item
+    } else {
+      if (hasMenu(item.menu_key)) {
+        if (pendingSection) { out.push(pendingSection); pendingSection = null }
+        out.push(item)
+      }
     }
   }
   return out
 }
 
-function hasVisibleChildren(item: MenuItem): boolean {
-  if (!item.children) return !item.disabled
-  return visibleChildren(item.children).some(c => !c.section)
+function visibleGroups(groups: NavGroup[]): NavGroup[] {
+  return groups
+    .map(g => ({ ...g, items: visibleItems(g.items) }))
+    .filter(g => g.items.some(i => !('section' in i)))
 }
+
+// ── Tab ───────────────────────────────────────────────────────────────────────
+type Tab = 'all' | 'fav'
+const activeTab = ref<Tab>('all')
+
+// ── Favorites ─────────────────────────────────────────────────────────────────
+const FAV_KEY = 'isf-sidebar-favorites'
+const favorites = shallowRef<Set<string>>(new Set())
+
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAV_KEY)
+    if (raw) favorites.value = new Set(JSON.parse(raw))
+  } catch { /* ignore */ }
+}
+
+function toggleFavorite(to: string, e: Event) {
+  e.stopPropagation()
+  const next = new Set(favorites.value)
+  if (next.has(to)) next.delete(to)
+  else next.add(to)
+  favorites.value = next
+  localStorage.setItem(FAV_KEY, JSON.stringify([...next]))
+}
+
+onMounted(loadFavorites)
+
+// ── Search ────────────────────────────────────────────────────────────────────
+const searchQuery = ref('')
+
+interface FlatItem extends NavItem { groupLabel: string }
+
+const searchResults = computed<FlatItem[]>(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q || !domainConfig.value) return []
+  const results: FlatItem[] = []
+  for (const g of visibleGroups(domainConfig.value.groups)) {
+    for (const item of g.items) {
+      if (!('section' in item) && item.label.toLowerCase().includes(q)) {
+        results.push({ ...item, groupLabel: g.label })
+      }
+    }
+  }
+  return results
+})
+
+const favItems = computed<FlatItem[]>(() => {
+  if (!domainConfig.value) return []
+  const results: FlatItem[] = []
+  for (const g of visibleGroups(domainConfig.value.groups)) {
+    for (const item of g.items) {
+      if (!('section' in item) && favorites.value.has(item.to)) {
+        results.push({ ...item, groupLabel: g.label })
+      }
+    }
+  }
+  return results
+})
 
 // ── Expand / collapse ─────────────────────────────────────────────────────────
-
 const EXPANDED_KEY = 'isf-sidebar-expanded-groups'
-const expandedParents = shallowRef<Set<string>>(new Set())
+const expandedGroups = shallowRef<Set<string>>(new Set())
 
 function persistExpanded() {
-  localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expandedParents.value]))
+  localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expandedGroups.value]))
 }
 
-function setExpanded(next: Set<string>) {
-  expandedParents.value = next
+function toggleGroup(id: string) {
+  const next = new Set(expandedGroups.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedGroups.value = next
   persistExpanded()
 }
 
-function toggleParent(label: string) {
-  const copy = new Set(expandedParents.value)
-  if (copy.has(label)) copy.delete(label)
-  else copy.add(label)
-  setExpanded(copy)
-}
+function isExpanded(id: string) { return expandedGroups.value.has(id) }
 
-function autoExpandForRoute(path: string) {
-  for (const g of groups) {
-    for (const item of g.items) {
-      if (item.children?.some((c) => c.to && path.startsWith(c.to))) {
-        if (!expandedParents.value.has(item.label!)) {
-          const copy = new Set(expandedParents.value)
-          copy.add(item.label!)
-          setExpanded(copy)
-        }
+function autoExpand(path: string) {
+  if (!domainConfig.value) return
+  for (const g of domainConfig.value.groups) {
+    if (g.items.some(i => !('section' in i) && path.startsWith(i.to) && i.to !== '/')) {
+      if (!expandedGroups.value.has(g.id)) {
+        const next = new Set(expandedGroups.value)
+        next.add(g.id)
+        expandedGroups.value = next
+        persistExpanded()
       }
     }
+  }
+  // Always expand dashboard group if at root
+  if (path === '/') {
+    const next = new Set(expandedGroups.value)
+    next.add('dashboard')
+    expandedGroups.value = next
+    persistExpanded()
   }
 }
 
 onMounted(() => {
   try {
     const raw = localStorage.getItem(EXPANDED_KEY)
-    if (raw) expandedParents.value = new Set(JSON.parse(raw))
+    if (raw) expandedGroups.value = new Set(JSON.parse(raw))
   } catch { /* ignore */ }
-  autoExpandForRoute(route.path)
+  autoExpand(route.path)
 })
-watch(() => route.path, (p) => autoExpandForRoute(p))
 
-function handleParentClick(item: MenuItem) {
-  if (sidebar.collapsed) {
-    sidebar.toggle()
-    const copy = new Set(expandedParents.value)
-    copy.add(item.label!)
-    setExpanded(copy)
-  } else {
-    toggleParent(item.label!)
+watch(() => route.path, autoExpand)
+watch(activeDomain, (newDomain) => {
+  if (newDomain && domainConfig.value?.groups.length) {
+    const firstGroup = domainConfig.value.groups[0].id
+    if (!expandedGroups.value.has(firstGroup)) {
+      const next = new Set(expandedGroups.value)
+      next.add(firstGroup)
+      expandedGroups.value = next
+      persistExpanded()
+    }
   }
-}
+})
 
-const isExpanded     = (label: string) => expandedParents.value.has(label)
-const isActiveItem   = (item: MenuItem) => Boolean(item.to && route.path === item.to)
-const isActiveParent = (item: MenuItem) =>
-  Boolean(item.children?.some((c) => c.to && route.path.startsWith(c.to)))
+// ── Active state ──────────────────────────────────────────────────────────────
+const isActiveItem = (to: string) => route.path === to
 </script>
 
 <template>
   <aside
-    :class="
-      cn(
-        'hidden lg:flex shrink-0 flex-col bg-slate-900 transition-[width] duration-200 overflow-hidden',
-        sidebar.collapsed ? 'w-14' : 'w-52',
-      )
-    "
+    :class="cn(
+      'flex flex-col bg-white border-r border-slate-100 transition-[width] duration-200 overflow-hidden shrink-0',
+      sidebar.collapsed ? 'w-0' : 'w-[278px]',
+    )"
   >
-    <!-- ── Sidebar header ──────────────────────────────────────────────────── -->
-    <div
-      :class="
-        cn(
-          'flex items-center gap-2.5 px-3 py-3 border-b border-slate-700/60 shrink-0',
-          sidebar.collapsed && 'justify-center px-2',
-        )
-      "
-    >
-      <!-- Logo icon -->
-      <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-600 grid place-items-center overflow-hidden">
-        <img src="@/assets/logo.svg" alt="Logo" class="w-6 h-6 object-contain" />
-      </div>
-
-      <template v-if="!sidebar.collapsed">
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-bold text-white leading-tight truncate">MZISS</p>
-          <p class="text-[10px] text-slate-500 italic leading-tight truncate">Modul Akuntansi</p>
-        </div>
-      </template>
+    <!-- Domain header -->
+    <div class="px-3.5 pt-4 pb-3 border-b border-slate-100 shrink-0" v-if="domainConfig">
+      <p class="text-base font-extrabold text-slate-900 leading-tight">{{ domainConfig.label }}</p>
+      <p class="text-[10.5px] text-slate-400 mt-0.5">{{ domainConfig.sub }}</p>
     </div>
 
-    <!-- ── Navigation ─────────────────────────────────────────────────────── -->
-    <nav class="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5">
-      <template v-for="group in groups" :key="group.label">
-        <template v-for="item in group.items" :key="item.label">
+    <!-- Search -->
+    <div class="px-2.5 py-2 border-b border-slate-100 shrink-0">
+      <div class="relative">
+        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Cari menu, fitur..."
+          class="w-full pl-8 pr-3 py-2 text-[12.5px] bg-slate-50 border border-slate-200 rounded-[10px]
+                 text-slate-900 placeholder-slate-400 outline-none
+                 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
+        />
+      </div>
+    </div>
 
-          <div v-if="hasVisibleChildren(item)" class="flex flex-col">
+    <!-- Tabs -->
+    <div class="flex gap-1.5 px-2.5 py-2 border-b border-slate-100 shrink-0">
+      <button
+        type="button"
+        :class="cn(
+          'flex-1 rounded-full py-1.5 text-[11.5px] font-semibold border transition-all',
+          activeTab === 'all'
+            ? 'bg-blue-600 border-blue-600 text-white font-bold'
+            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300',
+        )"
+        @click="activeTab = 'all'; searchQuery = ''"
+      >
+        Semua
+      </button>
+      <button
+        type="button"
+        :class="cn(
+          'flex-1 rounded-full py-1.5 text-[11.5px] font-semibold border transition-all',
+          activeTab === 'fav'
+            ? 'bg-blue-600 border-blue-600 text-white font-bold'
+            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300',
+        )"
+        @click="activeTab = 'fav'; searchQuery = ''"
+      >
+        ⭐ Favorit
+      </button>
+    </div>
 
-            <!-- Parent with children -->
-            <template v-if="item.children">
-              <button
-                type="button"
-                :title="
-                  sidebar.collapsed
-                    ? item.label
-                    : undefined
-                "
-                :class="
-                  cn(
-                    'flex items-center gap-2.5 text-xs font-semibold uppercase tracking-widest transition-colors w-full text-left',
-                    sidebar.collapsed ? 'justify-center px-0 py-2.5 mx-auto' : 'px-3 py-2',
-                    isActiveParent(item)
-                      ? 'text-white'
-                      : 'text-slate-500 hover:text-slate-300',
-                  )
-                "
-                @click="handleParentClick(item)"
-              >
-                <component
-                  :is="item.icon"
-                  :class="cn('shrink-0', sidebar.collapsed ? 'w-5 h-5' : 'w-3.5 h-3.5')"
-                />
-                <template v-if="!sidebar.collapsed">
-                  <span class="flex-1 truncate">{{ item.label }}</span>
-                  <ChevronDown
-                    :class="[
-                      'w-3 h-3 shrink-0 transition-transform duration-150',
-                      isExpanded(item.label!) ? '' : '-rotate-90',
-                    ]"
-                  />
-                </template>
-              </button>
+    <!-- Nav area -->
+    <nav class="flex-1 overflow-y-auto py-1.5 px-2.5 scrollbar-thin scrollbar-thumb-slate-200">
 
-              <!-- Children list -->
+      <!-- Search results -->
+      <template v-if="searchQuery.trim()">
+        <div v-if="searchResults.length === 0" class="py-5 text-center text-sm text-slate-400">
+          Tidak ada menu yang cocok.
+        </div>
+        <router-link
+          v-for="item in searchResults"
+          :key="item.to"
+          :to="item.to"
+          :class="cn(
+            'group flex items-center gap-2 w-full text-left px-2 py-2 rounded-[9px] text-[12.5px] transition-all',
+            isActiveItem(item.to)
+              ? 'bg-blue-50 text-blue-700 font-bold'
+              : 'text-slate-600 hover:bg-slate-50',
+          )"
+        >
+          <span class="flex-1 truncate">{{ item.label }}</span>
+          <span class="text-[10px] bg-slate-100 text-slate-400 rounded-full px-2 py-px font-bold shrink-0">
+            {{ item.groupLabel }}
+          </span>
+          <span
+            :class="cn(
+              'text-sm transition-colors cursor-pointer shrink-0',
+              favorites.has(item.to) ? 'text-amber-400' : 'text-transparent group-hover:text-slate-300 hover:!text-amber-400',
+            )"
+            @click="toggleFavorite(item.to, $event)"
+          >★</span>
+        </router-link>
+      </template>
+
+      <!-- Favorites tab -->
+      <template v-else-if="activeTab === 'fav'">
+        <div v-if="favItems.length === 0" class="py-5 text-center text-sm text-slate-400">
+          Belum ada favorit.<br>
+          <span class="text-xs">Klik ★ pada menu item untuk menyimpan.</span>
+        </div>
+        <router-link
+          v-for="item in favItems"
+          :key="item.to"
+          :to="item.to"
+          :class="cn(
+            'group flex items-center gap-2 w-full text-left px-2 py-2 rounded-[9px] text-[12.5px] transition-all',
+            isActiveItem(item.to)
+              ? 'bg-blue-50 text-blue-700 font-bold'
+              : 'text-slate-600 hover:bg-slate-50',
+          )"
+        >
+          <span class="flex-1 truncate">{{ item.label }}</span>
+          <span class="text-[10px] bg-slate-100 text-slate-400 rounded-full px-2 py-px font-bold shrink-0">
+            {{ item.groupLabel }}
+          </span>
+          <span
+            class="text-sm text-amber-400 transition-colors cursor-pointer shrink-0 hover:text-amber-500"
+            @click="toggleFavorite(item.to, $event)"
+          >★</span>
+        </router-link>
+      </template>
+
+      <!-- Normal grouped view -->
+      <template v-else-if="domainConfig">
+        <div
+          v-for="group in visibleGroups(domainConfig.groups)"
+          :key="group.id"
+          class="border border-slate-100 rounded-[13px] bg-white mb-1.5 overflow-hidden"
+        >
+          <!-- Group header -->
+          <button
+            type="button"
+            class="flex items-center gap-2 w-full text-left px-3 py-2.5 text-[12.5px] font-bold text-slate-700 select-none"
+            @click="toggleGroup(group.id)"
+          >
+            <component :is="group.icon" class="w-3.5 h-3.5 text-slate-400 shrink-0" :stroke-width="2" />
+            <span class="flex-1">{{ group.label }}</span>
+            <span class="text-[10px] bg-slate-100 text-slate-400 rounded-full px-1.5 py-px font-bold">
+              {{ group.items.filter(i => !('section' in i)).length }}
+            </span>
+            <svg
+              :class="cn('w-3 h-3 text-slate-300 transition-transform duration-150 shrink-0', isExpanded(group.id) ? 'rotate-90' : '')"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            ><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+
+          <!-- Items -->
+          <div v-if="isExpanded(group.id)" class="pb-1.5 px-1.5">
+            <template v-for="(item, idx) in group.items" :key="'section' in item ? `sect-${idx}` : item.to">
+              <!-- Section divider -->
               <div
-                v-if="!sidebar.collapsed && isExpanded(item.label!)"
-                class="flex flex-col gap-px pb-1"
+                v-if="'section' in item"
+                class="px-2 pt-2 pb-0.5 text-[9.5px] uppercase tracking-wider text-slate-300 font-bold first:pt-1"
               >
-                <template
-                  v-for="(child, ci) in visibleChildren(item.children)"
-                  :key="child.section ?? child.label ?? ci"
-                >
-                  <!-- Sub-section heading -->
-                  <div
-                    v-if="child.section"
-                    class="px-3 pt-2 pb-0.5 text-[9px] uppercase tracking-widest text-slate-600 font-semibold first:pt-1"
-                  >
-                    {{ child.section }}
-                  </div>
-
-                  <!-- Active child link -->
-                  <router-link
-                    v-else-if="child.to && !child.disabled"
-                    :to="child.to"
-                    :class="
-                      cn(
-                        'flex items-center gap-2 pl-4 pr-3 py-1.5 text-xs transition-colors rounded-r-full mr-1',
-                        isActiveItem(child)
-                          ? 'bg-indigo-600 text-white font-medium'
-                          : 'text-slate-200 hover:text-white hover:bg-slate-800',
-                      )
-                    "
-                  >
-                    <span
-                      v-if="!isActiveItem(child)"
-                      class="text-slate-500 text-[10px] leading-none shrink-0"
-                      aria-hidden="true"
-                    >•</span>
-                    <component
-                      v-else
-                      :is="child.icon"
-                      class="w-3 h-3 shrink-0"
-                    />
-                    <span class="flex-1 truncate">{{ child.label }}</span>
-                  </router-link>
-
-                  <!-- Disabled child -->
-                  <div
-                    v-else
-                    class="flex items-center gap-2 pl-4 pr-3 py-1.5 text-xs text-slate-700 cursor-not-allowed"
-                  >
-                    <span class="text-slate-700 text-[10px] leading-none shrink-0" aria-hidden="true">•</span>
-                    <span class="flex-1 truncate">{{ child.label }}</span>
-                    <span
-                      v-if="child.badge"
-                      class="text-[9px] uppercase tracking-wide bg-slate-800 text-slate-500 px-1 py-px rounded shrink-0"
-                    >{{ child.badge }}</span>
-                  </div>
-                </template>
+                {{ item.section }}
               </div>
-            </template>
 
-            <!-- Standalone item (no children) — disabled only since all real items have children -->
-            <div
-              v-else
-              :title="
-                sidebar.collapsed
-                  ? item.label + (item.badge ? ' · ' + item.badge : '')
-                  : undefined
-              "
-              :class="
-                cn(
-                  'flex items-center gap-2.5 text-xs font-semibold uppercase tracking-widest text-slate-700 cursor-not-allowed',
-                  sidebar.collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
-                )
-              "
-            >
-              <component
-                :is="item.icon"
-                :class="cn('shrink-0', sidebar.collapsed ? 'w-5 h-5' : 'w-3.5 h-3.5')"
-              />
-              <template v-if="!sidebar.collapsed">
+              <!-- Nav item -->
+              <router-link
+                v-else
+                :to="item.to"
+                :class="cn(
+                  'group flex items-center gap-2 px-2 py-2 rounded-[9px] text-[12.5px] transition-all',
+                  isActiveItem(item.to)
+                    ? 'bg-blue-50 text-blue-700 font-bold'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                )"
+              >
                 <span class="flex-1 truncate">{{ item.label }}</span>
                 <span
-                  v-if="item.badge"
-                  class="text-[9px] uppercase tracking-wide bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded"
-                >{{ item.badge }}</span>
-              </template>
-            </div>
-
+                  :class="cn(
+                    'text-sm transition-colors cursor-pointer shrink-0',
+                    favorites.has(item.to)
+                      ? 'text-amber-400'
+                      : 'text-transparent group-hover:text-slate-300 hover:!text-amber-400',
+                  )"
+                  @click="toggleFavorite(item.to, $event)"
+                >★</span>
+              </router-link>
+            </template>
           </div>
-        </template>
+        </div>
       </template>
     </nav>
 
-    <!-- ── Bottom: App Version ───────────────────────────────────────────────── -->
-    <div
-      :class="
-        cn(
-          'border-t border-slate-700/60 shrink-0',
-          sidebar.collapsed ? 'px-2 py-2.5 flex justify-center' : 'px-3 py-2.5',
-        )
-      "
-    >
-      <template v-if="!sidebar.collapsed">
-        <p class="text-[10px] text-slate-500 leading-none">{{ appVersion }}</p>
-      </template>
-      <template v-else>
-        <p class="text-[9px] text-slate-600 leading-none" :title="appVersion">{{ appVersion }}</p>
-      </template>
+    <!-- Footer -->
+    <div class="px-3 py-2 border-t border-slate-100 shrink-0">
+      <p class="text-[10px] text-slate-300">v0.2.0</p>
     </div>
   </aside>
 </template>
