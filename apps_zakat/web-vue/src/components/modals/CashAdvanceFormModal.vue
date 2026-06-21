@@ -2,10 +2,10 @@
 import { X } from 'lucide-vue-next'
 import { onMounted, ref, shallowRef } from 'vue'
 
-import Modal from '@/components/ui/Modal.vue'
-import DateField from '@/components/ui/DateField.vue'
-import SearchSelect from '@/components/ui/SearchSelect.vue'
-import AmountInput from '@/components/ui/AmountInput.vue'
+import Modal from '@/shared/components/Modal.vue'
+import DateField from '@/shared/components/DateField.vue'
+import SearchSelect from '@/shared/components/SearchSelect.vue'
+import AmountInput from '@/shared/components/AmountInput.vue'
 import { api } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

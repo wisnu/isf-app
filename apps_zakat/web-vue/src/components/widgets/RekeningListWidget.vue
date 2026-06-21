@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { AlertTriangle, Loader2 } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardTitle from '@/components/ui/CardTitle.vue'
-import CardContent from '@/components/ui/CardContent.vue'
+import Card from '@/shared/components/Card.vue'
+import CardHeader from '@/shared/components/CardHeader.vue'
+import CardTitle from '@/shared/components/CardTitle.vue'
+import CardContent from '@/shared/components/CardContent.vue'
 
 interface RekeningItem {
   account_no: string

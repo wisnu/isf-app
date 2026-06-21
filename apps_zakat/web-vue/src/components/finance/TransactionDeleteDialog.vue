@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Button from '@/shared/components/Button.vue'
 
 const props = defineProps<{
   transactionId: number

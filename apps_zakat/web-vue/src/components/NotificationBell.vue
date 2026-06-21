@@ -2,7 +2,7 @@
 import { AlertTriangle, Bell, CheckCircle2, Info } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import DropdownMenu from '@/shared/components/DropdownMenu.vue'
 import { cn } from '@/shared/utils/utils'
 import { useNotificationsStore, type NotificationKind } from '@/stores/notifications'
 

@@ -2,8 +2,8 @@
 import { AlertTriangle, Loader2, TrendingDown, TrendingUp } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
 
 const props = withDefaults(
   defineProps<{

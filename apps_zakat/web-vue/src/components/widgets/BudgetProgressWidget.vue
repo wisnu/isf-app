@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { AlertTriangle, Loader2 } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardTitle from '@/components/ui/CardTitle.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
+import CardHeader from '@/shared/components/CardHeader.vue'
+import CardTitle from '@/shared/components/CardTitle.vue'
 
 interface AnggaranItem {
   owner_id: number

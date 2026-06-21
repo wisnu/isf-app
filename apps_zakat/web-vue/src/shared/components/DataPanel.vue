@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Loader2, Search } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
 
 defineProps<{
   title: string

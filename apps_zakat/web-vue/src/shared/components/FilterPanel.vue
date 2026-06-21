@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
 
 defineProps<{ hasFilters?: boolean }>()
 defineEmits<{ reset: [] }>()

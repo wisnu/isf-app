@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref, shallowRef } from 'vue'
 import { X } from 'lucide-vue-next'
 
-import SearchSelect from '@/components/ui/SearchSelect.vue'
+import SearchSelect from '@/shared/components/SearchSelect.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

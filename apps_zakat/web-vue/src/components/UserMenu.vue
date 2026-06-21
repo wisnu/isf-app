@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import UserAvatar from '@/components/UserAvatar.vue'
-import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import DropdownMenu from '@/shared/components/DropdownMenu.vue'
 import { cn } from '@/shared/utils/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'

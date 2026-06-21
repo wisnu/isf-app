@@ -2,7 +2,7 @@
 import { shallowRef } from 'vue'
 import { AlertTriangle, X } from 'lucide-vue-next'
 
-import Button from '@/components/ui/Button.vue'
+import Button from '@/shared/components/Button.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 
