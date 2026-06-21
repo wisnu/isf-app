@@ -74,8 +74,9 @@ export const financeMenu: DomainConfig = {
       label: 'Inquiry',
       icon: Search,
       items: [
-        { label: 'Histori Transaksi',  to: '/finance/transactions/history', menu_key: 'finance.transactions.history' },
-        { label: 'Inquiry Anggaran',   to: '/finance/budget/inquiry',       menu_key: 'finance.budget.inquiry' },
+        { label: 'Histori Transaksi',  to: '/finance/transactions/history',   menu_key: 'finance.transactions.history' },
+        { label: 'Inquiry Anggaran',   to: '/finance/budget/inquiry',         menu_key: 'finance.budget.inquiry' },
+        { label: 'Uang Muka Kegiatan', to: '/finance/inquiry/cash-advance',   menu_key: 'finance.inquiry.cash_advance' },
       ],
     },
     {

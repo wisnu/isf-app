@@ -148,6 +148,13 @@ export const financeRoutes: RouteRecordRaw[] = [
     meta: { title: 'Detail Transaksi', menu_key: 'finance.transactions.history' as MenuKey, domain: 'finance' },
   },
 
+  {
+    path: '/finance/inquiry/cash-advance',
+    name: 'finance-inquiry-cash-advance',
+    component: () => import('./views/inquiry/cash-advance/CashAdvanceInquiryView.vue'),
+    meta: { title: 'Uang Muka Kegiatan', menu_key: 'finance.inquiry.cash_advance' as MenuKey, domain: 'finance' },
+  },
+
   // ── Transaction ───────────────────────────────────────────────────────────
   {
     path: '/finance/transactions/fund-collection',

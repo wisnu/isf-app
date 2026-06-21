@@ -32,6 +32,7 @@ export const MENU_KEYS = [
   'finance.reports.memo_realization',
   'finance.reports.receivable_realization',
   'finance.reports.upz',
+  'finance.inquiry.cash_advance',
   'finance.transactions.history',
   'finance.transactions.fund_distribution',
   'finance.transactions.fund_collection',
