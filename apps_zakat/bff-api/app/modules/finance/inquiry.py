@@ -138,3 +138,67 @@ async def do_repost(
         },
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+# ── Cash Advance Inquiry ─────────────────────────────────────────────────────
+
+ca_router = APIRouter(prefix='/api/finance/inquiry/cash-advance', tags=['cash-advance-inquiry'])
+
+_CA_MENU = 'finance.inquiry.cash_advance'
+
+
+def _branch_from_session(request: Request) -> str:
+    access = request.session.get('branch_access', 'single')
+    primary = request.session.get('primary_branch') or ''
+    return '' if access == 'all' else primary
+
+
+@ca_router.get('/accounts')
+async def ca_accounts(
+    request: Request,
+    _: str = Depends(require_menu(_CA_MENU)),
+):
+    branch = _branch_from_session(request)
+    downstream = await get_api_python(
+        '/api/finance/inquiry/cash-advance/accounts',
+        params={'branch': branch},
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@ca_router.get('/history')
+async def ca_history(
+    request: Request,
+    _: str = Depends(require_menu(_CA_MENU)),
+    account_no: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+):
+    downstream = await get_api_python(
+        '/api/finance/inquiry/cash-advance/history',
+        params={'account_no': account_no, 'begin': begin, 'end': end},
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@ca_router.get('/history/export.xlsx')
+async def ca_history_export(
+    request: Request,
+    _: str = Depends(require_menu(_CA_MENU)),
+    account_no: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+):
+    downstream = await stream_api_python(
+        '/api/finance/inquiry/cash-advance/history/export.xlsx',
+        params={'account_no': account_no, 'begin': begin, 'end': end},
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    safe = account_no.replace('/', '-')
+    fname = f'riwayat-uangmuka-{safe}-{begin}-{end}.xlsx'
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={'Content-Disposition': f'attachment; filename="{fname}"'},
+    )

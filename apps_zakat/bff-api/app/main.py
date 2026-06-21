@@ -32,7 +32,7 @@ from app.modules.finance.transaction import (
 from app.modules.finance.upload import upload_collection_router, hc_zis_router
 
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
-from app.modules.finance.inquiry import router as transaction_history_router
+from app.modules.finance.inquiry import router as transaction_history_router, ca_router as ca_inquiry_router
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 from app.modules.finance.monitoring import router as authorization_router
@@ -132,6 +132,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(upload_collection_router)
     app.include_router(hc_zis_router)
     app.include_router(transaction_history_router)
+    app.include_router(ca_inquiry_router)
     app.include_router(authorization_router)
     app.include_router(report_router)
     app.include_router(dashboard_router)
