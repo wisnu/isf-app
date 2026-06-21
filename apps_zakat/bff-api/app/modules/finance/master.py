@@ -46,7 +46,7 @@ async def accounts(
     params = _build_passthrough_params(search, type, is_detail, max_level)
     params["page"] = page
     params["page_size"] = page_size
-    downstream = await get_api_python("/api/coa/accounts", params=params)
+    downstream = await get_api_python("/api/finance/master/coa/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -107,7 +107,7 @@ async def accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/bank/accounts", params=params)
+    downstream = await get_api_python("/api/finance/master/bank/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -134,7 +134,7 @@ async def lookup_banks(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/bank/lookup/banks")
+    downstream = await get_api_python("/api/finance/master/bank/lookup/banks")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -147,7 +147,7 @@ async def lookup_branches(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/bank/lookup/branches")
+    downstream = await get_api_python("/api/finance/master/bank/lookup/branches")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -160,7 +160,7 @@ async def lookup_currencies(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/bank/lookup/currencies")
+    downstream = await get_api_python("/api/finance/master/bank/lookup/currencies")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -178,7 +178,7 @@ async def lookup_gl_accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/bank/lookup/gl_accounts", params=params or None)
+    downstream = await get_api_python("/api/finance/master/bank/lookup/gl_accounts", params=params or None)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -196,7 +196,7 @@ async def lookup_products(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/bank/lookup/products", params=params or None)
+    downstream = await get_api_python("/api/finance/master/bank/lookup/products", params=params or None)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 petty_cash_router = APIRouter(prefix="/api/finance/master/petty-cash", tags=["petty-cash"])
@@ -220,7 +220,7 @@ async def accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/petty-cash/accounts", params=params)
+    downstream = await get_api_python("/api/finance/master/petty-cash/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -298,7 +298,7 @@ async def lookup_branches(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/petty-cash/lookup/branches")
+    downstream = await get_api_python("/api/finance/master/petty-cash/lookup/branches")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -311,7 +311,7 @@ async def lookup_currencies(
     if error_response is not None:
         return error_response
 
-    downstream = await get_api_python("/api/petty-cash/lookup/currencies")
+    downstream = await get_api_python("/api/finance/master/petty-cash/lookup/currencies")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -329,7 +329,7 @@ async def lookup_gl_accounts(
     if search:
         params["search"] = search
 
-    downstream = await get_api_python("/api/petty-cash/lookup/gl_accounts", params=params or None)
+    downstream = await get_api_python("/api/finance/master/petty-cash/lookup/gl_accounts", params=params or None)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 parameter_router = APIRouter(prefix="/api/finance/master/parameter", tags=["parameter"])
@@ -349,7 +349,7 @@ async def list_owners(
     params: dict = {"page": page, "limit": limit}
     if q:
         params["q"] = q
-    downstream = await get_api_python("/api/parameter/budget-owner", params=params)
+    downstream = await get_api_python("/api/finance/master/parameter/budget-owner", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -365,7 +365,7 @@ async def lookup_owners(
     params: dict = {}
     if q:
         params["q"] = q
-    downstream = await get_api_python("/api/parameter/budget-owner/lookup", params=params)
+    downstream = await get_api_python("/api/finance/master/parameter/budget-owner/lookup", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 

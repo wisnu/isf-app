@@ -59,7 +59,7 @@ const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.valu
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>(`/api/report/${endpoint.value}/branches`)
+    branches.value = await api.get<BranchOption[]>(`/api/finance/report/${endpoint.value}/branches`)
     if (!branch.value && branches.value.length && !canPickBranch.value) branch.value = branches.value[0].code
   } catch { branches.value = [] }
 }
@@ -67,7 +67,7 @@ async function loadBranches() {
 async function load() {
   loading.value = true; errorMsg.value = null
   try {
-    data.value = await api.get<ARPayload>(`/api/report/${endpoint.value}?begin=${begin.value}&end=${end.value}${branchQS()}`)
+    data.value = await api.get<ARPayload>(`/api/finance/report/${endpoint.value}?begin=${begin.value}&end=${end.value}${branchQS()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'; data.value = null
   } finally { loading.value = false }
@@ -78,7 +78,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/${endpoint.value}/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`, `${fileBase.value}-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/${endpoint.value}/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`, `${fileBase.value}-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally { exporting.value = false }

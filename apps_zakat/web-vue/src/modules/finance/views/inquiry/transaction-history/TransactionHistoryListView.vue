@@ -176,7 +176,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const d = await api.get<SearchResult>(`/api/transaction-history/search?${buildParams()}`)
+    const d = await api.get<SearchResult>(`/api/finance/inquiry/transaction-history/search?${buildParams()}`)
     rows.value = d.rows
     total.value = d.total
     totalPages.value = d.total_pages
@@ -221,7 +221,7 @@ async function confirmDelete() {
   deleteMsg.value = null
   const targetId = deleteConfirmId.value
   try {
-    await api.post(`/api/transaction-history/transactions/${targetId}/delete`, {})
+    await api.post(`/api/finance/inquiry/transaction-history/transactions/${targetId}/delete`, {})
     toast.success('Transaksi berhasil dihapus')
     deleteConfirmId.value = null
     await load()

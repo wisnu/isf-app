@@ -84,7 +84,7 @@ async function loadBankAccounts() {
   try {
     const params = new URLSearchParams({ page: String(page.value), page_size: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('search', searchInput.value.trim())
-    const res = await api.get<BankAccountList>(`/api/bank/accounts?${params}`)
+    const res = await api.get<BankAccountList>(`/api/finance/master/bank/accounts?${params}`)
     rows.value = res.rows
     totalPages.value = res.pagination.total_pages || 1
     totalRecords.value = res.pagination.total
@@ -191,7 +191,7 @@ async function openEdit(accountNo: string) {
   drawerLoading.value = true
   try {
     const [res] = await Promise.all([
-      api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`),
+      api.get<BankAccountDetail>(`/api/finance/master/bank/accounts/${accountNo}`),
       loadLookups(),
     ])
     form.account_name = res.account_name ?? ''
@@ -286,7 +286,7 @@ async function openDelete(accountNo: string) {
   drawerLoading.value = true
   try {
     const [res] = await Promise.all([
-      api.get<BankAccountDetail>(`/api/bank/accounts/${accountNo}`),
+      api.get<BankAccountDetail>(`/api/finance/master/bank/accounts/${accountNo}`),
       loadLookups(),
     ])
     form.account_name = res.account_name ?? ''

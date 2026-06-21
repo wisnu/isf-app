@@ -74,7 +74,7 @@ async function tampilkan() {
     const params = new URLSearchParams({ limit: '500' })
     if (beginDate.value) params.set('begin_date', beginDate.value)
     if (endDate.value) params.set('end_date', endDate.value)
-    const res = await api.get<TxResponse>(`/api/budget/${budgetId}/transactions?${params}`)
+    const res = await api.get<TxResponse>(`/api/finance/budget/${budgetId}/transactions?${params}`)
     rows.value = res.rows ?? []
     computeTotals(rows.value)
     hasData.value = true

@@ -98,7 +98,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<GtPage>(`/api/report/general-transaction?${queryParams(true)}`)
+    data.value = await api.get<GtPage>(`/api/finance/report/general-transaction?${queryParams(true)}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -125,7 +125,7 @@ async function exportXlsx() {
     const p = (n: number) => String(n).padStart(2, '0')
     const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
     await api.downloadBlob(
-      `/api/report/general-transaction/export.xlsx?${queryParams(false)}`,
+      `/api/finance/report/general-transaction/export.xlsx?${queryParams(false)}`,
       `generaltransaction-${ts}.xlsx`,
     )
   } catch (e) {

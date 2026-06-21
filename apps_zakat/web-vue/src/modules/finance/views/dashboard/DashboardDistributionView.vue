@@ -35,10 +35,10 @@ const bulan = shallowRef(new Date().getMonth() + 1)
 const tahun = shallowRef(new Date().getFullYear())
 
 const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
-  () => api.get(`/api/dashboard/fund-distribution/kpis?month=${bulan.value}&year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/fund-distribution/kpis?month=${bulan.value}&year=${tahun.value}`),
 )
 const budgetQ = useFetch<{ budget: AnggaranItem[] }>(
-  () => api.get(`/api/dashboard/fund-distribution/budget?year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/fund-distribution/budget?year=${tahun.value}`),
 )
 const memoQ = useFetch<{ recent_memo: MemoItem[] }>(
   () => api.get('/api/finance/dashboard/fund-distribution/memo'),

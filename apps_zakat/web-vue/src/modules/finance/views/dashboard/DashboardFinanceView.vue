@@ -64,16 +64,16 @@ const tahun = shallowRef(new Date().getFullYear())
 // Per-chart fetchers — masing-masing independen.
 const kpisQ = useFetch<KpisBundle>(() =>
   api.get<KpisBundle>(
-    `/api/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`,
+    `/api/finance/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`,
   ),
 )
 const trendQ = useFetch<TrendBundle>(() =>
   api.get<TrendBundle>(
-    `/api/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`,
+    `/api/finance/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`,
   ),
 )
 const budgetQ = useFetch<AnggaranBundle>(() =>
-  api.get<AnggaranBundle>(`/api/dashboard/finance/budget?year=${tahun.value}`),
+  api.get<AnggaranBundle>(`/api/finance/dashboard/finance/budget?year=${tahun.value}`),
 )
 const accountQ = useFetch<RekeningBundle>(() =>
   api.get<RekeningBundle>('/api/finance/dashboard/finance/account'),

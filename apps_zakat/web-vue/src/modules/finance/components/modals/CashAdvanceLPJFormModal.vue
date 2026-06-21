@@ -58,7 +58,7 @@ async function searchEmployees(query: string) {
   if (!query.trim()) { employeeOptions.value = []; return }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/finance/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch { employeeOptions.value = [] }
@@ -70,7 +70,7 @@ async function loadOpenCA(emp: EmployeeLookup) {
   selectedOpenCA.value = null
   try {
     const res = await api.get<{ rows: OpenUangMuka[] }>(
-      `/api/transaction/cash-advance-settlement/lookup/open-cash-advance?employee_id=${emp.employee_id}`
+      `/api/finance/transaction/cash-advance-settlement/lookup/open-cash-advance?employee_id=${emp.employee_id}`
     )
     openCAOptions.value = res.rows ?? []
     if (!openCAOptions.value.length) {

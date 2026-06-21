@@ -52,7 +52,7 @@ async function loadItems() {
   try {
     const params = new URLSearchParams({ page: String(page.value), limit: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('q', searchInput.value.trim())
-    const res = await api.get<BudgetItemList>(`/api/budget/parameter/items?${params}`)
+    const res = await api.get<BudgetItemList>(`/api/finance/budget/parameter/items?${params}`)
     rows.value = res.rows
     totalRecords.value = res.pagination.total
     totalPages.value = res.pagination.total_pages || 1
@@ -138,7 +138,7 @@ async function submitForm() {
       await api.post('/api/finance/budget/parameter/items', payload)
       toast.success('Item anggaran berhasil ditambahkan')
     } else {
-      await api.put(`/api/budget/parameter/items/${selectedItem.value?.item_id}`, payload)
+      await api.put(`/api/finance/budget/parameter/items/${selectedItem.value?.item_id}`, payload)
       toast.success('Item anggaran berhasil diubah')
     }
 
@@ -154,7 +154,7 @@ async function submitForm() {
 async function submitDelete() {
   submitting.value = true
   try {
-    await api.delete(`/api/budget/parameter/items/${selectedItem.value?.item_id}`)
+    await api.delete(`/api/finance/budget/parameter/items/${selectedItem.value?.item_id}`)
     toast.success('Item anggaran berhasil dihapus')
     closeModal()
     loadItems()

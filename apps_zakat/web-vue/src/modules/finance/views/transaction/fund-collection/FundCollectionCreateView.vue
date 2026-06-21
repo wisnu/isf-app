@@ -124,14 +124,14 @@ const paymentTabs = [
 
 async function loadLookups() {
   productOptions.value = await api
-    .get<ProductOption[]>(`/api/fund-collection/lookup/product?branch_code=${encodeURIComponent(productBranchCode.value)}`)
+    .get<ProductOption[]>(`/api/finance/transaction/fund-collection/lookup/product?branch_code=${encodeURIComponent(productBranchCode.value)}`)
     .catch(() => [])
 }
 
 async function loadRekening() {
   const typeMap: Record<string, string> = { B: 'bank', K: 'petty', C: 'cabang', A: 'bank' }
   rekeningOptions.value = await api
-    .get<RekeningOption[]>(`/api/fund-collection/lookup/account?type=${typeMap[paymentType.value]}`)
+    .get<RekeningOption[]>(`/api/finance/transaction/fund-collection/lookup/account?type=${typeMap[paymentType.value]}`)
     .catch(() => [])
 }
 
@@ -190,7 +190,7 @@ function validate(): string | null {
 async function loadSubmission(id: number) {
   try {
     const res = await api.get<{ id: number; payload: Record<string, any> }>(
-      `/api/authorization/submission/${id}`,
+      `/api/finance/monitoring/authorization/submission/${id}`,
     )
     const p = res.payload
     if (p.actual_date) actualDate.value = p.actual_date
@@ -257,7 +257,7 @@ async function submit() {
 
     if (isEditMode.value && editId.value !== null) {
       res = await api.put<{ status: string; bypassed_auth: boolean }>(
-        `/api/authorization/save-and-submit/${editId.value}`,
+        `/api/finance/monitoring/authorization/save-and-submit/${editId.value}`,
         { payload: innerPayload },
       )
     } else {

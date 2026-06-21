@@ -42,7 +42,7 @@ async def get_owners(
     _: str = Depends(require_menu(_MENU_INQUIRY)),
 ):
     """List BudgetOwner (is_detail='T'). Lookup endpoint, no pagination."""
-    downstream = await get_api_python("/api/budget/owners")
+    downstream = await get_api_python("/api/finance/budget/owners")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -52,7 +52,7 @@ async def get_periods(
     _: str = Depends(require_menu(_MENU_INQUIRY)),
 ):
     """List tahun anggaran (parentperiodid IS NULL). Lookup endpoint, no pagination."""
-    downstream = await get_api_python("/api/budget/periods")
+    downstream = await get_api_python("/api/finance/budget/periods")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -88,7 +88,7 @@ async def search_codes(
         params["filter_category"] = filter_category
     if filter_text:
         params["filter_text"] = filter_text
-    downstream = await get_api_python("/api/budget/search/codes", params=params)
+    downstream = await get_api_python("/api/finance/budget/search/codes", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -113,7 +113,7 @@ async def get_parameter_items(
         params["owner_id"] = owner_id
     if s["branch"]:
         params["branch_code"] = s["branch"]
-    downstream = await get_api_python("/api/budget/parameter/items", params=params or None)
+    downstream = await get_api_python("/api/finance/budget/parameter/items", params=params or None)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -157,7 +157,7 @@ async def get_parameter_periods(
     _: str = Depends(require_menu(_MENU_PERIOD)),
 ):
     """List master BudgetPeriod (tahun root)."""
-    downstream = await get_api_python("/api/budget/parameter/periods")
+    downstream = await get_api_python("/api/finance/budget/parameter/periods")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -188,7 +188,7 @@ async def get_budget_summary(
     params: dict = {"period_id": period_id}
     if s["branch"]:
         params["branch_code"] = s["branch"]
-    downstream = await get_api_python("/api/budget/summary", params=params)
+    downstream = await get_api_python("/api/finance/budget/summary", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -215,7 +215,7 @@ async def list_budgets(
         params["period_id"] = period_id
     if s["branch"]:
         params["branch_code"] = s["branch"]
-    downstream = await get_api_python("/api/budget", params=params)
+    downstream = await get_api_python("/api/finance/budget", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -261,7 +261,7 @@ async def create_budget(
 
     # Submit via otorisasi save-and-submit
     params = {"user_id": s["user_id"], "branch_code": s["branch"] or "001"}
-    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/"
+    url = f"{settings.api_python_base_url}/api/finance/monitoring/authorization/save-and-submit/"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
             url,
@@ -295,7 +295,7 @@ async def update_budget(
 
     # Submit via otorisasi save-and-submit (update existing submission)
     params = {"user_id": s["user_id"]}
-    url = f"{settings.api_python_base_url}/api/authorization/save-and-submit/{budget_id}"
+    url = f"{settings.api_python_base_url}/api/finance/monitoring/authorization/save-and-submit/{budget_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.put(
             url,

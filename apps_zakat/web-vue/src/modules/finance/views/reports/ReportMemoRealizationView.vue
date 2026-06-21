@@ -45,14 +45,14 @@ async function loadBranches() {
 }
 async function load() {
   loading.value = true; errorMsg.value = null
-  try { data.value = await api.get<Payload>(`/api/report/realization-memo?${qs()}`) }
+  try { data.value = await api.get<Payload>(`/api/finance/report/realization-memo?${qs()}`) }
   catch (e) { errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'; data.value = null }
   finally { loading.value = false }
 }
 async function exportXlsx() {
   exporting.value = true; errorMsg.value = null
   try { const n = new Date(); const ts = `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}-${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`
-    await api.downloadBlob(`/api/report/realization-memo/export.xlsx?${qs()}`, `realisasimemo-${ts}.xlsx`) }
+    await api.downloadBlob(`/api/finance/report/realization-memo/export.xlsx?${qs()}`, `realisasimemo-${ts}.xlsx`) }
   catch (e) { errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal' } finally { exporting.value = false }
 }
 watch([begin, end, branch, q], () => { data.value = null })

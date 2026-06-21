@@ -65,7 +65,7 @@ async function searchEmployees(query: string) {
   }
   try {
     const res = await api.get<{ rows: EmployeeLookup[] }>(
-      `/api/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
+      `/api/finance/transaction/cash-advance/lookup/employee?search=${encodeURIComponent(query.trim())}`
     )
     employeeOptions.value = res.rows ?? []
   } catch (e) {

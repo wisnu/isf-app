@@ -43,7 +43,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<MonthlyPayload>(`/api/report/cash-monthly?branch=${encodeURIComponent(branch.value)}&year=${year.value}`)
+    data.value = await api.get<MonthlyPayload>(`/api/finance/report/cash-monthly?branch=${encodeURIComponent(branch.value)}&year=${year.value}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -60,7 +60,7 @@ async function exportXlsx() {
     const p = (n: number) => String(n).padStart(2, '0')
     const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
     await api.downloadBlob(
-      `/api/report/cash-monthly/export.xlsx?branch=${encodeURIComponent(branch.value)}&year=${year.value}`,
+      `/api/finance/report/cash-monthly/export.xlsx?branch=${encodeURIComponent(branch.value)}&year=${year.value}`,
       `cashmonthly-${ts}.xlsx`,
     )
   } catch (e) {

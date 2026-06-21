@@ -78,7 +78,7 @@ async function load() {
     })
 
     const res = await api.get<ListResponse>(
-      `/api/amil-expense/?${params}`
+      `/api/finance/transaction/amil-expense/?${params}`
     )
 
     rows.value = res?.rows ?? []
@@ -97,7 +97,7 @@ async function openDetail(row: AmilExpenseRow) {
   showDetail.value = true
   detailRow.value = { ...row }
   try {
-    const res = await api.get<{ items: unknown[] }>(`/api/amil-expense/${row.id}`)
+    const res = await api.get<{ items: unknown[] }>(`/api/finance/transaction/amil-expense/${row.id}`)
     detailRow.value = { ...row, items: res?.items ?? [] } as AmilExpenseRow & { items: unknown[] }
   } catch {
     // keep header

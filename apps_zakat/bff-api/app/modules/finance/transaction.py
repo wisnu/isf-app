@@ -586,7 +586,7 @@ async def create_cash_advance(
     s = _session(request)
     body = await request.json()
     params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
-    url = f"{settings.api_python_base_url}/api/transaction/cash-advance"
+    url = f"{settings.api_python_base_url}/api/finance/transaction/cash-advance"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())
@@ -650,7 +650,7 @@ async def create_pengembalian(
     s = _session(request)
     body = await request.json()
     params = {'user_id': s['user_id'], 'branch_code': s['branch'] or '001'}
-    url = f"{settings.api_python_base_url}/api/transaction/cash-advance-settlement"
+    url = f"{settings.api_python_base_url}/api/finance/transaction/cash-advance-settlement"
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(url, json=body, params=params)
     return JSONResponse(status_code=resp.status_code, content=resp.json())

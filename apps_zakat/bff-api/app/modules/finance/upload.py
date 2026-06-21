@@ -31,7 +31,7 @@ async def parse(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        '/api/transaction/upload/fund-collection/parse',
+        '/api/finance/upload/fund-collection/parse',
         data={'branch_code': branch_code},
         file_content=data,
         filename=file.filename or 'upload',
@@ -50,7 +50,7 @@ async def draft(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        '/api/transaction/upload/fund-collection/draft',
+        '/api/finance/upload/fund-collection/draft',
         data={'branch_code': branch_code, 'upload_user': user_id},
         file_content=data,
         filename=file.filename or 'upload',
@@ -64,7 +64,7 @@ async def template(
     request: Request,
     _: str = Depends(require_menu(_UPLOAD_MENU)),
 ):
-    downstream = await get_api_python('/api/transaction/upload/fund-collection/template')
+    downstream = await get_api_python('/api/finance/upload/fund-collection/template')
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(
@@ -89,7 +89,7 @@ async def batches(
         params['end'] = end
     if status:
         params['status'] = status
-    downstream = await get_api_python('/api/transaction/upload/fund-collection/batches', params=params)
+    downstream = await get_api_python('/api/finance/upload/fund-collection/batches', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -100,7 +100,7 @@ async def batch_detail(
     _: str = Depends(require_menu(_APPROVE_MENU)),
 ):
     downstream = await get_api_python(
-        f'/api/transaction/upload/fund-collection/batches/{batch_id}'
+        f'/api/finance/upload/fund-collection/batches/{batch_id}'
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -113,7 +113,7 @@ async def approve(
 ):
     user_id = request.session.get('user_id', '')
     branch_code = _branch_for_session(request)
-    url = f"{settings.api_python_base_url}/api/transaction/upload/fund-collection/batches/{batch_id}/approve"
+    url = f"{settings.api_python_base_url}/api/finance/upload/fund-collection/batches/{batch_id}/approve"
     async with httpx.AsyncClient(timeout=60.0) as client:
         downstream = await client.post(url, json={
             'authorized_user': user_id,
@@ -146,7 +146,7 @@ async def parse_hc_zis(
     branch_code = _branch_for_session(request)
     data = await file.read()
     downstream = await post_multipart_api_python(
-        f'/api/transaction/upload/hc-zis/parse?tanggal_transaksi={tanggal_transaksi}&branch_code={branch_code}',
+        f'/api/finance/upload/hc-zis/parse?tanggal_transaksi={tanggal_transaksi}&branch_code={branch_code}',
         data={},
         file_content=data,
         filename=file.filename or 'upload.xlsx',
@@ -165,7 +165,7 @@ async def submit_hc_zis(
     branch_code = _branch_for_session(request)
     body = await request.json()
 
-    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/submit"
+    url = f"{settings.api_python_base_url}/api/finance/upload/hc-zis/submit"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.post(
             url,
@@ -199,7 +199,7 @@ async def list_hc_zis_batches(
     if date_to:
         params['date_to'] = date_to
 
-    downstream = await get_api_python('/api/transaction/upload/hc-zis/batches', params=params)
+    downstream = await get_api_python('/api/finance/upload/hc-zis/batches', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -211,7 +211,7 @@ async def get_hc_zis_batch(
 ):
     """Ambil detail batch HC ZIS + rows."""
     downstream = await get_api_python(
-        f'/api/transaction/upload/hc-zis/batches/{batch_id}'
+        f'/api/finance/upload/hc-zis/batches/{batch_id}'
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -227,7 +227,7 @@ async def update_hc_zis_batch_date(
     branch_code = _branch_for_session(request)
     body = await request.json()
 
-    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/batches/{batch_id}/date"
+    url = f"{settings.api_python_base_url}/api/finance/upload/hc-zis/batches/{batch_id}/date"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.put(
             url,
@@ -247,7 +247,7 @@ async def delete_hc_zis_batch(
     user_id = request.session.get('user_id', '')
     branch_code = _branch_for_session(request)
 
-    url = f"{settings.api_python_base_url}/api/transaction/upload/hc-zis/batches/{batch_id}"
+    url = f"{settings.api_python_base_url}/api/finance/upload/hc-zis/batches/{batch_id}"
     async with httpx.AsyncClient(timeout=30.0) as client:
         downstream = await client.delete(
             url,

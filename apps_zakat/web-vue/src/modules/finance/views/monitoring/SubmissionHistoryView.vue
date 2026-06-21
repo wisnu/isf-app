@@ -75,7 +75,7 @@ async function load() {
     if (filterDateFrom.value) params.set('date_from', filterDateFrom.value)
     if (filterDateTo.value) params.set('date_to', filterDateTo.value)
 
-    const res = await api.get<ListResponse>(`/api/authorization/my-submissions/?${params}`)
+    const res = await api.get<ListResponse>(`/api/finance/monitoring/authorization/my-submissions/?${params}`)
     rows.value = res.rows ?? []
     total.value = res.pagination?.total ?? 0
     totalPages.value = res.pagination?.total_pages ?? 1

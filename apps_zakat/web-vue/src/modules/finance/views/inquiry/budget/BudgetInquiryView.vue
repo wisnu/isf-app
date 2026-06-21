@@ -85,7 +85,7 @@ async function tampilkan() {
   loading.value = true
   hasData.value = false
   try {
-    const res = await api.get<SummaryResponse>(`/api/budget/summary?period_id=${selectedPeriod.value}`)
+    const res = await api.get<SummaryResponse>(`/api/finance/budget/summary?period_id=${selectedPeriod.value}`)
     rows.value = res.rows ?? []
     selectedPeriodId.value = res.period_id
     selectedPeriodValue.value = res.period_value

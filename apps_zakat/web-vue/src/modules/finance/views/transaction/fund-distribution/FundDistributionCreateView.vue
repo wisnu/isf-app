@@ -121,7 +121,7 @@ async function loadLookups() {
 async function loadRekening() {
   const typeMap: Record<string, string> = { B: 'bank', K: 'petty', C: 'cabang', A: 'bank' }
   const rows = await api
-    .get<RekeningOption[]>(`/api/fund-distribution/lookup/account?type=${typeMap[paymentType.value]}`)
+    .get<RekeningOption[]>(`/api/finance/transaction/fund-distribution/lookup/account?type=${typeMap[paymentType.value]}`)
     .catch(() => [])
   rekeningOptions.value = rows
 }
@@ -132,7 +132,7 @@ async function onBankSelected(accountNo: string) {
   fundAccountOptions.value = []
   if (!accountNo) return
   const rows = await api
-    .get<FundAccountOption[]>(`/api/fund-distribution/lookup/fund-product-account?bank_account_no=${accountNo}`)
+    .get<FundAccountOption[]>(`/api/finance/transaction/fund-distribution/lookup/fund-product-account?bank_account_no=${accountNo}`)
     .catch(() => [])
   fundAccountOptions.value = rows
   if (rows.length === 1) fundAccountNo.value = rows[0].account_no
@@ -195,7 +195,7 @@ function validate(): string | null {
 async function loadSubmission(id: number) {
   try {
     const res = await api.get<{ id: number; payload: Record<string, any> }>(
-      `/api/authorization/submission/${id}`,
+      `/api/finance/monitoring/authorization/submission/${id}`,
     )
     const p = res.payload
     if (p.actual_date) actualDate.value = p.actual_date
@@ -267,7 +267,7 @@ async function submit() {
 
     if (isEditMode.value && editId.value !== null) {
       res = await api.put<{ status: string; bypassed_auth: boolean }>(
-        `/api/authorization/save-and-submit/${editId.value}`,
+        `/api/finance/monitoring/authorization/save-and-submit/${editId.value}`,
         { payload: innerPayload },
       )
     } else {

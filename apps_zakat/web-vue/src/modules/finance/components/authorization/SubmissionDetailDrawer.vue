@@ -49,7 +49,7 @@ async function approve() {
   if (!props.submission) return
   loading.value = true
   try {
-    await api.post(`/api/authorization/submission/${props.submission.id}/approve`, { notes: null })
+    await api.post(`/api/finance/monitoring/authorization/submission/${props.submission.id}/approve`, { notes: null })
     toast.success('Submission diotorisasi')
     emit('approved', props.submission.id)
     emit('close')
@@ -64,7 +64,7 @@ async function reject() {
   if (!props.submission || !rejectNotes.value.trim()) return
   loading.value = true
   try {
-    await api.post(`/api/authorization/submission/${props.submission.id}/reject`, { notes: rejectNotes.value })
+    await api.post(`/api/finance/monitoring/authorization/submission/${props.submission.id}/reject`, { notes: rejectNotes.value })
     toast.warning('Submission ditolak')
     emit('rejected', props.submission.id)
     emit('close')

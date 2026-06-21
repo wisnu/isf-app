@@ -87,7 +87,7 @@ async function loadPeriods() {
   if (!selectedOwner.value) return
   periodsLoading.value = true
   try {
-    const res = await api.get<{ data: Period[] }>(`/api/budget/periods/${selectedOwner.value}`)
+    const res = await api.get<{ data: Period[] }>(`/api/finance/budget/periods/${selectedOwner.value}`)
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
       label: String(p.period_value),
@@ -113,7 +113,7 @@ async function loadBudgets() {
       page: String(page.value),
       limit: String(pageSize.value),
     })
-    const res = await api.get<BudgetList>(`/api/budget/?${params}`)
+    const res = await api.get<BudgetList>(`/api/finance/budget/?${params}`)
     rows.value = res.rows
     totalRecords.value = res.pagination.total
     totalPages.value = res.pagination.total_pages || 1
@@ -182,7 +182,7 @@ async function submitForm() {
 
   loading.value = true
   try {
-    await api.put(`/api/budget/${selectedItem.value?.budget_id}`, {
+    await api.put(`/api/finance/budget/${selectedItem.value?.budget_id}`, {
       owner_id: Number(selectedOwner.value),
       period_id: Number(selectedPeriod.value),
       budget_code: form.budget_code.trim(),
@@ -204,7 +204,7 @@ async function submitDelete() {
   loading.value = true
 
   try {
-    await api.delete(`/api/budget/${selectedItem.value?.budget_id}`)
+    await api.delete(`/api/finance/budget/${selectedItem.value?.budget_id}`)
     toast.success('Anggaran berhasil dihapus.')
     closeModal()
     loadBudgets()

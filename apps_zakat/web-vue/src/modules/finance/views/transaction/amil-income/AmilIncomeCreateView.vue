@@ -95,7 +95,7 @@ async function loadKasAccounts() {
   kasAccountLoading.value = true
   try {
     const res = await api.get<{ rows: LookupKasAccount[] }>(
-      `/api/amil-income/lookup/kas-account?search=`
+      `/api/finance/transaction/amil-income/lookup/kas-account?search=`
     )
     kasAccountResults.value = res?.rows ?? []
   } catch (e: unknown) {
@@ -113,7 +113,7 @@ async function searchGlAccounts(searchText: string) {
   glAccountLoading.value = true
   try {
     const res = await api.get<{ rows: LookupGlAccount[] }>(
-      `/api/amil-income/lookup/gl-account?search=${encodeURIComponent(searchText)}`
+      `/api/finance/transaction/amil-income/lookup/gl-account?search=${encodeURIComponent(searchText)}`
     )
     glAccountResults.value = res?.rows ?? []
   } catch (e: unknown) {

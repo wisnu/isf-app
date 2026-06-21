@@ -86,7 +86,7 @@ async function loadAccounts() {
   if (!branch.value) return
   try {
     accounts.value = await api.get<AccountOption[]>(
-      `/api/report/cash-accounts?branch=${encodeURIComponent(branch.value)}`,
+      `/api/finance/report/cash-accounts?branch=${encodeURIComponent(branch.value)}`,
     )
     if (accounts.value.length) account.value = accounts.value[0].account_no
   } catch (e) {
@@ -110,7 +110,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<CashPage>(`/api/report/cash-mutation?${qs()}&page=${page.value}&page_size=${pageSize.value}`)
+    data.value = await api.get<CashPage>(`/api/finance/report/cash-mutation?${qs()}&page=${page.value}&page_size=${pageSize.value}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -136,7 +136,7 @@ async function exportXlsx() {
     const d = new Date()
     const p = (n: number) => String(n).padStart(2, '0')
     const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
-    await api.downloadBlob(`/api/report/cash-mutation/export.xlsx?${qs()}`, `cashdaily-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/cash-mutation/export.xlsx?${qs()}`, `cashdaily-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {

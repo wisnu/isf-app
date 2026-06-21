@@ -254,7 +254,7 @@ async function loadKasBankOptions() {
   kbLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/general-transaction/lookup/cash-bank?search=`
+      `/api/finance/transaction/general/lookup/cash-bank?search=`
     )
     kbResults.value = res?.rows ?? []
   } finally {
@@ -282,7 +282,7 @@ async function searchDonor() {
   phShowDonorResults.value = false
   try {
     const res = await api.get<{ rows: DonorRow[] }>(
-      `/api/general-transaction/lookup/donor?search=${encodeURIComponent(phDonorSearch.value)}`
+      `/api/finance/transaction/general/lookup/donor?search=${encodeURIComponent(phDonorSearch.value)}`
     )
     phDonorResults.value = res?.rows ?? []
     phShowDonorResults.value = true
@@ -308,7 +308,7 @@ async function loadProdukOptions() {
   phProdukLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/general-transaction/lookup/product?search=&fund_entity=${phFundEntity.value}`
+      `/api/finance/transaction/general/lookup/product?search=&fund_entity=${phFundEntity.value}`
     )
     phProdukResults.value = res?.rows ?? []
   } finally {
@@ -340,7 +340,7 @@ async function loadProgramOptions() {
   pyProgramLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/general-transaction/lookup/distribution?search=`
+      `/api/finance/transaction/general/lookup/distribution?search=`
     )
     pyProgramResults.value = res?.rows ?? []
   } finally {
@@ -364,7 +364,7 @@ async function loadSumberOptions() {
   pySumberLoading.value = true
   try {
     const res = await api.get<{ rows: LookupRow[] }>(
-      `/api/general-transaction/lookup/product?search=`
+      `/api/finance/transaction/general/lookup/product?search=`
     )
     pySumberResults.value = res?.rows ?? []
   } finally {

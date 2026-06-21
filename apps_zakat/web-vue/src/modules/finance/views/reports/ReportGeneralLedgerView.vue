@@ -79,7 +79,7 @@ async function loadBranches() {
 async function loadAccounts() {
   try {
     const url = branch.value
-      ? `/api/report/general-ledger/accounts?branch=${encodeURIComponent(branch.value)}`
+      ? `/api/finance/report/general-ledger/accounts?branch=${encodeURIComponent(branch.value)}`
       : '/api/finance/report/general-ledger/accounts'
     accounts.value = await api.get<AccountOption[]>(url)
   } catch {
@@ -91,7 +91,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<GLPayload>(`/api/report/general-ledger?${qs()}`)
+    data.value = await api.get<GLPayload>(`/api/finance/report/general-ledger?${qs()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -106,7 +106,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/general-ledger/export.xlsx?${qs()}`, `bukubesar-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/general-ledger/export.xlsx?${qs()}`, `bukubesar-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {

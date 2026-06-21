@@ -67,7 +67,7 @@ async function load() {
   errorMsg.value = null
   try {
     data.value = await api.get<TBPayload>(
-      `/api/report/trial-balance?begin=${begin.value}&end=${end.value}${branchQS()}`,
+      `/api/finance/report/trial-balance?begin=${begin.value}&end=${end.value}${branchQS()}`,
     )
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
@@ -83,7 +83,7 @@ async function exportXlsx() {
   try {
     const ts = `${today.getFullYear()}${p(today.getMonth() + 1)}${p(today.getDate())}-${p(new Date().getHours())}${p(new Date().getMinutes())}${p(new Date().getSeconds())}`
     await api.downloadBlob(
-      `/api/report/trial-balance/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`,
+      `/api/finance/report/trial-balance/export.xlsx?begin=${begin.value}&end=${end.value}${branchQS()}`,
       `trialbalance-${ts}.xlsx`,
     )
   } catch (e) {

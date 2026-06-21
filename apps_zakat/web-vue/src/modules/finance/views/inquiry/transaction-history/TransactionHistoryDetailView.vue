@@ -73,7 +73,7 @@ const canRepost = computed(() => detail.value?.is_posted === 'F')
 onMounted(async () => {
   try {
     detail.value = await api.get<TransaksiDetail>(
-      `/api/transaction-history/transactions/${txId}`,
+      `/api/finance/inquiry/transaction-history/transactions/${txId}`,
     )
   } catch (e: unknown) {
     errorMsg.value = e instanceof ApiError ? e.message : String(e)
@@ -86,7 +86,7 @@ async function doDelete() {
   deleting.value = true
   deleteError.value = null
   try {
-    await api.post(`/api/transaction-history/transactions/${txId}/delete`, {})
+    await api.post(`/api/finance/inquiry/transaction-history/transactions/${txId}/delete`, {})
     toast.success('Transaksi berhasil dihapus')
     showDeleteConfirm.value = false
     router.push({ name: 'finance-transactions-history' })
@@ -101,11 +101,11 @@ async function doRepost() {
   reposting.value = true
   repostError.value = null
   try {
-    await api.post(`/api/transaction-history/transactions/${txId}/repost`, {})
+    await api.post(`/api/finance/inquiry/transaction-history/transactions/${txId}/repost`, {})
     toast.success('Jurnal berhasil di-repost')
     showRepostConfirm.value = false
     detail.value = await api.get<TransaksiDetail>(
-      `/api/transaction-history/transactions/${txId}`,
+      `/api/finance/inquiry/transaction-history/transactions/${txId}`,
     )
   } catch (e: unknown) {
     repostError.value = e instanceof Error ? e.message : String(e)

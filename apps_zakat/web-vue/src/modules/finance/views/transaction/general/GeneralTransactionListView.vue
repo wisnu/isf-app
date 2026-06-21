@@ -116,7 +116,7 @@ async function load() {
 
     const [txRes, subRes] = await Promise.all([
       api.get<{ rows: Omit<TxRow, '_kind'>[]; pagination: { total: number; total_pages: number } }>(
-        `/api/general-transaction/?${params}`
+        `/api/finance/transaction/general/?${params}`
       ),
       api.get<{ rows: Omit<SubRow, '_kind'>[] }>(
         '/api/finance/monitoring/authorization/my-submissions/?entity_type=transaksi_umum'
@@ -140,7 +140,7 @@ async function openDetail(row: TxRow) {
   showDetail.value = true
   detailRow.value = { ...row }
   try {
-    const res = await api.get<{ id: number; items: unknown[] }>(`/api/general-transaction/${row.transactionid}`)
+    const res = await api.get<{ id: number; items: unknown[] }>(`/api/finance/transaction/general/${row.transactionid}`)
     detailRow.value = { ...row, items: res?.items ?? [] } as TxRow & { items: unknown[] }
   } catch {
     // keep header
@@ -159,9 +159,9 @@ async function confirmDelete() {
   deleteLoading.value = true
   try {
     if (deleteRow.value._kind === 'tx') {
-      await api.delete(`/api/general-transaction/${deleteRow.value.transactionid}`)
+      await api.delete(`/api/finance/transaction/general/${deleteRow.value.transactionid}`)
     } else {
-      await api.delete(`/api/authorization/submission/${deleteRow.value.id}`)
+      await api.delete(`/api/finance/monitoring/authorization/submission/${deleteRow.value.id}`)
     }
     toast.success('Transaksi berhasil dihapus')
     showDeleteModal.value = false

@@ -24,7 +24,7 @@ async def get_role_menu(
     request: Request,
     user_id: str = Depends(require_menu("admin.role_menu")),
 ):
-    downstream = await get_api_python("/api/admin/role-menu")
+    downstream = await get_api_python("/api/administration/role-menu")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 

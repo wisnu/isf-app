@@ -45,7 +45,7 @@ async function loadPeriods() {
   periods.value = []
   selectedPeriod.value = ''
   try {
-    const res = await api.get<{ data: Period[] }>(`/api/budget/periods/${selectedOwner.value}`)
+    const res = await api.get<{ data: Period[] }>(`/api/finance/budget/periods/${selectedOwner.value}`)
     periods.value = (res.data ?? []).map((p) => ({ value: String(p.period_id), label: String(p.period_value) }))
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat periode')

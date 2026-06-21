@@ -78,8 +78,8 @@ async function load() {
   loading.value = true; errorMsg.value = null
   try {
     const [d, rk] = await Promise.all([
-      api.get<CollPayload>(`/api/report/collection?${qs()}&page=${page.value}&page_size=${pageSize}`),
-      api.get<RekapPayload>(`/api/report/collection/rekap?begin=${begin.value}&end=${end.value}${branch.value ? `&branch=${encodeURIComponent(branch.value)}` : ''}`),
+      api.get<CollPayload>(`/api/finance/report/collection?${qs()}&page=${page.value}&page_size=${pageSize}`),
+      api.get<RekapPayload>(`/api/finance/report/collection/rekap?begin=${begin.value}&end=${end.value}${branch.value ? `&branch=${encodeURIComponent(branch.value)}` : ''}`),
     ])
     data.value = d; rekap.value = rk
   } catch (e) {
@@ -89,7 +89,7 @@ async function load() {
 
 async function loadPage(pp: number) {
   page.value = pp; loading.value = true
-  try { data.value = await api.get<CollPayload>(`/api/report/collection?${qs()}&page=${page.value}&page_size=${pageSize}`) }
+  try { data.value = await api.get<CollPayload>(`/api/finance/report/collection?${qs()}&page=${page.value}&page_size=${pageSize}`) }
   catch (e) { errorMsg.value = e instanceof ApiError ? e.message : 'Gagal' }
   finally { loading.value = false }
 }
@@ -99,7 +99,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/collection/export.xlsx?${qs()}`, `penghimpunandana-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/collection/export.xlsx?${qs()}`, `penghimpunandana-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally { exporting.value = false }

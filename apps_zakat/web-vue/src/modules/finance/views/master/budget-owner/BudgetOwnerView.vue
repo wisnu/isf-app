@@ -51,7 +51,7 @@ async function loadData() {
   try {
     const params = new URLSearchParams({ page: String(page.value), limit: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('q', searchInput.value.trim())
-    const res = await api.get<ListResponse>(`/api/parameter/budget-owner?${params}`)
+    const res = await api.get<ListResponse>(`/api/finance/master/parameter/budget-owner?${params}`)
     rows.value       = res.rows
     totalPages.value = res.pagination.total_pages || 1
     totalRec.value   = res.pagination.total

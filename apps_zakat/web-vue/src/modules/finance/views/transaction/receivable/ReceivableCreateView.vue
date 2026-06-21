@@ -65,7 +65,7 @@ async function searchDebtors(query: string) {
   if (!query.trim()) { debtorOptions.value = []; return }
   try {
     const res = await api.get<{ rows: DebtorOption[] }>(
-      `/api/receivable/debtor/?q=${encodeURIComponent(query.trim())}`,
+      `/api/finance/transaction/receivable/debtor/?q=${encodeURIComponent(query.trim())}`,
     )
     debtorOptions.value = res.rows ?? []
   } catch { debtorOptions.value = [] }
@@ -80,7 +80,7 @@ async function searchCashAccounts(query: string) {
   if (!query.trim()) { cashAccountOptions.value = []; return }
   try {
     const res = await api.get<{ rows: CashAccountOption[] }>(
-      `/api/receivable/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
+      `/api/finance/transaction/receivable/cash-accounts/?q=${encodeURIComponent(query.trim())}`,
     )
     cashAccountOptions.value = res.rows ?? []
   } catch { cashAccountOptions.value = [] }
@@ -90,7 +90,7 @@ async function searchGLAccounts(query: string) {
   if (!query.trim()) { glAccountOptions.value = []; return }
   try {
     const res = await api.get<{ rows: GLAccountOption[] }>(
-      `/api/receivable/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
+      `/api/finance/transaction/receivable/gl-accounts/?q=${encodeURIComponent(query.trim())}`,
     )
     glAccountOptions.value = res.rows ?? []
   } catch { glAccountOptions.value = [] }

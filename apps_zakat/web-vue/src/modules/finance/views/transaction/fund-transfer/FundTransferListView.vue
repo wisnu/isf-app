@@ -79,7 +79,7 @@ async function load() {
       page: String(page.value),
       limit: String(pageSize.value),
     })
-    const res = await api.get<ListResponse>(`/api/transaction/inter-account-transfer/?${params}`)
+    const res = await api.get<ListResponse>(`/api/finance/transaction/inter-account-transfer/?${params}`)
     rows.value = res.rows ?? []
     totalRec.value = res.pagination.total
     totalPages.value = res.pagination.total_pages

@@ -40,16 +40,16 @@ const tahun = shallowRef(new Date().getFullYear())
 // Per-chart fetchers — masing-masing independen. Kegagalan/lambatnya satu
 // widget tidak menggagalkan widget lain.
 const kpisQ = useFetch<{ period: string; kpis: Record<string, KpiCardData> }>(
-  () => api.get(`/api/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/finance/kpis?month=${bulan.value}&year=${tahun.value}`),
 )
 const trendQ = useFetch<{ trend: TrendPoint[] }>(
-  () => api.get(`/api/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/finance/trend?month=${bulan.value}&year=${tahun.value}`),
 )
 const asnafQ = useFetch<{ asnaf: AsnafItem[] }>(
-  () => api.get(`/api/dashboard/finance/asnaf?month=${bulan.value}&year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/finance/asnaf?month=${bulan.value}&year=${tahun.value}`),
 )
 const budgetQ = useFetch<{ budget: AnggaranItem[] }>(
-  () => api.get(`/api/dashboard/finance/budget?year=${tahun.value}`),
+  () => api.get(`/api/finance/dashboard/finance/budget?year=${tahun.value}`),
 )
 
 function loadAll() {

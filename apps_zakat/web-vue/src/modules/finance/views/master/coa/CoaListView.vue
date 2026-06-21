@@ -153,7 +153,7 @@ async function loadAll() {
   try {
     const first = await api.get<CoaList>('/api/finance/master/coa/accounts?page=1&page_size=500')
     const restPages = Array.from({ length: first.pagination.total_pages - 1 }, (_, i) =>
-      api.get<CoaList>(`/api/coa/accounts?page=${i + 2}&page_size=500`)
+      api.get<CoaList>(`/api/finance/master/coa/accounts?page=${i + 2}&page_size=500`)
     )
     const rest = await Promise.all(restPages)
     allRows.value = [...first.rows, ...rest.flatMap(r => r.rows)]

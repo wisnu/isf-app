@@ -135,7 +135,7 @@ async function loadBankAccounts() {
   bankAccountLoading.value = true
   try {
     const res = await api.get<{ rows: LookupBankAccount[] }>(
-      `/api/amil-expense/lookup/bank-account?search=`
+      `/api/finance/transaction/amil-expense/lookup/bank-account?search=`
     )
     bankAccountResults.value = res?.rows ?? []
   } catch (e: unknown) {
@@ -149,7 +149,7 @@ async function loadPettyCashAccounts() {
   pettyCashAccountLoading.value = true
   try {
     const res = await api.get<{ rows: LookupPettyCashAccount[] }>(
-      `/api/amil-expense/lookup/petty-cash-account?search=`
+      `/api/finance/transaction/amil-expense/lookup/petty-cash-account?search=`
     )
     pettyCashAccountResults.value = res?.rows ?? []
   } catch (e: unknown) {
@@ -167,7 +167,7 @@ async function searchGlAccounts(searchText: string) {
   glAccountLoading.value = true
   try {
     const res = await api.get<{ rows: LookupGlAccount[] }>(
-      `/api/amil-expense/lookup/gl-account?search=${encodeURIComponent(searchText)}`
+      `/api/finance/transaction/amil-expense/lookup/gl-account?search=${encodeURIComponent(searchText)}`
     )
     glAccountResults.value = res?.rows ?? []
   } catch (e: unknown) {
@@ -185,7 +185,7 @@ async function searchBudgets(searchText: string) {
   budgetLoading.value = true
   try {
     const res = await api.get<{ rows: LookupBudget[] }>(
-      `/api/amil-expense/lookup/budget?search=${encodeURIComponent(searchText)}`
+      `/api/finance/transaction/amil-expense/lookup/budget?search=${encodeURIComponent(searchText)}`
     )
     budgetResults.value = res?.rows ?? []
   } catch (e: unknown) {

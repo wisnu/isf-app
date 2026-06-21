@@ -93,7 +93,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<JournalPage>(`/api/report/journal-daily?${queryParams(true)}`)
+    data.value = await api.get<JournalPage>(`/api/finance/report/journal-daily?${queryParams(true)}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -120,7 +120,7 @@ async function exportXlsx() {
     const p = (n: number) => String(n).padStart(2, '0')
     const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
     await api.downloadBlob(
-      `/api/report/journal-daily/export.xlsx?${queryParams(false)}`,
+      `/api/finance/report/journal-daily/export.xlsx?${queryParams(false)}`,
       `journaldaily-${ts}.xlsx`,
     )
   } catch (e) {

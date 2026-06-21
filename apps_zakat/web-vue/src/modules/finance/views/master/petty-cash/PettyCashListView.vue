@@ -73,7 +73,7 @@ async function loadAccounts() {
   try {
     const params = new URLSearchParams({ page: String(page.value), page_size: String(pageSize.value) })
     if (searchInput.value.trim()) params.set('search', searchInput.value.trim())
-    const res = await api.get<PettyCashList>(`/api/petty-cash/accounts?${params}`)
+    const res = await api.get<PettyCashList>(`/api/finance/master/petty-cash/accounts?${params}`)
     rows.value = res.rows
     totalPages.value = res.pagination.total_pages || 1
     totalRecords.value = res.pagination.total
@@ -161,7 +161,7 @@ async function openEdit(accountNo: string) {
   modalLoading.value = true
   await loadLookups()
   try {
-    const res = await api.get<PettyCashDetail>(`/api/petty-cash/accounts/${accountNo}`)
+    const res = await api.get<PettyCashDetail>(`/api/finance/master/petty-cash/accounts/${accountNo}`)
     form.account_name = res.account_name ?? ''
     form.branch_code = res.branch_code ?? ''
     form.currency_code = res.currency_code ?? ''
@@ -184,7 +184,7 @@ async function openDelete(accountNo: string) {
   modalOpen.value = true
   modalLoading.value = true
   try {
-    const res = await api.get<PettyCashDetail>(`/api/petty-cash/accounts/${accountNo}`)
+    const res = await api.get<PettyCashDetail>(`/api/finance/master/petty-cash/accounts/${accountNo}`)
     deleteDetail.value = res
   } catch {
     toast.error('Gagal memuat detail rekening')
@@ -218,7 +218,7 @@ async function submitForm() {
 
   submitting.value = true
   try {
-    await api.put<unknown>(`/api/petty-cash/accounts/${editingAccountNo.value}`, {
+    await api.put<unknown>(`/api/finance/master/petty-cash/accounts/${editingAccountNo.value}`, {
       account_name: form.account_name.trim(),
       account_interface: form.account_interface,
       currency_code: form.currency_code,
@@ -243,7 +243,7 @@ async function submitDelete() {
   submitting.value = true
   formError.value = null
   try {
-    await api.delete<unknown>(`/api/petty-cash/accounts/${editingAccountNo.value}`)
+    await api.delete<unknown>(`/api/finance/master/petty-cash/accounts/${editingAccountNo.value}`)
     toast.success('Rekening kas kecil berhasil dihapus')
     closeModal()
     await loadAccounts()

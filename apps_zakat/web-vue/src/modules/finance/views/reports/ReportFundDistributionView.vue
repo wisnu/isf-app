@@ -67,7 +67,7 @@ async function loadBranches() {
 async function load() {
   loading.value = true; errorMsg.value = null
   try {
-    data.value = await api.get<DistPayload>(`/api/report/distribution?${qs()}&page=${page.value}&page_size=${pageSize}`)
+    data.value = await api.get<DistPayload>(`/api/finance/report/distribution?${qs()}&page=${page.value}&page_size=${pageSize}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'; data.value = null
   } finally { loading.value = false }
@@ -80,7 +80,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/distribution/export.xlsx?${qs()}`, `penyalurandana-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/distribution/export.xlsx?${qs()}`, `penyalurandana-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally { exporting.value = false }

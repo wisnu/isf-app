@@ -175,7 +175,7 @@ async function load() {
     if (filterEntityType.value) params.set('entity_type', filterEntityType.value)
     if (filterDateFrom.value) params.set('date_from', filterDateFrom.value)
     if (filterDateTo.value) params.set('date_to', filterDateTo.value)
-    const res = await api.get<ListResponse>(`/api/authorization/pending/?${params}`)
+    const res = await api.get<ListResponse>(`/api/finance/monitoring/authorization/pending/?${params}`)
     rows.value = res.rows
     total.value = res.pagination.total
     totalPages.value = res.pagination.total_pages
@@ -211,7 +211,7 @@ onUnmounted(() => {
 
 async function openDetail(row: SubmissionRow) {
   try {
-    const res = await api.get<SubmissionRow>(`/api/authorization/submission/${row.id}`)
+    const res = await api.get<SubmissionRow>(`/api/finance/monitoring/authorization/submission/${row.id}`)
     drawerSubmission.value = res
     drawerOpen.value = true
   } catch {

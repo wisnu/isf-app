@@ -107,7 +107,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    data.value = await api.get<NeracaPayload>(`/api/report/balance-sheet?${baseQS()}`)
+    data.value = await api.get<NeracaPayload>(`/api/finance/report/balance-sheet?${baseQS()}`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? e.message : 'Gagal memuat laporan'
     data.value = null
@@ -122,7 +122,7 @@ async function exportXlsx() {
   try {
     const now = new Date()
     const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`
-    await api.downloadBlob(`/api/report/balance-sheet/export.xlsx?${baseQS()}`, `neraca-${ts}.xlsx`)
+    await api.downloadBlob(`/api/finance/report/balance-sheet/export.xlsx?${baseQS()}`, `neraca-${ts}.xlsx`)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {
