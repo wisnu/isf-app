@@ -9,7 +9,7 @@ from app.services.proxy import get_api_python
 from app.shared.config import settings
 from app.shared.response import err, ok
 
-router = APIRouter(prefix='/authorization', tags=['authorization'])
+router = APIRouter(prefix='/api/finance/monitoring/authorization', tags=['authorization'])
 
 _ENTITY_MENU: dict[str, str] = {
     'penghimpunan':        'finance.transactions.fund_collection',
@@ -74,7 +74,7 @@ async def list_pending(
         params['branch'] = s['branch']
     if s['branch_access']:
         params['branch_access'] = s['branch_access']
-    downstream = await get_api_python('/api/authorization/submissions/', params=params)
+    downstream = await get_api_python('/api/finance/monitoring/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     raw = downstream.json()
@@ -153,7 +153,7 @@ async def list_entity_config(
     params: dict = {}
     if module:
         params['module'] = module
-    downstream = await get_api_python('/api/authorization/entity-config/', params=params)
+    downstream = await get_api_python('/api/finance/monitoring/authorization/entity-config/', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -205,7 +205,7 @@ async def my_submissions(
         params['date_from'] = date_from
     if date_to:
         params['date_to'] = date_to
-    downstream = await get_api_python('/api/authorization/submissions/', params=params)
+    downstream = await get_api_python('/api/finance/monitoring/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     raw = downstream.json()

@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse, Response
 from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_api_python, stream_api_python
 
-router = APIRouter(prefix='/transaction-history', tags=['transaction-history'])
+router = APIRouter(prefix='/api/finance/inquiry/transaction-history', tags=['transaction-history'])
 
 _MENU = 'finance.transactions.history'
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -51,7 +51,7 @@ async def search(
         params['search_text'] = search_text
     if cash_account_no:
         params['cash_account_no'] = cash_account_no
-    downstream = await get_api_python('/api/transaction-history/search', params=params)
+    downstream = await get_api_python('/api/finance/inquiry/transaction-history/search', params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 

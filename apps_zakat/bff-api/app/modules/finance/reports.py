@@ -7,7 +7,7 @@ from app.services.auth import current_user_id_or_401, require_menu
 from app.services.proxy import get_report_api, stream_report_api
 from app.shared.response import err
 
-router = APIRouter(prefix="/report", tags=["report"])
+router = APIRouter(prefix="/api/finance/report", tags=["report"])
 
 _JOURNAL_MENU = "finance.reports.daily_journal"
 _GT_MENU = "finance.reports.general_transaction"

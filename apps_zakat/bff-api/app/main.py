@@ -6,30 +6,44 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.routers.admin import router as admin_router
-from app.routers.auth import router as auth_router
-from app.routers.bank import router as bank_router
-from app.routers.budget import router as budget_router
-from app.routers.petty_cash import router as petty_cash_router
-from app.routers.auth_google import router as google_router
-from app.routers.coa import router as coa_router
-from app.routers.dashboard import router as dashboard_router
-from app.routers.report import router as report_router
-from app.routers.tenants import router as tenants_router
-from app.routers.transaction_history import router as transaction_history_router
-from app.routers.fund_distribution import router as fund_distribution_router
-from app.routers.fund_collection import router as fund_collection_router
-from app.routers.receivable import router as receivable_router
-from app.routers.cash_advance import router as cash_advance_router
-from app.routers.cash_advance_settlement import router as cash_advance_settlement_router
-from app.routers.inter_account_transfer import router as inter_account_transfer_router
-from app.routers.authorization import router as authorization_router
-from app.routers.parameter import router as parameter_router
-from app.routers.transaction import router as transaction_router
-from app.routers.hc_zis import router as hc_zis_router
-from app.routers.general_transaction import router as general_transaction_router
-from app.routers.amil_income import router as amil_income_router
-from app.routers.amil_expense import router as amil_expense_router
+# ── Core (auth, session) ──────────────────────────────────────────────────────
+from app.modules.core.auth import router as auth_router
+from app.modules.core.auth_google import router as google_router
+from app.modules.core.tenants import router as tenants_router
+
+# ── Finance — Master Data ─────────────────────────────────────────────────────
+from app.modules.finance.master import (
+    coa_router, bank_router, petty_cash_router, parameter_router,
+)
+
+# ── Finance — Budget ──────────────────────────────────────────────────────────
+from app.modules.finance.budget import router as budget_router
+
+# ── Finance — Transaction ─────────────────────────────────────────────────────
+from app.modules.finance.transaction import (
+    fund_collection_router, fund_distribution_router,
+    amil_income_router, amil_expense_router,
+    cash_advance_router, cash_advance_settlement_router,
+    inter_account_transfer_router, general_transaction_router,
+    receivable_router,
+)
+
+# ── Finance — Upload ──────────────────────────────────────────────────────────
+from app.modules.finance.upload import upload_collection_router, hc_zis_router
+
+# ── Finance — Inquiry ─────────────────────────────────────────────────────────
+from app.modules.finance.inquiry import router as transaction_history_router
+
+# ── Finance — Monitoring ──────────────────────────────────────────────────────
+from app.modules.finance.monitoring import router as authorization_router
+
+# ── Finance — Reports + Dashboard ────────────────────────────────────────────
+from app.modules.finance.reports import router as report_router
+from app.modules.finance.dashboard import router as dashboard_router
+
+# ── Administration ────────────────────────────────────────────────────────────
+from app.modules.administration.admin import router as admin_router
+
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -88,7 +102,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        # Agar nama file export (.xlsx) terbaca oleh fetch lintas-origin di FE.
         expose_headers=["Content-Disposition"],
     )
 
@@ -96,30 +109,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict:
         return ok({"status": "ok"})
 
-    app.include_router(auth_router, prefix="/api")
-    app.include_router(google_router, prefix="/api")
+    # Core — needs /api prefix (router prefix is /auth, /tenants)
+    app.include_router(auth_router,    prefix="/api")
+    app.include_router(google_router,  prefix="/api")
     app.include_router(tenants_router, prefix="/api")
-    app.include_router(dashboard_router, prefix="/api")
-    app.include_router(report_router, prefix="/api")
-    app.include_router(bank_router, prefix="/api")
-    app.include_router(budget_router, prefix="/api")
-    app.include_router(petty_cash_router, prefix="/api")
-    app.include_router(coa_router, prefix="/api")
-    app.include_router(admin_router, prefix="/api")
-    app.include_router(transaction_router, prefix="/api")
-    app.include_router(hc_zis_router, prefix="/api")
-    app.include_router(transaction_history_router, prefix="/api")
-    app.include_router(fund_distribution_router, prefix="/api")
-    app.include_router(fund_collection_router, prefix="/api")
-    app.include_router(receivable_router, prefix="/api")
-    app.include_router(cash_advance_router, prefix="/api")
-    app.include_router(cash_advance_settlement_router, prefix="/api")
-    app.include_router(inter_account_transfer_router, prefix="/api")
-    app.include_router(general_transaction_router, prefix="/api")
-    app.include_router(amil_income_router, prefix="/api")
-    app.include_router(amil_expense_router, prefix="/api")
-    app.include_router(authorization_router, prefix="/api")
-    app.include_router(parameter_router, prefix="/api")
+
+    # Finance — routers already carry full /api/finance/... prefix
+    app.include_router(coa_router)
+    app.include_router(bank_router)
+    app.include_router(petty_cash_router)
+    app.include_router(parameter_router)
+    app.include_router(budget_router)
+    app.include_router(fund_collection_router)
+    app.include_router(fund_distribution_router)
+    app.include_router(amil_income_router)
+    app.include_router(amil_expense_router)
+    app.include_router(cash_advance_router)
+    app.include_router(cash_advance_settlement_router)
+    app.include_router(inter_account_transfer_router)
+    app.include_router(general_transaction_router)
+    app.include_router(receivable_router)
+    app.include_router(upload_collection_router)
+    app.include_router(hc_zis_router)
+    app.include_router(transaction_history_router)
+    app.include_router(authorization_router)
+    app.include_router(report_router)
+    app.include_router(dashboard_router)
+
+    # Administration — router carries full /api/administration/... prefix
+    app.include_router(admin_router)
+
     return app
 
 

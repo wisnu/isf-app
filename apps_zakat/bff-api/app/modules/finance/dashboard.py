@@ -7,7 +7,7 @@ from app.services.auth import current_user_id_or_401
 from app.services.proxy import get_report_api
 from app.shared.response import err
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/api/finance/dashboard", tags=["dashboard"])
 
 
 def _period_params(month: int | None, year: int | None) -> dict:

@@ -13,7 +13,7 @@ from app.services.proxy import (
 from app.shared.config import settings
 from app.shared.response import ok
 
-router = APIRouter(prefix="/budget", tags=["budget"])
+router = APIRouter(prefix="/api/finance/budget", tags=["budget"])
 
 _MENU_INQUIRY = "finance.budget.inquiry"
 _MENU_REVISI = "finance.budget.revise"
