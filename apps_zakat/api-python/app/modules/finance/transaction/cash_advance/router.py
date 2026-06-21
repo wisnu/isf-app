@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import cash_advance_service
-from .cash_advance_schema import (
+from . import service as cash_advance_service
+from .schema import (
     CashAdvanceCreate,
     CashAdvanceUpdate,
 )
@@ -105,7 +105,7 @@ async def create_uang_muka(
     request: Request,
 ):
     """Create new Uang Muka via otorisasi save-and-submit."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]

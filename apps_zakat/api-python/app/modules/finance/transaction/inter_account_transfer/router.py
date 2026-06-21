@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import inter_account_transfer_service as svc
-from .inter_account_transfer_schema import InterAccountTransferCreate
+from . import service as svc
+from .schema import InterAccountTransferCreate
 
 _MENU = 'keuangan.transaksi.transfer-antar-rekening'
 
-router = APIRouter(prefix='/transaction/inter-account-transfer', tags=['inter-account-transfer'])
+router = APIRouter(prefix='/finance/transaction/inter-account-transfer', tags=['inter-account-transfer'])
 
 
 # ── List & Detail ──────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ async def create_transfer(
     request: Request,
 ):
     """Create Inter-Account Transfer via otorisasi save-and-submit."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session['user_id']

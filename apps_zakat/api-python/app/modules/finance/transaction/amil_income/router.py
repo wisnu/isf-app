@@ -4,12 +4,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.authorization import service as otorisasi_service
+from app.modules.finance.monitoring.authorization import service as otorisasi_service
 from app.shared.response import err, ok
-from . import amil_income_service
-from .amil_income_schema import AmilIncomeCreate
+from . import service as amil_income_service
+from .schema import AmilIncomeCreate
 
-router = APIRouter(prefix='/transaction/amil-income', tags=['amil-income'])
+router = APIRouter(prefix='/finance/transaction/amil-income', tags=['amil-income'])
 
 
 # Lookup endpoints

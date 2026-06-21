@@ -5,11 +5,11 @@ from fastapi import APIRouter, File, Query, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from app.shared.response import ok, err
-from . import hc_zis_service
-from .hc_zis_schema import HCZisSubmitRequest, HCZisUpdateDateRequest
+from . import service as hc_zis_service
+from .schema import HCZisSubmitRequest, HCZisUpdateDateRequest
 
 
-router = APIRouter(prefix="/transaction", tags=["transaction-hc-zis"])
+router = APIRouter(prefix="/finance", tags=["transaction-hc-zis"])
 
 
 @router.post("/upload/hc-zis/parse")

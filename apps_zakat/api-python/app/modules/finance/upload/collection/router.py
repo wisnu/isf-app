@@ -6,20 +6,20 @@ from fastapi import APIRouter, BackgroundTasks, File, Query, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
-from app.modules.transaction import service
-from app.modules.transaction.commit import approve_batch_background
-from app.modules.transaction import repository as txrepo
-from app.modules.transaction.template import build_template
-from app.modules.transaction import fund_distribution_repo as prp
-from app.modules.transaction import fund_distribution_service as psvc
-from app.modules.transaction.fund_distribution_schema import ASHNAF_LIST, PenyaluranCreate
-from app.modules.transaction import fund_collection_repo as phrp
-from app.modules.transaction import fund_collection_service as phsvc
-from app.modules.transaction.fund_collection_schema import PenghimpunanCreate
+from app.modules.finance.upload.collection import service
+from app.modules.finance.transaction._shared.commit import approve_batch_background
+from app.modules.finance.transaction._shared import repository as txrepo
+from app.modules.finance.transaction._shared.template import build_template
+from app.modules.finance.transaction.fund_distribution import repo as prp
+from app.modules.finance.transaction.fund_distribution import service as psvc
+from app.modules.finance.transaction.fund_distribution.schema import ASHNAF_LIST, PenyaluranCreate
+from app.modules.finance.transaction.fund_collection import repo as phrp
+from app.modules.finance.transaction.fund_collection import service as phsvc
+from app.modules.finance.transaction.fund_collection.schema import PenghimpunanCreate
 from app.shared.db import fetch_all, fetch_one
 from app.shared.response import err, ok
 
-router = APIRouter(prefix='/transaction', tags=['transaction'])
+router = APIRouter(prefix='/finance', tags=['transaction'])
 
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 

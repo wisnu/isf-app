@@ -19,7 +19,7 @@ _HC_ZIS_FUNDS: list[dict] = [
     # amountwakaf SKIP — fund_entity 3 disabled
 ]
 
-from app.modules.transaction.schema import PRODUCT_ID_MAP
+from app.modules.finance.upload.collection.schema import PRODUCT_ID_MAP
 
 
 async def _load_bank_params(conn) -> dict[str, str]:

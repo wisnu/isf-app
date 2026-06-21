@@ -4,12 +4,12 @@ from datetime import datetime
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
-from app.modules.coa.export import build_coa_xlsx
-from app.modules.coa.service import list_accounts, list_all_rows
+from app.modules.finance.master.coa.export import build_coa_xlsx
+from app.modules.finance.master.coa.service import list_accounts, list_all_rows
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/coa", tags=["coa"])
+router = APIRouter(prefix="/finance/master/coa", tags=["coa"])
 
 
 @router.get("/accounts")

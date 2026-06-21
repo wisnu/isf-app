@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import receivable_service
-from .receivable_schema import ReceivableCreate
+from . import service as receivable_service
+from .schema import ReceivableCreate
 
 
 router = APIRouter(prefix="/transaction/receivable", tags=["receivable"])
@@ -106,7 +106,7 @@ async def create_receivable(
     request: Request,
 ):
     """Create new Receivable (Pinjam/Bayar) via otorisasi save-and-submit."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]

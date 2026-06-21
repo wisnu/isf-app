@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from io import BytesIO
 
-from app.modules.transaction.schema import PRODUCT_KEYS, ParsedRow
+from app.modules.finance.upload.collection.schema import PRODUCT_KEYS, ParsedRow
 
 
 def _to_float(v: object) -> float:

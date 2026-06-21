@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from app.modules.transaction_history import repository as repo
-from app.modules.transaction_history.schema import (
+from app.modules.finance.inquiry.transaction_history import repo
+from app.modules.finance.inquiry.transaction_history.schema import (
     JournalItem, RepostResult, SearchPage, TransactionDetail, TransactionRow,
 )
 from app.shared.db import get_pool

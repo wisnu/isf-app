@@ -5,7 +5,7 @@
 """
 from __future__ import annotations
 from datetime import datetime, timezone
-from app.modules.transaction_history.schema import DeleteResult
+from app.modules.finance.inquiry.transaction_history.schema import DeleteResult
 from app.shared.db import get_pool
 
 

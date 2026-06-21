@@ -8,7 +8,7 @@ isf_auth.role_menu (sumber kebenaran mapping role→menu).
 
 from __future__ import annotations
 
-from app.modules.admin.schema import (
+from app.modules.administration.schema import (
     MappingPair, MenuInfo, RoleInfo, RoleMenuDiff, RoleMenuSnapshot, RoleMenuUpdateResponse,
 )
 from app.shared.db import fetch_all, fetch_all_isf_auth, get_isf_auth_pool

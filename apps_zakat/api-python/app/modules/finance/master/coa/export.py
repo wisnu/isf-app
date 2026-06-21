@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from app.modules.coa.schema import CoaRow
+from app.modules.finance.master.coa.schema import CoaRow
 
 
 def build_coa_xlsx(rows: list[CoaRow], title: str = "Chart of Accounts") -> bytes:

@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 from asyncpg import Connection
 
 from app.shared.db import get_pool
-from .cash_advance_schema import CashAdvanceCreate, CashAdvanceUpdate
+from .schema import CashAdvanceCreate, CashAdvanceUpdate
 
 
 async def list_uang_muka(

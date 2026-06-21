@@ -4,10 +4,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.authorization import service as otorisasi_service
+from app.modules.finance.monitoring.authorization import service as otorisasi_service
 from app.shared.response import err, ok
-from . import general_service
-from .general_schema import GeneralCreate
+from . import service as general_service
+from .schema import GeneralCreate
 
 router = APIRouter(prefix='/transaction/general', tags=['general-transaction'])
 

@@ -5,7 +5,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 import xlrd
 
-from .hc_zis_schema import HCZisItem, HCZisTotals, HCZisParseResult
+from .schema import HCZisItem, HCZisTotals, HCZisParseResult
 
 
 def _to_float(v: object) -> float:

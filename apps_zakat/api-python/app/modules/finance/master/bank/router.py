@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.bank.service import (
+from app.modules.finance.master.bank.service import (
     get_bank_account_detail,
     get_lookup_banks,
     get_lookup_branches,
@@ -13,7 +13,7 @@ from app.modules.bank.service import (
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/bank", tags=["bank"])
+router = APIRouter(prefix="/finance/master/bank", tags=["bank"])
 
 
 @router.get("/accounts")

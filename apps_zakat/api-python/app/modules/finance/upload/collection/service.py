@@ -1,7 +1,7 @@
 from __future__ import annotations
-from app.modules.transaction import repository as repo
-from app.modules.transaction.parse import parse_file
-from app.modules.transaction.schema import (
+from app.modules.finance.transaction._shared import repository as repo
+from app.modules.finance.transaction._shared.parse import parse_file
+from app.modules.finance.upload.collection.schema import (
     BatchDetail, BatchItem, BatchSummary, DraftResponse, ParsedRow,
 )
 

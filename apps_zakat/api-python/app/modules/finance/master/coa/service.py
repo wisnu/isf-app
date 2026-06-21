@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.modules.coa.schema import (
+from app.modules.finance.master.coa.schema import (
     TYPE_LABELS,
     CoaList,
     CoaRow,

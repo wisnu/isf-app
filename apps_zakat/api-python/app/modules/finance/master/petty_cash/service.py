@@ -4,7 +4,7 @@ from datetime import date
 
 from fastapi import HTTPException
 
-from app.modules.petty_cash.schema import (
+from app.modules.finance.master.petty_cash.schema import (
     BranchLookupItem,
     CurrencyLookupItem,
     GlAccountLookupItem,

@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from app.shared.db import get_pool
-from .hc_zis_parse import parse_hc_zis_file
-from .hc_zis_schema import (
+from .parse import parse_hc_zis_file
+from .schema import (
     HCZisParseResult,
     HCZisSubmitRequest,
     HCZisBatchSummary,
@@ -41,7 +41,7 @@ async def submit_upload(
     branch_code: str,
 ) -> dict:
     """Submit HC ZIS upload to otorisasi — goes to PENDING."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     return await otorisasi_svc.save_and_submit(
         entity_type='hc_zis_upload',
@@ -58,7 +58,7 @@ async def submit_delete(
     branch_code: str,
 ) -> dict:
     """Submit batch delete to otorisasi."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     pool = get_pool()
     batch = await pool.fetchrow(
@@ -90,7 +90,7 @@ async def submit_update_date(
     branch_code: str,
 ) -> dict:
     """Submit date update to otorisasi."""
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     pool = get_pool()
     batch = await pool.fetchrow(

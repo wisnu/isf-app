@@ -25,7 +25,7 @@ def _serialize(obj: dict) -> dict:
             result[k] = v
     return result
 
-router = APIRouter(prefix='/authorization', tags=['authorization'])
+router = APIRouter(prefix='/finance/monitoring/authorization', tags=['authorization'])
 
 
 @router.post('/submission/')

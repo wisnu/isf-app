@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.budget import service
-from app.modules.budget.schema import (
+from app.modules.finance.budget import service
+from app.modules.finance.budget.schema import (
     BudgetEditRequest,
     BudgetImportRequest,
     BudgetMasterItemRequest,
@@ -15,7 +15,7 @@ from app.modules.budget.schema import (
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/budget", tags=["budget"])
+router = APIRouter(prefix="/finance/budget", tags=["budget"])
 
 
 # ── Lookups ───────────────────────────────────────────────────────────────────

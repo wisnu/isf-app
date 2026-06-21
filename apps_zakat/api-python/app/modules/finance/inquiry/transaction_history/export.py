@@ -2,7 +2,7 @@ from __future__ import annotations
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
-from app.modules.transaction_history.schema import TransactionRow
+from app.modules.finance.inquiry.transaction_history.schema import TransactionRow
 
 _HEADERS = [
     'No Transaksi', 'Rekening', 'Tgl Transaksi', 'Tgl Aktual',

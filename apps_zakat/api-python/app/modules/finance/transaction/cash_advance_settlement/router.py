@@ -5,8 +5,8 @@ from fastapi import APIRouter, Request
 
 from app.shared.db import get_pool
 from app.shared.response import ok
-from . import cash_advance_settlement_service
-from .cash_advance_settlement_schema import CashAdvanceSettlementCreate
+from . import service as cash_advance_settlement_service
+from .schema import CashAdvanceSettlementCreate
 
 router = APIRouter(prefix="/transaction/cash-advance-settlement", tags=["cash-advance-settlement"])
 
@@ -46,7 +46,7 @@ async def create_pengembalian(
     payload: CashAdvanceSettlementCreate,
     request: Request,
 ):
-    from app.modules.authorization import service as otorisasi_svc
+    from app.modules.finance.monitoring.authorization import service as otorisasi_svc
 
     session = request.state.session
     user_id = session["user_id"]

@@ -3,13 +3,13 @@ from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
-from app.modules.transaction_history import service
-from app.modules.transaction_history.delete import delete_transaction
-from app.modules.transaction_history.export import build_histori_xlsx
+from app.modules.finance.inquiry.transaction_history import service
+from app.modules.finance.inquiry.transaction_history.delete import delete_transaction
+from app.modules.finance.inquiry.transaction_history.export import build_histori_xlsx
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix='/transaction-history', tags=['transaction-history'])
+router = APIRouter(prefix='/finance/inquiry/transaction-history', tags=['transaction-history'])
 _XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 

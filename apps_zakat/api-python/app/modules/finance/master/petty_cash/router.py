@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from app.modules.petty_cash.schema import PettyCashCreate, PettyCashUpdate
-from app.modules.petty_cash.service import (
+from app.modules.finance.master.petty_cash.schema import PettyCashCreate, PettyCashUpdate
+from app.modules.finance.master.petty_cash.service import (
     create_petty_cash,
     delete_petty_cash,
     get_petty_cash_detail,
@@ -15,7 +15,7 @@ from app.modules.petty_cash.service import (
 from app.shared.db import ping
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/petty-cash", tags=["petty-cash"])
+router = APIRouter(prefix="/finance/master/petty-cash", tags=["petty-cash"])
 
 
 @router.get("/accounts")

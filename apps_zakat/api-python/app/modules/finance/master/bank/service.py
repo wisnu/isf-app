@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.modules.bank.schema import (
+from app.modules.finance.master.bank.schema import (
     BankAccountDetail,
     BankAccountList,
     BankAccountRow,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Optional
 
-from app.modules.budget.schema import (
+from app.modules.finance.budget.schema import (
     BudgetCodeSearchRow,
     BudgetDetailResponse,
     BudgetImportRow,

@@ -31,7 +31,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timezone
 
-from app.modules.transaction.schema import FUND_ENTITY_MAP, PRODUCT_ID_MAP
+from app.modules.finance.upload.collection.schema import FUND_ENTITY_MAP, PRODUCT_ID_MAP
 from app.shared.db import get_pool
 
 
@@ -488,7 +488,7 @@ async def approve_batch_background(
 ) -> None:
     """Background task wrapper untuk approve_batch.
     Memanggil approve_batch() dan menangani error dengan set authstatus='F'."""
-    from app.modules.transaction.repository import set_batch_failed
+    from app.modules.finance.transaction._shared.repository import set_batch_failed
     try:
         await approve_batch(batch_id, authorized_user, branch_code, inputer)
     except Exception:
