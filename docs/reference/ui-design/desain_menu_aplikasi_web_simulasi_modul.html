@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prototype Menu Aplikasi Web Enterprise</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --panel:#ffffff;
+      --panel-2:#f9fafc;
+      --text:#182033;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --primary:#2563eb;
+      --primary-2:#dbeafe;
+      --green:#16a34a;
+      --orange:#ea580c;
+      --purple:#7c3aed;
+      --red:#dc2626;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --radius:18px;
+      --side-w:292px;
+      --domain-w:74px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+    button,input,select{font:inherit}
+    .app{display:grid;grid-template-columns:var(--domain-w) var(--side-w) 1fr;min-height:100vh}
+
+    /* Domain rail */
+    .domain-rail{background:#0f172a;color:white;padding:14px 10px;display:flex;flex-direction:column;gap:12px;align-items:center;position:sticky;top:0;height:100vh}
+    .brand{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#60a5fa,#22c55e);display:grid;place-items:center;font-weight:800;box-shadow:0 10px 22px rgba(0,0,0,.25)}
+    .domain-btn{width:52px;height:52px;border:0;border-radius:16px;color:#cbd5e1;background:transparent;display:grid;place-items:center;cursor:pointer;position:relative;transition:.18s ease}
+    .domain-btn:hover{background:rgba(255,255,255,.08);color:white}
+    .domain-btn.active{background:white;color:#0f172a;box-shadow:0 12px 25px rgba(0,0,0,.22)}
+    .domain-btn.locked{opacity:.32;cursor:not-allowed}
+    .domain-btn span:first-child{font-size:22px}
+    .domain-label{position:absolute;left:62px;background:#111827;color:white;border-radius:10px;padding:8px 10px;white-space:nowrap;box-shadow:var(--shadow);font-size:12px;opacity:0;pointer-events:none;transform:translateX(-5px);transition:.15s ease;z-index:50}
+    .domain-btn:hover .domain-label{opacity:1;transform:translateX(0)}
+    .rail-spacer{flex:1}
+    .mini-avatar{width:42px;height:42px;border-radius:50%;background:#334155;display:grid;place-items:center;font-weight:700;border:2px solid rgba(255,255,255,.14)}
+
+    /* Sidebar */
+    .sidebar{background:var(--panel);border-right:1px solid var(--line);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;overflow:hidden}
+    .side-head{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+    .side-title{font-size:18px;font-weight:800;margin:0 0 4px}
+    .side-sub{font-size:12px;color:var(--muted)}
+    .role-box{margin-top:14px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--panel-2)}
+    .role-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .role-box select{width:100%;border:1px solid var(--line);border-radius:11px;background:white;padding:9px 10px;color:var(--text);outline:none}
+    .search{padding:14px 18px;border-bottom:1px solid var(--line)}
+    .search input{width:100%;border:1px solid var(--line);border-radius:13px;padding:11px 12px 11px 36px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center;outline:none}
+    .tabs{display:flex;padding:12px 14px 0;gap:8px}
+    .tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+    .tab.active{background:var(--primary);border-color:var(--primary);color:white;font-weight:700}
+    .menu-scroll{padding:10px 14px 20px;overflow:auto;flex:1}
+    .group{border:1px solid var(--line);border-radius:16px;background:white;margin-bottom:10px;overflow:hidden}
+    .group summary{list-style:none;cursor:pointer;padding:13px 13px;display:flex;align-items:center;gap:10px;font-weight:800}
+    .group summary::-webkit-details-marker{display:none}
+    .chev{margin-left:auto;color:var(--muted);transition:.15s ease}
+    .group[open] .chev{transform:rotate(90deg)}
+    .menu-list{padding:0 8px 8px}
+    .menu-item{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;text-align:left;padding:10px 9px;border-radius:12px;cursor:pointer;color:#374151}
+    .menu-item:hover{background:#f3f4f6}
+    .menu-item.active{background:var(--primary-2);color:#1d4ed8;font-weight:800}
+    .menu-item .star{margin-left:auto;color:#cbd5e1;font-size:16px}
+    .menu-item.fav .star{color:#f59e0b}
+    .empty{padding:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* Main */
+    .main{min-width:0;display:flex;flex-direction:column}
+    .topbar{height:72px;background:rgba(245,247,251,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 26px;position:sticky;top:0;z-index:10}
+    .breadcrumb{font-size:13px;color:var(--muted)}
+    .topbar h1{font-size:20px;margin:4px 0 0}
+    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .btn{border:1px solid var(--line);background:white;border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:0 1px 0 rgba(15,23,42,.04)}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:white;font-weight:800}
+    .content{padding:26px;display:grid;gap:20px}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .card{background:white;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+    .metric{font-size:28px;font-weight:900;margin-top:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .workspace{display:grid;grid-template-columns:1.3fr .7fr;gap:20px}
+    .panel{background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+    .panel-head h2{font-size:16px;margin:0}.panel-body{padding:20px}
+    .table{width:100%;border-collapse:collapse;font-size:14px}
+    .table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;background:#eef2ff;color:#3730a3}
+    .badge.green{background:#dcfce7;color:#166534}.badge.orange{background:#ffedd5;color:#9a3412}.badge.red{background:#fee2e2;color:#991b1b}
+    .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.quick{padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafafa;cursor:pointer}.quick:hover{border-color:#bfdbfe;background:#eff6ff}
+    .flow{display:flex;gap:10px;flex-wrap:wrap}.flow-step{flex:1;min-width:145px;border:1px dashed #cbd5e1;border-radius:14px;padding:12px;background:#f8fafc}.flow-step b{display:block;margin-bottom:4px}
+
+    .module-shell{display:grid;gap:18px}
+    .module-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#f8fafc)}
+    .module-header h3{margin:0 0 6px;font-size:18px}.module-header p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:.035em}
+    .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:white;outline:none;color:var(--text)}
+    .field textarea{min-height:88px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:#93c5fd;box-shadow:0 0 0 4px #dbeafe}
+    .action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}.btn.ghost{background:#f8fafc}.btn.success{background:#16a34a;border-color:#16a34a;color:white;font-weight:800}.btn.warn{background:#ea580c;border-color:#ea580c;color:white;font-weight:800}
+    .summary-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.summary-box{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}.summary-box b{display:block;font-size:20px;margin-top:4px}.summary-box span{font-size:12px;color:var(--muted)}
+    .report-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;padding:14px;border:1px solid var(--line);border-radius:16px;background:#f8fafc}.report-toolbar .field{min-width:160px;flex:1}.report-chart{height:170px;display:flex;align-items:end;gap:10px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#f8fafc)}
+    .bar{flex:1;min-width:28px;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#93c5fd,#2563eb);position:relative}.bar em{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;color:var(--muted);margin-bottom:5px}.bar span{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);margin-top:6px;white-space:nowrap}
+    .timeline{display:grid;gap:10px}.timeline-item{display:flex;gap:10px;align-items:flex-start}.dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:6px;box-shadow:0 0 0 4px #dbeafe}.timeline-item b{display:block;font-size:13px}.timeline-item span{font-size:12px;color:var(--muted)}
+    @media (max-width: 760px){.form-grid,.form-grid.three{grid-template-columns:1fr}.summary-strip{grid-template-columns:1fr 1fr}.module-header{display:grid}.report-toolbar .field{min-width:100%}}
+
+    .mobile-toggle{display:none}
+    .overlay{display:none}
+    @media (max-width: 1100px){.cards{grid-template-columns:repeat(2,1fr)}.workspace{grid-template-columns:1fr}.app{grid-template-columns:var(--domain-w) 1fr}.sidebar{position:fixed;left:var(--domain-w);top:0;z-index:30;width:var(--side-w);transform:translateX(-110%);transition:.2s ease}.sidebar.open{transform:translateX(0)}.mobile-toggle{display:inline-flex}.overlay.show{display:block;position:fixed;inset:0;background:rgba(15,23,42,.3);z-index:20}}
+    @media (max-width: 680px){.app{grid-template-columns:1fr}.domain-rail{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:72px;z-index:40;flex-direction:row;justify-content:space-around;border-top:1px solid rgba(255,255,255,.12)}.brand,.rail-spacer,.mini-avatar{display:none}.domain-btn{width:46px;height:46px}.sidebar{left:0;width:min(90vw,var(--side-w));height:calc(100vh - 72px)}.topbar{height:auto;padding:14px 16px;align-items:flex-start}.top-actions{display:none}.content{padding:16px 16px 92px}.cards{grid-template-columns:1fr}.domain-label{display:none}}
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="app">
+    <nav class="domain-rail" aria-label="Domain utama">
+      <div class="brand">IS</div>
+      <button class="domain-btn active" data-domain="Keuangan"><span>💰</span><span class="domain-label">Keuangan</span></button>
+      <button class="domain-btn" data-domain="Program"><span>🤝</span><span class="domain-label">Program / Penyaluran</span></button>
+      <button class="domain-btn" data-domain="Penghimpunan"><span>📥</span><span class="domain-label">Penghimpunan</span></button>
+      <button class="domain-btn" data-domain="Administrasi"><span>🗂️</span><span class="domain-label">Administrasi</span></button>
+      <button class="domain-btn" data-domain="Enterprise"><span>🏢</span><span class="domain-label">Enterprise</span></button>
+      <div class="rail-spacer"></div>
+      <div class="mini-avatar">WP</div>
+    </nav>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="side-head">
+        <p class="side-title" id="domainTitle">Keuangan</p>
+        <div class="side-sub">Menu dikelompokkan agar ±20 menu/domain tetap mudah dicari.</div>
+        <div class="role-box">
+          <div class="role-row">🔐 Simulasi role</div>
+          <select id="roleSelect">
+            <option value="finance_manager">Finance Manager</option>
+            <option value="program_officer">Program Officer</option>
+            <option value="fundraising_staff">Fundraising Staff</option>
+            <option value="branch_admin">Branch Admin</option>
+            <option value="super_admin">Super Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="search"><input id="searchInput" placeholder="Cari menu, transaksi, laporan..." /></div>
+      <div class="tabs">
+        <button class="tab active" data-filter="all">Semua</button>
+        <button class="tab" data-filter="favorite">Favorit</button>
+        <button class="tab" data-filter="recent">Terakhir</button>
+      </div>
+      <div class="menu-scroll" id="menuContainer"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="btn mobile-toggle" onclick="openSidebar()">☰ Menu</button>
+        <div>
+          <div class="breadcrumb" id="breadcrumb">Keuangan / Master Data / Akun Perkiraan</div>
+          <h1 id="pageTitle">Akun Perkiraan</h1>
+        </div>
+        <div class="top-actions">
+          <button class="btn">🔔 Notifikasi</button>
+          <button class="btn">⚙️ Preferensi</button>
+          <button class="btn primary">+ Buat Data</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="cards">
+          <div class="card"><div class="muted">Menu aktif</div><div class="metric" id="metricMenu">20</div></div>
+          <div class="card"><div class="muted">Domain role ini</div><div class="metric" id="metricDomain">2</div></div>
+          <div class="card"><div class="muted">Butuh approval</div><div class="metric">14</div></div>
+          <div class="card"><div class="muted">Laporan favorit</div><div class="metric">8</div></div>
+        </div>
+
+        <div class="workspace">
+          <div class="panel">
+            <div class="panel-head"><h2 id="panelTitle">Area kerja: Akun Perkiraan</h2><span class="badge">Prototype</span></div>
+            <div class="panel-body">
+              <div class="flow" id="flow">
+                <div class="flow-step"><b>1. Pilih domain</b><span class="muted">Keuangan, Program, Penghimpunan, Administrasi, Enterprise.</span></div>
+                <div class="flow-step"><b>2. Buka kelompok</b><span class="muted">Master Data, Input/Transaksi, Laporan.</span></div>
+                <div class="flow-step"><b>3. Jalankan aktivitas</b><span class="muted">Tambah data, approval, cetak, ekspor, audit trail.</span></div>
+              </div>
+              <table class="table" style="margin-top:20px">
+                <thead><tr><th>Data</th><th>Status</th><th>Update</th><th>Aksi</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Shortcut & konteks</h2></div>
+            <div class="panel-body">
+              <div class="quick-grid" id="quickGrid"></div>
+              <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+              <p class="muted"><b>Catatan desain:</b> role tidak harus mengikuti domain tunggal. Satu role bisa melihat beberapa domain; domain yang tidak boleh diakses akan terkunci otomatis.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+const data = {
+  Keuangan: {
+    icon:'💰', color:'blue', groups:{
+      'Master Data':['Akun Perkiraan','Bank & Kas','Periode Akuntansi','Pajak & Potongan','Template Jurnal','Mapping Program','Saldo Awal'],
+      'Input Transaksi':['Jurnal Umum','Kas Masuk','Kas Keluar','Transfer Bank','Rekonsiliasi Bank','Posting Jurnal','Approval Keuangan'],
+      'Laporan':['Buku Besar','Neraca Saldo','Laporan Posisi Keuangan','Laporan Aktivitas','Arus Kas','Laporan Budget vs Realisasi']
+    }
+  },
+  Program: {
+    icon:'🤝', groups:{
+      'Master Data':['Program','Sub Program','Mustahik/Penerima Manfaat','Kriteria Kelayakan','Mitra Penyaluran','Lokasi Program'],
+      'Input Transaksi':['Pengajuan Penyaluran','Survei Penerima','RAB Program','Realisasi Penyaluran','Monitoring Program','Approval Penyaluran','Penutupan Program'],
+      'Laporan':['Laporan Penyaluran','Rekap Penerima Manfaat','Efektivitas Program','Monitoring Realisasi','Laporan Mitra','Laporan Per Wilayah']
+    }
+  },
+  Penghimpunan: {
+    icon:'📥', groups:{
+      'Master Data':['Donatur/Muzakki','Kanal Donasi','Produk Donasi','Campaign','Collector/Fundraiser','Target Penghimpunan'],
+      'Input Transaksi':['Input Donasi','Konfirmasi Pembayaran','Kwitansi Donasi','Import Mutasi Bank','Follow Up Donatur','Approval Donasi','Refund/Koreksi Donasi'],
+      'Laporan':['Laporan Donasi','Rekap Donatur','Performa Campaign','Performa Fundraiser','Laporan Kanal','Retensi Donatur']
+    }
+  },
+  Administrasi: {
+    icon:'🗂️', groups:{
+      'Master Data':['Vendor','Aset','Inventaris','Jenis Surat','Template Dokumen','Ruang & Kendaraan'],
+      'Input Transaksi':['Permintaan Pembelian','Purchase Order','Penerimaan Barang','Peminjaman Aset','Surat Masuk','Surat Keluar','Disposisi'],
+      'Laporan':['Laporan Aset','Laporan Pengadaan','Laporan Inventaris','Log Surat','Rekap Vendor','Laporan Pemakaian Fasilitas']
+    }
+  },
+  Enterprise: {
+    icon:'🏢', groups:{
+      'Master Data':['User','Role & Permission','Cabang','Unit Kerja','Jabatan','Parameter Sistem','Workflow Approval'],
+      'Input Transaksi':['Setup Akses User','Mutasi Cabang','Delegasi Approval','Audit Aktivitas','Import Master','Backup Data','Broadcast Pengumuman'],
+      'Laporan':['Laporan User Login','Matrix Hak Akses','Audit Trail','Laporan Cabang','Health Check Sistem','Log Integrasi']
+    }
+  }
+};
+
+const moduleSim = {
+  Keuangan:{
+    input:{title:'Jurnal Umum',subtitle:'Simulasi pencatatan jurnal manual dengan kontrol debet/kredit, lampiran, dan approval.',fields:[['Tanggal','date','2026-06-20'],['No. Referensi','text','JU-2026-0001'],['Cabang','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya'],['Akun Debet','select','Kas Operasional|Bank BSI|Beban Program'],['Akun Kredit','select','Pendapatan Donasi|Utang Vendor|Kas Operasional'],['Nominal','number','12500000'],['Keterangan','textarea','Penyesuaian transaksi operasional program.']]},
+    report:{title:'Laporan Posisi Keuangan',subtitle:'Simulasi laporan neraca dengan filter periode, cabang, dan drill-down akun.',columns:['Kelompok','Akun','Saldo Awal','Mutasi','Saldo Akhir'],rows:[['Aset','Kas dan Bank','1.250.000.000','325.000.000','1.575.000.000'],['Liabilitas','Utang Operasional','210.000.000','-35.000.000','175.000.000'],['Dana','Dana Terikat','860.000.000','140.000.000','1.000.000.000']]}
+  },
+  Program:{
+    input:{title:'Pengajuan Penyaluran',subtitle:'Simulasi pengajuan bantuan/program dari RAB sampai approval penyaluran.',fields:[['Tanggal Pengajuan','date','2026-06-20'],['Program','select','Pendidikan|Kesehatan|Ekonomi|Kemanusiaan'],['Penerima/Mitra','text','Yayasan Mitra Sejahtera'],['Wilayah','select','Jakarta|Bandung|Surabaya|Makassar'],['Jumlah Penerima','number','120'],['Nilai Pengajuan','number','75000000'],['Uraian Kegiatan','textarea','Penyaluran bantuan pendidikan untuk penerima manfaat prioritas.']]},
+    report:{title:'Laporan Penyaluran',subtitle:'Simulasi monitoring realisasi penyaluran berdasarkan program, wilayah, dan status.',columns:['Program','Wilayah','Penerima','Realisasi','Status'],rows:[['Pendidikan','Bandung','120','75.000.000','Selesai'],['Kesehatan','Jakarta','45','32.500.000','Berjalan'],['Ekonomi','Surabaya','80','58.000.000','Verifikasi']]}
+  },
+  Penghimpunan:{
+    input:{title:'Input Donasi',subtitle:'Simulasi pencatatan donasi multi-kanal, validasi mutasi bank, dan penerbitan kwitansi.',fields:[['Tanggal Donasi','date','2026-06-20'],['Donatur/Muzakki','text','Ahmad Hidayat'],['Kanal','select','Transfer Bank|QRIS|Cash|Payment Gateway'],['Produk Donasi','select','Zakat|Infak|Sedekah|Wakaf'],['Nominal','number','2500000'],['No. Transaksi Bank','text','BSI-20260620-8812'],['Catatan','textarea','Donasi via transfer bank, perlu kirim kwitansi digital.']]},
+    report:{title:'Laporan Donasi',subtitle:'Simulasi analisis penghimpunan per kanal, campaign, produk donasi, dan fundraiser.',columns:['Kanal','Produk','Transaksi','Nominal','Growth'],rows:[['Transfer Bank','Zakat','342','820.000.000','+12%'],['QRIS','Infak','986','415.000.000','+28%'],['Payment Gateway','Sedekah','572','310.000.000','+19%']]}
+  },
+  Administrasi:{
+    input:{title:'Permintaan Pembelian',subtitle:'Simulasi pengajuan pembelian barang/jasa, vendor, anggaran, dan proses PO.',fields:[['Tanggal Permintaan','date','2026-06-20'],['Unit Pemohon','select','Operasional|Program|Keuangan|IT'],['Kategori','select','ATK|Perangkat IT|Jasa|Aset'],['Vendor Usulan','text','PT Sumber Makmur'],['Estimasi Nilai','number','18500000'],['Prioritas','select','Normal|Tinggi|Mendesak'],['Kebutuhan','textarea','Pengadaan perangkat pendukung operasional cabang.']]},
+    report:{title:'Laporan Pengadaan',subtitle:'Simulasi rekap pengadaan berdasarkan vendor, kategori, SLA, dan status dokumen.',columns:['No. PR','Unit','Vendor','Nilai','Status'],rows:[['PR-001','IT','PT Sumber Makmur','18.500.000','PO Terbit'],['PR-002','Program','CV Amanah','7.250.000','Approval'],['PR-003','Operasional','PT Logistik Raya','11.800.000','Diterima']]}
+  },
+  Enterprise:{
+    input:{title:'Setup Akses User',subtitle:'Simulasi pemberian akses lintas domain, cabang, role, dan workflow approval.',fields:[['Nama User','text','Siti Rahma'],['Email','text','siti.rahma@contoh.org'],['Cabang','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya'],['Role','select','Finance Manager|Program Officer|Fundraising Staff|Branch Admin'],['Domain Akses','select','Keuangan + Program|Penghimpunan + Keuangan|Semua Domain'],['Masa Berlaku','date','2026-12-31'],['Catatan Akses','textarea','Akses diberikan sesuai tanggung jawab operasional cabang.']]},
+    report:{title:'Matrix Hak Akses',subtitle:'Simulasi audit role, permission, cabang, status user, dan akses menu kritikal.',columns:['Role','Domain','User Aktif','Menu Kritis','Status'],rows:[['Finance Manager','Keuangan, Program','8','12','Terkontrol'],['Branch Admin','Administrasi, Program','23','9','Review'],['Super Admin','Semua Domain','3','35','Ketat']]}
+  }
+};
+
+const roles = {
+  finance_manager:['Keuangan','Program'],
+  program_officer:['Program','Keuangan'],
+  fundraising_staff:['Penghimpunan','Keuangan'],
+  branch_admin:['Administrasi','Penghimpunan','Program'],
+  super_admin:['Keuangan','Program','Penghimpunan','Administrasi','Enterprise']
+};
+let state = {domain:'Keuangan', activeGroup:'Master Data', activeMenu:'Akun Perkiraan', filter:'all', favorites:new Set(['Akun Perkiraan','Jurnal Umum','Laporan Donasi','Pengajuan Penyaluran','Role & Permission']), recent:['Akun Perkiraan','Input Donasi','Pengajuan Penyaluran']};
+
+const qs = s => document.querySelector(s);
+const qsa = s => [...document.querySelectorAll(s)];
+function availableDomains(){return roles[qs('#roleSelect').value]}
+function safeDomain(){
+  const allowed = availableDomains();
+  if(!allowed.includes(state.domain)){state.domain = allowed[0];}
+}
+function renderDomainRail(){
+  const allowed = availableDomains();
+  qsa('.domain-btn').forEach(btn=>{
+    const d = btn.dataset.domain;
+    btn.classList.toggle('active', d === state.domain);
+    btn.classList.toggle('locked', !allowed.includes(d));
+    btn.title = allowed.includes(d) ? d : 'Tidak tersedia untuk role ini';
+  });
+  qs('#metricDomain').textContent = allowed.length;
+}
+function renderMenu(){
+  safeDomain(); renderDomainRail();
+  qs('#domainTitle').textContent = state.domain;
+  const search = qs('#searchInput').value.toLowerCase().trim();
+  const container = qs('#menuContainer');
+  const domain = data[state.domain];
+  let html = '';
+  let count = 0;
+  Object.entries(domain.groups).forEach(([group,menus])=>{
+    let filtered = menus.filter(m=>{
+      const matchSearch = !search || (m+' '+group+' '+state.domain).toLowerCase().includes(search);
+      const matchTab = state.filter === 'all' || (state.filter === 'favorite' && state.favorites.has(m)) || (state.filter === 'recent' && state.recent.includes(m));
+      return matchSearch && matchTab;
+    });
+    count += filtered.length;
+    if(filtered.length){
+      html += `<details class="group" open><summary><span>${groupIcon(group)}</span>${group}<span class="chev">›</span></summary><div class="menu-list">`;
+      filtered.forEach(m=>{
+        const fav = state.favorites.has(m) ? 'fav' : '';
+        const active = m === state.activeMenu ? 'active' : '';
+        html += `<button class="menu-item ${fav} ${active}" data-group="${group}" data-menu="${m}"><span>${itemIcon(group)}</span><span>${m}</span><span class="star" data-star="${m}">★</span></button>`;
+      });
+      html += `</div></details>`;
+    }
+  });
+  container.innerHTML = html || '<div class="empty">Tidak ada menu yang cocok.</div>';
+  qs('#metricMenu').textContent = count;
+  bindMenuEvents();
+  renderMain();
+}
+function groupIcon(g){return g.includes('Master')?'🧩':g.includes('Laporan')?'📊':'✍️'}
+function itemIcon(g){return g.includes('Master')?'▫️':g.includes('Laporan')?'▣':'▪️'}
+function bindMenuEvents(){
+  qsa('.menu-item').forEach(btn=>btn.addEventListener('click', e=>{
+    if(e.target.dataset.star) return;
+    state.activeGroup = btn.dataset.group;
+    state.activeMenu = btn.dataset.menu;
+    state.recent = [state.activeMenu, ...state.recent.filter(x=>x!==state.activeMenu)].slice(0,6);
+    closeSidebar(); renderMenu();
+  }));
+  qsa('[data-star]').forEach(star=>star.addEventListener('click', e=>{
+    e.stopPropagation();
+    const m = star.dataset.star;
+    state.favorites.has(m) ? state.favorites.delete(m) : state.favorites.add(m);
+    renderMenu();
+  }));
+}
+function currentMode(){
+  if(state.activeGroup.includes('Input')) return 'input';
+  if(state.activeGroup.includes('Laporan')) return 'report';
+  return 'master';
+}
+function formatNumber(v){
+  const n = Number(String(v).replace(/[^0-9]/g,''));
+  return Number.isFinite(n) ? n.toLocaleString('id-ID') : v;
+}
+function renderMain(){
+  qs('#breadcrumb').textContent = `${state.domain} / ${state.activeGroup} / ${state.activeMenu}`;
+  qs('#pageTitle').textContent = state.activeMenu;
+  const mode = currentMode();
+  if(mode === 'input') return renderInputSimulation();
+  if(mode === 'report') return renderReportSimulation();
+  return renderMasterSimulation();
+}
+function renderMasterSimulation(){
+  qs('#panelTitle').textContent = `Master data: ${state.activeMenu}`;
+  qs('#flow').innerHTML = `
+    <div class="flow-step"><b>1. Data referensi</b><span class="muted">Kelola kode, nama, status aktif, dan relasi antar domain.</span></div>
+    <div class="flow-step"><b>2. Validasi duplikasi</b><span class="muted">Cegah master data ganda saat migrasi dari aplikasi desktop.</span></div>
+    <div class="flow-step"><b>3. Audit perubahan</b><span class="muted">Simpan histori perubahan untuk compliance dan rollback.</span></div>`;
+  const rows = ['Aktif','Draft','Menunggu Review','Nonaktif'].map((s,i)=>{
+    const badge = i===0?'green':i===1?'orange':i===2?'':'red';
+    return `<tr><td>${state.activeMenu} ${String(i+1).padStart(3,'0')}</td><td><span class="badge ${badge}">${s}</span></td><td>${['Hari ini','Kemarin','2 hari lalu','Minggu ini'][i]}</td><td><button class="btn">Detail</button></td></tr>`;
+  }).join('');
+  qs('.table thead tr').innerHTML = '<th>Data</th><th>Status</th><th>Update</th><th>Aksi</th>';
+  const old = qs('#reportTimeline'); if(old) old.remove();
+  qs('#tableBody').innerHTML = rows;
+  qs('#quickGrid').innerHTML = ['Tambah Master','Import Excel','Cek Duplikasi','Audit Trail'].map(x=>`<button class="quick">${x}</button>`).join('');
+}
+function renderInputSimulation(){
+  const cfg = moduleSim[state.domain].input;
+  qs('#panelTitle').textContent = `Simulasi input: ${cfg.title}`;
+  qs('#flow').innerHTML = `
+    <div class="module-shell">
+      <div class="module-header">
+        <div><h3>${cfg.title}</h3><p>${cfg.subtitle}</p></div>
+        <span class="badge orange">Form Input</span>
+      </div>
+      <div class="form-grid">
+        ${cfg.fields.map(([label,type,value])=>renderField(label,type,value)).join('')}
+      </div>
+      <div class="action-row">
+        <button class="btn ghost">Simpan Draft</button>
+        <button class="btn success">Submit Approval</button>
+        <button class="btn">Lampiran</button>
+        <button class="btn warn">Reset</button>
+      </div>
+    </div>`;
+  const rows = ['Draft','Menunggu Approval','Disetujui','Perlu Revisi'].map((s,i)=>{
+    const badge = i===0?'orange':i===1?'':i===2?'green':'red';
+    return `<tr><td>${cfg.title} #${String(i+1).padStart(3,'0')}</td><td><span class="badge ${badge}">${s}</span></td><td>${['Hari ini','Kemarin','2 hari lalu','Minggu ini'][i]}</td><td><button class="btn">Buka</button></td></tr>`;
+  }).join('');
+  qs('.table thead tr').innerHTML = '<th>Data</th><th>Status</th><th>Update</th><th>Aksi</th>';
+  const old = qs('#reportTimeline'); if(old) old.remove();
+  qs('#tableBody').innerHTML = rows;
+  qs('#quickGrid').innerHTML = ['Validasi Data','Workflow Approval','Duplikasi Data','Riwayat Dokumen'].map(x=>`<button class="quick">${x}</button>`).join('');
+}
+function renderField(label,type,value){
+  const full = type === 'textarea' ? ' full' : '';
+  if(type === 'select'){
+    return `<div class="field${full}"><label>${label}</label><select>${String(value).split('|').map(v=>`<option>${v}</option>`).join('')}</select></div>`;
+  }
+  if(type === 'textarea') return `<div class="field${full}"><label>${label}</label><textarea>${value}</textarea></div>`;
+  return `<div class="field${full}"><label>${label}</label><input type="${type}" value="${value}"></div>`;
+}
+function renderReportSimulation(){
+  const cfg = moduleSim[state.domain].report;
+  qs('#panelTitle').textContent = `Simulasi laporan: ${cfg.title}`;
+  qs('#flow').innerHTML = `
+    <div class="module-shell">
+      <div class="module-header">
+        <div><h3>${cfg.title}</h3><p>${cfg.subtitle}</p></div>
+        <span class="badge green">Laporan</span>
+      </div>
+      <div class="report-toolbar">
+        <div class="field"><label>Periode Dari</label><input type="date" value="2026-06-01"></div>
+        <div class="field"><label>Sampai</label><input type="date" value="2026-06-20"></div>
+        <div class="field"><label>Cabang</label><select><option>Semua Cabang</option><option>Kantor Pusat</option><option>Cabang Bandung</option></select></div>
+        <button class="btn primary">Tampilkan</button>
+        <button class="btn">Export Excel</button>
+        <button class="btn">PDF</button>
+      </div>
+      <div class="summary-strip">
+        <div class="summary-box"><span>Total Data</span><b>1.248</b></div>
+        <div class="summary-box"><span>Total Nilai</span><b>2,8 M</b></div>
+        <div class="summary-box"><span>Growth</span><b>+18%</b></div>
+        <div class="summary-box"><span>Perlu Review</span><b>7</b></div>
+      </div>
+      <div class="report-chart">
+        ${[40,72,58,88,63,95].map((h,i)=>`<div class="bar" style="height:${h}%"><em>${h}%</em><span>${['Jan','Feb','Mar','Apr','Mei','Jun'][i]}</span></div>`).join('')}
+      </div>
+    </div>`;
+  qs('#tableBody').innerHTML = cfg.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}<td><button class="btn">Drill-down</button></td></tr>`).join('');
+  const head = qs('.table thead tr');
+  head.innerHTML = cfg.columns.map(c=>`<th>${c}</th>`).join('') + '<th>Aksi</th>';
+  qs('#quickGrid').innerHTML = ['Filter Tersimpan','Jadwalkan Email','Pivot View','Audit Angka'].map(x=>`<button class="quick">${x}</button>`).join('');
+  renderReportContext();
+}
+function renderReportContext(){
+  const side = qs('#quickGrid').parentElement;
+  const old = qs('#reportTimeline'); if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'reportTimeline';
+  div.innerHTML = `<hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><div class="timeline">
+    <div class="timeline-item"><span class="dot"></span><div><b>Data dikompilasi</b><span>Sumber transaksi, master data, dan approval.</span></div></div>
+    <div class="timeline-item"><span class="dot"></span><div><b>Validasi otomatis</b><span>Cek periode, cabang, otorisasi, dan status posting.</span></div></div>
+    <div class="timeline-item"><span class="dot"></span><div><b>Siap distribusi</b><span>Export, print, atau jadwalkan email periodik.</span></div></div>
+  </div>`;
+  side.appendChild(div);
+}
+function openSidebar(){qs('#sidebar').classList.add('open');qs('#overlay').classList.add('show')}
+function closeSidebar(){qs('#sidebar').classList.remove('open');qs('#overlay').classList.remove('show')}
+qsa('.domain-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  if(btn.classList.contains('locked')) return;
+  state.domain = btn.dataset.domain;
+  const firstGroup = Object.keys(data[state.domain].groups)[0];
+  state.activeGroup = firstGroup;
+  state.activeMenu = data[state.domain].groups[firstGroup][0];
+  renderMenu();
+}));
+qsa('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  qsa('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active'); state.filter = tab.dataset.filter; renderMenu();
+}));
+qs('#roleSelect').addEventListener('change',()=>{
+  safeDomain(); const firstGroup = Object.keys(data[state.domain].groups)[0];
+  state.activeGroup = firstGroup; state.activeMenu = data[state.domain].groups[firstGroup][0]; renderMenu();
+});
+qs('#searchInput').addEventListener('input', renderMenu);
+renderMenu();
+</script>
+</body>
+</html>

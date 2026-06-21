@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#eef0f5;color:#0f172a}
+button,input,select,textarea{font:inherit}
+.ab{border:1.5px solid #e8ecf4;background:white;border-radius:10px;padding:7px 13px;cursor:pointer;font-size:12.5px;font-weight:600;color:#374151;transition:.12s;white-space:nowrap}
+.ab:hover{background:#f8fafc;border-color:#cbd5e1}
+.abp{background:#2563eb!important;border-color:#2563eb!important;color:white!important;font-weight:700!important}
+.abp:hover{background:#1d4ed8!important}
+.abs{background:#16a34a!important;border-color:#16a34a!important;color:white!important;font-weight:700!important}
+.abw{background:#ea580c!important;border-color:#ea580c!important;color:white!important;font-weight:700!important}
+.abg{background:#f8fafc!important;border-color:#f0f2f7!important}
+.bdg{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.bg{background:#eff6ff;color:#1d4ed8}.bgn{background:#f0fdf4;color:#15803d}.bgo{background:#fff7ed;color:#c2410c}.bgr{background:#fef2f2;color:#b91c1c}.bgp{background:#faf5ff;color:#7c3aed}.bgg{background:#f1f5f9;color:#64748b}.bgt{background:#f0fdfa;color:#0f766e}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.065em;color:#94a3b8;border-bottom:1.5px solid #f1f5f9;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #f8fafc;color:#334155;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafbff}
+.fi input,.fi select,.fi textarea{border:1.5px solid #e8ecf4;border-radius:10px;padding:9px 12px;background:#fff;outline:none;width:100%;transition:.15s;color:#0f172a}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(219,234,254,.45)}
+.fi textarea{resize:vertical;min-height:76px}
+.fl{font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px}
+.mg{border:1.5px solid #f0f2f7;border-radius:13px;background:white;margin-bottom:7px;overflow:hidden}
+.mg summary{list-style:none;cursor:pointer;padding:10px 11px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#374151;user-select:none}
+.mg summary::-webkit-details-marker{display:none}
+.mb{padding:4px 7px 7px}
+.mi{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;text-align:left;padding:8px 8px;border-radius:9px;cursor:pointer;color:#4b5563;transition:.1s}
+.mi:hover{background:#f8fafc}
+.ma{background:#eff6ff!important;color:#1e40af!important;font-weight:700!important}
+.mf .mst{color:#f59e0b!important}
+.mst{margin-left:auto;color:#e2e8f0;font-size:13px;padding:2px 4px;transition:color .12s}
+.mst:hover{color:#fbbf24!important}
+.mic{font-size:15px;flex-shrink:0}
+.mtt{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc{margin-left:auto;font-size:10px;background:#f1f5f9;color:#94a3b8;border-radius:999px;padding:2px 7px;font-weight:700;flex-shrink:0}
+.cv{color:#cbd5e1;font-size:12px;margin-left:4px;transition:transform .15s;flex-shrink:0}
+details[open] .cv{transform:rotate(90deg)}
+.me{padding:20px 12px;font-size:13px;color:#94a3b8;text-align:center}
+.bc{display:flex;align-items:flex-end;gap:8px;height:110px;padding:0 4px}
+.bcb{flex:1;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#93c5fd,#2563eb);position:relative;min-width:22px;transition:.2s}
+.bcb:hover{opacity:.8}
+.bcv{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:9.5px;color:#94a3b8;margin-bottom:3px;white-space:nowrap}
+.bcl{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:9.5px;color:#94a3b8;margin-top:4px;white-space:nowrap}
+.pn{background:white;border-radius:18px;border:1.5px solid #f0f2f7;box-shadow:0 2px 14px rgba(15,23,42,.05);overflow:hidden}
+.ph{padding:14px 18px;border-bottom:1.5px solid #f4f6f9;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ph h2{font-size:14px;font-weight:800;margin:0;color:#0f172a}
+.pb{padding:18px}
+.sc{background:white;border-radius:16px;border:1.5px solid #f0f2f7;padding:16px 18px;box-shadow:0 2px 10px rgba(15,23,42,.04)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:66px 278px 1fr;height:100vh;overflow:hidden;">
+
+  <nav style="background:#0f172a;display:flex;flex-direction:column;align-items:center;padding:13px 8px 14px;gap:7px;overflow:hidden;flex-shrink:0;">
+    <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#22c55e);display:grid;place-items:center;font-size:14px;font-weight:900;color:white;box-shadow:0 6px 16px rgba(0,0,0,.28);margin-bottom:4px;flex-shrink:0;">IS</div>
+    <button title="Keuangan" onClick="{{ nKeu }}" style="{{ sKeu }}">💰</button>
+    <button title="Program / Penyaluran" onClick="{{ nPro }}" style="{{ sPro }}">🤝</button>
+    <button title="Penghimpunan" onClick="{{ nPen }}" style="{{ sPen }}">📥</button>
+    <button title="Administrasi" onClick="{{ nAdm }}" style="{{ sAdm }}">🗂️</button>
+    <button title="Enterprise / IT" onClick="{{ nEnt }}" style="{{ sEnt }}">🏢</button>
+    <div style="flex:1;"></div>
+    <div style="width:34px;height:34px;border-radius:50%;background:#334155;display:grid;place-items:center;font-size:11px;font-weight:700;color:white;border:2px solid rgba(255,255,255,.14);flex-shrink:0;">WP</div>
+  </nav>
+
+  <aside style="background:white;border-right:1.5px solid #edf0f5;height:100%;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:15px 14px 11px;border-bottom:1.5px solid #f4f6f9;flex-shrink:0;">
+      <div style="font-size:16px;font-weight:800;margin-bottom:1px;">{{ domainTitle }}</div>
+      <div style="font-size:10.5px;color:#94a3b8;margin-bottom:11px;">Sistem Informasi Pengelolaan Dana</div>
+      <div style="border:1.5px solid #eef0f5;border-radius:12px;padding:9px 11px;background:#fafbfd;">
+        <div style="font-size:9.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🔐 Simulasi Role</div>
+        <select onChange="{{ onRole }}" value="{{ role }}" style="border-radius:8px;padding:7px 9px;font-size:12px;border:1.5px solid #eef0f5;width:100%;background:white;outline:none;">
+          <option value="finance_manager">Finance Manager</option>
+          <option value="program_officer">Program Officer</option>
+          <option value="fundraising_staff">Fundraising Staff</option>
+          <option value="branch_admin">Branch Admin</option>
+          <option value="super_admin">Super Admin</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:9px 11px;border-bottom:1.5px solid #f4f6f9;flex-shrink:0;">
+      <input onInput="{{ onSearch }}" placeholder="Cari menu, fitur..." style="font-size:12.5px;padding:8px 10px 8px 32px;background:#f8fafc url(data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='none' stroke='%2394a3b8' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E) no-repeat 10px center;border:1.5px solid #eef0f5;border-radius:10px;width:100%;outline:none;" />
+    </div>
+    <div style="display:flex;gap:5px;padding:8px 10px;flex-shrink:0;">
+      <button onClick="{{ onTabAll }}" style="{{ tAll }}">Semua</button>
+      <button onClick="{{ onTabFav }}" style="{{ tFav }}">⭐ Favorit</button>
+      <button onClick="{{ onTabRec }}" style="{{ tRec }}">🕐 Terkini</button>
+    </div>
+    <div ref="{{ menuRef }}" style="flex:1;overflow-y:auto;padding:5px 9px 18px;"></div>
+  </aside>
+
+  <main style="height:100%;overflow:hidden;display:flex;flex-direction:column;background:#eef0f5;">
+    <header style="height:64px;background:rgba(238,240,245,.96);backdrop-filter:blur(14px);border-bottom:1.5px solid #e4e8f0;display:flex;align-items:center;gap:14px;padding:0 22px;flex-shrink:0;">
+      <div>
+        <div style="font-size:11px;color:#94a3b8;line-height:1.2;">{{ breadcrumb }}</div>
+        <div style="font-size:17px;font-weight:800;color:#0f172a;line-height:1.2;margin-top:1px;">{{ pageTitle }}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:7px;align-items:center;">
+        <button onClick="{{ onNotif }}" style="border:1.5px solid #e4e8f0;background:white;border-radius:10px;padding:7px 11px;cursor:pointer;font-size:14px;">🔔</button>
+        <button onClick="{{ onPref }}" style="border:1.5px solid #e4e8f0;background:white;border-radius:10px;padding:7px 11px;cursor:pointer;font-size:14px;">⚙️</button>
+        <button onClick="{{ onNew }}" style="background:#2563eb;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:700;color:white;">+ Buat Data</button>
+      </div>
+    </header>
+    <div ref="{{ mainRef }}" style="flex:1;overflow-y:auto;padding:18px;"></div>
+  </main>
+
+</div>
+
+<div ref="{{ toastRef }}" style="position:fixed;bottom:22px;right:22px;z-index:999;pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:flex-end;"></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {dom:'Keuangan',grp:'Master Data',menu:'Akun Perkiraan',filt:'all',role:'finance_manager'};
+  favs = new Set(['Akun Perkiraan','Jurnal Umum','Laporan Donasi','Pengajuan Penyaluran','Role & Permission']);
+  recs = ['Akun Perkiraan','Input Donasi','Jurnal Umum'];
+  q = ''; toastTmr = null;
+  menuRef = React.createRef(); mainRef = React.createRef(); toastRef = React.createRef();
+
+  D = {
+    Keuangan:{icon:'💰',g:{'Master Data':['Akun Perkiraan','Bank & Kas','Periode Akuntansi','Pajak & Potongan','Template Jurnal','Mapping Program','Saldo Awal'],'Input Transaksi':['Jurnal Umum','Kas Masuk','Kas Keluar','Transfer Bank','Rekonsiliasi Bank','Posting Jurnal','Approval Keuangan'],'Laporan':['Buku Besar','Neraca Saldo','Laporan Posisi Keuangan','Laporan Aktivitas','Arus Kas','Laporan Budget vs Realisasi']}},
+    Program:{icon:'🤝',g:{'Master Data':['Program','Sub Program','Mustahik/Penerima Manfaat','Kriteria Kelayakan','Mitra Penyaluran','Lokasi Program'],'Input Transaksi':['Pengajuan Penyaluran','Survei Penerima','RAB Program','Realisasi Penyaluran','Monitoring Program','Approval Penyaluran','Penutupan Program'],'Laporan':['Laporan Penyaluran','Rekap Penerima Manfaat','Efektivitas Program','Monitoring Realisasi','Laporan Mitra','Laporan Per Wilayah']}},
+    Penghimpunan:{icon:'📥',g:{'Master Data':['Donatur/Muzakki','Kanal Donasi','Produk Donasi','Campaign','Collector/Fundraiser','Target Penghimpunan'],'Input Transaksi':['Input Donasi','Konfirmasi Pembayaran','Kwitansi Donasi','Import Mutasi Bank','Follow Up Donatur','Approval Donasi','Refund/Koreksi Donasi'],'Laporan':['Laporan Donasi','Rekap Donatur','Performa Campaign','Performa Fundraiser','Laporan Kanal','Retensi Donatur']}},
+    Administrasi:{icon:'🗂️',g:{'Master Data':['Vendor','Aset','Inventaris','Jenis Surat','Template Dokumen','Ruang & Kendaraan'],'Input Transaksi':['Permintaan Pembelian','Purchase Order','Penerimaan Barang','Peminjaman Aset','Surat Masuk','Surat Keluar','Disposisi'],'Laporan':['Laporan Aset','Laporan Pengadaan','Laporan Inventaris','Log Surat','Rekap Vendor','Laporan Pemakaian Fasilitas']}},
+    Enterprise:{icon:'🏢',g:{'Master Data':['User','Role & Permission','Cabang','Unit Kerja','Jabatan','Parameter Sistem','Workflow Approval'],'Input Transaksi':['Setup Akses User','Mutasi Cabang','Delegasi Approval','Audit Aktivitas','Import Master','Backup Data','Broadcast Pengumuman'],'Laporan':['Laporan User Login','Matrix Hak Akses','Audit Trail','Laporan Cabang','Health Check Sistem','Log Integrasi']}},
+  };
+
+  R = {
+    finance_manager:['Keuangan','Program'],
+    program_officer:['Program','Keuangan'],
+    fundraising_staff:['Penghimpunan','Keuangan'],
+    branch_admin:['Administrasi','Penghimpunan','Program'],
+    super_admin:['Keuangan','Program','Penghimpunan','Administrasi','Enterprise'],
+  };
+
+  S = {
+    'Akun Perkiraan':{tp:'master',ic:'📋',ti:'Chart of Accounts',de:'Kelola daftar akun untuk pencatatan keuangan sesuai standar PSAK Syariah.',st:[['Total Akun','342'],['Aktif','298'],['Level Maks','4'],['Perlu Review','12']],co:['Kode','Nama Akun','Jenis','Kelompok','Status'],ro:[['1-1000','Kas dan Setara Kas','Aset','Aset Lancar','Aktif'],['1-1200','Bank BSI – Operasional','Aset','Aset Lancar','Aktif'],['4-0000','Pendapatan Zakat','Pendapatan','Dana Zakat','Aktif'],['5-1000','Beban Operasional','Beban','Operasional','Aktif'],['2-0000','Utang Usaha','Liabilitas','Liab. Lancar','Draft']],ac:['+ Tambah Akun','Import COA','Cetak Daftar','Audit Log']},
+    'Bank & Kas':{tp:'master',ic:'🏦',ti:'Data Rekening Bank & Kas',de:'Kelola rekening bank dan kas kecil organisasi beserta saldo terkini.',st:[['Rekening Aktif','12'],['Saldo Total','4,2 M'],['Bank Berbeda','5'],['Perlu Rekon','3']],co:['No. Rekening','Nama Rekening','Bank','Saldo (Rp)','Status'],ro:[['700-1234-5678','Dana Zakat — BSI','Bank BSI','1.250.000.000','Aktif'],['650-9876-5432','Dana Infak — BSI','Bank BSI','820.000.000','Aktif'],['001-456-789','Operasional — Mandiri','Bank Mandiri','345.000.000','Aktif'],['888-1234-0001','Kas Kecil Pusat','Internal','25.000.000','Aktif']],ac:['+ Tambah Rekening','Lihat Mutasi','Rekonsiliasi','Cetak Daftar']},
+    'Periode Akuntansi':{tp:'master',ic:'📅',ti:'Periode Akuntansi',de:'Kelola periode pembukuan — buka, tutup, dan lock untuk integritas data.',st:[['Periode Aktif','1'],['Closed','5'],['Tahun Buku','2026'],['Butuh Lock','2']],co:['Tahun','Periode','Tgl Buka','Tgl Tutup','Status'],ro:[['2026','Juni 2026','01 Jun','–','Buka'],['2026','Mei 2026','01 Mei','31 Mei','Closed'],['2026','Apr 2026','01 Apr','30 Apr','Locked'],['2026','Mar 2026','01 Mar','31 Mar','Locked']],ac:['Buka Periode','Tutup Periode','Lock Periode','Ekspor Neraca']},
+    'Pajak & Potongan':{tp:'master',ic:'🧾',ti:'Pajak & Potongan',de:'Master tarif PPh 21, PPh 23, PPN, dan potongan lain yang berlaku.',st:[['Jenis Pajak','8'],['PPh Aktif','4'],['PPN Rate','11%'],['Update','Jun 2026']],co:['Kode','Nama Pajak','Tarif','Jenis','Status'],ro:[['PPH21','PPh Pasal 21','5–30%','Pendapatan','Aktif'],['PPH23','PPh Pasal 23','2%','Jasa','Aktif'],['PPN','Pajak Pertambahan Nilai','11%','Transaksi','Aktif'],['PPH4','PPh Final Ps. 4(2)','0.5%','Sewa','Aktif']],ac:['+ Tambah Jenis','Update Tarif','Cek Kewajiban','Lapor Pajak']},
+    'Template Jurnal':{tp:'master',ic:'📝',ti:'Template Jurnal Berulang',de:'Template recurring untuk transaksi rutin: gaji, penyusutan, amortisasi.',st:[['Template Aktif','14'],['Otomatis','6'],['Manual','8'],['Terakhir Run','Kemarin']],co:['Nama Template','Frekuensi','Akun Debet','Akun Kredit','Status'],ro:[['Beban Gaji Bulanan','Bulanan','Beban Gaji','Utang Gaji','Aktif'],['Penyusutan Aset','Bulanan','Beban Penyusutan','Akum. Penyusutan','Aktif'],['Sewa Kantor','Bulanan','Beban Sewa','Kas Operasional','Aktif'],['Biaya Utilitas','Bulanan','Beban Utilitas','Utang Usaha','Aktif']],ac:['+ Tambah Template','Run Sekarang','Jadwalkan Otomatis','Riwayat Run']},
+    'Mapping Program':{tp:'master',ic:'🔗',ti:'Mapping Akun ke Program',de:'Pemetaan akun keuangan ke kode program untuk pelaporan dana per program.',st:[['Program Aktif','18'],['Akun Terpetakan','94'],['Belum Dipetakan','12'],['Konflik','2']],co:['Kode Program','Nama Program','Akun Beban','Akun Pendapatan','Status'],ro:[['PRG-001','Beasiswa Pendidikan','5-2100','4-1200','Aktif'],['PRG-002','Klinik Sehat Gratis','5-2200','4-1300','Aktif'],['PRG-003','Bantuan Modal UMKM','5-2300','4-1400','Aktif'],['PRG-004','Pemberdayaan Masyarakat','5-2400','4-1500','Draft']],ac:['+ Tambah Mapping','Cek Konflik','Sinkron Program','Export']},
+    'Saldo Awal':{tp:'form',ic:'⚖️',ti:'Input Saldo Awal',de:'Entry saldo awal akun untuk pembukaan buku baru atau migrasi sistem.',fi:[['Periode Awal','select','Jan 2026|Feb 2026|Mar 2026|Jun 2026'],['Cabang','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya'],['Akun','select','Kas Kecil|Bank BSI – Zakat|Bank BSI – Infak'],['Saldo Debet (Rp)','number','0'],['Saldo Kredit (Rp)','number','0'],['Keterangan','textarea','Saldo awal migrasi dari sistem lama.']],wf:['Entry Saldo','Review Akun','Verifikasi Balance','Kunci Saldo Awal']},
+    'Jurnal Umum':{tp:'form',ic:'✍️',ti:'Jurnal Umum',de:'Pencatatan jurnal manual multi-entry dengan validasi debet = kredit dan lampiran.',fi:[['Tanggal','date','2026-06-20'],['No. Referensi','text','JU-2026-0001'],['Cabang','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya'],['Akun Debet','select','Kas Operasional|Bank BSI|Beban Program'],['Akun Kredit','select','Pendapatan Donasi|Utang Vendor|Kas Operasional'],['Nominal (Rp)','number','12500000'],['Keterangan','textarea','Penyesuaian transaksi operasional periode Juni 2026.']],wf:['Input Jurnal','Cek Debet=Kredit','Submit Approval','Posting Otomatis']},
+    'Kas Masuk':{tp:'form',ic:'💵',ti:'Penerimaan Kas',de:'Pencatatan kas masuk dari donasi tunai, pengembalian dana, dan penerimaan lainnya.',fi:[['Tanggal','date','2026-06-20'],['No. Kwitansi','text','KM-2026-0456'],['Sumber Penerimaan','select','Donasi Tunai|Pengembalian Dana|Penerimaan Lain-lain'],['Rekening Tujuan','select','Kas Kecil Pusat|Bank BSI – Operasional'],['Nominal (Rp)','number','5000000'],['Keterangan','textarea','Donasi tunai dari kunjungan donatur.']],wf:['Input Penerimaan','Cetak Kwitansi','Submit Approval','Posting Kas']},
+    'Kas Keluar':{tp:'form',ic:'💸',ti:'Pengeluaran Kas',de:'Pencatatan pengeluaran kas untuk operasional, pembelian, dan reimbursement.',fi:[['Tanggal','date','2026-06-20'],['No. Bukti Kas','text','KK-2026-0312'],['Jenis Pengeluaran','select','Biaya Operasional|Pembelian|Reimbursement|Dana Program'],['Penerima','text','Ahmad Sopian'],['Nominal (Rp)','number','1500000'],['Keterangan','textarea','Penggantian biaya perjalanan dinas koordinasi program.']],wf:['Input Pengeluaran','Attach Bukti','Submit Approval','Bayar & Posting']},
+    'Transfer Bank':{tp:'form',ic:'🔄',ti:'Transfer Antar Rekening',de:'Pencatatan transfer antar rekening bank internal untuk pengelolaan likuiditas.',fi:[['Tanggal Transfer','date','2026-06-20'],['Rekening Asal','select','Bank BSI – Operasional|Bank Mandiri – Program'],['Rekening Tujuan','select','Bank BSI – Program|Bank Mandiri – Operasional'],['Nominal Transfer (Rp)','number','100000000'],['No. Referensi Bank','text','TRF20260620001'],['Keperluan','textarea','Pemindahan dana program pendidikan triwulan II 2026.']],wf:['Input Transfer','Verifikasi Rekening','Otorisasi Direksi','Konfirmasi Bank']},
+    'Rekonsiliasi Bank':{tp:'master',ic:'🔍',ti:'Rekonsiliasi Bank',de:'Pencocokan buku bank vs mutasi rekening koran untuk memastikan kesamaan saldo.',st:[['Rekening Aktif','8'],['Belum Direkon','3'],['Item Outstanding','24'],['Selisih','0']],co:['Tanggal','Keterangan','Mutasi Bank (Rp)','Buku Bank (Rp)','Status'],ro:[['20 Jun','Penerimaan Donasi BSI','1.250.000','1.250.000','Match'],['19 Jun','Bayar Vendor PT A','-3.500.000','-3.500.000','Match'],['18 Jun','Transfer Dana Program','-50.000.000','-50.000.000','Match'],['17 Jun','Biaya Admin Bank','-15.000','–','Outstanding']],ac:['Import Rekening Koran','Match Otomatis','Tandai Outstanding','Cetak Rekon']},
+    'Posting Jurnal':{tp:'approval',ic:'📌',ti:'Batch Posting Jurnal',de:'Batch posting jurnal yang telah disetujui ke buku besar sesuai periode akuntansi.',st:[['Siap Posting','42'],['Posted Hari Ini','18'],['Error','1'],['Total Nilai','2,4 M']],co:['No. Jurnal','Tanggal','Keterangan','Nilai (Rp)','Status'],ro:[['JU-2026-041','20 Jun','Penerimaan Zakat – Batch','234.500.000','Siap'],['JU-2026-040','20 Jun','Beban Operasional Juni','45.800.000','Siap'],['JU-2026-039','19 Jun','Transfer Dana Program','100.000.000','Disetujui'],['JU-2026-038','19 Jun','Koreksi Jurnal PPh 23','2.150.000','Error']],ac:['Post Semua','Post Pilihan','Batalkan Posting','Lihat Error']},
+    'Approval Keuangan':{tp:'approval',ic:'✅',ti:'Antrian Approval Keuangan',de:'Daftar transaksi menunggu persetujuan berdasarkan level dan limit otorisasi.',st:[['Menunggu','14'],['Urgent','3'],['Expired','1'],['Disetujui Hari Ini','8']],co:['No. Dokumen','Jenis','Nilai (Rp)','Pemohon','Tunggu Sejak'],ro:[['KK-2026-310','Kas Keluar','8.500.000','Budi Santoso','2 jam'],['JU-2026-038','Jurnal Umum','125.000.000','Finance Staff','4 jam'],['TRF-2026-042','Transfer Bank','500.000.000','Treasurer','1 hari'],['KM-2026-455','Kas Masuk','12.000.000','Kasir Cab. Bdg','Hari ini']],ac:['Setujui Semua','Tolak & Beri Catatan','Delegasi Approval','Riwayat']},
+    'Buku Besar':{tp:'report',ic:'📒',ti:'Buku Besar (General Ledger)',de:'Ledger detail per akun dengan mutasi debet-kredit dan saldo berjalan.',co:['Tanggal','No. Jurnal','Keterangan','Debet (Rp)','Kredit (Rp)','Saldo (Rp)'],ro:[['01 Jun','JU-001','Saldo Awal','1.250.000.000','–','1.250.000.000'],['05 Jun','KM-012','Penerimaan Zakat','234.500.000','–','1.484.500.000'],['10 Jun','KK-089','Beban Program Pendidikan','–','75.000.000','1.409.500.000'],['15 Jun','TRF-041','Transfer ke Program','–','100.000.000','1.309.500.000']],su:[['Total Debet','1.489.500.000'],['Total Kredit','175.000.000'],['Saldo Akhir','1.314.500.000'],['Mutasi','1.064.500.000']],ba:[['Jan',65],['Feb',72],['Mar',58],['Apr',88],['Mei',76],['Jun',95]]},
+    'Neraca Saldo':{tp:'report',ic:'⚖️',ti:'Neraca Saldo (Trial Balance)',de:'Daftar semua akun beserta saldo debet-kredit untuk verifikasi keseimbangan buku.',co:['Kode Akun','Nama Akun','Saldo Debet (Rp)','Saldo Kredit (Rp)','Saldo Normal'],ro:[['1-1000','Kas dan Setara Kas','1.314.500.000','–','Debet'],['1-2000','Piutang Program','234.000.000','–','Debet'],['2-1000','Utang Usaha','–','125.000.000','Kredit'],['4-0000','Pendapatan Dana','–','2.820.000.000','Kredit']],su:[['Total Debet','2.820.000.000'],['Total Kredit','2.820.000.000'],['Selisih','0'],['Status','Balance ✓']],ba:[['Aset',85],['Liab',32],['Dana',95],['Pend',78],['Beban',62],['Eq',70]]},
+    'Laporan Posisi Keuangan':{tp:'report',ic:'📊',ti:'Laporan Posisi Keuangan',de:'Neraca keuangan syariah (PSAK 109) — aset, liabilitas, dan dana terikat/bebas.',co:['Kelompok','Akun','Saldo Awal (Rp)','Mutasi (Rp)','Saldo Akhir (Rp)'],ro:[['Aset','Kas dan Bank','1.250.000.000','325.000.000','1.575.000.000'],['Aset','Piutang Program','180.000.000','54.000.000','234.000.000'],['Liabilitas','Utang Operasional','210.000.000','-35.000.000','175.000.000'],['Dana','Dana Zakat Terikat','860.000.000','140.000.000','1.000.000.000']],su:[['Total Aset','2,1 M'],['Total Liabilitas','175 Jt'],['Total Dana','1,5 M'],['Selisih A-L-D','0']],ba:[['Jan',60],['Feb',68],['Mar',55],['Apr',82],['Mei',74],['Jun',92]]},
+    'Laporan Aktivitas':{tp:'report',ic:'📈',ti:'Laporan Aktivitas',de:'Laporan penerimaan dan pengeluaran dana sesuai PSAK 109 untuk lembaga amil.',co:['Uraian','Dana Zakat (Rp)','Dana Infak (Rp)','Dana Wakaf (Rp)','Total (Rp)'],ro:[['Penerimaan','1.820.000.000','620.000.000','180.000.000','2.620.000.000'],['Penyaluran Program','-1.540.000.000','-420.000.000','-80.000.000','-2.040.000.000'],['Biaya Operasional','-145.000.000','-85.000.000','–','-230.000.000'],['Surplus / Defisit','135.000.000','115.000.000','100.000.000','350.000.000']],su:[['Total Penerimaan','2,62 M'],['Total Penyaluran','2,04 M'],['Surplus','350 Jt'],['Rasio Operasional','8,8%']],ba:[['Jan',55],['Feb',68],['Mar',62],['Apr',80],['Mei',73],['Jun',88]]},
+    'Arus Kas':{tp:'report',ic:'💧',ti:'Laporan Arus Kas',de:'Pergerakan kas dari aktivitas operasi, investasi, dan pendanaan organisasi.',co:['Aktivitas','Kas Masuk (Rp)','Kas Keluar (Rp)','Net Arus Kas (Rp)'],ro:[['Operasi – Donasi Diterima','2.620.000.000','–','2.620.000.000'],['Operasi – Beban Dibayar','–','2.270.000.000','-2.270.000.000'],['Investasi – Pembelian Aset','–','85.000.000','-85.000.000'],['Pendanaan – Pinjaman','0','0','0']],su:[['Net Operasi','350 Jt'],['Net Investasi','-85 Jt'],['Net Pendanaan','0'],['Kenaikan Kas','265 Jt']],ba:[['Jan',45],['Feb',62],['Mar',50],['Apr',75],['Mei',68],['Jun',85]]},
+    'Laporan Budget vs Realisasi':{tp:'report',ic:'🎯',ti:'Budget vs Realisasi',de:'Perbandingan anggaran vs realisasi pendapatan dan pengeluaran per program.',co:['Program/Unit','Anggaran (Rp)','Realisasi (Rp)','Selisih (Rp)','Serapan'],ro:[['Program Pendidikan','500.000.000','428.000.000','72.000.000','85,6%'],['Program Kesehatan','300.000.000','312.000.000','-12.000.000','104%'],['Program Ekonomi','250.000.000','198.000.000','52.000.000','79,2%'],['Operasional Kantor','120.000.000','115.800.000','4.200.000','96,5%']],su:[['Total Anggaran','1,17 M'],['Total Realisasi','1,05 M'],['Surplus Anggaran','117 Jt'],['Avg Serapan','89,4%']],ba:[['Pend',86],['Kes',100],['Eko',79],['Ops',97],['SDM',72],['IT',65]]},
+    'Program':{tp:'master',ic:'🤝',ti:'Data Program Penyaluran',de:'Master data program penyaluran zakat, infak, sedekah, dan wakaf.',st:[['Program Aktif','18'],['Berjalan','12'],['Selesai','4'],['Draft','2']],co:['Kode','Nama Program','Jenis Dana','PIC','Status'],ro:[['PRG-001','Beasiswa Santri Berprestasi','Zakat','Ahmad Fauzi','Berjalan'],['PRG-002','Klinik Sehat Gratis','Zakat','Siti Aminah','Berjalan'],['PRG-003','Modal Usaha Produktif','Infak','Budi Hartono','Berjalan'],['PRG-004','Rumah Layak Huni','Infak','Dewi Lestari','Draft']],ac:['+ Tambah Program','Approve Draft','Laporan Program','Archive Selesai']},
+    'Sub Program':{tp:'master',ic:'📂',ti:'Sub Program',de:'Rincian sub-program atau kegiatan di bawah program utama.',st:[['Sub Program','54'],['Berjalan','38'],['Anggaran Total','3,8 M'],['Serapan Avg','76%']],co:['Kode Sub','Nama Sub Program','Induk Program','Anggaran (Rp)','Status'],ro:[['SP-001-A','Beasiswa SD','Beasiswa Santri','150.000.000','Berjalan'],['SP-001-B','Beasiswa SMP','Beasiswa Santri','200.000.000','Berjalan'],['SP-002-A','Klinik Keliling','Klinik Sehat','80.000.000','Berjalan'],['SP-003-A','KUR Mikro','Modal Usaha','300.000.000','Draft']],ac:['+ Tambah Sub Program','Alokasi Anggaran','Laporan Sub','Tutup Sub']},
+    'Mustahik/Penerima Manfaat':{tp:'master',ic:'👥',ti:'Mustahik / Penerima Manfaat',de:'Database penerima manfaat dengan profil, kelayakan, histori bantuan, dan status.',st:[['Terdaftar','4.820'],['Aktif','3.241'],['Baru Bulan Ini','124'],['Perlu Verifikasi','87']],co:['No. Reg','Nama','Asnaf','Wilayah','Status'],ro:[['PM-00841','Siti Aisyah','Fakir','Bandung Selatan','Aktif'],['PM-00842','Joko Widodo','Miskin','Jakarta Timur','Aktif'],['PM-00843','Ahmad Basri','Ibnu Sabil','Surabaya Utara','Aktif'],['PM-00844','Fatimah Zahra','Muallaf','Bekasi','Perlu Verifikasi']],ac:['+ Daftarkan Penerima','Verifikasi Data','Cetak Kartu','Update Status']},
+    'Kriteria Kelayakan':{tp:'master',ic:'📋',ti:'Kriteria Kelayakan',de:'Definisi kriteria dan scoring kelayakan penerimaan bantuan per jenis program.',st:[['Set Kriteria','12'],['Digunakan','8'],['Perlu Review','2'],['Update','Mar 2026']],co:['Program','Kriteria','Bobot','Nilai Min','Status'],ro:[['Beasiswa','IPK Minimal','30%','3.00','Aktif'],['Beasiswa','Penghasilan Orang Tua','40%','≤ 3 Jt/bln','Aktif'],['Modal Usaha','Lama Usaha','20%','≥ 1 tahun','Aktif'],['Modal Usaha','Omset Bulanan','30%','≤ 10 Jt/bln','Aktif']],ac:['+ Tambah Kriteria','Update Bobot','Preview Scoring','Publish Kriteria']},
+    'Mitra Penyaluran':{tp:'master',ic:'🤲',ti:'Mitra Penyaluran',de:'Data lembaga mitra untuk penyaluran program di wilayah yang tidak terjangkau langsung.',st:[['Mitra Aktif','34'],['Terverifikasi','28'],['MOU Aktif','22'],['Perlu Perpanjangan','6']],co:['Kode','Nama Mitra','Wilayah','Jenis','Status MOU'],ro:[['MT-001','Yayasan Mitra Sejahtera','Jawa Barat','Yayasan','Aktif'],['MT-002','LSM Peduli Bangsa','Jawa Timur','LSM','Aktif'],['MT-003','Komunitas Berdaya','Sulsel','Komunitas','Perlu Perpanjangan'],['MT-004','Pesantren Darul Ulum','Jawa Tengah','Pesantren','Aktif']],ac:['+ Daftarkan Mitra','Upload MOU','Evaluasi Mitra','Cetak Daftar']},
+    'Lokasi Program':{tp:'master',ic:'📍',ti:'Lokasi Program',de:'Master lokasi pelaksanaan program: provinsi, kota, kecamatan, dan desa sasaran.',st:[['Provinsi','15'],['Kabupaten/Kota','48'],['Kecamatan Sasaran','124'],['Desa Sasaran','342']],co:['Kode Lokasi','Wilayah','Provinsi','Penerima','Program Aktif'],ro:[['LOK-001','Kec. Buahbatu, Bandung','Jawa Barat','234','3'],['LOK-002','Kec. Bekasi Timur','Jawa Barat','187','2'],['LOK-003','Kec. Genteng, Surabaya','Jawa Timur','156','4'],['LOK-004','Kec. Rappocini, Makassar','Sulsel','98','2']],ac:['+ Tambah Lokasi','Peta Sebaran','Rekap Wilayah','Export GIS']},
+    'Pengajuan Penyaluran':{tp:'form',ic:'📤',ti:'Pengajuan Penyaluran',de:'Pengajuan penyaluran bantuan dari RAB hingga approval dan realisasi.',fi:[['Tanggal Pengajuan','date','2026-06-20'],['Program','select','Beasiswa Santri|Klinik Sehat|Modal Usaha|Rumah Layak Huni'],['Sub Program','select','Beasiswa SD|Beasiswa SMP|Beasiswa SMA'],['Mitra / Pelaksana','text','Yayasan Mitra Sejahtera'],['Wilayah','select','Jakarta|Bandung|Surabaya|Makassar'],['Jumlah Penerima','number','80'],['Nilai Pengajuan (Rp)','number','120000000'],['Uraian Kegiatan','textarea','Penyaluran beasiswa santri semester ganjil 2026/2027 di Bandung.']],wf:['Pengajuan','Survei Lapangan','Verifikasi RAB','Approval','Realisasi','Laporan']},
+    'Survei Penerima':{tp:'form',ic:'📝',ti:'Survei Kelayakan Penerima',de:'Input hasil survei lapangan untuk verifikasi kelayakan calon penerima manfaat.',fi:[['Tanggal Survei','date','2026-06-20'],['Surveyor','text','Muhammad Iqbal'],['Calon Penerima','text','Siti Aisyah'],['Program','select','Beasiswa Santri|Klinik Sehat|Modal Usaha'],['Skor Kelayakan (0-100)','number','82'],['Rekomendasi','select','Layak Diterima|Perlu Data Tambahan|Tidak Layak'],['Catatan Survei','textarea','Kondisi ekonomi keluarga sesuai kriteria asnaf fakir.']],wf:['Penugasan Surveyor','Survei Lapangan','Input Hasil','Review Supervisor','Keputusan']},
+    'RAB Program':{tp:'form',ic:'💹',ti:'Rencana Anggaran Biaya (RAB)',de:'Penyusunan dan pengajuan RAB untuk program yang akan dijalankan.',fi:[['Program','select','Beasiswa Santri|Klinik Sehat|Modal Usaha'],['Periode Pelaksanaan','text','Juli – Desember 2026'],['Lokasi','select','Bandung|Jakarta|Surabaya|Makassar'],['Jumlah Penerima Target','number','100'],['Nilai Per Penerima (Rp)','number','1500000'],['Biaya Operasional (Rp)','number','12000000'],['Justifikasi','textarea','Biaya mencakup beasiswa, ATK, dan biaya pendampingan program.']],wf:['Penyusunan RAB','Review Program Mgr','Approval Keuangan','Alokasi Anggaran']},
+    'Realisasi Penyaluran':{tp:'form',ic:'✅',ti:'Realisasi Penyaluran',de:'Input realisasi penyaluran setelah bantuan diterima penerima manfaat.',fi:[['Tanggal Realisasi','date','2026-06-20'],['No. Pengajuan','text','PAJ-2026-0089'],['Program','select','Beasiswa Santri|Klinik Sehat|Modal Usaha'],['Penerima / Mitra','text','Yayasan Mitra Sejahtera'],['Jumlah Penerima Realisasi','number','78'],['Nilai Realisasi (Rp)','number','117000000'],['Keterangan Selisih','textarea','2 penerima mengundurkan diri sebelum pencairan.']],wf:['Input Realisasi','Verifikasi Dokumen','Tanda Terima','Approval','Posting']},
+    'Monitoring Program':{tp:'report',ic:'📡',ti:'Monitoring Program',de:'Pantau perkembangan program: realisasi, serapan anggaran, dan capaian output.',co:['Program','Target','Realisasi','Serapan Anggaran','Status'],ro:[['Beasiswa Santri','200 siswa','178 siswa','89,0%','Berjalan'],['Klinik Sehat','500 pasien','412 pasien','82,4%','Berjalan'],['Modal Usaha','80 UMKM','65 UMKM','81,3%','Berjalan'],['Rumah Layak Huni','30 unit','0 unit','0%','Draft']],su:[['Program Berjalan','3'],['Avg Serapan','84,2%'],['Penerima Terbantu','655'],['Sisa Anggaran','278 Jt']],ba:[['Bea',89],['Kes',82],['Eko',81],['Rum',5],['Air',72],['Lain',65]]},
+    'Approval Penyaluran':{tp:'approval',ic:'✅',ti:'Antrian Approval Penyaluran',de:'Antrian pengajuan penyaluran yang membutuhkan persetujuan berdasarkan nilai.',st:[['Menunggu','9'],['Urgent','2'],['Total Nilai','1,2 M'],['SLA Terlampaui','1']],co:['No. Pengajuan','Program','Nilai (Rp)','Pemohon','Tgl Pengajuan'],ro:[['PAJ-089','Beasiswa Santri','120.000.000','Ahmad Fauzi','18 Jun'],['PAJ-090','Klinik Sehat','65.000.000','Siti Aminah','19 Jun'],['PAJ-091','Modal Usaha','200.000.000','Budi Hartono','20 Jun'],['PAJ-092','Rumah Layak','180.000.000','Dewi Lestari','20 Jun']],ac:['Setujui','Tolak','Minta Revisi','Delegasi ke Direktur']},
+    'Penutupan Program':{tp:'form',ic:'🏁',ti:'Penutupan Program',de:'Proses penutupan program selesai dengan verifikasi output dan pertanggungjawaban.',fi:[['Program','select','Beasiswa Santri 2025|Klinik Sehat Q1 2026|Modal Usaha Batch 1'],['Tanggal Penutupan','date','2026-06-30'],['Total Penerima Terlayani','number','178'],['Total Realisasi (Rp)','number','267000000'],['Sisa Dana (Rp)','number','3000000'],['Status Output','select','Tercapai Penuh|Tercapai Sebagian|Tidak Tercapai'],['Evaluasi Program','textarea','Program berjalan lancar, target 89% tercapai. Sisa dana dikembalikan ke pool infak.']],wf:['Input Penutupan','Review Output','Verifikasi Keuangan','Laporan Akhir','Archive']},
+    'Laporan Penyaluran':{tp:'report',ic:'📊',ti:'Laporan Penyaluran',de:'Rekap realisasi penyaluran berdasarkan program, wilayah, jenis dana, dan mitra.',co:['Program','Wilayah','Penerima','Nilai Realisasi (Rp)','Status'],ro:[['Beasiswa Santri','Bandung','178','267.000.000','Berjalan'],['Klinik Sehat','Jakarta','412','123.600.000','Berjalan'],['Modal Usaha','Surabaya','65','97.500.000','Berjalan'],['Rumah Layak','Makassar','0','0','Draft']],su:[['Total Penerima','655'],['Total Realisasi','488,1 Jt'],['Avg/Penerima','745 Rb'],['Program Aktif','3']],ba:[['Jan',40],['Feb',55],['Mar',70],['Apr',65],['Mei',82],['Jun',90]]},
+    'Rekap Penerima Manfaat':{tp:'report',ic:'👥',ti:'Rekap Penerima Manfaat',de:'Rekapitulasi penerima manfaat berdasarkan asnaf, wilayah, program, dan periode.',co:['Asnaf','Wilayah','Jumlah','Total Bantuan (Rp)','% Total'],ro:[['Fakir','Jawa Barat','1.234','380.000.000','38,1%'],['Miskin','Jawa Timur','876','245.000.000','27,0%'],['Muallaf','DKI Jakarta','312','95.000.000','9,6%'],['Ibnu Sabil','Sulsel','198','58.000.000','6,1%']],su:[['Total Penerima','4.820'],['Total Bantuan','1,2 M'],['Provinsi','15'],['Avg/Penerima','248 Rb']],ba:[['Fakir',80],['Miskin',65],['Amiil',20],['Muallaf',35],['Ibnu S',28],['Lain',15]]},
+    'Efektivitas Program':{tp:'report',ic:'🎯',ti:'Laporan Efektivitas Program',de:'Analisis capaian output vs target dan dampak program terhadap penerima manfaat.',co:['Program','Target','Capaian','Efektivitas','Skor Dampak'],ro:[['Beasiswa Santri','200','178','89%','8.4/10'],['Klinik Sehat','500','412','82,4%','8.8/10'],['Modal Usaha','80','65','81,3%','7.9/10'],['Rumah Layak','30','0','0%','–']],su:[['Avg Efektivitas','84,2%'],['Avg Skor','8,37/10'],['Program Efektif','3'],['Perlu Evaluasi','1']],ba:[['Bea',89],['Kes',82],['Eko',81],['Rum',5],['Infra',76],['SDM',84]]},
+    'Monitoring Realisasi':{tp:'report',ic:'📡',ti:'Monitoring Realisasi Anggaran',de:'Dashboard serapan anggaran dan progres fisik pelaksanaan program real-time.',co:['Program','Anggaran (Rp)','Realisasi (Rp)','Sisa (Rp)','Progres'],ro:[['Beasiswa Santri','300.000.000','267.000.000','33.000.000','89%'],['Klinik Sehat','150.000.000','123.600.000','26.400.000','82%'],['Modal Usaha','120.000.000','97.500.000','22.500.000','81%'],['Rumah Layak','200.000.000','0','200.000.000','0%']],su:[['Total Anggaran','770 Jt'],['Total Realisasi','488 Jt'],['Sisa','282 Jt'],['Serapan','63,4%']],ba:[['Jan',10],['Feb',28],['Mar',45],['Apr',52],['Mei',58],['Jun',63]]},
+    'Laporan Mitra':{tp:'report',ic:'🤲',ti:'Laporan Kinerja Mitra',de:'Rekap kinerja mitra penyaluran: dana disalurkan, penerima, ketepatan waktu.',co:['Nama Mitra','Wilayah','Penerima','Dana Disalurkan (Rp)','Nilai'],ro:[['Yayasan Mitra Sejahtera','Jawa Barat','234','267.000.000','A'],['LSM Peduli Bangsa','Jawa Timur','156','187.500.000','A'],['Komunitas Berdaya','Sulsel','98','98.000.000','B'],['Pesantren Darul Ulum','Jawa Tengah','87','87.000.000','B']],su:[['Total Mitra','34'],['Mitra Nilai A','18'],['Rata-rata Skor','7,8/10'],['Mitra Bermasalah','2']],ba:[['Q1',60],['Q2',75],['H1',68],['YoY',82]]},
+    'Laporan Per Wilayah':{tp:'report',ic:'🗺️',ti:'Laporan Penyaluran Per Wilayah',de:'Sebaran penyaluran berdasarkan provinsi dan kabupaten/kota untuk pemerataan.',co:['Provinsi','Kab/Kota','Penerima','Total Dana (Rp)','Dominan Program'],ro:[['Jawa Barat','Kota Bandung','412','287.000.000','Beasiswa'],['Jawa Timur','Kota Surabaya','287','198.000.000','Modal Usaha'],['DKI Jakarta','Jakarta Timur','198','145.000.000','Klinik Sehat'],['Sulsel','Kota Makassar','98','72.000.000','Beasiswa']],su:[['Total Provinsi','15'],['Total Kab/Kota','48'],['Terbesar','Jawa Barat'],['Terkecil','Papua']],ba:[['Jabar',95],['Jatim',78],['DKI',65],['Sulsel',42],['Sumut',38],['Lain',28]]},
+    'Donatur/Muzakki':{tp:'master',ic:'💝',ti:'Data Donatur / Muzakki',de:'Database donatur dan muzakki dengan histori donasi, preferensi, dan segmentasi.',st:[['Total Donatur','24.820'],['Aktif','8.412'],['Baru Bulan Ini','342'],['Perlu Update','156']],co:['No. Donatur','Nama','Jenis','Total Donasi (Rp)','Terakhir Donasi'],ro:[['DON-841','Ahmad Hidayat','Perorangan','12.500.000','20 Jun 2026'],['DON-842','PT Berkah Abadi','Perusahaan','85.000.000','15 Jun 2026'],['DON-843','Komunitas Peduli','Komunitas','28.000.000','10 Jun 2026'],['DON-844','Siti Rahayu','Perorangan','5.000.000','18 Jun 2026']],ac:['+ Tambah Donatur','Import Data','Kirim Lap. Donasi','Segmentasi']},
+    'Kanal Donasi':{tp:'master',ic:'📡',ti:'Kanal Donasi',de:'Konfigurasi kanal penerimaan donasi: bank, QRIS, payment gateway, dan lainnya.',st:[['Kanal Aktif','12'],['Online','8'],['Offline','4'],['Integrasi API','5']],co:['Kode','Nama Kanal','Jenis','Biaya Admin','Status'],ro:[['KNL-001','Bank BSI Transfer','Bank Transfer','0%','Aktif'],['KNL-002','QRIS Nasional','QRIS','0,3%','Aktif'],['KNL-003','Midtrans Gateway','Payment Gateway','2,9%','Aktif'],['KNL-004','Kasir Langsung','Tunai','0%','Aktif']],ac:['+ Tambah Kanal','Test Koneksi','Konfigurasi Webhook','Rekap per Kanal']},
+    'Produk Donasi':{tp:'master',ic:'🏷️',ti:'Produk Donasi',de:'Jenis produk donasi: Zakat, Infak, Sedekah, Wakaf, beserta aturan akuntansinya.',st:[['Produk Aktif','14'],['Produk Zakat','4'],['Infak/Sedekah','7'],['Wakaf','3']],co:['Kode','Nama Produk','Jenis','Akun','Kalkulator'],ro:[['PRD-001','Zakat Mal','Zakat','4-1100','Ya'],['PRD-002','Zakat Fitrah','Zakat','4-1110','Ya'],['PRD-003','Infak Bebas','Infak','4-2100','Tidak'],['PRD-004','Wakaf Produktif','Wakaf','4-3100','Tidak']],ac:['+ Tambah Produk','Atur Kalkulator Zakat','Publikasi ke Web','Lihat Performa']},
+    'Campaign':{tp:'master',ic:'📣',ti:'Campaign Penghimpunan',de:'Kelola kampanye dengan target, periode, channel, dan tracking progres.',st:[['Campaign Aktif','8'],['Total Target','15 M'],['Terkumpul','11,2 M'],['% Tercapai','74,7%']],co:['Kode','Nama Campaign','Target (Rp)','Terkumpul (Rp)','Status'],ro:[['CAM-001','Ramadan Berkhidmat 2026','5.000.000.000','4.200.000.000','Selesai'],['CAM-002','Beasiswa Generasi Emas','2.000.000.000','1.450.000.000','Berjalan'],['CAM-003','Wakaf Produktif 1000','3.000.000.000','1.800.000.000','Berjalan'],['CAM-004','Qurban Berbagi 2026','2.500.000.000','800.000.000','Berjalan']],ac:['+ Buat Campaign','Update Progress','Laporan Campaign','Tutup Campaign']},
+    'Collector/Fundraiser':{tp:'master',ic:'🙋',ti:'Collector / Fundraiser',de:'Data fundraiser internal dan collector lapangan beserta target dan performa.',st:[['Fundraiser Aktif','124'],['Target Bulan Ini','8,5 M'],['Terkumpul','6,2 M'],['% Target','72,9%']],co:['Kode','Nama Fundraiser','Wilayah','Target (Rp)','Terkumpul (Rp)'],ro:[['FR-001','Andika Pratama','DKI Jakarta','500.000.000','420.000.000'],['FR-002','Rina Marlina','Jawa Barat','400.000.000','385.000.000'],['FR-003','Deden Suryadi','Jawa Timur','350.000.000','268.000.000'],['FR-004','Maya Sari','Sumatera Utara','250.000.000','142.000.000']],ac:['+ Tambah Fundraiser','Set Target','Laporan Performa','Kirim Feedback']},
+    'Target Penghimpunan':{tp:'master',ic:'🎯',ti:'Target Penghimpunan',de:'Penetapan target penghimpunan per periode, produk, cabang, dan fundraiser.',st:[['Target Tahun','120 M'],['Realisasi YTD','72,4 M'],['% YTD','60,3%'],['Proyeksi','94,8 M']],co:['Periode','Produk','Target (Rp)','Realisasi (Rp)','Selisih (Rp)'],ro:[['Jan–Jun 2026','Zakat','45.000.000.000','38.200.000.000','-6,8 M'],['Jan–Jun 2026','Infak/Sedekah','20.000.000.000','18.500.000.000','-1,5 M'],['Jan–Jun 2026','Wakaf','15.000.000.000','15.700.000.000','+700 Jt'],['Jan–Jun 2026','Campaign Spesial','10.000.000.000','–','-10 M']],ac:['+ Set Target Baru','Revisi Target','Simulasi Proyeksi','Export Target']},
+    'Input Donasi':{tp:'form',ic:'💳',ti:'Input Donasi',de:'Pencatatan donasi masuk dari semua kanal dengan validasi dan penerbitan kwitansi otomatis.',fi:[['Tanggal Donasi','date','2026-06-20'],['Donatur / Muzakki','text','Ahmad Hidayat'],['Kanal Donasi','select','Transfer Bank|QRIS|Cash|Payment Gateway'],['Produk Donasi','select','Zakat Mal|Zakat Fitrah|Infak Bebas|Sedekah|Wakaf Produktif'],['Nominal (Rp)','number','2500000'],['No. Transaksi Bank','text','BSI-20260620-8812'],['Campaign','select','(Tidak ada)|Ramadan 2026|Beasiswa Generasi Emas|Qurban 2026'],['Catatan','textarea','Donasi via transfer BSI, perlu kirim kwitansi digital ke email donatur.']],wf:['Input Donasi','Validasi Mutasi','Kirim Kwitansi','Posting ke Buku Besar']},
+    'Konfirmasi Pembayaran':{tp:'approval',ic:'🔔',ti:'Konfirmasi Pembayaran',de:'Verifikasi donasi yang masuk melalui transfer manual dan konfirmasi dari donatur.',st:[['Perlu Konfirmasi','28'],['Dikonfirmasi Hari Ini','45'],['Nominal Pending','12,5 M'],['Auto-Match','18']],co:['Donatur','Nominal (Rp)','Kanal','Tgl Transfer','Status'],ro:[['Ahmad Hidayat','2.500.000','BSI Transfer','20 Jun','Perlu Konfirmasi'],['PT Berkah Abadi','25.000.000','Mandiri Transfer','20 Jun','Perlu Konfirmasi'],['Siti Rahayu','500.000','QRIS','20 Jun','Auto Terkonfirmasi'],['Anonim','1.000.000','BSI Transfer','19 Jun','Terkonfirmasi']],ac:['Konfirmasi Manual','Tolak Transfer','Match Otomatis','Export Daftar']},
+    'Kwitansi Donasi':{tp:'form',ic:'🧾',ti:'Kwitansi Donasi',de:'Penerbitan dan pengiriman kwitansi donasi digital dan cetak kepada donatur.',fi:[['No. Kwitansi','text','KWT-2026-08812'],['Tanggal Donasi','date','2026-06-20'],['Nama Donatur','text','Ahmad Hidayat'],['Produk','select','Zakat Mal|Infak Bebas|Sedekah|Wakaf'],['Nominal (Rp)','number','2500000'],['Ucapan','select','Terima kasih atas donasi Anda|Semoga menjadi amal jariyah|Jazakumullah khairan'],['Kirim Via','select','Email|WhatsApp|Email + WhatsApp|Cetak']],wf:['Generate Kwitansi','Preview & Validasi','Kirim ke Donatur','Arsipkan']},
+    'Import Mutasi Bank':{tp:'form',ic:'📥',ti:'Import Mutasi Bank',de:'Import rekening koran bank secara bulk untuk proses matching donasi otomatis.',fi:[['Bank / Rekening','select','Bank BSI – Zakat|Bank BSI – Infak|Bank Mandiri|BCA'],['Periode Statement','text','1 Jun 2026 – 30 Jun 2026'],['File Rekening Koran','text','mutasi_bsi_jun2026.xlsx'],['Metode Matching','select','NIK + Nominal|Kode Unik|Nama + Nominal|Manual'],['Aksi Setelah Import','select','Match Otomatis & Preview|Langsung Posting|Review Manual Semua'],['Catatan','textarea','Import mutasi bulanan untuk rekap donasi transfer bulan Juni 2026.']],wf:['Upload File','Parsing & Validasi','Auto Matching','Review Unmatched','Konfirmasi & Posting']},
+    'Follow Up Donatur':{tp:'form',ic:'📞',ti:'Follow Up Donatur',de:'Input aktivitas follow-up donatur untuk menjaga loyalitas dan re-donasi.',fi:[['Tanggal Kontak','date','2026-06-20'],['Donatur','text','Ahmad Hidayat'],['Kanal Kontak','select','Telepon|WhatsApp|Email|Kunjungan Langsung'],['Jenis Follow Up','select','Reminder Zakat|Ucapan Terima Kasih|Laporan Dana|Undangan Event'],['Status','select','Berhasil Dihubungi|Tidak Bisa Dihubungi|Perlu Follow Up Lanjut'],['Catatan','textarea','Donatur berencana donasi kembali bulan depan, perlu diingatkan H-3.']],wf:['Penugasan Staff','Kontak Donatur','Input Hasil','Update CRM','Jadwalkan Ulang']},
+    'Approval Donasi':{tp:'approval',ic:'✅',ti:'Approval Donasi',de:'Persetujuan donasi nilai besar atau non-standar sebelum pencatatan resmi.',st:[['Perlu Approval','5'],['Nilai Total','1,45 M'],['Avg Waktu Approval','2,3 jam'],['SLA 24 Jam','100%']],co:['Donatur','Produk','Nominal (Rp)','Diajukan','Keterangan'],ro:[['Yayasan Arrahman','Wakaf Produktif','500.000.000','20 Jun','Nilai > 100 Jt'],['PT Maju Bersama','Infak Terikat','250.000.000','20 Jun','Butuh MOU'],['Anonim','Zakat Mal','200.000.000','19 Jun','Verifikasi Muzakki'],['Komunitas Masjid','Infak Bebas','500.000.000','19 Jun','Nilai > 100 Jt']],ac:['Setujui','Minta Klarifikasi','Tolak','Delegasi ke Direksi']},
+    'Refund/Koreksi Donasi':{tp:'form',ic:'↩️',ti:'Refund / Koreksi Donasi',de:'Proses pengembalian atau koreksi donasi karena kesalahan input atau permintaan donatur.',fi:[['No. Donasi Asal','text','DON-2026-08812'],['Tanggal Pengajuan','date','2026-06-20'],['Donatur','text','Ahmad Hidayat'],['Jenis Koreksi','select','Refund Penuh|Refund Sebagian|Koreksi Produk|Koreksi Nominal'],['Alasan','select','Kesalahan Input|Permintaan Donatur|Donasi Ganda|Salah Kanal'],['Nominal Koreksi (Rp)','number','2500000'],['Catatan','textarea','Donasi tercatat dua kali karena double submit di sistem.']],wf:['Pengajuan Koreksi','Verifikasi Data Asal','Approval Manager','Proses Refund/Koreksi']},
+    'Laporan Donasi':{tp:'report',ic:'💰',ti:'Laporan Donasi',de:'Rekap donasi per kanal, produk, campaign, dan fundraiser dengan analisis tren.',co:['Kanal','Produk','Transaksi','Nominal (Rp)','Growth'],ro:[['Transfer Bank','Zakat','342','820.000.000','+12%'],['QRIS','Infak','986','415.000.000','+28%'],['Payment Gateway','Sedekah','572','310.000.000','+19%'],['Cash','Wakaf','124','185.000.000','+5%']],su:[['Total Donasi','12.024'],['Total Nilai','1,73 M'],['Avg/Transaksi','143.900'],['Growth','+18,2%']],ba:[['Jan',55],['Feb',72],['Mar',65],['Apr',88],['Mei',78],['Jun',95]]},
+    'Rekap Donatur':{tp:'report',ic:'👥',ti:'Rekap & Segmentasi Donatur',de:'Analisis donatur berdasarkan frekuensi, nilai, retensi, dan segmentasi loyalitas.',co:['Segmen','Jumlah Donatur','Total Donasi (Rp)','Avg Donasi','Retensi'],ro:[['Platinum (>100 Jt)','234','82.000.000.000','350 Jt','94%'],['Gold (10-100 Jt)','1.240','28.500.000.000','23 Jt','88%'],['Silver (1-10 Jt)','5.820','12.400.000.000','2,1 Jt','72%'],['Bronze (<1 Jt)','17.526','4.200.000.000','240 Rb','45%']],su:[['Total Donatur','24.820'],['Donatur Loyal','8.412'],['Retensi Avg','72%'],['Churn/Bln','234']],ba:[['Plat',94],['Gold',88],['Silver',72],['Bronze',45],['Baru',30],['Lain',20]]},
+    'Performa Campaign':{tp:'report',ic:'📣',ti:'Performa Campaign',de:'Analisis efektivitas campaign penghimpunan: donasi terhimpun, share, konversi.',co:['Campaign','Target (Rp)','Terhimpun (Rp)','% Target','Konversi'],ro:[['Ramadan Berkhidmat','5 M','4,2 M','84%','8,2%'],['Beasiswa Generasi Emas','2 M','1,45 M','72,5%','5,4%'],['Wakaf Produktif 1000','3 M','1,8 M','60%','3,1%'],['Qurban Berbagi 2026','2,5 M','0,8 M','32%','2,8%']],su:[['Campaign Aktif','8'],['Total Target','15 M'],['Total Terhimpun','11,2 M'],['Avg Konversi','5,4%']],ba:[['Ramadan',84],['Bea',73],['Wakaf',60],['Qurban',32],['Darurat',90],['Lain',55]]},
+    'Performa Fundraiser':{tp:'report',ic:'🙋',ti:'Performa Fundraiser',de:'Peringkat dan analisis kinerja fundraiser berdasarkan target, realisasi, donatur baru.',co:['Fundraiser','Wilayah','Target (Rp)','Realisasi (Rp)','Donatur Baru'],ro:[['Andika Pratama','DKI Jakarta','500 Jt','420 Jt','28'],['Rina Marlina','Jawa Barat','400 Jt','385 Jt','34'],['Deden Suryadi','Jawa Timur','350 Jt','268 Jt','19'],['Maya Sari','Sumatera Utara','250 Jt','142 Jt','12']],su:[['Total Fundraiser','124'],['Target Kolektif','8,5 M'],['Realisasi','6,2 M'],['Avg Pencapaian','72,9%']],ba:[['Andika',84],['Rina',96],['Deden',77],['Maya',57],['Budi',70],['Sari',65]]},
+    'Laporan Kanal':{tp:'report',ic:'📡',ti:'Laporan per Kanal',de:'Analisis komposisi dan tren donasi berdasarkan kanal penerimaan.',co:['Kanal','Transaksi','Total Nilai (Rp)','Avg Transaksi','% dari Total'],ro:[['Bank Transfer','2.420','1.250.000.000','516 Rb','45,2%'],['QRIS','4.820','680.000.000','141 Rb','24,6%'],['Payment Gateway','1.960','480.000.000','245 Rb','17,4%'],['Tunai Langsung','820','348.000.000','424 Rb','12,6%']],su:[['Total Kanal','12'],['Terbesar','Bank Transfer'],['Tumbuh Tercepat','QRIS +48%'],['Biaya Total','12,4 Jt']],ba:[['Bank',78],['QRIS',65],['PG',52],['Tunai',38],['Cek',12],['Lain',8]]},
+    'Retensi Donatur':{tp:'report',ic:'🔄',ti:'Analisis Retensi Donatur',de:'Analisis donatur berulang, donatur baru, dan donatur yang berhenti (churn).',co:['Bulan','Donatur Baru','Donatur Berulang','Churn','Net Retensi'],ro:[['Januari 2026','342','6.420','189','96,7%'],['Februari 2026','298','6.380','224','96,1%'],['Maret 2026','412','6.520','198','97,0%'],['Juni 2026','456','6.784','156','97,8%']],su:[['Retensi Avg','96,4%'],['Churn Avg/Bln','191'],['Donatur Baru Avg','377/bln'],['Net Growth','+186/bln']],ba:[['Jan',97],['Feb',96],['Mar',97],['Apr',95],['Mei',96],['Jun',98]]},
+    'Vendor':{tp:'master',ic:'🏪',ti:'Data Vendor',de:'Daftar vendor/supplier resmi beserta data legal, kontak, rekening, dan status.',st:[['Vendor Aktif','145'],['Terverifikasi','132'],['Kontrak Aktif','48'],['Perlu Evaluasi','12']],co:['Kode','Nama Vendor','Kategori','NPWP','Status'],ro:[['VND-001','PT Sumber Makmur','Perangkat IT','02.345.678.9-012','Terverifikasi'],['VND-002','CV Amanah Sejahtera','ATK & Perlengkapan','03.456.789.0-013','Terverifikasi'],['VND-003','PT Logistik Raya','Jasa Pengiriman','04.567.890.1-014','Aktif'],['VND-004','Toko Berkah','Konsumsi','–','Non-PKP']],ac:['+ Tambah Vendor','Evaluasi Vendor','Upload Dokumen','Blacklist']},
+    'Aset':{tp:'master',ic:'🏗️',ti:'Data Aset Tetap',de:'Manajemen aset tetap organisasi: tanah, bangunan, kendaraan, dan peralatan.',st:[['Total Aset','856'],['Nilai Buku','12,4 M'],['Penyusutan YTD','1,8 M'],['Perlu Service','14']],co:['Kode Aset','Nama Aset','Kategori','Nilai Buku (Rp)','Kondisi'],ro:[['AST-001','Gedung Kantor Pusat','Bangunan','4.200.000.000','Baik'],['AST-002','Toyota Avanza – Operasional','Kendaraan','185.000.000','Baik'],['AST-003','Server IBM x3850','Peralatan IT','235.000.000','Baik'],['AST-004','Laptop Dell 14 – IT','Peralatan IT','12.500.000','Rusak Ringan']],ac:['+ Tambah Aset','Update Kondisi','Hitung Penyusutan','Cetak Kartu Aset']},
+    'Inventaris':{tp:'master',ic:'📦',ti:'Inventaris Barang',de:'Stok barang habis pakai, ATK, dan perlengkapan operasional per unit/lokasi.',st:[['Jenis Item','234'],['Stok Kritis','18'],['Nilai Stok','245 Jt'],['Keluar Bulan Ini','87']],co:['Kode Item','Nama Barang','Satuan','Stok','Stok Min.'],ro:[['INV-001','Kertas HVS A4 80gr','Rim','45','20'],['INV-002','Tinta Printer Epson','Botol','8','10'],['INV-003','Masker Medis','Box','12','5'],['INV-004','Hand Sanitizer 500ml','Botol','3','5']],ac:['+ Tambah Barang','Penerimaan Barang','Pengeluaran Barang','Laporan Stok']},
+    'Jenis Surat':{tp:'master',ic:'✉️',ti:'Jenis Surat',de:'Klasifikasi surat: resmi, edaran, keputusan, perjanjian, dan lainnya.',st:[['Jenis Surat','24'],['Template Tersedia','18'],['Paling Sering','Surat Tugas'],['Update','Jan 2026']],co:['Kode','Nama Jenis','Format Nomor','Template','Status'],ro:[['ST','Surat Tugas','ST/[UNIT]/[NO]/[BLN]/[THN]','Ada','Aktif'],['SK','Surat Keputusan','SK/[NO]/[THN]','Ada','Aktif'],['SE','Surat Edaran','SE/[NO]/[THN]','Ada','Aktif'],['PKS','Perjanjian Kerjasama','PKS/[NO]/[THN]','Tidak','Aktif']],ac:['+ Tambah Jenis','Edit Format Nomor','Upload Template','Nonaktifkan']},
+    'Template Dokumen':{tp:'master',ic:'📄',ti:'Template Dokumen',de:'Kelola template dokumen resmi: kontrak, proposal, laporan, dan surat standar.',st:[['Template Aktif','32'],['Digunakan Bulan Ini','156'],['Draft','4'],['Perlu Update','5']],co:['Nama Template','Jenis','Format','Update Terakhir','Status'],ro:[['Template Kontrak Vendor','Perjanjian','DOCX','15 Mar 2026','Aktif'],['Template Laporan Program','Laporan','DOCX','10 Apr 2026','Aktif'],['Template Proposal Campaign','Proposal','PPTX','20 Jan 2026','Aktif'],['Template Surat Tugas','Surat','DOCX','12 Feb 2026','Aktif']],ac:['+ Upload Template','Edit Template','Arsipkan','Lihat Penggunaan']},
+    'Ruang & Kendaraan':{tp:'master',ic:'🚗',ti:'Ruang & Kendaraan',de:'Manajemen booking ruang rapat dan kendaraan dinas untuk keperluan operasional.',st:[['Ruang Tersedia','12'],['Kendaraan','8'],['Booking Hari Ini','5'],['Konflik Jadwal','1']],co:['Aset','Jenis','Kapasitas','Status Hari Ini','Peminjam'],ro:[['Ruang Rapat A','Ruang Rapat','20 orang','Terpakai 09–12','Divisi Program'],['Ruang Rapat B','Ruang Rapat','10 orang','Tersedia','–'],['Aula Utama','Aula','200 orang','Tersedia','–'],['Avanza B 1234 XX','Kendaraan','5 orang','Dipinjam','Budi – Perjalanan Dinas']],ac:['+ Buat Booking','Lihat Kalender','Batalkan Booking','Laporan Penggunaan']},
+    'Permintaan Pembelian':{tp:'form',ic:'🛒',ti:'Permintaan Pembelian (PR)',de:'Pengajuan kebutuhan pembelian barang/jasa oleh unit kerja kepada pengadaan.',fi:[['Tanggal Permintaan','date','2026-06-20'],['Unit Pemohon','select','Operasional|Program|Keuangan|IT|SDM'],['Kategori Kebutuhan','select','ATK|Perangkat IT|Jasa|Aset|Konsumsi|Lain-lain'],['Nama Barang/Jasa','text','Laptop Dell 14 Inch – 2 unit'],['Vendor Usulan','text','PT Sumber Makmur'],['Estimasi Nilai (Rp)','number','25000000'],['Prioritas','select','Normal|Tinggi|Mendesak'],['Kebutuhan','textarea','Penggantian laptop yang rusak untuk staf IT, mendesak untuk operasional.']],wf:['Input PR','Review Kepala Unit','Cek Anggaran','Approve','Proses PO']},
+    'Purchase Order':{tp:'form',ic:'📋',ti:'Purchase Order (PO)',de:'Penerbitan PO resmi ke vendor berdasarkan PR yang telah disetujui.',fi:[['No. PO','text','PO-2026-0234'],['Tanggal PO','date','2026-06-20'],['No. PR Asal','text','PR-2026-0189'],['Vendor','select','PT Sumber Makmur|CV Amanah|PT Logistik Raya'],['Deskripsi Item','text','Laptop Dell Inspiron 14, Core i5, 8GB RAM, 512GB SSD'],['Jumlah','number','2'],['Harga Satuan (Rp)','number','12500000'],['Tanggal Kirim Diharapkan','date','2026-06-27']],wf:['Input PO','Review Pengadaan','TTD Manager','Kirim ke Vendor','Tunggu Konfirmasi']},
+    'Penerimaan Barang':{tp:'form',ic:'📦',ti:'Penerimaan Barang (GR)',de:'Pencatatan penerimaan barang dari vendor beserta inspeksi kualitas dan kuantitas.',fi:[['Tanggal Terima','date','2026-06-27'],['No. PO','text','PO-2026-0234'],['Vendor','text','PT Sumber Makmur'],['No. Surat Jalan','text','SJ/SMK/2026/0456'],['Item Diterima','text','Laptop Dell Inspiron 14'],['Jumlah Diterima','number','2'],['Kondisi','select','Baik Semua|Sebagian Rusak|Tidak Sesuai Spesifikasi'],['Catatan Inspeksi','textarea','Semua unit dalam kondisi baik, sesuai dengan spesifikasi PO.']],wf:['Terima Fisik','Inspeksi Kualitas','Input GR','Update Stok/Aset','Approve Pembayaran']},
+    'Peminjaman Aset':{tp:'form',ic:'🔑',ti:'Peminjaman Aset',de:'Proses peminjaman aset/kendaraan untuk kegiatan dinas atau eksternal.',fi:[['Tanggal Pinjam','date','2026-06-20'],['Peminjam','text','Ahmad Sopian'],['Unit Kerja','select','Program|Operasional|Keuangan|IT'],['Aset yang Dipinjam','select','Avanza B 1234 XX|Laptop Cadangan|Kamera DSLR|LCD Projector'],['Keperluan','text','Monitoring program di Bandung'],['Tanggal Kembali Diharapkan','date','2026-06-22'],['Catatan','textarea','Perlu BBM dan tol untuk perjalanan Bandung PP.']],wf:['Pengajuan Pinjaman','Cek Ketersediaan','Approve','Serah Terima','Pengembalian']},
+    'Surat Masuk':{tp:'form',ic:'📬',ti:'Input Surat Masuk',de:'Pencatatan dan disposisi surat masuk dari instansi eksternal atau internal.',fi:[['Tanggal Terima','date','2026-06-20'],['No. Agenda','text','SM-2026-0567'],['Pengirim','text','Kementerian Agama RI'],['Perihal','text','Undangan Koordinasi Program Zakat Nasional'],['Tanggal Surat','date','2026-06-17'],['Klasifikasi','select','Sangat Penting|Penting|Biasa'],['Tujuan Disposisi','select','Direktur Utama|Direktur Program|Kepala Divisi|Staf Terkait'],['Catatan Disposisi','textarea','Mohon hadir atau kirimkan perwakilan pada tanggal yang ditentukan.']],wf:['Input Surat','Scan & Upload','Disposisi','Proses oleh Penerima','Arsipkan']},
+    'Surat Keluar':{tp:'form',ic:'📮',ti:'Pembuatan Surat Keluar',de:'Pembuatan dan penerbitan surat resmi keluar dari organisasi.',fi:[['Jenis Surat','select','Surat Tugas|Surat Keputusan|Surat Edaran|Undangan|Perjanjian'],['Kepada','text','Kepala Dinas Sosial Kota Bandung'],['Perihal','text','Permohonan Data Keluarga Kurang Mampu'],['Tanggal Surat','date','2026-06-20'],['Penanda Tangan','select','Direktur Utama|Direktur Program|Kepala Divisi'],['Lampiran','text','Proposal Kerjasama Program Sosial'],['Isi Singkat','textarea','Permohonan data dan kerjasama dalam program penyaluran bantuan sosial.']],wf:['Draft Surat','Review Atasan','Tanda Tangan','Kirim','Arsipkan']},
+    'Disposisi':{tp:'approval',ic:'✍️',ti:'Antrian Disposisi Surat',de:'Daftar surat masuk yang memerlukan disposisi dan tindaklanjut dari pimpinan.',st:[['Perlu Disposisi','12'],['Belum Ditindaklanjuti','8'],['Terlambat','2'],['Selesai Hari Ini','5']],co:['No. Agenda','Pengirim','Perihal','Masuk','SLA'],ro:[['SM-567','Kemenag RI','Undangan Koordinasi','20 Jun','Hari ini'],['SM-566','Pemkot Bandung','MOU Penyaluran Bantuan','19 Jun','Besok'],['SM-565','BAZNAS Pusat','Laporan Keuangan Q1','18 Jun','Terlampaui'],['SM-564','Auditor Eksternal','Jadwal Audit 2026','17 Jun','2 hari']],ac:['Disposisi','Teruskan','Tandai Selesai','Arsipkan']},
+    'Laporan Aset':{tp:'report',ic:'🏗️',ti:'Laporan Aset Tetap',de:'Rekap aset tetap, nilai buku, penyusutan, dan kondisi fisik per lokasi.',co:['Kategori','Jumlah','Nilai Perolehan (Rp)','Akum. Penyusutan (Rp)','Nilai Buku (Rp)'],ro:[['Tanah & Bangunan','4','8.200.000.000','820.000.000','7.380.000.000'],['Kendaraan','8','1.480.000.000','592.000.000','888.000.000'],['Peralatan IT','124','1.240.000.000','620.000.000','620.000.000'],['Furnitur','456','345.000.000','172.500.000','172.500.000']],su:[['Total Aset','856'],['Nilai Buku Total','12,4 M'],['Penyusutan YTD','1,8 M'],['Nilai Rusak','245 Jt']],ba:[['Bangunan',90],['Kendaraan',60],['IT',50],['Furnitur',35],['Alat',25]]},
+    'Laporan Pengadaan':{tp:'report',ic:'🛒',ti:'Laporan Pengadaan',de:'Rekap pengadaan berdasarkan vendor, kategori, nilai, SLA, dan status dokumen.',co:['No. PO','Unit','Vendor','Nilai (Rp)','Status'],ro:[['PO-234','IT','PT Sumber Makmur','25.000.000','PO Terbit'],['PO-233','Program','CV Amanah','7.250.000','Diterima'],['PO-232','Operasional','PT Logistik','11.800.000','Perlu Pembayaran'],['PO-231','SDM','Toko Berkah','1.500.000','Selesai']],su:[['PO Bulan Ini','48'],['Total Nilai','385 Jt'],['Vendor Aktif','23'],['PO Terlambat','4']],ba:[['IT',72],['Program',58],['Ops',65],['SDM',28],['Keu',40],['Lain',22]]},
+    'Laporan Inventaris':{tp:'report',ic:'📦',ti:'Laporan Inventaris',de:'Status stok barang habis pakai, pergerakan keluar-masuk, dan item kritis.',co:['Kategori','Total Item','Nilai Stok (Rp)','Keluar Bulan Ini','Stok Kritis'],ro:[['ATK','145 jenis','45.000.000','234 item','8 jenis'],['Perangkat IT','32 jenis','125.000.000','12 item','2 jenis'],['Konsumsi','28 jenis','12.000.000','456 item','5 jenis'],['Kebersihan','24 jenis','8.000.000','89 item','3 jenis']],su:[['Total Item','234 jenis'],['Nilai Total','190 Jt'],['Item Kritis','18'],['Perlu Reorder','12']],ba:[['ATK',65],['IT',90],['Konsumsi',42],['Kebersihan',35],['Alkes',28],['Lain',18]]},
+    'Log Surat':{tp:'report',ic:'✉️',ti:'Log Surat',de:'Histori surat masuk dan keluar beserta status disposisi dan tindaklanjut.',co:['No. Agenda','Jenis','Perihal','Tanggal','Status'],ro:[['SM-567','Masuk','Undangan Kemenag','20 Jun','Perlu Disposisi'],['SK-423','Keluar','Surat Tugas Program','20 Jun','Terkirim'],['SM-566','Masuk','MOU Pemkot','19 Jun','Diproses'],['SK-422','Keluar','Laporan ke BAZNAS','19 Jun','Terkirim']],su:[['Surat Masuk Bulan Ini','87'],['Surat Keluar','124'],['Perlu Tindaklanjut','12'],['Terlambat','3']],ba:[['Jan',55],['Feb',62],['Mar',70],['Apr',58],['Mei',72],['Jun',68]]},
+    'Rekap Vendor':{tp:'report',ic:'🏪',ti:'Rekap & Evaluasi Vendor',de:'Evaluasi kinerja vendor: ketepatan pengiriman, kualitas, dan nilai transaksi.',co:['Vendor','Kategori','Transaksi','Total Nilai (Rp)','Skor Evaluasi'],ro:[['PT Sumber Makmur','IT','12','145.000.000','8.5/10'],['CV Amanah','ATK','34','28.500.000','9.1/10'],['PT Logistik Raya','Jasa','8','85.000.000','7.8/10'],['Toko Berkah','Konsumsi','45','18.200.000','8.2/10']],su:[['Vendor Aktif','145'],['Total Transaksi','456'],['Total Nilai','1,2 M'],['Skor Avg','8,1/10']],ba:[['PT Sumber',85],['CV Amanah',91],['PT Logistik',78],['T.Berkah',82],['Lain',70]]},
+    'Laporan Pemakaian Fasilitas':{tp:'report',ic:'🚗',ti:'Laporan Pemakaian Fasilitas',de:'Rekapitulasi penggunaan ruang rapat dan kendaraan dinas per periode.',co:['Fasilitas','Jenis','Penggunaan/Bln','Peminjam Terbanyak','% Utilisasi'],ro:[['Ruang Rapat A','Ruang','48x','Divisi Program','80%'],['Ruang Rapat B','Ruang','32x','Divisi Keuangan','53%'],['Avanza B 1234','Kendaraan','22 hari','Program Officer','73%'],['Innova B 5678','Kendaraan','18 hari','Direktur','60%']],su:[['Fasilitas Terpantau','20'],['Avg Utilisasi','67%'],['Booking Bulan Ini','185'],['Pembatalan','12']],ba:[['Rapat A',80],['Rapat B',53],['Avanza',73],['Innova',60],['Aula',35],['Kamera',28]]},
+    'User':{tp:'master',ic:'👤',ti:'Manajemen User',de:'Manajemen user akun aplikasi: status, role, cabang, dan riwayat akses.',st:[['User Aktif','248'],['Online Sekarang','34'],['Akun Terkunci','5'],['Perlu Update','12']],co:['Username','Nama Lengkap','Role','Cabang','Status'],ro:[['arifin.k','Ahmad Arifin Kurniatama','Finance Manager','Kantor Pusat','Aktif'],['siti.r','Siti Rahma Dewi','Program Officer','Cabang Bandung','Aktif'],['budi.h','Budi Hartono','Fundraising Staff','Cabang Surabaya','Aktif'],['deni.s','Deni Setiawan','Branch Admin','Cabang Makassar','Non-aktif']],ac:['+ Tambah User','Reset Password','Kunci/Buka Akun','Log Aktivitas']},
+    'Role & Permission':{tp:'master',ic:'🔐',ti:'Role & Permission',de:'Definisi role, hak akses menu, dan kontrol per fitur untuk setiap role.',st:[['Role Terdefinisi','12'],['User Aktif','248'],['Menu Kritikal','24'],['Konflik Akses','1']],co:['Nama Role','Domain','User Aktif','Menu Diakses','Fitur Kritikal'],ro:[['Super Admin','Semua Domain','3','All','Post Jurnal, Approval Semua'],['Finance Manager','Keuangan, Program','8','38','Approval Keuangan, Posting'],['Program Officer','Program','24','22','Approval Penyaluran'],['Branch Admin','Administrasi, Program','45','18','Input Data, View Laporan']],ac:['+ Tambah Role','Edit Permission','Kloning Role','Audit Akses']},
+    'Cabang':{tp:'master',ic:'🏢',ti:'Data Cabang',de:'Daftar cabang/unit kerja organisasi dengan hierarki, lokasi, dan atribut operasional.',st:[['Total Cabang','18'],['Aktif','16'],['Kantor Pusat','1'],['Kantor Cabang','15']],co:['Kode','Nama Cabang','Kota','Kepala Cabang','Status'],ro:[['CB-000','Kantor Pusat','Jakarta','Dr. Muhammad Amin','Aktif'],['CB-001','Cabang Jawa Barat','Bandung','Ahmad Fauzi','Aktif'],['CB-002','Cabang Jawa Timur','Surabaya','Siti Aminah','Aktif'],['CB-003','Cabang Sulsel','Makassar','Budi Hartono','Aktif']],ac:['+ Tambah Cabang','Edit Detail','Set Kepala Cabang','Nonaktifkan']},
+    'Unit Kerja':{tp:'master',ic:'🏗️',ti:'Unit Kerja',de:'Struktur divisi dan departemen untuk hierarki workflow dan laporan.',st:[['Total Unit','34'],['Divisi Utama','8'],['Departemen','26'],['Jabatan Tersedia','48']],co:['Kode','Nama Unit','Induk','Kepala','Level'],ro:[['DIV-KU','Divisi Keuangan','Direktorat','CFO','Divisi'],['DEP-AK','Dept. Akuntansi','Div. Keuangan','Manager Akuntansi','Departemen'],['DIV-PRG','Divisi Program','Direktorat','Dir. Program','Divisi'],['DEP-PM','Dept. Program Mgr','Div. Program','PM Senior','Departemen']],ac:['+ Tambah Unit','Set Kepala','Atur Hierarki','Ekspor Struktur Org']},
+    'Jabatan':{tp:'master',ic:'🎖️',ti:'Jabatan',de:'Master jabatan dalam organisasi dengan level, grade, dan wewenang approval.',st:[['Total Jabatan','48'],['Level Jabatan','6'],['Punya Kewenangan Approval','18'],['Jabatan Kosong','5']],co:['Kode','Nama Jabatan','Level','Grade','Limit Approval (Rp)'],ro:[['JAB-001','Direktur Utama','L1','Executive','Tidak Terbatas'],['JAB-002','Kepala Divisi','L3','Manager','500 Jt'],['JAB-003','Manager','L4','Supervisor','100 Jt'],['JAB-004','Staff Senior','L5','Staff','10 Jt']],ac:['+ Tambah Jabatan','Atur Level Approval','Ekspor Grading','Cetak Struktur']},
+    'Parameter Sistem':{tp:'master',ic:'⚙️',ti:'Parameter Sistem',de:'Konfigurasi global sistem: format nomor, toleransi, threshold, dan integrasi.',st:[['Parameter Aktif','78'],['Kritis','12'],['Diubah Bulan Ini','4'],['Perlu Review','3']],co:['Kelompok','Parameter','Nilai','Terakhir Diubah','Oleh'],ro:[['Keuangan','Batas Nilai Approval L2','100.000.000','10 Jan 2026','Super Admin'],['Notifikasi','Hari Reminder Invoice','3','15 Mar 2026','IT Admin'],['Sistem','Timeout Sesi (menit)','30','01 Jun 2026','IT Admin'],['Laporan','Format Tanggal','DD/MM/YYYY','01 Jan 2026','Super Admin']],ac:['Edit Parameter','Ekspor Config','Reset Default','Log Perubahan']},
+    'Workflow Approval':{tp:'master',ic:'🔀',ti:'Workflow Approval',de:'Konfigurasi alur persetujuan multi-level untuk setiap jenis transaksi.',st:[['Workflow Aktif','24'],['Dengan Eskalasi','12'],['Level Maks','4'],['Diubah Bulan Ini','2']],co:['Transaksi','Approver L1','Approver L2','Approver L3','Batas Waktu'],ro:[['Jurnal Umum','Supervisor Keuangan','Manager Keuangan','–','24 jam'],['Kas Keluar > 50 Jt','Manager Keuangan','CFO','–','48 jam'],['Transfer Bank > 500 Jt','CFO','Direktur Utama','Dewan Pengawas','72 jam'],['Pengajuan Penyaluran','Program Manager','Dir. Program','CFO','48 jam']],ac:['+ Tambah Workflow','Edit Level','Tes Simulasi','Aktifkan/Nonaktifkan']},
+    'Setup Akses User':{tp:'form',ic:'🔑',ti:'Setup Akses User',de:'Pemberian dan konfigurasi akses user lintas domain, cabang, role, dan periode.',fi:[['Nama Lengkap','text','Siti Rahma Dewi'],['Email','text','siti.rahma@contoh.org'],['Cabang','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya|Cabang Makassar'],['Role','select','Finance Manager|Program Officer|Fundraising Staff|Branch Admin|Super Admin'],['Domain Akses','select','Keuangan + Program|Penghimpunan + Keuangan|Semua Domain|Kustom'],['Masa Berlaku Akses','date','2026-12-31'],['Catatan','textarea','Akses diberikan sesuai tanggung jawab operasional cabang Bandung.']],wf:['Permintaan Akses','Review HR/IT','Setup Role & Permission','Kirim Kredensial','Aktifkan']},
+    'Mutasi Cabang':{tp:'form',ic:'🔄',ti:'Mutasi Cabang User',de:'Proses perpindahan user dari satu cabang ke cabang lain dengan penyesuaian akses.',fi:[['User','text','Ahmad Arifin Kurniatama'],['Cabang Asal','select','Kantor Pusat|Cabang Bandung|Cabang Surabaya'],['Cabang Tujuan','select','Cabang Bandung|Cabang Surabaya|Cabang Makassar'],['Tanggal Efektif','date','2026-07-01'],['Jabatan Baru','select','Sama dengan sebelumnya|Finance Manager|Program Officer|Staff'],['Alasan Mutasi','select','Promosi|Rotasi|Penugasan Khusus|Kebutuhan Organisasi'],['Catatan','textarea','Mutasi dalam rangka penguatan kapasitas cabang Bandung.']],wf:['Pengajuan HR','Approval Direktur','Update Sistem','Notifikasi User','Efektif']},
+    'Delegasi Approval':{tp:'form',ic:'👥',ti:'Delegasi Approval',de:'Pengaturan delegasi wewenang approval saat pejabat tidak hadir.',fi:[['Pejabat Delegasi','text','Ahmad Arifin – CFO'],['Penerima Delegasi','select','Manager Keuangan|Supervisor Senior|Deputy CFO'],['Berlaku Dari','date','2026-06-21'],['Berlaku Sampai','date','2026-06-28'],['Jenis Transaksi','select','Semua Approval|Kas Keluar|Jurnal Posting|Transfer Bank'],['Batas Nilai Delegasi (Rp)','number','100000000'],['Catatan','textarea','Delegasi selama cuti tahunan CFO, 21–28 Juni 2026.']],wf:['Input Delegasi','Verifikasi HR','Kirim Notifikasi','Aktif','Otomatis Berakhir']},
+    'Audit Aktivitas':{tp:'report',ic:'🔍',ti:'Audit Aktivitas User',de:'Log aktivitas semua user di sistem: login, akses menu, perubahan data, approval.',co:['User','Aktivitas','Modul','Waktu','IP Address'],ro:[['arifin.k','Login Berhasil','Auth','20 Jun 09:14','192.168.1.24'],['siti.r','Tambah Pengajuan Penyaluran','Program','20 Jun 09:32','10.0.0.45'],['arifin.k','Approve Jurnal JU-041','Keuangan','20 Jun 10:05','192.168.1.24'],['budi.h','Export Laporan Donasi','Penghimpunan','20 Jun 10:28','10.0.1.12']],su:[['Aktivitas Hari Ini','2.482'],['User Aktif','34'],['Aktivitas Mencurigakan','0'],['Export Dilakukan','12']],ba:[['Login',85],['Input',72],['Approve',58],['Laporan',65],['Config',25],['Export',42]]},
+    'Import Master':{tp:'form',ic:'📥',ti:'Import Data Master',de:'Import bulk data master dari file Excel atau sistem lama ke sistem baru.',fi:[['Jenis Data Master','select','Akun Perkiraan|Donatur|Mustahik|Vendor|User|Program'],['File Import','text','master_data_akun_jun2026.xlsx'],['Metode Duplikasi','select','Skip Duplikat|Update Jika Ada|Tolak Semua Jika Duplikat'],['Validasi Sebelum Import','select','Preview 100 Baris|Validasi Penuh|Langsung Import'],['Notifikasi Setelah Import','select','Email ke Saya|Email ke Tim|Tidak Perlu'],['Catatan','textarea','Import master data baru sebelum go-live sistem versi 3.1.0.']],wf:['Upload File','Validasi Format','Preview & Mapping','Konfirmasi Import','Cek Hasil']},
+    'Backup Data':{tp:'form',ic:'💾',ti:'Backup Data',de:'Trigger backup manual atau jadwalkan backup otomatis database dan file attachment.',fi:[['Jenis Backup','select','Full Backup|Incremental|Database Saja|Attachment Saja'],['Tujuan Penyimpanan','select','Cloud Storage|Server Lokal|Keduanya'],['Format Kompresi','select','ZIP (standar)|TAR.GZ (kecil)|Tidak Dikompres'],['Enkripsi','select','Dienkripsi (AES-256)|Tidak Dienkripsi'],['Catatan Backup','textarea','Backup sebelum upgrade sistem ke versi 3.1.0, Sabtu 22 Juni 2026.']],wf:['Inisiasi Backup','Validasi Storage','Proses Backup','Upload Remote','Verifikasi Integritas']},
+    'Broadcast Pengumuman':{tp:'form',ic:'📢',ti:'Broadcast Pengumuman',de:'Kirim pengumuman atau notifikasi sistem ke user tertentu atau semua user.',fi:[['Judul Pengumuman','text','Pemeliharaan Sistem – 22 Juni 2026'],['Isi Pesan','textarea','Sistem akan dalam mode maintenance pada 22 Juni 2026, pukul 22.00–24.00 WIB. Mohon selesaikan transaksi sebelum jam tersebut.'],['Target Penerima','select','Semua User|Per Role|Per Cabang|Pilih Individu'],['Channel','select','Notifikasi In-App|Email|WhatsApp|In-App + Email'],['Jadwal Kirim','select','Kirim Sekarang|Jadwalkan Kustom'],['Prioritas','select','Normal|Penting|Urgent']],wf:['Buat Pengumuman','Preview','Approve (Urgent)','Kirim','Monitor Pembacaan']},
+    'Laporan User Login':{tp:'report',ic:'👤',ti:'Laporan Aktivitas Login User',de:'Rekap login, durasi sesi, dan akses user per periode untuk audit keamanan.',co:['User','Role','Login Terakhir','Total Sesi/Bln','Durasi Rata-rata'],ro:[['arifin.k','Finance Manager','20 Jun 09:14','245','42 mnt'],['siti.r','Program Officer','20 Jun 09:32','198','35 mnt'],['budi.h','Fundraising Staff','20 Jun 08:45','312','28 mnt'],['deni.s','Branch Admin','10 Jun 14:22','89','18 mnt']],su:[['User Aktif','248'],['Login Hari Ini','34'],['Avg Sesi','32 mnt'],['Tidak Aktif 30hr','12']],ba:[['Senin',85],['Selasa',90],['Rabu',78],['Kamis',92],['Jumat',82],['Sabtu',35]]},
+    'Matrix Hak Akses':{tp:'report',ic:'🔐',ti:'Matrix Hak Akses',de:'Visualisasi matriks role vs menu: akses baca, tulis, approve, dan admin per role.',co:['Role','Domain','User Aktif','Menu Kritis','Status'],ro:[['Super Admin','Semua Domain','3','35','Ketat'],['Finance Manager','Keuangan, Program','8','12','Terkontrol'],['Program Officer','Program','24','8','Aman'],['Branch Admin','Administrasi, Program','45','9','Review']],su:[['Role Terdefinisi','12'],['Menu Kritis','35'],['Konflik Akses','1'],['Perlu Review','3']],ba:[['S.Admin',100],['Finance',82],['Program',65],['Branch',55],['Fund',48],['View',30]]},
+    'Audit Trail':{tp:'report',ic:'🔍',ti:'Audit Trail',de:'Log lengkap semua perubahan data di sistem: siapa, apa, kapan, dan dari mana.',co:['Timestamp','User','Aksi','Tabel/Modul','Perubahan'],ro:[['20 Jun 10:05','arifin.k','UPDATE','jurnal','Status: Draft → Approved'],['20 Jun 09:32','siti.r','INSERT','pengajuan','ID baru: PAJ-092'],['20 Jun 09:28','budi.h','UPDATE','donatur','Email diubah'],['20 Jun 08:55','it.admin','UPDATE','parameter','Timeout: 60 → 30 mnt']],su:[['Log Hari Ini','2.482'],['Perubahan Data','384'],['Akses Sensitif','28'],['Anomali','0']],ba:[['INSERT',55],['UPDATE',80],['DELETE',15],['SELECT',95],['LOGIN',85],['Export',42]]},
+    'Laporan Cabang':{tp:'report',ic:'🏢',ti:'Laporan Kinerja Cabang',de:'Rekap kinerja setiap cabang: penghimpunan, penyaluran, user aktif, dan sistem.',co:['Cabang','User Aktif','Penghimpunan (Rp)','Penyaluran (Rp)','Skor Sistem'],ro:[['Kantor Pusat','58','245.000.000','312.000.000','9.2/10'],['Cabang Bandung','42','182.000.000','198.000.000','8.7/10'],['Cabang Surabaya','38','165.000.000','172.000.000','8.5/10'],['Cabang Makassar','24','89.000.000','95.000.000','8.1/10']],su:[['Total Cabang','18'],['User Total','248'],['Total Penghimpunan','1,73 M'],['Total Penyaluran','1,85 M']],ba:[['Pusat',92],['Bandung',87],['Surabaya',85],['Makassar',81],['Medan',75],['Lain',68]]},
+    'Health Check Sistem':{tp:'report',ic:'💚',ti:'Health Check Sistem',de:'Monitor performa server, database, antrian background job, dan integrasi API.',co:['Komponen','Status','Uptime','Response Time','Terakhir Dicek'],ro:[['Web Server','🟢 Normal','99.9%','142 ms','20 Jun 10:30'],['Database','🟢 Normal','99.8%','8 ms','20 Jun 10:30'],['Background Jobs','🟡 Warning','98.2%','–','20 Jun 10:29'],['Integrasi BSI API','🟢 Normal','99.5%','245 ms','20 Jun 10:30']],su:[['Uptime','99,7%'],['Avg Response','131 ms'],['Error Rate','0,03%'],['Queue Pending','18']],ba:[['Web',99],['Database',99],['Jobs',98],['BSI API',99],['Email',97],['Storage',95]]},
+    'Log Integrasi':{tp:'report',ic:'🔗',ti:'Log Integrasi',de:'Rekap log koneksi ke sistem eksternal: bank, payment gateway, dan API pihak ketiga.',co:['Sistem Eksternal','Transaksi','Sukses','Gagal','Avg Response'],ro:[['BSI Bank API','1.240','1.234','6','245 ms'],['Midtrans Gateway','986','982','4','380 ms'],['QRIS Nasional','2.340','2.338','2','125 ms'],['BAZNAS Pelaporan','48','48','0','890 ms']],su:[['Total Request','4.614'],['Sukses','4.602'],['Gagal','12'],['SLA 99,9%','Terpenuhi']],ba:[['BSI',99],['Midtrans',99],['QRIS',100],['BAZNAS',100],['BPKH',97],['Lain',95]]},
+  };
+
+  componentDidMount() {
+    const mc = this.menuRef.current, ma = this.mainRef.current;
+    if (mc) mc.addEventListener('click', e => this.onMenuClick(e));
+    if (ma) ma.addEventListener('click', e => this.onMainClick(e));
+    this.draw();
+  }
+
+  componentDidUpdate() { this.draw(); }
+
+  draw() { this.drawMenu(); this.drawMain(); }
+
+  drawMenu() {
+    const el = this.menuRef.current; if (!el) return;
+    const {dom, menu, filt} = this.state;
+    const q = this.q.toLowerCase();
+    const dc = this.D[dom];
+    let html = '';
+    Object.entries(dc.g).forEach(([grp, menus]) => {
+      const vis = menus.filter(mn => {
+        const mq = !q || mn.toLowerCase().includes(q) || grp.toLowerCase().includes(q);
+        const mf = filt==='all' || (filt==='fav' && this.favs.has(mn)) || (filt==='rec' && this.recs.includes(mn));
+        return mq && mf;
+      });
+      if (!vis.length) return;
+      const gi = {'Master Data':'🧩','Input Transaksi':'✍️','Laporan':'📊'}[grp]||'📁';
+      html += `<details class="mg" open><summary>${gi} <span style="flex:1">${grp}</span><span class="gc">${vis.length}</span><span class="cv">›</span></summary><div class="mb">`;
+      vis.forEach(mn => {
+        const sim = this.S[mn]||{};
+        html += `<button class="mi${mn===menu?' ma':''}${this.favs.has(mn)?' mf':''}" data-g="${grp}" data-m="${mn}"><span class="mic">${sim.ic||'▫️'}</span><span class="mtt">${mn}</span><span class="mst" data-s="${mn}">★</span></button>`;
+      });
+      html += '</div></details>';
+    });
+    el.innerHTML = html || '<div class="me">Tidak ada menu ditemukan.</div>';
+  }
+
+  drawMain() {
+    const el = this.mainRef.current; if (!el) return;
+    const {menu, grp, dom} = this.state;
+    const s = this.S[menu] || {tp:'master',ic:'📋',ti:menu,de:`Modul ${menu}.`,st:[['Data','0'],['Aktif','0'],['Baru','0'],['Review','0']],co:['Kode','Nama','Status','Update'],ro:[],ac:['+ Tambah','Import','Cetak']};
+    let html = '';
+    if (s.tp==='form') html = this.rForm(s, menu);
+    else if (s.tp==='report') html = this.rReport(s, menu);
+    else if (s.tp==='approval') html = this.rApproval(s, menu);
+    else html = this.rMaster(s, menu);
+    el.innerHTML = `<div style="animation:fadeIn .22s ease;">${html}</div>`;
+    el.scrollTop = 0;
+  }
+
+  isSt(v) {
+    return /^(aktif|non-aktif|nonaktif|berjalan|selesai|draft|disetujui|pending|match|outstanding|menunggu|siap|posted|error|locked|terkontrol|ketat|aman|balance|terpenuhi|perlu|closed|normal|warning|terverifikasi|terkonfirmasi|terkirim|diproses|perlu disposisi|perlu perpanjangan|buka|rusak ringan|baik|auto terkonfirmasi)$/i.test(String(v).trim()) || /^🟢|^🟡/.test(String(v).trim());
+  }
+
+  stCl(v) {
+    const s = String(v).toLowerCase();
+    if (/aktif$|berjalan|selesai|disetujui|^match|^normal|terkontrol|terpenuhi|balance|terkonfirmasi|terkirim|^baik$|buka$|auto terkonfirmasi|🟢/.test(s)) return 'bdg bgn';
+    if (/draft|pending|siap$|menunggu|warning|perlu|outstanding|🟡/.test(s)) return 'bdg bgo';
+    if (/nonaktif|non-aktif|error|gagal|rusak/.test(s)) return 'bdg bgr';
+    if (/ketat|locked|closed/.test(s)) return 'bdg bgp';
+    if (/aman|diproses/.test(s)) return 'bdg bgt';
+    return 'bdg bgg';
+  }
+
+  rMaster(s, m) {
+    const st = (s.st||[]).map(([l,v]) => `<div class="sc"><div style="font-size:11px;color:#94a3b8;margin-bottom:5px;">${l}</div><div style="font-size:26px;font-weight:900;">${v}</div></div>`).join('');
+    const th = (s.co||[]).map(c => `<th>${c}</th>`).join('') + '<th>Aksi</th>';
+    const tb = (s.ro||[]).map(r => `<tr>${r.map(c => this.isSt(c) ? `<td><span class="${this.stCl(c)}">${c}</span></td>` : `<td>${c}</td>`).join('')}<td style="white-space:nowrap"><button class="ab" data-a="det" style="font-size:11.5px;padding:4px 9px;">Detail</button> <button class="ab" data-a="edt" style="font-size:11.5px;padding:4px 9px;">Edit</button></td></tr>`).join('');
+    const ac = (s.ac||['+ Tambah','Import','Cetak']).map((a,i) => `<button class="ab${i===0?' abp':''}" data-a="${a}" style="font-size:12px;padding:6px 12px;">${a}</button>`).join('');
+    return `<div style="display:grid;gap:15px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">${st}</div>
+      <div style="display:grid;grid-template-columns:1.45fr .55fr;gap:15px;">
+        <div class="pn">
+          <div class="ph"><h2>${s.ti}</h2><span class="bdg bg">Master Data</span><div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">${ac}</div></div>
+          <div style="padding:10px 16px;border-bottom:1px solid #f8fafc;"><input placeholder="Cari ${m}..." style="max-width:260px;font-size:12.5px;padding:7px 10px 7px 28px;background:#f8fafc url(data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2394a3b8' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E) no-repeat 9px center;border:1.5px solid #f0f2f7;border-radius:9px;outline:none;"></div>
+          <div style="overflow-x:auto;"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>
+          <div style="padding:10px 16px;border-top:1px solid #f8fafc;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#94a3b8;">
+            <span>Menampilkan ${(s.ro||[]).length} dari ${(s.st||[['–','0']])[0][1]} data</span>
+            <div style="display:flex;gap:5px;"><button class="ab" style="font-size:11.5px;padding:4px 9px;">‹</button><button class="ab abp" style="font-size:11.5px;padding:4px 9px;">1</button><button class="ab" style="font-size:11.5px;padding:4px 9px;">2</button><button class="ab" style="font-size:11.5px;padding:4px 9px;">›</button></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="pn"><div class="ph"><h2>Tentang ${m}</h2></div><div class="pb"><p style="font-size:12.5px;color:#64748b;line-height:1.65;margin-bottom:14px;">${s.de}</p><div style="display:grid;gap:6px;">${(s.ac||[]).map((a,i)=>`<button class="ab${i===0?' abp':''}" data-a="${a}" style="width:100%;text-align:left;padding:8px 12px;font-size:12.5px;">${a}</button>`).join('')}</div></div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  rForm(s, m) {
+    const wf = (s.wf||[]).map((w,i) => `<div style="display:flex;align-items:center;">${i>0?`<div style="width:18px;height:2px;background:#e2e8f0;flex-shrink:0;"></div>`:''}<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;"><div style="width:26px;height:26px;border-radius:50%;background:${i===0?'#2563eb':'#f0f2f7'};color:${i===0?'white':'#94a3b8'};display:grid;place-items:center;font-size:11px;font-weight:800;">${i+1}</div><div style="font-size:9.5px;color:${i===0?'#2563eb':'#94a3b8'};font-weight:600;white-space:nowrap;text-align:center;">${w}</div></div></div>`).join('');
+    const fi = (s.fi||[]).map(([l,t,v]) => {
+      const full = t==='textarea';
+      let inp;
+      if (t==='select') inp = `<select>${v.split('|').map(o=>`<option>${o}</option>`).join('')}</select>`;
+      else if (t==='textarea') inp = `<textarea>${v}</textarea>`;
+      else inp = `<input type="${t}" value="${v}">`;
+      return `<div class="fi"${full?' style="grid-column:1/-1;"':''}><label class="fl">${l}</label>${inp}</div>`;
+    }).join('');
+    return `<div style="display:grid;grid-template-columns:1.4fr .6fr;gap:15px;">
+      <div class="pn">
+        <div class="ph"><h2>${s.ti}</h2><span class="bdg bgo">Form Input</span></div>
+        <div class="pb">
+          <p style="font-size:12.5px;color:#64748b;line-height:1.6;margin-bottom:16px;">${s.de}</p>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">${fi}</div>
+          <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+            <button class="ab abs" data-a="submit">✓ Submit untuk Approval</button>
+            <button class="ab abg" data-a="draft">💾 Simpan Draft</button>
+            <button class="ab" data-a="attach">📎 Lampiran</button>
+            <button class="ab abw" data-a="reset" style="margin-left:auto;">✕ Reset</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="pn"><div class="ph"><h2>Alur Proses</h2></div><div class="pb">
+          <div style="display:flex;flex-wrap:wrap;gap:4px 0;overflow-x:auto;padding-bottom:8px;">${wf}</div>
+          <hr style="border:0;border-top:1px solid #f4f6f9;margin:14px 0;">
+          <p style="font-size:12px;color:#94a3b8;line-height:1.6;">Data yang disubmit masuk ke antrian approval sesuai workflow yang berlaku.</p>
+        </div></div>
+        <div class="pn"><div class="ph"><h2>Data Terkini</h2></div><div style="overflow-x:auto;"><table>
+          <thead><tr><th>Dokumen</th><th>Status</th><th>Waktu</th></tr></thead>
+          <tbody>
+            <tr><td>${m} #001</td><td><span class="bdg bgn">Disetujui</span></td><td>Kemarin</td></tr>
+            <tr><td>${m} #002</td><td><span class="bdg bgo">Menunggu</span></td><td>Hari ini</td></tr>
+            <tr><td>${m} #003</td><td><span class="bdg bgg">Draft</span></td><td>2 jam lalu</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+    </div>`;
+  }
+
+  rReport(s, m) {
+    const su = (s.su||[]).map(([l,v]) => `<div class="sc"><div style="font-size:11px;color:#94a3b8;margin-bottom:5px;">${l}</div><div style="font-size:22px;font-weight:900;">${v}</div></div>`).join('');
+    const bars = (s.ba||[]).map(([l,h]) => `<div class="bcb" style="height:${h}%;"><span class="bcv">${h}%</span><span class="bcl">${l}</span></div>`).join('');
+    const th = (s.co||[]).map(c => `<th>${c}</th>`).join('') + '<th></th>';
+    const tb = (s.ro||[]).map(r => `<tr>${r.map(c => this.isSt(c) ? `<td><span class="${this.stCl(c)}">${c}</span></td>` : `<td>${c}</td>`).join('')}<td><button class="ab" data-a="drill" style="font-size:11.5px;padding:4px 9px;">Drill-down</button></td></tr>`).join('');
+    return `<div style="display:grid;gap:14px;">
+      <div class="pn"><div class="pb" style="padding:14px 16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:#fafbfd;">
+        <div class="fi" style="flex:1;min-width:130px;"><label class="fl">Periode Dari</label><input type="date" value="2026-06-01" style="font-size:12.5px;padding:8px 10px;"></div>
+        <div class="fi" style="flex:1;min-width:130px;"><label class="fl">Sampai</label><input type="date" value="2026-06-20" style="font-size:12.5px;padding:8px 10px;"></div>
+        <div class="fi" style="flex:1;min-width:150px;"><label class="fl">Cabang</label><select style="font-size:12.5px;padding:8px 10px;"><option>Semua Cabang</option><option>Kantor Pusat</option><option>Cabang Bandung</option></select></div>
+        <button class="ab abp" data-a="show" style="padding:9px 14px;">Tampilkan</button>
+        <button class="ab" data-a="xls" style="padding:9px 12px;">Export Excel</button>
+        <button class="ab" data-a="pdf" style="padding:9px 12px;">PDF</button>
+      </div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">${su}</div>
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:14px;">
+        <div class="pn"><div class="ph"><h2>Tren Bulanan</h2></div><div class="pb" style="padding:16px 16px 28px;"><div class="bc">${bars}</div></div></div>
+        <div class="pn"><div class="ph"><h2>${s.ti}</h2><span class="bdg bgn">Laporan</span><div style="margin-left:auto;display:flex;gap:6px;"><button class="ab" data-a="filter" style="font-size:11.5px;padding:4px 9px;">Filter Tersimpan</button><button class="ab" data-a="pivot" style="font-size:11.5px;padding:4px 9px;">Pivot View</button></div></div><div style="overflow-x:auto;"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div></div>
+      </div>
+    </div>`;
+  }
+
+  rApproval(s, m) {
+    const st = (s.st||[]).map(([l,v]) => `<div class="sc"><div style="font-size:11px;color:#94a3b8;margin-bottom:5px;">${l}</div><div style="font-size:26px;font-weight:900;">${v}</div></div>`).join('');
+    const th = (s.co||[]).map(c => `<th>${c}</th>`).join('') + '<th>Aksi</th>';
+    const tb = (s.ro||[]).map(r => `<tr>${r.map(c => this.isSt(c) ? `<td><span class="${this.stCl(c)}">${c}</span></td>` : `<td>${c}</td>`).join('')}<td style="white-space:nowrap;"><button class="ab abs" data-a="apr" style="font-size:11.5px;padding:4px 10px;">✓ Setujui</button> <button class="ab abw" data-a="rej" style="font-size:11.5px;padding:4px 10px;">✕ Tolak</button></td></tr>`).join('');
+    const ac = (s.ac||['Setujui Semua','Tolak','Delegasi','Riwayat']).map((a,i) => `<button class="ab${i===0?' abp':''}" data-a="${a}" style="font-size:12px;padding:6px 12px;">${a}</button>`).join('');
+    return `<div style="display:grid;gap:14px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">${st}</div>
+      <div class="pn"><div class="ph"><h2>${s.ti}</h2><span class="bdg bgo">Antrian Approval</span><div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">${ac}</div></div><div style="overflow-x:auto;"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div></div>
+      <div class="pn"><div class="ph"><h2>Tentang ${m}</h2></div><div class="pb"><p style="font-size:12.5px;color:#64748b;line-height:1.65;">${s.de}</p></div></div>
+    </div>`;
+  }
+
+  onMenuClick(e) {
+    const star = e.target.closest('[data-s]');
+    if (star) {
+      const mn = star.dataset.s;
+      if (this.favs.has(mn)) this.favs.delete(mn); else this.favs.add(mn);
+      this.drawMenu(); return;
+    }
+    const mi = e.target.closest('[data-m]');
+    if (mi) {
+      const grp = mi.dataset.g, menu = mi.dataset.m;
+      this.recs = [menu, ...this.recs.filter(x => x !== menu)].slice(0, 8);
+      this.setState({grp, menu});
+    }
+  }
+
+  onMainClick(e) {
+    const b = e.target.closest('[data-a]');
+    if (!b) return;
+    const a = b.dataset.a;
+    const map = {
+      submit:['✅ Data berhasil disubmit untuk approval!','#16a34a'],
+      draft:['💾 Disimpan sebagai draft.','#2563eb'],
+      reset:['🔄 Form berhasil direset.','#64748b'],
+      apr:['✅ Transaksi berhasil disetujui!','#16a34a'],
+      rej:['❌ Transaksi ditolak. Catatan dikirim ke pemohon.','#dc2626'],
+      xls:['📥 Export Excel sedang diproses...','#2563eb'],
+      pdf:['📋 Membuat file PDF laporan...','#2563eb'],
+      show:['🔄 Data laporan berhasil diperbarui.','#2563eb'],
+      det:['🔍 Membuka detail data...','#7c3aed'],
+      edt:['✏️ Membuka form edit...','#2563eb'],
+      drill:['📊 Membuka drill-down data...','#7c3aed'],
+      attach:['📎 Pilih file untuk dilampirkan...','#64748b'],
+      filter:['💾 Filter tersimpan.','#2563eb'],
+      pivot:['📊 Mengaktifkan pivot view...','#7c3aed'],
+    };
+    const [msg, bg] = map[a] || [`✓ Aksi dijalankan.`,'#2563eb'];
+    this.showToast(msg, bg);
+  }
+
+  showToast(msg, bg) {
+    const el = this.toastRef.current; if (!el) return;
+    const d = document.createElement('div');
+    d.style.cssText = `background:${bg};color:white;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:toastIn .25s ease;white-space:nowrap;pointer-events:auto;`;
+    d.textContent = msg;
+    el.appendChild(d);
+    clearTimeout(this.toastTmr);
+    this.toastTmr = setTimeout(() => { if (el.children.length) el.removeChild(el.children[0]); }, 3000);
+  }
+
+  handleRoleChange(e) {
+    const role = e.target.value;
+    const allowed = this.R[role] || [];
+    let dom = this.state.dom;
+    if (!allowed.includes(dom)) dom = allowed[0];
+    const firstGrp = Object.keys(this.D[dom].g)[0];
+    const firstMnu = this.D[dom].g[firstGrp][0];
+    this.setState({role, dom, grp: firstGrp, menu: firstMnu});
+  }
+
+  navDomain(dom) {
+    const firstGrp = Object.keys(this.D[dom].g)[0];
+    const firstMnu = this.D[dom].g[firstGrp][0];
+    this.setState({dom, grp: firstGrp, menu: firstMnu});
+  }
+
+  renderVals() {
+    const {dom, grp, menu, filt, role} = this.state;
+    const allowed = this.R[role] || [];
+    const db = (d) => ({
+      width:'46px', height:'46px', border:'none', borderRadius:'13px',
+      background: d===dom ? 'white' : 'transparent',
+      color: d===dom ? '#0f172a' : '#94a3b8',
+      cursor: allowed.includes(d) ? 'pointer' : 'not-allowed',
+      opacity: allowed.includes(d) ? 1 : 0.22,
+      display:'grid', placeItems:'center', fontSize:'22px',
+      boxShadow: d===dom ? '0 6px 18px rgba(0,0,0,.2)' : 'none',
+      transition:'all .18s ease', flexShrink:0,
+    });
+    const tb = (f) => ({
+      flex:1, border:`1.5px solid ${filt===f?'#2563eb':'#eef0f5'}`,
+      borderRadius:'999px', padding:'6px 8px', fontSize:'11px', cursor:'pointer',
+      background: filt===f ? '#2563eb' : 'white',
+      color: filt===f ? 'white' : '#64748b',
+      fontWeight: filt===f ? '700' : '500',
+      transition:'all .15s', whiteSpace:'nowrap',
+    });
+    return {
+      sKeu: db('Keuangan'), sPro: db('Program'), sPen: db('Penghimpunan'), sAdm: db('Administrasi'), sEnt: db('Enterprise'),
+      nKeu: allowed.includes('Keuangan') ? () => this.navDomain('Keuangan') : null,
+      nPro: allowed.includes('Program') ? () => this.navDomain('Program') : null,
+      nPen: allowed.includes('Penghimpunan') ? () => this.navDomain('Penghimpunan') : null,
+      nAdm: allowed.includes('Administrasi') ? () => this.navDomain('Administrasi') : null,
+      nEnt: allowed.includes('Enterprise') ? () => this.navDomain('Enterprise') : null,
+      domainTitle: dom, role,
+      breadcrumb: `${dom} › ${grp} › ${menu}`,
+      pageTitle: menu,
+      tAll: tb('all'), tFav: tb('fav'), tRec: tb('rec'),
+      onTabAll: () => this.setState({filt:'all'}),
+      onTabFav: () => this.setState({filt:'fav'}),
+      onTabRec: () => this.setState({filt:'rec'}),
+      onRole: e => this.handleRoleChange(e),
+      onSearch: e => { this.q = e.target.value; this.drawMenu(); },
+      onNew: () => this.showToast('💡 Gunakan form di area kerja untuk membuat data baru.','#7c3aed'),
+      onNotif: () => this.showToast('🔔 Tidak ada notifikasi baru.','#374151'),
+      onPref: () => this.showToast('⚙️ Membuka pengaturan preferensi...','#374151'),
+      menuRef: this.menuRef, mainRef: this.mainRef, toastRef: this.toastRef,
+    };
+  }
+}
+</script>
+</body>
+</html>
