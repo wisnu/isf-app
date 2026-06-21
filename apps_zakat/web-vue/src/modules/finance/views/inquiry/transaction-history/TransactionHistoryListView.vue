@@ -194,7 +194,7 @@ async function exportXlsx() {
   exporting.value = true
   try {
     await api.downloadBlob(
-      '/api/transaction-history/search/export.xlsx',
+      '/api/finance/inquiry/transaction-history/search/export.xlsx',
       `histori-transaksi-${begin.value}-${end.value}.xlsx`,
       buildParams(true),
     )

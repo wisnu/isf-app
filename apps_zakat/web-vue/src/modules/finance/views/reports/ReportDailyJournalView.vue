@@ -79,7 +79,7 @@ function queryParams(withPaging: boolean): string {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/journal-daily/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/journal-daily/branches')
     // 'single' user: kunci ke primary_branch (atau satu-satunya cabang yang ada)
     if (!canAll.value && !branch.value && branches.value.length) {
       branch.value = branches.value[0].code

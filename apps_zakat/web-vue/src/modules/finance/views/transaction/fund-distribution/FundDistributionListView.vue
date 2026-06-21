@@ -105,7 +105,7 @@ async function load() {
         rows: [],
         pagination: { page: 1, limit: 25, total: 0, total_pages: 1 },
       })),
-      api.get<{ rows: any[] }>('/api/authorization/my-submissions/?entity_type=penyaluran').catch(
+      api.get<{ rows: any[] }>('/api/finance/monitoring/authorization/my-submissions/?entity_type=penyaluran').catch(
         () => ({ rows: [] }),
       ),
     ])

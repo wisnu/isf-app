@@ -76,7 +76,7 @@ const budgetQ = useFetch<AnggaranBundle>(() =>
   api.get<AnggaranBundle>(`/api/dashboard/finance/budget?year=${tahun.value}`),
 )
 const accountQ = useFetch<RekeningBundle>(() =>
-  api.get<RekeningBundle>('/api/dashboard/finance/account'),
+  api.get<RekeningBundle>('/api/finance/dashboard/finance/account'),
 )
 
 function loadAll() {

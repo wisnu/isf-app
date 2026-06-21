@@ -70,7 +70,7 @@ function groupRows(grp: SumGroup) {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/cash-summary/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/cash-summary/branches')
     if (!branch.value && branches.value.length) branch.value = branches.value[0].code
   } catch {
     branches.value = []

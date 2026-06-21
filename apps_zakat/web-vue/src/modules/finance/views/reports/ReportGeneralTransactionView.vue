@@ -85,7 +85,7 @@ function queryParams(withPaging: boolean): string {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/general-transaction/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/general-transaction/branches')
     if (!canAll.value && !branch.value && branches.value.length) {
       branch.value = branches.value[0].code
     }

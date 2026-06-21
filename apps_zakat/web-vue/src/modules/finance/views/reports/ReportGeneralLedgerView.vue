@@ -68,7 +68,7 @@ const qs = () => {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/general-ledger/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/general-ledger/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {
@@ -80,7 +80,7 @@ async function loadAccounts() {
   try {
     const url = branch.value
       ? `/api/report/general-ledger/accounts?branch=${encodeURIComponent(branch.value)}`
-      : '/api/report/general-ledger/accounts'
+      : '/api/finance/report/general-ledger/accounts'
     accounts.value = await api.get<AccountOption[]>(url)
   } catch {
     accounts.value = []

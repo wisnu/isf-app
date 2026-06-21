@@ -86,7 +86,7 @@ async function loadOpenCA(emp: EmployeeLookup) {
 async function loadCashAccounts() {
   try {
     const res = await api.get<{ rows: { cash_account_no: string; cash_account_name: string }[] }>(
-      '/api/transaction/cash-advance/lookup/cash-account'
+      '/api/finance/transaction/cash-advance/lookup/cash-account'
     )
     cashAccountOptions.value = (res.rows ?? []).map(r => ({
       cash_account_no: r.cash_account_no,
@@ -142,7 +142,7 @@ async function submitForm() {
       reference_no: referenceNo.value,
       description: description.value,
     }
-    await api.post('/api/transaction/cash-advance-settlement', payload)
+    await api.post('/api/finance/transaction/cash-advance-settlement', payload)
     toast.success('Pengembalian uang muka berhasil disimpan')
     emit('saved')
   } catch (e: unknown) {

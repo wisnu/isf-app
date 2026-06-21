@@ -111,8 +111,8 @@ const paymentTabs = [
 
 async function loadLookups() {
   const [ashnaf, products] = await Promise.all([
-    api.get<AshnafOption[]>('/api/fund-distribution/lookup/ashnaf').catch(() => []),
-    api.get<ProductOption[]>('/api/fund-distribution/lookup/product').catch(() => []),
+    api.get<AshnafOption[]>('/api/finance/transaction/fund-distribution/lookup/ashnaf').catch(() => []),
+    api.get<ProductOption[]>('/api/finance/transaction/fund-distribution/lookup/product').catch(() => []),
   ])
   ashnafOptions.value = ashnaf
   productOptions.value = products
@@ -272,7 +272,7 @@ async function submit() {
       )
     } else {
       res = await api.post<{ status: string; bypassed_auth: boolean }>(
-        '/api/authorization/save-and-submit/',
+        '/api/finance/monitoring/authorization/save-and-submit/',
         { entity_type: 'penyaluran', module: 'keuangan', payload: innerPayload },
       )
     }
@@ -296,7 +296,7 @@ async function fetchUserLimit() {
   limitLoading.value = true
   try {
     const res = await api.get<{ nilai_limit: number; has_limit: boolean }>(
-      '/api/authorization/user-limit/?entity_type=penyaluran',
+      '/api/finance/monitoring/authorization/user-limit/?entity_type=penyaluran',
     )
     nilaiLimit.value = res.nilai_limit
     hasLimit.value = res.has_limit

@@ -30,7 +30,7 @@ async function submit() {
   formError.value = null
   submitting.value = true
   try {
-    await api.post('/api/authorization/save-and-submit/', {
+    await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
       entity_type: 'coa',
       module: 'keuangan',
       payload: {

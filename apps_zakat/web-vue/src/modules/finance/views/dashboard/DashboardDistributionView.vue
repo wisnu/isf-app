@@ -41,7 +41,7 @@ const budgetQ = useFetch<{ budget: AnggaranItem[] }>(
   () => api.get(`/api/dashboard/fund-distribution/budget?year=${tahun.value}`),
 )
 const memoQ = useFetch<{ recent_memo: MemoItem[] }>(
-  () => api.get('/api/dashboard/fund-distribution/memo'),
+  () => api.get('/api/finance/dashboard/fund-distribution/memo'),
 )
 
 function loadAll() {

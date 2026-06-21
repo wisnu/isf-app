@@ -224,7 +224,7 @@ async function bulkApprove() {
   if (!ids.length) return
   bulkLoading.value = true
   try {
-    const res = await api.post<any[]>('/api/authorization/bulk/approve', { ids })
+    const res = await api.post<any[]>('/api/finance/monitoring/authorization/bulk/approve', { ids })
     const failed = res.filter((r: any) => r.error)
     if (failed.length) {
       toast.warning(`${failed.length} submission gagal diotorisasi`)
@@ -244,7 +244,7 @@ async function bulkReject() {
   const ids = selectedRows.value.map(r => r.id)
   bulkLoading.value = true
   try {
-    await api.post('/api/authorization/bulk/reject', { ids, notes: bulkRejectNotes.value })
+    await api.post('/api/finance/monitoring/authorization/bulk/reject', { ids, notes: bulkRejectNotes.value })
     toast.warning(`${ids.length} submission ditolak`)
     bulkRejectNotes.value = ''
     await load()

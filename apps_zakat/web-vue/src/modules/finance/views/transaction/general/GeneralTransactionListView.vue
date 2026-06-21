@@ -119,7 +119,7 @@ async function load() {
         `/api/general-transaction/?${params}`
       ),
       api.get<{ rows: Omit<SubRow, '_kind'>[] }>(
-        '/api/authorization/my-submissions/?entity_type=transaksi_umum'
+        '/api/finance/monitoring/authorization/my-submissions/?entity_type=transaksi_umum'
       ).catch(() => ({ rows: [] })),
     ])
 

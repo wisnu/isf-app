@@ -46,7 +46,7 @@ const branchQS = () => (branch.value ? `&branch=${encodeURIComponent(branch.valu
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/fund-changes/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/fund-changes/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {

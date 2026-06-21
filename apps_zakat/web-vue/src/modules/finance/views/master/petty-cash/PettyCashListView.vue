@@ -100,9 +100,9 @@ async function loadLookups() {
   if (lookupLoaded.value) return
   try {
     const [branches, currencies, gl] = await Promise.all([
-      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/petty-cash/lookup/branches'),
-      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/petty-cash/lookup/currencies'),
-      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/petty-cash/lookup/gl_accounts'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/finance/master/petty-cash/lookup/branches'),
+      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/finance/master/petty-cash/lookup/currencies'),
+      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/finance/master/petty-cash/lookup/gl_accounts'),
     ])
     lookupBranches.value = (branches.data ?? []).map((b) => ({
       value: b.branch_code,

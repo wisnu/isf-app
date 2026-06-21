@@ -116,11 +116,11 @@ async function loadLookups() {
   if (lookupLoaded.value) return
   try {
     const [banks, branches, currencies, gl, products] = await Promise.all([
-      api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/bank/lookup/banks'),
-      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/bank/lookup/branches'),
-      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/bank/lookup/currencies'),
-      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/bank/lookup/gl_accounts'),
-      api.get<{ data: { product_id: number; product_code: string | null; product_name: string | null }[] }>('/api/bank/lookup/products'),
+      api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/finance/master/bank/lookup/banks'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/finance/master/bank/lookup/branches'),
+      api.get<{ data: { currency_code: string; short_name: string | null }[] }>('/api/finance/master/bank/lookup/currencies'),
+      api.get<{ data: { account_code: string; account_name: string | null }[] }>('/api/finance/master/bank/lookup/gl_accounts'),
+      api.get<{ data: { product_id: number; product_code: string | null; product_name: string | null }[] }>('/api/finance/master/bank/lookup/products'),
     ])
     lookupBanks.value = (banks.data ?? []).map((b) => ({
       value: b.bank_code,
@@ -260,7 +260,7 @@ async function submitForm() {
       product_id: form.is_amil_account || !form.product_id ? null : Number(form.product_id),
       cash_code: form.cash_code.trim() || null,
     }
-    await api.post('/api/authorization/save-and-submit/', {
+    await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload,
@@ -310,7 +310,7 @@ async function openDelete(accountNo: string) {
 async function submitDelete() {
   submitting.value = true
   try {
-    await api.post('/api/authorization/save-and-submit/', {
+    await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
       entity_type: 'bank',
       module: 'keuangan',
       payload: { action: 'delete', account_no: editingAccountNo.value },

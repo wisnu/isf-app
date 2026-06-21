@@ -77,7 +77,7 @@ async function searchEmployees(query: string) {
 async function loadCashAccounts() {
   try {
     const res = await api.get<{ rows: CashAccountLookup[] }>(
-      '/api/transaction/cash-advance/lookup/cash-account'
+      '/api/finance/transaction/cash-advance/lookup/cash-account'
     )
     cashAccountOptions.value = res.rows ?? []
   } catch (e) {
@@ -145,7 +145,7 @@ async function submitForm() {
       fund_entity: 4,
     }
 
-    await api.post('/api/transaction/cash-advance', payload)
+    await api.post('/api/finance/transaction/cash-advance', payload)
     toast.success('Transaksi uang muka berhasil disimpan')
     emit('saved')
   } catch (e: unknown) {

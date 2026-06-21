@@ -53,7 +53,7 @@ async function searchEmployees(query: string) {
 
 async function loadCashAccounts() {
   try {
-    const res = await api.get<{ rows: CashAccountLookup[] }>('/api/transaction/cash-advance/lookup/cash-account')
+    const res = await api.get<{ rows: CashAccountLookup[] }>('/api/finance/transaction/cash-advance/lookup/cash-account')
     cashAccountOptions.value = res.rows ?? []
   } catch { /* silent */ }
 }
@@ -86,7 +86,7 @@ async function submit() {
   if (!validate()) return
   loading.value = true
   try {
-    await api.post('/api/transaction/cash-advance', {
+    await api.post('/api/finance/transaction/cash-advance', {
       ...form.value,
       budget_id: 0,
       real_memo_id: 0,

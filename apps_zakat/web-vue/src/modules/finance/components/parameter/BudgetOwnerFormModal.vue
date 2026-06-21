@@ -63,7 +63,7 @@ onMounted(async () => {
 
 async function loadParentLookup() {
   try {
-    const res = await api.get<{ data: LookupItem[] }>('/api/parameter/budget-owner/lookup')
+    const res = await api.get<{ data: LookupItem[] }>('/api/finance/master/parameter/budget-owner/lookup')
     parentOpts.value = (res.data ?? []).map((item) => ({
       value: String(item.owner_id),
       label: `${item.owner_code} — ${item.owner_name}`,
@@ -96,7 +96,7 @@ async function submit() {
         parent_owner_id: form.parent_owner_id ? Number(form.parent_owner_id) : null,
         status:        form.status,
       }
-      await api.post('/api/authorization/save-and-submit/', {
+      await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
         entity_type: 'budget_owner',
         module:      'keuangan',
         payload,
@@ -109,7 +109,7 @@ async function submit() {
         owner_name: form.owner_name.trim(),
         status:    form.status,
       }
-      await api.post('/api/authorization/save-and-submit/', {
+      await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
         entity_type: 'budget_owner',
         module:      'keuangan',
         payload,

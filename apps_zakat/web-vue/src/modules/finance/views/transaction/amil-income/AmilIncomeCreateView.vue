@@ -200,7 +200,7 @@ async function submitForm() {
     }
 
     const res = await api.post<{ transaction_no: string; status: string }>(
-      '/api/amil-income/save-and-submit',
+      '/api/finance/transaction/amil-income/save-and-submit',
       payload
     )
 

@@ -70,7 +70,7 @@ const destAccount = computed<CashAccountOption | null>(
 async function loadAccounts() {
   try {
     const res = await api.get<{ rows: CashAccountOption[] }>(
-      '/api/transaction/inter-account-transfer/lookup/cash-accounts?search='
+      '/api/finance/transaction/inter-account-transfer/lookup/cash-accounts?search='
     )
     allAccounts.value = res.rows ?? []
   } catch {
@@ -97,7 +97,7 @@ async function submit() {
   formError.value = null
   try {
     const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/transaction/inter-account-transfer/',
+      '/api/finance/transaction/inter-account-transfer/',
       {
         actual_date: formDate.value,
         source_account_no: sourceAccount.value.cash_account_no,

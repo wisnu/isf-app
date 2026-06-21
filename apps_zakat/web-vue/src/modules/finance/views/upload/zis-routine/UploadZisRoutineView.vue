@@ -70,7 +70,7 @@ function resetUpload() {
 
 async function downloadTemplate() {
   try {
-    const blob = await api.blob('/api/transaction/upload/hc-zis/template')
+    const blob = await api.blob('/api/finance/upload/collection/hc-zis/template')
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -121,7 +121,7 @@ async function submitUntukOtorisasi() {
       items: parseResult.value.items,
     }
     const result = await api.post<{ id: number }>(
-      '/api/transaction/upload/hc-zis/submit',
+      '/api/finance/upload/collection/hc-zis/submit',
       payload,
     )
     submissionId.value = result.id

@@ -68,7 +68,7 @@ function resetUpload() {
 
 async function downloadTemplate() {
   await api.downloadBlob(
-    '/api/transaction/upload/fund-collection/template',
+    '/api/finance/upload/collection/fund-collection/template',
     'template-upload-penghimpunan.xlsx',
   )
 }
@@ -80,7 +80,7 @@ async function parseFile() {
   try {
     const form = new FormData()
     form.append('file', selectedFile.value)
-    const result = await api.upload<{ rows: ParsedRow[] }>('/api/transaction/upload/fund-collection/parse', form)
+    const result = await api.upload<{ rows: ParsedRow[] }>('/api/finance/upload/collection/fund-collection/parse', form)
     rows.value = result.rows
     phase.value = 'preview'
   } catch (e: unknown) {
@@ -96,7 +96,7 @@ async function submitUntukOtorisasi() {
   errorMsg.value = null
   try {
     const result = await api.post<{ id: number; status: 'DRAFT' | 'PENDING' | 'AUTHORIZED' | 'REJECTED' }>(
-      '/api/authorization/submission/',
+      '/api/finance/monitoring/authorization/submission/',
       {
         entity_type: 'upload_penghimpunan',
         module: 'keuangan',

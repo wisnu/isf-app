@@ -35,7 +35,7 @@ const form = reactive({
 async function loadPeriods() {
   loading.value = true
   try {
-    const res = await api.get<{ data: BudgetPeriod[] }>('/api/budget/parameter/periods')
+    const res = await api.get<{ data: BudgetPeriod[] }>('/api/finance/budget/parameter/periods')
     periods.value = (res.data ?? []).sort((a, b) => b.period_year - a.period_year)
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat periode anggaran')
@@ -65,7 +65,7 @@ async function submitForm() {
 
   submitting.value = true
   try {
-    await api.post('/api/budget/parameter/periods', {
+    await api.post('/api/finance/budget/parameter/periods', {
       period_year: form.period_year,
     })
 

@@ -95,7 +95,7 @@ function isTotal(r: NeracaTableRow): r is NeracaTotalRow { return '__isTotal' in
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/balance-sheet/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/balance-sheet/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {

@@ -72,7 +72,7 @@ const submissions = ref<CoaSubmission[]>([])
 async function loadSubmissions() {
   try {
     const res = await api.get<{ rows: CoaSubmission[] }>(
-      '/api/authorization/my-submissions/?entity_type=coa',
+      '/api/finance/monitoring/authorization/my-submissions/?entity_type=coa',
     )
     submissions.value = res.rows ?? []
   } catch {
@@ -151,7 +151,7 @@ async function loadAll() {
   loading.value = true
   errorMsg.value = null
   try {
-    const first = await api.get<CoaList>('/api/coa/accounts?page=1&page_size=500')
+    const first = await api.get<CoaList>('/api/finance/master/coa/accounts?page=1&page_size=500')
     const restPages = Array.from({ length: first.pagination.total_pages - 1 }, (_, i) =>
       api.get<CoaList>(`/api/coa/accounts?page=${i + 2}&page_size=500`)
     )
@@ -172,7 +172,7 @@ async function exportXlsx() {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const domain = (import.meta.env.VITE_PORTAL_DOMAIN as string | undefined) ?? ''
     const suggested = domain ? `coa-${domain}-${today}.xlsx` : `coa-${today}.xlsx`
-    await api.downloadBlob('/api/coa/accounts.xlsx', suggested)
+    await api.downloadBlob('/api/finance/master/coa/accounts.xlsx', suggested)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'
   } finally {

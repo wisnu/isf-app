@@ -123,7 +123,7 @@ async function submit() {
       payload.gl_account_code = glAccount.value.account_code
 
     const result = await api.post<{ submission_id: number; status: string; transaction_id: number | null }>(
-      '/api/receivable/', payload,
+      '/api/finance/transaction/receivable/', payload,
     )
     if (result.status === 'AUTHORIZED') toast.success('Piutang berhasil disimpan dan disetujui.')
     else toast.info(`Piutang dikirim untuk otorisasi. Status: ${result.status}`)

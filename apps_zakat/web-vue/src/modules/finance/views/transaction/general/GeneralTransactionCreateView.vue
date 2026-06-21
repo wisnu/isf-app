@@ -238,7 +238,7 @@ async function loadCoa() {
   if (coaOptions.value.length) return
   coaLoading.value = true
   try {
-    const res = await api.get<{ rows: CoaOption[] }>('/api/coa/accounts?is_detail=T&page_size=500')
+    const res = await api.get<{ rows: CoaOption[] }>('/api/finance/master/coa/accounts?is_detail=T&page_size=500')
     coaOptions.value = res?.rows ?? []
   } finally {
     coaLoading.value = false
@@ -576,7 +576,7 @@ async function submitForm() {
 
   saving.value = true
   try {
-    await api.post('/api/general-transaction/', {
+    await api.post('/api/finance/transaction/general/', {
       actual_date: formDate.value,
       description: formDescription.value.trim(),
       reference_no: formReferenceNo.value.trim(),

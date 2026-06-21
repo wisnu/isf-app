@@ -137,7 +137,7 @@ async function loadRekening() {
 
 async function loadDonors() {
   donorOptions.value = await api
-    .get<DonorOption[]>('/api/fund-collection/lookup/donor?q=')
+    .get<DonorOption[]>('/api/finance/transaction/fund-collection/lookup/donor?q=')
     .catch(() => [])
 }
 
@@ -262,7 +262,7 @@ async function submit() {
       )
     } else {
       res = await api.post<{ status: string; bypassed_auth: boolean }>(
-        '/api/authorization/save-and-submit/',
+        '/api/finance/monitoring/authorization/save-and-submit/',
         { entity_type: 'penghimpunan', module: 'keuangan', payload: innerPayload },
       )
     }
@@ -286,7 +286,7 @@ async function fetchUserLimit() {
   limitLoading.value = true
   try {
     const res = await api.get<{ nilai_limit: number; has_limit: boolean }>(
-      '/api/authorization/user-limit/?entity_type=penghimpunan',
+      '/api/finance/monitoring/authorization/user-limit/?entity_type=penghimpunan',
     )
     nilaiLimit.value = res.nilai_limit
     hasLimit.value = res.has_limit

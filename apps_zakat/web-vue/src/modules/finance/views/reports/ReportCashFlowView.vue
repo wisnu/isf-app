@@ -74,7 +74,7 @@ const tableRows = computed<AKTableRow[]>(() => {
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/cash-flow/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/cash-flow/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value)
       branch.value = branches.value[0].code
   } catch {

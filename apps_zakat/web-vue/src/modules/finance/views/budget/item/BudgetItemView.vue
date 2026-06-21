@@ -135,7 +135,7 @@ async function submitForm() {
     }
 
     if (isCreate) {
-      await api.post('/api/budget/parameter/items', payload)
+      await api.post('/api/finance/budget/parameter/items', payload)
       toast.success('Item anggaran berhasil ditambahkan')
     } else {
       await api.put(`/api/budget/parameter/items/${selectedItem.value?.item_id}`, payload)

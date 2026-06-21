@@ -27,7 +27,7 @@ async function confirmDelete() {
   submitting.value = true
   errorMsg.value   = null
   try {
-    await api.post('/api/authorization/save-and-submit/', {
+    await api.post('/api/finance/monitoring/authorization/save-and-submit/', {
       entity_type: 'budget_owner',
       module:      'keuangan',
       payload: {

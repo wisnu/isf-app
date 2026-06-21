@@ -52,7 +52,7 @@ const qs = () => {
 }
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/cashadvance-list/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/cashadvance-list/branches')
     if (!branch.value && branches.value.length && !canPickBranch.value) branch.value = branches.value[0].code
   } catch { branches.value = [] }
 }

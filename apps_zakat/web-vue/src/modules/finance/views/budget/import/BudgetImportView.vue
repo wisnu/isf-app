@@ -28,7 +28,7 @@ const periodsLoading = shallowRef(false)
 async function loadPeriods() {
   periodsLoading.value = true
   try {
-    const res = await api.get<{ data: Period[] }>('/api/budget/periods')
+    const res = await api.get<{ data: Period[] }>('/api/finance/budget/periods')
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
       label: p.period_name,
@@ -73,7 +73,7 @@ async function submitImport() {
     formData.append('file', selectedFile.value)
     formData.append('period_id', selectedPeriod.value)
 
-    const res = await api.upload<{ submission_id: string; message: string }>('/api/budget/import', formData)
+    const res = await api.upload<{ submission_id: string; message: string }>('/api/finance/budget/import', formData)
 
     toast.success('Anggaran berhasil disimpan. Silahkan diotorisasi di menu Otorisasi.')
     selectedFile.value = null

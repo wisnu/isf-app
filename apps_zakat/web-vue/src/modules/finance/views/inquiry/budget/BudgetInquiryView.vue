@@ -63,7 +63,7 @@ function computeSummary(items: OwnerSummaryRow[]) {
 async function loadPeriods() {
   periodsLoading.value = true
   try {
-    const res = await api.get<{ data: Period[] }>('/api/budget/periods')
+    const res = await api.get<{ data: Period[] }>('/api/finance/budget/periods')
     periods.value = (res.data ?? []).map((p) => ({
       value: String(p.period_id),
       label: String(p.period_value),

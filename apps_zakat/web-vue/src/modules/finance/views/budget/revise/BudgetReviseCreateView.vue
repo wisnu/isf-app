@@ -30,7 +30,7 @@ const saving = shallowRef(false)
 async function loadOwners() {
   ownersLoading.value = true
   try {
-    const res = await api.get<{ data: BudgetOwner[] }>('/api/budget/owners')
+    const res = await api.get<{ data: BudgetOwner[] }>('/api/finance/budget/owners')
     owners.value = (res.data ?? []).map((o) => ({ value: o.owner_id, label: o.owner_name }))
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal memuat daftar pemilik')
@@ -66,7 +66,7 @@ async function submit() {
 
   saving.value = true
   try {
-    await api.post('/api/budget/', {
+    await api.post('/api/finance/budget/', {
       owner_id: Number(selectedOwner.value),
       period_id: Number(selectedPeriod.value),
       budget_code: budgetCode.value.trim(),

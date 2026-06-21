@@ -41,7 +41,7 @@ const qs = () => {
   return s
 }
 async function loadBranches() {
-  try { branches.value = await api.get<BranchOption[]>('/api/report/realization-memo/branches'); if (!branch.value && branches.value.length && !canPickBranch.value) branch.value = branches.value[0].code } catch { branches.value = [] }
+  try { branches.value = await api.get<BranchOption[]>('/api/finance/report/realization-memo/branches'); if (!branch.value && branches.value.length && !canPickBranch.value) branch.value = branches.value[0].code } catch { branches.value = [] }
 }
 async function load() {
   loading.value = true; errorMsg.value = null

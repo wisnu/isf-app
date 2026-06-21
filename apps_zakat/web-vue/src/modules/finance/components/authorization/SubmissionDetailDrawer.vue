@@ -28,8 +28,8 @@ async function loadBankLookups() {
   if (lookupLoaded.value) return
   try {
     const [banks, branches] = await Promise.all([
-      api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/bank/lookup/banks'),
-      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/bank/lookup/branches'),
+      api.get<{ data: { bank_code: string; bank_short_name: string | null; bank_name: string | null }[] }>('/api/finance/master/bank/lookup/banks'),
+      api.get<{ data: { branch_code: string; branch_name: string | null }[] }>('/api/finance/master/bank/lookup/branches'),
     ])
     for (const b of banks.data ?? []) bankMap.value[b.bank_code] = b.bank_short_name ?? b.bank_name ?? b.bank_code
     for (const b of branches.data ?? []) branchMap.value[b.branch_code] = b.branch_name ?? b.branch_code

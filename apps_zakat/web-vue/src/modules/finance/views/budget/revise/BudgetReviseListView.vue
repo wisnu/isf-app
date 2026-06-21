@@ -71,7 +71,7 @@ const form = reactive({
 async function loadOwners() {
   ownersLoading.value = true
   try {
-    const res = await api.get<{ data: BudgetOwner[] }>('/api/budget/owners')
+    const res = await api.get<{ data: BudgetOwner[] }>('/api/finance/budget/owners')
     owners.value = (res.data ?? []).map((o) => ({
       value: o.owner_id,
       label: o.owner_name,
@@ -233,7 +233,7 @@ async function submitRevision() {
 
   loading.value = true
   try {
-    await api.post('/api/budget/revise', { items })
+    await api.post('/api/finance/budget/revise', { items })
     toast.success('Revisi anggaran berhasil disimpan')
     changedItems.value.clear()
     loadBudgets()
