@@ -127,10 +127,10 @@ async function load() {
     subRows.value = (subRes?.rows ?? []).map(r => ({ ...r, _kind: 'sub' as const }))
     totalRec.value = txRes?.pagination?.total ?? 0
     totalPages.value = txRes?.pagination?.total_pages ?? 1
-    hasLoaded.value = true
   } catch {
     errorMsg.value = 'Gagal memuat data transaksi'
   } finally {
+    hasLoaded.value = true
     loading.value = false
   }
 }
@@ -190,7 +190,7 @@ onMounted(load)
       </Button>
     </div>
 
-    <Alert v-if="errorMsg" variant="destructive">{{ errorMsg }}</Alert>
+    <Alert v-if="errorMsg && mergedRows.length === 0" variant="destructive">{{ errorMsg }}</Alert>
 
     <div class="space-y-0">
       <!-- Toolbar -->
@@ -271,7 +271,7 @@ onMounted(load)
           </td>
         </tr>
 
-        <template v-for="row in mergedRows" :key="row._kind === 'tx' ? `tx-${row.transactionid}` : `sub-${row.id}`">
+        <template v-if="hasLoaded" v-for="row in mergedRows" :key="row._kind === 'tx' ? `tx-${row.transactionid}` : `sub-${row.id}`">
           <tr v-if="row._kind === 'sub'" class="border-t border-slate-100 bg-amber-50/40 dark:bg-amber-900/10">
             <td class="px-3 py-1.5 font-mono text-xs text-slate-400">Draft #{{ row.id }}</td>
             <td class="px-3 py-1.5 text-sm">{{ dmy(row.actual_date) }}</td>
