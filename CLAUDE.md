@@ -75,11 +75,11 @@ Env vars (in `infra/.env`):
 | Routing            | Vue Router 4.4 (named routes only)          |
 | Charts             | Chart.js 4.4 via vue-chartjs                |
 | Icons              | **Lucide icons** (not PrimeIcons)           |
-| HTTP               | `lib/api/client.ts` — custom fetch wrapper  |
+| HTTP               | `shared/api/client.ts` — custom fetch wrapper  |
 | Testing            | Vitest + Vue Test Utils                     |
 
 > ⚠️ PrimeVue is in **unstyled** mode — do NOT assume default PrimeVue styles.
-> All visual styling comes from Tailwind + reka-ui + custom `components/ui/`.
+> All visual styling comes from Tailwind + reka-ui + custom `shared/components/`.
 
 ---
 
@@ -93,7 +93,7 @@ Env vars (in `infra/.env`):
 
 ### 2. Hybrid Stack — Strict Boundaries
 - **PrimeVue** → complex headless components (DataTable, Dialog, Steps, etc.)
-- **reka-ui / components/ui/** → buttons, inputs, cards, alerts, badges
+- **reka-ui / shared/components/** → buttons, inputs, cards, alerts, badges
 - **Tailwind** → layout, spacing, flex/grid, responsive, all visual styling
 - PrimeVue is unstyled — never rely on its default theme classes
 
@@ -102,27 +102,27 @@ Env vars (in `infra/.env`):
 - No Options API, no `defineComponent()`, no `.js` files in `src/`
 - Type all props, emits, and composable return values
 
-### 4. API — Use `lib/api/client.ts` Only
-- Use the project's fetch wrapper: `GET()`, `POST()`, `blob()` from `lib/api/client.ts`
+### 4. API — Use `shared/api/client.ts` Only
+- Use the project's fetch wrapper: `GET()`, `POST()`, `blob()` from `shared/api/client.ts`
 - Never use raw `fetch()` or install Axios — client.ts is the only HTTP layer
 - Base URL is always `VITE_API_BASE_URL` (resolves to bff-api)
 
 ### 5. Date Handling
-- **Display:** always use `dmy()` from `lib/date.ts` → formats to `DD-MM-YYYY`
+- **Display:** always use `dmy()` from `shared/utils/date.ts` → formats to `DD-MM-YYYY`
 - **Internal / API payload:** always ISO `YYYY-MM-DD`
-- **User input:** always use `components/ui/DateField.vue` (v-model = ISO string)
+- **User input:** always use `shared/components/DateField.vue` (v-model = ISO string)
 - Never format dates inline in templates — always go through `dmy()`
 - Backend columns stay ISO (`to_char(...,'YYYY-MM-DD')`) — never alias to DD-MM-YYYY (breaks ORDER BY)
 
 ### 6. UI Components — Use Existing First
-Before creating a new component, check `components/ui/` for:
+Before creating a new component, check `shared/components/` for:
 - `Button`, `Card`, `Input`, `Alert` — standard primitives
 - `DateField.vue` — all date inputs
 - `SearchSelect.vue` — all long dropdowns (combobox + keyboard nav + clear)
 - `TablePagination.vue` — pagination display
 - `Modal.vue` — dialogs/modals
 
-Only create a new `components/ui/` component if nothing fits.
+Only create a new `shared/components/` component if nothing fits.
 
 ### 7. Report Pages — No Auto-Load
 - Report/laporan pages must NOT fetch data on mount
@@ -131,7 +131,7 @@ Only create a new `components/ui/` component if nothing fits.
 - Export disabled until data is present
 
 ### 8. Menu Keys — Use Registry
-- All menu keys must be registered in `lib/menu/registry.ts` (MENU_KEYS)
+- All menu keys must be registered in `shared/constants/menu-keys.ts` (MENU_KEYS)
 - Every route that requires a menu permission must have `meta.menu_key`
 - Never hardcode menu key strings outside of the registry
 
@@ -144,7 +144,7 @@ Every async operation must have all three:
 
 ### 10. Role-Based UI
 - Use `v-if` tied to Pinia `auth` store — never CSS `display:none`
-- Auth store (`stores/auth.ts`) exposes: `user`, `roles`, `menus[]`, `branches`, `active_tenant_id`
+- Auth store (`app/stores/auth.store.ts`) exposes: `user`, `roles`, `menus[]`, `branches`, `active_tenant_id`
 - Check menu access via `menus[]` — session snapshot from login
 - `menus[]` is populated at login time; new `role_menu` rows only take effect after **logout + login**
 
@@ -152,7 +152,7 @@ Every async operation must have all three:
 All public identifiers are **English**; Indonesian is allowed **only** in user-facing text (labels, titles, toasts), error messages (`raise ... detail=`), and comments.
 - **URL paths**: English kebab-case — `/fund-collection`, `/cash-advance`, `/report/balance-sheet`. Never `/penghimpunan`, `/transaksi/...`, `/keuangan/...`.
 - **Python** (folders/files/functions/classes): English snake_case — `fund_collection_service.py`, `list_receivable()`. **JSON fields** (request/response): English snake_case — `account_no`, `transaction_date`, `opening_balance`.
-- **Frontend**: API path strings, TS interfaces, and template bindings all English; page folders `pages/finance/fund-collection/`.
+- **Frontend**: API path strings, TS interfaces, and template bindings all English; view folders `modules/finance/views/transaction/fund-collection/`.
 - **Legacy Indonesian DB columns**: never `ALTER`/rename — **alias in SELECT** (`no_rekening AS account_no`, `tanggal AS date`). WHERE/ORDER/INSERT keep the real column name.
 - **FROZEN (do not translate)**: `entity_type` values (`penghimpunan`, `penyaluran`, `budget_owner`, …) — they key `otorisasi.entity_config` + dispatcher registry + FE literals; `transactioncode` (SD001/DD001/KK/EAR/PEAR/TI/GT/CI); `fund_entity` 1–5; Islamic terms (`ashnaf`, `zakat_fitrah`, `infaq`, `wakaf`, `qurban`, `amil`).
 - Canonical glossary: `docs/todos/2026-06-20-002-refactor-naming-english/glossary.md`. The nuwis-* builder skills encode this per-layer.
@@ -163,40 +163,56 @@ All public identifiers are **English**; Indonesian is allowed **only** in user-f
 
 ```
 src/
-├── main.ts                   ← entry: mount + Pinia + router + PrimeVue
-├── App.vue
-├── router/
-│   └── index.ts              ← 60+ named routes, meta.menu_key per route
-├── stores/
-│   ├── auth.ts               ← user, roles, menus[], branches, active_tenant
-│   ├── sidebar.ts            ← collapsed state, active menu
-│   ├── notifications.ts
-│   └── theme.ts              ← dark/light mode
-├── pages/
-│   ├── LoginPage.vue
-│   ├── DashboardPage.vue
-│   ├── dashboard/            ← KeuanganPage, PenyaluranPage, PenghimpunanPage
-│   ├── keuangan/             ← all financial pages (CoaPage, KasPage, etc.)
-│   ├── HistoriTransaksiPage.vue
-│   ├── admin/                ← RoleMenuPage, UsersPage
-│   └── profile/              ← PasswordPage
-├── components/
+├── app/
+│   ├── main.ts               ← entry: mount + Pinia + router + PrimeVue
+│   ├── App.vue
+│   ├── router/
+│   │   ├── index.ts          ← imports module routes + registerGuards
+│   │   └── guards.ts         ← beforeEach navigation guards
+│   ├── stores/
+│   │   ├── auth.store.ts     ← user, roles, menus[], branches, active_tenant
+│   │   ├── sidebar.store.ts  ← collapsed state
+│   │   ├── notification.store.ts
+│   │   └── theme.store.ts
+│   └── views/                ← LoginView, NoTenantView, profile/PasswordView
+│
+├── layouts/                  ← navigation chrome
+│   ├── AppDomainRail.vue     ← leftmost domain switcher (new)
+│   ├── AppSidebar.vue        ← white/light sidebar, search, ⭐ Favorit
 │   ├── AppHeader.vue
-│   ├── AppSidebar.vue
-│   ├── AppLogo.vue
-│   ├── UserMenu.vue
-│   ├── SystemDate.vue
-│   ├── NotificationBell.vue
-│   ├── widgets/              ← chart widgets per dashboard domain
-│   └── ui/                   ← Button, Card, Input, Alert, DateField,
-│                                SearchSelect, TablePagination, Modal, ...
-├── lib/
+│   └── AppLogo, UserMenu, SystemDate, NotificationBell, UserAvatar
+│
+├── shared/                   ← cross-domain shared code
 │   ├── api/client.ts         ← fetch wrapper: GET/POST/blob
-│   ├── date.ts               ← dmy() — ISO → DD-MM-YYYY display
-│   ├── format.ts             ← currency, number formatters
-│   ├── charts.ts             ← Chart.js global plugin register
-│   ├── menu/registry.ts      ← MENU_KEYS — single source of truth
-│   └── useFetch.ts           ← composable: loading/error/data state
+│   ├── components/           ← Button, Card, Input, Alert, DateField,
+│   │                            SearchSelect, TablePagination, Modal, ...
+│   ├── composables/          ← useFetch.ts, useToast.ts
+│   ├── utils/                ← date.ts, format.ts, charts.ts, download.ts
+│   └── constants/
+│       ├── menu-keys.ts      ← MENU_KEYS — single source of truth
+│       └── domains.ts        ← DomainConfig types + DOMAIN_MAP
+│
+├── modules/
+│   ├── finance/              ← Keuangan domain
+│   │   ├── routes.ts         ← 53 finance routes + meta.domain:'finance'
+│   │   ├── menu.ts           ← DomainConfig (8 groups)
+│   │   ├── components/       ← authorization/, finance/, modals/, parameter/, widgets/
+│   │   └── views/
+│   │       ├── dashboard/    ← DashboardView, DashboardFinanceView, ...
+│   │       ├── master/       ← coa/, cash/, bank/, petty-cash/, budget-owner/
+│   │       ├── budget/       ← import/, revise/, item/, period/
+│   │       ├── transaction/  ← fund-collection/, fund-distribution/, cash-advance/, ...
+│   │       ├── inquiry/      ← budget/, transaction-history/, cash-advance/
+│   │       ├── upload/       ← collection/, zis-routine/
+│   │       ├── reports/      ← all Report*View.vue
+│   │       └── monitoring/   ← AuthorizationView, SubmissionHistoryView
+│   ├── administration/       ← Admin domain
+│   │   ├── routes.ts
+│   │   ├── menu.ts
+│   │   └── views/users/, views/role-menu/
+│   ├── fundraising/          ← Fase 3 stub
+│   ├── distribution/         ← Fase 3 stub
+│   └── enterprise/           ← Fase 4 stub
 ```
 
 ---
@@ -270,14 +286,14 @@ When asked to add a laporan/report page, always follow this order:
 1. **DWH view** — `dwh.v_<name>` in `mziss_*` (backend, not frontend)
 2. **report-api module** — `service.py` + `router.py` + `export.py` (openpyxl)
 3. **BFF route** — `require_menu('keuangan.report.<key>')` + `_resolve_branch` + `stream_report_api` for xlsx
-4. **Frontend** — new `pages/keuangan/Laporan*Page.vue` + key in `lib/menu/registry.ts` + sidebar child in "Laporan" group + route with `meta.menu_key`
+4. **Frontend** — new `pages/keuangan/Laporan*Page.vue` + key in `shared/constants/menu-keys.ts` + sidebar child in "Laporan" group + route with `meta.menu_key`
 5. **Seed** — menu + role_menu rows in `seed-menu-and-rolemenu.sql`, apply to `isf_auth_zakat`
 
 Frontend step (4) is the only step this agent handles.
 
 ### Report UX Rules
 - Filter: use `DateField.vue` (v-model = ISO string, displays DD-MM-YYYY) — never `<input type="date">`
-- Preview: wrap date cells with `dmy()` from `lib/date.ts`
+- Preview: wrap date cells with `dmy()` from `shared/utils/date.ts`
 - Long dropdowns (rekening, akun): use `SearchSelect.vue`
 - Export: BFF sets `Content-Disposition`; `downloadBlob` defers `revokeObjectURL` so Chrome preserves filename
 
@@ -509,6 +525,6 @@ const bff = await agent("Tambah endpoint /api/muzakki", { agentType: 'nuwis-bff-
 - No database queries or migrations
 - No Docker/podman compose changes
 - No direct calls to api-python (:8000) or report-api (:8010) from frontend
-- No raw `fetch()` — always use `lib/api/client.ts`
+- No raw `fetch()` — always use `shared/api/client.ts`
 - No Options API, no Vuex, no Axios
 - No inline `style="..."` — Tailwind classes only
