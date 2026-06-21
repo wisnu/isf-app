@@ -30,6 +30,7 @@ from app.modules.finance.upload.hc_zis.router import router as hc_zis_router
 
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
 from app.modules.finance.inquiry.transaction_history.router import router as transaction_history_router
+from app.modules.finance.inquiry.cash_advance.router import router as ca_inquiry_router
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 from app.modules.finance.monitoring.authorization.router import router as authorization_router
@@ -110,6 +111,7 @@ app.include_router(hc_zis_router,            prefix="/api")
 
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
 app.include_router(transaction_history_router, prefix="/api")
+app.include_router(ca_inquiry_router,            prefix="/api")
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 app.include_router(authorization_router, prefix="/api")
