@@ -5,7 +5,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api, ApiError } from '@/shared/api/client'
 import { useAuthStore } from '@/stores/auth'
 
 interface PDDRow { account_code: string; account_name: string | null; value: number }

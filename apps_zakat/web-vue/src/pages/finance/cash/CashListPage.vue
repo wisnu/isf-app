@@ -8,8 +8,8 @@ import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
-import { formatIdr } from '@/lib/format'
-import { dmy } from '@/lib/date'
+import { formatIdr } from '@/shared/utils/format'
+import { dmy } from '@/shared/utils/date'
 
 interface KasAccount {
   id: string

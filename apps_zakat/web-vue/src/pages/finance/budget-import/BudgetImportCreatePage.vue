@@ -4,8 +4,8 @@ import { ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

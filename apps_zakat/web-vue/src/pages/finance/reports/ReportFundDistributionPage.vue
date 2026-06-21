@@ -8,8 +8,8 @@ import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
+import { api, ApiError } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
 import { useAuthStore } from '@/stores/auth'
 
 interface DistRow {

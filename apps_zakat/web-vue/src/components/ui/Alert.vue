@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { cva, type VariantProps } from 'class-variance-authority'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/utils'
 
 const alertVariants = cva(
   'relative w-full rounded-md border p-3 text-sm flex items-start gap-2',

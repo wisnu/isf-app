@@ -8,9 +8,9 @@ import AmountInput from '@/components/ui/AmountInput.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api } from '@/lib/api/client'
+import { api } from '@/shared/api/client'
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from '@/lib/useToast'
+import { useToast } from '@/shared/composables/useToast'
 
 interface RekeningOption {
   account_no: string

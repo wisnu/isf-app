@@ -10,8 +10,8 @@ import DateField from '@/components/ui/DateField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
 
 interface AmilExpenseRow {
   id: number

@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from 'reka-ui'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/utils'
 
 const props = defineProps<{
   side?: 'top' | 'bottom' | 'left' | 'right'

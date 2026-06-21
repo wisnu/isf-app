@@ -8,8 +8,8 @@ import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { api } from '@/lib/api/client'
-import { dmy, dmyt } from '@/lib/date'
+import { api } from '@/shared/api/client'
+import { dmy, dmyt } from '@/shared/utils/date'
 import type { SubmissionRow } from '@/types/authorization'
 
 interface ListResponse {

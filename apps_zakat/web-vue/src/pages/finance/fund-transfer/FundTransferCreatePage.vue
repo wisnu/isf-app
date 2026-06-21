@@ -8,8 +8,8 @@ import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CashAccountOption {

@@ -4,8 +4,8 @@ import { onMounted, reactive, ref, shallowRef } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

@@ -6,8 +6,8 @@ import { reactive, ref, shallowRef } from 'vue'
 import Alert from '@/components/ui/Alert.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 interface SelectOption { value: string; label: string }
 

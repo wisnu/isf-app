@@ -8,11 +8,11 @@ import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
 import Modal from '@/components/ui/Modal.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import type { MenuKey } from '@/lib/menu/registry'
+import type { MenuKey } from '@/shared/constants/menu-keys'
 
 interface Batch {
   id: number

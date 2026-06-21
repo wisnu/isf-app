@@ -1,6 +1,6 @@
 import { shallowRef } from 'vue'
 
-import { ApiError } from '@/lib/api/client'
+import { ApiError } from '@/shared/api/client'
 
 /**
  * Composable untuk fetch endpoint async dengan state loading/error/data.

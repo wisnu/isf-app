@@ -1,8 +1,8 @@
 import { computed, shallowRef } from 'vue'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 
-import { api, ApiError } from '@/lib/api/client'
-import type { MenuKey } from '@/lib/menu/registry'
+import { api, ApiError } from '@/shared/api/client'
+import type { MenuKey } from '@/shared/constants/menu-keys'
 
 export interface Tenant { id: string; name: string }
 export interface User {

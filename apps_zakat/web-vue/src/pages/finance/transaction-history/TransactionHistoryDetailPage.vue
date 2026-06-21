@@ -5,9 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 
 interface JournalItem {

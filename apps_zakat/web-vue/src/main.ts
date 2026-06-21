@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 
 import App from '@/App.vue'
-import '@/lib/charts'
+import '@/shared/utils/charts'
 import router from '@/router'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useSidebarStore } from '@/stores/sidebar'

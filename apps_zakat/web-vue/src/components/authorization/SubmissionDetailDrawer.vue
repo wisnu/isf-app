@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import { CheckCircle, XCircle, X } from 'lucide-vue-next'
-import { api } from '@/lib/api/client'
-import { dmyt, dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmyt, dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
 import type { SubmissionItem, SubmissionRow } from '@/types/authorization'
 

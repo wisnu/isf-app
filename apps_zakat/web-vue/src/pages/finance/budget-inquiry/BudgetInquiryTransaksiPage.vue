@@ -5,10 +5,10 @@ import { useRoute, useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { formatIdr } from '@/lib/format'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { formatIdr } from '@/shared/utils/format'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

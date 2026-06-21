@@ -5,9 +5,9 @@ import { computed, ref, shallowRef } from 'vue'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 
 interface ParsedRow {
   row_no: number

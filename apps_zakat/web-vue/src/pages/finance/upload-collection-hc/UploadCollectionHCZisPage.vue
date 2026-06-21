@@ -6,9 +6,9 @@ import { useRouter } from 'vue-router'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 
 interface HCZisItem {
   data_no: number

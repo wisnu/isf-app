@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 
 import UserAvatar from '@/components/UserAvatar.vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 

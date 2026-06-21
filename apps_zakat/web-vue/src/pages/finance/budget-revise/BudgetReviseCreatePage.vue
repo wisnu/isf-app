@@ -4,8 +4,8 @@ import { onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 interface BudgetOwner { owner_id: string; owner_name: string }
 interface Period { period_id: number; period_value: number }

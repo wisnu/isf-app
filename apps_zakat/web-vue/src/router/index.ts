@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import type { MenuKey } from '@/lib/menu/registry'
+import type { MenuKey } from '@/shared/constants/menu-keys'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({

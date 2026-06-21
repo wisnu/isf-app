@@ -11,11 +11,11 @@ import TablePagination from '@/components/ui/TablePagination.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
 import AppTable from '@/components/ui/AppTable.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import type { MenuKey } from '@/lib/menu/registry'
+import type { MenuKey } from '@/shared/constants/menu-keys'
 
 interface PengembalianRow {
   transaction_id: number

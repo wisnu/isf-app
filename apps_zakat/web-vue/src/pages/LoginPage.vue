@@ -13,8 +13,8 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import AppLogo from '@/components/AppLogo.vue'
-import { ApiError } from '@/lib/api/client'
-import { portalLabel } from '@/lib/portal'
+import { ApiError } from '@/shared/api/client'
+import { portalLabel } from '@/shared/utils/portal'
 import { useAuthStore } from '@/stores/auth'
 
 const username = shallowRef('')

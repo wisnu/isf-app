@@ -4,7 +4,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api, ApiError } from '@/shared/api/client'
 import { useAuthStore } from '@/stores/auth'
 
 interface MonthlyRow { account_no: string; account_name: string | null; balances: number[] }

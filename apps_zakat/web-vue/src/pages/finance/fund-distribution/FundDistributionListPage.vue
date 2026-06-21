@@ -9,9 +9,9 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import DateField from '@/components/ui/DateField.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import StatusBadge from '@/components/authorization/StatusBadge.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PenyaluranRow {

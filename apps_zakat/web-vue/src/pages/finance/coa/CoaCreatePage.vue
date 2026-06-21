@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { reactive, shallowRef } from 'vue'
 
 import Alert from '@/components/ui/Alert.vue'
-import { api } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 const TYPE_OPTIONS = [
   { code: 'A', label: 'Aset' },

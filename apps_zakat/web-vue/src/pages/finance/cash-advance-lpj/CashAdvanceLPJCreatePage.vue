@@ -6,9 +6,9 @@ import { useRouter } from 'vue-router'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
-import { api } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 
 interface EmployeeLookup {
   employee_id: number

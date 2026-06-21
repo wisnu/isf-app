@@ -6,8 +6,8 @@ import Modal from '@/components/ui/Modal.vue'
 import DateField from '@/components/ui/DateField.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import AmountInput from '@/components/ui/AmountInput.vue'
-import { api } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 interface EmployeeLookup {
   employee_id: number

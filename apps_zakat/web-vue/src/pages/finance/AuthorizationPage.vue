@@ -8,9 +8,9 @@ import StatusBadge from '@/components/authorization/StatusBadge.vue'
 import SubmissionDetailDrawer from '@/components/authorization/SubmissionDetailDrawer.vue'
 import DateField from '@/components/ui/DateField.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import { api } from '@/lib/api/client'
-import { dmyt } from '@/lib/date'
-import { useToast } from '@/lib/useToast'
+import { api } from '@/shared/api/client'
+import { dmyt } from '@/shared/utils/date'
+import { useToast } from '@/shared/composables/useToast'
 import type { SubmissionRow } from '@/types/authorization'
 
 const toast = useToast()

@@ -11,7 +11,7 @@ import DataPanel from '@/components/layout/DataPanel.vue'
 import FilterGroup from '@/components/layout/FilterGroup.vue'
 import FilterPanel from '@/components/layout/FilterPanel.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api, ApiError } from '@/shared/api/client'
 
 interface RoleInfo {
   role_id: string

@@ -2,8 +2,8 @@
 import { AlertCircle, CheckCircle2, Info, X, AlertTriangle } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-import { useToast } from '@/lib/useToast'
-import type { ToastType } from '@/lib/useToast'
+import { useToast } from '@/shared/composables/useToast'
+import type { ToastType } from '@/shared/composables/useToast'
 
 const { toasts, dismiss } = useToast()
 

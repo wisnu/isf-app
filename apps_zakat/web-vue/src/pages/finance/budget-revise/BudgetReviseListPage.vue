@@ -10,9 +10,9 @@ import CardContent from '@/components/ui/CardContent.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import Tooltip from '@/components/ui/Tooltip.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { formatIdr } from '@/lib/format'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { formatIdr } from '@/shared/utils/format'
+import { useToast } from '@/shared/composables/useToast'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

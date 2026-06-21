@@ -6,8 +6,8 @@ import { useRouter } from 'vue-router'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { dmy } from '@/lib/date'
+import { api, ApiError } from '@/shared/api/client'
+import { dmy } from '@/shared/utils/date'
 
 interface Batch {
   batch_id: number

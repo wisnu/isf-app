@@ -3,8 +3,8 @@ import { onMounted, reactive, ref, shallowRef } from 'vue'
 import { X } from 'lucide-vue-next'
 
 import SearchSelect from '@/components/ui/SearchSelect.vue'
-import { api, ApiError } from '@/lib/api/client'
-import { useToast } from '@/lib/useToast'
+import { api, ApiError } from '@/shared/api/client'
+import { useToast } from '@/shared/composables/useToast'
 
 interface OwnerRow {
   owner_id: number

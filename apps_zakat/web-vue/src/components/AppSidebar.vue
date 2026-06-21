@@ -32,10 +32,10 @@ import type { FunctionalComponent } from 'vue'
 import { onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/utils'
 import { useSidebarStore } from '@/stores/sidebar'
 import { useAuthStore } from '@/stores/auth'
-import type { MenuKey } from '@/lib/menu/registry'
+import type { MenuKey } from '@/shared/constants/menu-keys'
 
 interface MenuItem {
   label?: string

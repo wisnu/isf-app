@@ -8,7 +8,7 @@ import Alert from '@/components/ui/Alert.vue'
 import AppDataTable from '@/components/ui/AppDataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import DateField from '@/components/ui/DateField.vue'
-import { api, ApiError } from '@/lib/api/client'
+import { api, ApiError } from '@/shared/api/client'
 import { useAuthStore } from '@/stores/auth'
 
 interface ARRow {

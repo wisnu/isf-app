@@ -5,8 +5,8 @@ import BudgetProgress from '@/components/widgets/BudgetProgressWidget.vue'
 import KpiCard from '@/components/widgets/KpiCardWidget.vue'
 import RekeningList from '@/components/widgets/RekeningListWidget.vue'
 import TrendChart from '@/components/widgets/TrendChartWidget.vue'
-import { api } from '@/lib/api/client'
-import { useFetch } from '@/lib/useFetch'
+import { api } from '@/shared/api/client'
+import { useFetch } from '@/shared/composables/useFetch'
 
 interface KpiCardData {
   total: number

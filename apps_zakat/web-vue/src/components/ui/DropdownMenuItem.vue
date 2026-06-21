@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DropdownMenuItem as RekaDropdownMenuItem } from 'reka-ui'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/utils'
 
 const props = defineProps<{ class?: string; disabled?: boolean }>()
 </script>

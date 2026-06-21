@@ -27,7 +27,7 @@ The current `web-vue/src/` is a flat, feature-mixed structure:
 1. Align `src/` with the Enterprise Web Architecture doc (sections 6 & 7)
 2. Each business domain is self-contained: its own routes, menu config, views, components, types
 3. Shared code is explicitly separated from domain code
-4. Navigation adds a **domain rail** (leftmost icon column) + **per-domain sidebar panel** + **menu search**
+4. Navigation adds a **domain rail** (leftmost icon column) + **per-domain sidebar panel** + **menu search** + **favorites**
 5. Pure structural change: zero logic change to any `.vue` file internals, zero backend impact
 
 ---
@@ -45,6 +45,10 @@ The current `web-vue/src/` is a flat, feature-mixed structure:
 | Domain nav | `AppDomainRail.vue` (new) + rewritten `AppSidebar.vue` | Enables module-grouped navigation |
 | Domain state | Derived from `route.meta.domain` — no extra store | Always in sync with URL; survives hard refresh |
 | Domain switch | Auto-expand sidebar + navigate to `domain.defaultRoute` | User confirmed: A (sidebar + content sync) |
+| Sidebar theme | **White/light** (was dark slate-900) | Matches new UI design reference |
+| Primary accent | **`#2563eb` blue** (was `#4f46e5` indigo) | Matches new UI design reference |
+| Font | **Plus Jakarta Sans** added as primary font | Matches new UI design reference |
+| Sidebar tabs | **Semua \| ⭐ Favorit** (no Recent) | Favorites persisted to localStorage per user |
 | Transaction views folder | `transaction/` (singular) | Separates write workflow from inquiry and reports |
 | Inquiry views folder | `inquiry/` (separate from `reports/`) | Reports = aggregate exports; Inquiry = drill-down lookup |
 
@@ -469,19 +473,30 @@ Width: 56px fixed, always visible
 ### `layouts/AppSidebar.vue` (rewrite)
 
 ```
+Theme: white/light background (bg-white border-r border-slate-100)
+Font:  Plus Jakarta Sans
+
 Reads: route.meta.domain → DOMAIN_MAP[domain] → DomainConfig
 New sections vs current:
-  - Domain header (label + sub)    [NEW]
-  - Search input                   [NEW]
-  - Menu groups (expand/collapse)  [existing behavior, refactored]
-  - Sidebar footer (version)       [existing]
+  - Domain header (label + sub)            [NEW]
+  - Search input                           [NEW]
+  - Tab bar: "Semua | ⭐ Favorit"          [NEW]
+  - Menu groups (expand/collapse)          [existing behavior, refactored]
+  - Sidebar footer (version)               [existing]
 
 Removed from current:
   - Hardcoded groups array
   - MZISS / Modul Akuntansi header (moved to header-brand in AppHeader)
+  - Dark color scheme
 
 Search behavior: client-side filter on current domain's menu items;
-  shows group label as right-aligned secondary text per result
+  shows group label as right-aligned secondary text per result.
+
+Favorites behavior:
+  - Star icon (★) per menu item, toggles on click
+  - Stored in localStorage key: isf-sidebar-favorites (Set of menu item paths)
+  - "Favorit" tab shows only starred items, flat list (no group headers)
+  - Favorites survive domain switch and page reload
 ```
 
 ### `modules/finance/menu.ts` (new)
