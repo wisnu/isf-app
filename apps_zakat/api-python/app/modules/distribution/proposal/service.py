@@ -394,18 +394,18 @@ async def delete_proposal(proposal_id: int) -> None:
 
 # ── Total by Mustahiq ─────────────────────────────────────────────────────────
 
-async def get_total_by_mustahiq(mustahiq_id: int) -> float:
-    """Get total nominal proposal for a mustahiq."""
+async def get_total_by_mustahiq(mustahiq_id: int) -> int:
+    """Get total number of proposals ever submitted by a mustahiq."""
     row = await fetch_one(
         """
-        SELECT COALESCE(SUM(proposalnominal), 0) AS total
+        SELECT COUNT(*) AS total
         FROM program.proposal
         WHERE mustahiqid = $1
         """,
         mustahiq_id,
     )
 
-    return float(row['total']) if row else 0.0
+    return int(row['total']) if row else 0
 
 
 # ── Lookups ───────────────────────────────────────────────────────────────────
