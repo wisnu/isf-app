@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; background: #eef2f6; color: #1e2a36; font-size: 13px; -webkit-font-smoothing: antialiased; }
+    input, select, button { font-family: inherit; }
+    input:focus, select:focus { outline: none; border-color: #0f4c81 !important; box-shadow: 0 0 0 2px rgba(15,76,129,.16); }
+    input::placeholder { color: #9aabbb; }
+    table { border-collapse: collapse; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c3d0dd; border-radius: 6px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:#eef2f6">
+
+  <header style="background:#0f3a63;color:#fff;padding:0 22px;height:58px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #082a48;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;gap:13px">
+      <div style="width:30px;height:30px;border-radius:5px;background:#1f6fb2;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em">TU</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;letter-spacing:.01em;line-height:1.1">List Transaksi Umum</div>
+        <div style="font-size:11px;color:#9cc0e0;font-weight:500;margin-top:2px">Daftar Transaksi Tersimpan</div>
+      </div>
+    </div>
+    <a href="Transaksi Umum.dc.html" style="text-decoration:none;border:none;background:#1f8a5b;color:#fff;border-radius:4px;padding:0 16px;height:34px;display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;cursor:pointer">+ Transaksi Baru</a>
+  </header>
+
+  <main style="max-width:1480px;margin:0 auto;padding:20px">
+
+    <!-- FILTER BAR -->
+    <section style="background:#fff;border:1px solid #d4dde6;border-radius:5px;margin-bottom:16px">
+      <div style="padding:9px 16px;background:#f4f7fa;border-bottom:1px solid #d4dde6;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#3a4a5a">Filter &amp; Pencarian</span>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column">
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Tanggal Dari</label>
+          <input type="date" value="{{ fromDate }}" name="from" onChange="{{ onFilter }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36" />
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Tanggal Sampai</label>
+          <input type="date" value="{{ toDate }}" name="to" onChange="{{ onFilter }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36" />
+        </div>
+        <div style="display:flex;flex-direction:column;flex:1;min-width:240px">
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Cari Nomor Transaksi</label>
+          <input value="{{ search }}" name="search" onChange="{{ onFilter }}" onInput="{{ onFilter }}" placeholder="Mis. TU-2026-06-0184" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36;font-family:'IBM Plex Mono',monospace" />
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Status</label>
+          <select value="{{ statusFilter }}" name="status" onChange="{{ onFilter }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;min-width:130px">
+            <option value="">Semua</option>
+            <option value="Posted">Posted</option>
+            <option value="Draft">Draft</option>
+          </select>
+        </div>
+        <button onClick="{{ resetFilter }}" style="border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Reset Filter</button>
+      </div>
+    </section>
+
+    <!-- LIST -->
+    <section style="background:#fff;border:1px solid #d4dde6;border-radius:5px">
+      <!-- TOP BAR: count + pagination -->
+      <div style="padding:11px 16px;background:#f4f7fa;border-bottom:1px solid #d4dde6;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <span style="font-size:12px;color:#52616f;font-weight:500">Menampilkan <strong style="font-family:'IBM Plex Mono',monospace;color:#1e2a36">{{ rangeLabel }}</strong> dari <strong style="font-family:'IBM Plex Mono',monospace;color:#1e2a36">{{ totalCount }}</strong> transaksi</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:#6b7c8e;text-transform:uppercase;letter-spacing:.04em">Baris</span>
+            <select value="{{ pageSize }}" onChange="{{ onPageSize }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 7px;height:30px;font-size:12.5px;background:#fff">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button onClick="{{ firstPage }}" disabled="{{ onFirst }}" style="border:1px solid #cdd8e2;background:{{ firstBg }};color:{{ firstColor }};border-radius:3px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">«</button>
+            <button onClick="{{ prevPage }}" disabled="{{ onFirst }}" style="border:1px solid #cdd8e2;background:{{ firstBg }};color:{{ firstColor }};border-radius:3px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+            <span style="font-size:12px;color:#3a4a5a;font-weight:600;padding:0 8px;font-family:'IBM Plex Mono',monospace">Hal {{ currentPage }} / {{ totalPages }}</span>
+            <button onClick="{{ nextPage }}" disabled="{{ onLast }}" style="border:1px solid #cdd8e2;background:{{ lastBg }};color:{{ lastColor }};border-radius:3px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+            <button onClick="{{ lastPage }}" disabled="{{ onLast }}" style="border:1px solid #cdd8e2;background:{{ lastBg }};color:{{ lastColor }};border-radius:3px;width:30px;height:30px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">»</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:1040px">
+          <thead>
+            <tr>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Nomor Transaksi</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Tanggal</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6">Keterangan</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Detail</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Nilai</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Status</th>
+              <th style="background:#eef3f8;padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap;width:140px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-if value="{{ isEmpty }}">
+              <tr><td colspan="7" style="text-align:center;color:#829ab1;padding:40px;font-size:13px">Tidak ada transaksi yang cocok dengan filter.</td></tr>
+            </sc-if>
+            <sc-for list="{{ pageRows }}" as="row" hint-placeholder-count="5">
+              <tr style="border-bottom:1px solid #eef2f6" style-hover="background:#fafcfe">
+                <td style="padding:9px 14px;font-size:12.5px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:#0f4c81">{{ row.nomor }}</td>
+                <td style="padding:9px 14px;font-size:12.5px;color:#3a4a5a;white-space:nowrap">{{ row.tanggalFmt }}</td>
+                <td style="padding:9px 14px;font-size:12.5px;color:#52616f">{{ row.keterangan }}</td>
+                <td style="padding:9px 14px;font-size:12.5px;text-align:center;font-family:'IBM Plex Mono',monospace;color:#6b7c8e">{{ row.jumlahDetail }}</td>
+                <td style="padding:9px 14px;font-size:12.5px;text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-weight:600">{{ row.nilaiFmt }}</td>
+                <td style="padding:9px 14px;text-align:center">
+                  <sc-if value="{{ row.isPosted }}"><span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#e3f3ea;color:#1f8a5b">Posted</span></sc-if>
+                  <sc-if value="{{ row.isDraft }}"><span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#fdf1dc;color:#b7791f">Draft</span></sc-if>
+                </td>
+                <td style="padding:9px 14px">
+                  <div style="display:flex;gap:4px">
+                    <button onClick="{{ row.onEdit }}" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">Edit</button>
+                    <button onClick="{{ row.onDelete }}" style="border:1px solid #e3b4b0;background:#fbf1f0;color:#c0392b;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <sc-if value="{{ confirmOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:60;animation:fadeIn .12s ease-out" onClick="{{ cancelDelete }}">
+    <div style="width:420px;max-width:92%;background:#fff;border-radius:6px;box-shadow:0 18px 50px rgba(0,0,0,.28);overflow:hidden" onClick="{{ stopProp }}">
+      <div style="padding:16px 20px;border-bottom:1px solid #e6edf3;display:flex;align-items:center;gap:12px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#fbe7e7;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex:0 0 auto">!</div>
+        <h3 style="margin:0;font-size:15px;font-weight:700;color:#1e2a36">Hapus Transaksi</h3>
+      </div>
+      <div style="padding:18px 20px;font-size:13px;color:#52616f;line-height:1.55">
+        Anda akan menghapus transaksi <strong style="font-family:'IBM Plex Mono',monospace;color:#0f4c81">{{ pendingNomor }}</strong>. Tindakan ini tidak dapat dibatalkan. Lanjutkan?
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid #e6edf3;background:#f4f7fa;display:flex;justify-content:flex-end;gap:8px">
+        <button onClick="{{ cancelDelete }}" style="border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 16px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Batal</button>
+        <button onClick="{{ confirmDelete }}" style="border:none;background:#c0392b;color:#fff;border-radius:3px;padding:0 18px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#a83227">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    fromDate: "",
+    toDate: "",
+    search: "",
+    statusFilter: "",
+    page: 1,
+    pageSize: 10,
+    confirmNomor: null,
+    rows: this.seed()
+  };
+
+  seed() {
+    const ket = [
+      "Penerimaan dana infak operasional",
+      "Penyaluran beasiswa yatim",
+      "Setoran zakat maal korporasi",
+      "Pembayaran biaya operasional kantor",
+      "Penerimaan wakaf tunai",
+      "Penyaluran bantuan kemanusiaan",
+      "Transfer antar rekening bank",
+      "Penghimpunan sedekah jumat",
+      "Penyaluran program kesehatan",
+      "Koreksi pencatatan jurnal",
+      "Penerimaan donasi via QRIS",
+      "Pembayaran honor amil",
+      "Penyaluran sembako dhuafa",
+      "Setoran infak masjid",
+      "Pencatatan biaya sosialisasi program",
+      "Penerimaan dana CSR mitra",
+      "Penyaluran santunan fakir",
+      "Pembelian inventaris kantor",
+      "Penghimpunan zakat fitrah",
+      "Penyaluran modal usaha mustahik",
+      "Penerimaan bagi hasil deposito syariah",
+      "Koreksi selisih kas operasional",
+      "Penyaluran bantuan bencana alam",
+      "Setoran infak terikat pendidikan"
+    ];
+    const rows = [];
+    const total = ket.length;
+    for (let i = 0; i < total; i++) {
+      const day = 28 - i;
+      const mm = day > 0 ? "06" : "05";
+      const dd = day > 0 ? String(day).padStart(2, "0") : String(31 + day).padStart(2, "0");
+      const num = String(total - i).padStart(4, "0");
+      rows.push({
+        nomor: `TU-2026-${mm}-${num}`,
+        tanggal: `2026-${mm}-${dd}`,
+        keterangan: ket[i],
+        jumlahDetail: 2 + (i % 3),
+        nilai: (Math.floor((Math.sin(i + 1) * 0.5 + 0.6) * 90) + 5) * 100000,
+        status: i % 5 === 0 ? "Draft" : "Posted"
+      });
+    }
+    return rows;
+  }
+
+  fmt(v) { return new Intl.NumberFormat("id-ID").format(Number(v) || 0); }
+
+  fmtDate(s) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const [y, m, d] = s.split("-");
+    return `${d} ${months[Number(m) - 1]} ${y}`;
+  }
+
+  handleFilter = (e) => {
+    const { name, value } = e.target;
+    this.setState({ [name]: value, page: 1 });
+  };
+
+  resetFilter = () => this.setState({ fromDate: "", toDate: "", search: "", statusFilter: "", page: 1 });
+
+  onPageSize = (e) => this.setState({ pageSize: Number(e.target.value), page: 1 });
+
+  filtered() {
+    const s = this.state;
+    const q = s.search.trim().toLowerCase();
+    return s.rows.filter(r => {
+      if (q && !r.nomor.toLowerCase().includes(q)) return false;
+      if (s.statusFilter && r.status !== s.statusFilter) return false;
+      if (s.fromDate && r.tanggal < s.fromDate) return false;
+      if (s.toDate && r.tanggal > s.toDate) return false;
+      return true;
+    });
+  }
+
+  editRow = (nomor) => alert("Edit transaksi " + nomor + " — membuka form Transaksi Umum.");
+
+  deleteRow = (nomor) => this.setState({ confirmNomor: nomor });
+
+  cancelDelete = () => this.setState({ confirmNomor: null });
+
+  stopProp = (e) => e.stopPropagation();
+
+  confirmDelete = () => {
+    const nomor = this.state.confirmNomor;
+    this.setState(st => ({ rows: st.rows.filter(r => r.nomor !== nomor), confirmNomor: null }));
+  };
+
+  goPage = (p) => this.setState({ page: p });
+
+  renderVals() {
+    const s = this.state;
+    const all = this.filtered();
+    const totalCount = all.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / s.pageSize));
+    const page = Math.min(s.page, totalPages);
+    const start = (page - 1) * s.pageSize;
+    const slice = all.slice(start, start + s.pageSize);
+    const onFirst = page <= 1;
+    const onLast = page >= totalPages;
+
+    return {
+      fromDate: s.fromDate,
+      toDate: s.toDate,
+      search: s.search,
+      statusFilter: s.statusFilter,
+      pageSize: s.pageSize,
+      onFilter: this.handleFilter,
+      resetFilter: this.resetFilter,
+      onPageSize: this.onPageSize,
+      totalCount,
+      totalPages,
+      currentPage: page,
+      rangeLabel: totalCount === 0 ? "0" : `${start + 1}–${start + slice.length}`,
+      isEmpty: totalCount === 0,
+      pageRows: slice.map(r => ({
+        nomor: r.nomor,
+        tanggalFmt: this.fmtDate(r.tanggal),
+        keterangan: r.keterangan,
+        jumlahDetail: r.jumlahDetail,
+        nilaiFmt: this.fmt(r.nilai),
+        isPosted: r.status === "Posted",
+        isDraft: r.status === "Draft",
+        onEdit: () => this.editRow(r.nomor),
+        onDelete: () => this.deleteRow(r.nomor)
+      })),
+      onFirst, onLast,
+      firstBg: onFirst ? "#f4f7fa" : "#fff",
+      firstColor: onFirst ? "#b0bfcc" : "#3a4a5a",
+      lastBg: onLast ? "#f4f7fa" : "#fff",
+      lastColor: onLast ? "#b0bfcc" : "#3a4a5a",
+      confirmOpen: s.confirmNomor !== null,
+      pendingNomor: s.confirmNomor,
+      cancelDelete: this.cancelDelete,
+      confirmDelete: this.confirmDelete,
+      stopProp: this.stopProp,
+      firstPage: () => this.goPage(1),
+      prevPage: () => this.goPage(Math.max(1, page - 1)),
+      nextPage: () => this.goPage(Math.min(totalPages, page + 1)),
+      lastPage: () => this.goPage(totalPages)
+    };
+  }
+}
+</script>
+</body>
+</html>

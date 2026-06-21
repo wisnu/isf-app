@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; background: #eef2f6; color: #1e2a36; font-size: 13px; -webkit-font-smoothing: antialiased; }
+    input, select, textarea, button { font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #0f4c81 !important; box-shadow: 0 0 0 2px rgba(15,76,129,.16); }
+    input::placeholder, textarea::placeholder { color: #9aabbb; }
+    table { border-collapse: collapse; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c3d0dd; border-radius: 6px; }
+    @keyframes drawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:#eef2f6">
+
+  <header style="background:#0f3a63;color:#fff;padding:0 22px;height:58px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #082a48;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;gap:13px">
+      <div style="width:30px;height:30px;border-radius:5px;background:#1f6fb2;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em">TU</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;letter-spacing:.01em;line-height:1.1">Transaksi Umum</div>
+        <div style="font-size:11px;color:#9cc0e0;font-weight:500;margin-top:2px">Input Jurnal &amp; Mutasi</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;color:#9cc0e0;font-weight:500;letter-spacing:.04em;text-transform:uppercase">Periode</span>
+      <span style="font-size:12px;color:#fff;font-weight:600;font-family:'IBM Plex Mono',monospace">Juni 2026</span>
+    </div>
+  </header>
+
+  <!-- ============ DETAIL TRANSAKSI ============ -->
+  <main style="max-width:1540px;margin:0 auto;padding:18px 20px;display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start">
+
+    <div style="position:sticky;top:74px;display:flex;flex-direction:column;gap:14px">
+      <section style="background:#fff;border:1px solid #d4dde6;border-radius:5px">
+        <div style="padding:9px 14px;background:#11202f;border-bottom:1px solid #d4dde6;border-radius:5px 5px 0 0;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#cfe0ef">Header Transaksi</span>
+          <span style="font-size:10px;font-weight:600;color:#11202f;background:#9cc0e0;padding:3px 8px;border-radius:3px;letter-spacing:.03em">DRAFT</span>
+        </div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Nomor Transaksi</label>
+            <input value="TU-2026-06-0184" readonly style="width:100%;border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#eef2f6;color:#64748b;font-family:'IBM Plex Mono',monospace" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="display:flex;flex-direction:column">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Tgl Input</label>
+              <input type="date" value="2026-06-18" style="width:100%;border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36" />
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Tgl Posting</label>
+              <input type="date" value="2026-06-18" style="width:100%;border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36" />
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Nomor Cek / Kwitansi</label>
+            <input placeholder="Nomor cek atau kwitansi" style="width:100%;border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff;color:#1e2a36" />
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Keterangan Transaksi</label>
+            <textarea placeholder="Keterangan umum transaksi" style="width:100%;border:1px solid #cdd8e2;border-radius:3px;padding:8px 9px;font-size:13px;background:#fff;color:#1e2a36;min-height:58px;resize:vertical">Pencatatan penerimaan dana infak operasional.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <section style="background:#fff;border:1px solid #d4dde6;border-radius:5px">
+        <div style="padding:9px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#3a4a5a">Ringkasan</span>
+          <sc-if value="{{ balanced }}"><span style="font-size:11px;font-weight:700;background:#e3f3ea;color:#1f8a5b;padding:4px 11px;border-radius:999px">● Balance</span></sc-if>
+          <sc-if value="{{ notBalanced }}"><span style="font-size:11px;font-weight:700;background:#fdf1dc;color:#b7791f;padding:4px 11px;border-radius:999px">● Belum Balance</span></sc-if>
+        </div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:1px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #eef2f6">
+            <span style="font-size:12px;color:#6b7c8e;text-transform:uppercase;letter-spacing:.04em">Total Debit</span>
+            <strong style="font-size:16px;font-family:'IBM Plex Mono',monospace;color:#1f8a5b;font-weight:600">{{ totalDebit }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #eef2f6">
+            <span style="font-size:12px;color:#6b7c8e;text-transform:uppercase;letter-spacing:.04em">Total Kredit</span>
+            <strong style="font-size:16px;font-family:'IBM Plex Mono',monospace;color:#c0392b;font-weight:600">{{ totalKredit }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #eef2f6">
+            <span style="font-size:12px;color:#6b7c8e;text-transform:uppercase;letter-spacing:.04em">Selisih</span>
+            <strong style="font-size:16px;font-family:'IBM Plex Mono',monospace;color:#1e2a36;font-weight:600">{{ selisih }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px">
+            <span style="font-size:12px;color:#6b7c8e;text-transform:uppercase;letter-spacing:.04em">Jumlah Detail</span>
+            <strong style="font-size:16px;font-family:'IBM Plex Mono',monospace;color:#1e2a36;font-weight:600">{{ jumlahDetail }}</strong>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid #d4dde6;background:#f4f7fa">
+          <button onClick="{{ batalTransaction }}" style="flex:0 0 auto;border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 16px;height:36px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#eef2f6">Batal</button>
+          <button onClick="{{ saveTransaction }}" style="flex:1;border:none;background:#1f8a5b;color:#fff;border-radius:3px;height:36px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#1a774e">Simpan Transaksi</button>
+        </div>
+      </section>
+    </div>
+
+    <section style="background:#fff;border:1px solid #d4dde6;border-radius:5px">
+      <div style="padding:9px 16px;background:#f4f7fa;border-bottom:1px solid #d4dde6;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#3a4a5a">Detail Transaksi</span>
+        <span style="font-size:11px;color:#6b7c8e;font-family:'IBM Plex Mono',monospace">{{ jumlahDetail }} baris</span>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:11px 16px;border-bottom:1px solid #e6edf3;background:#fafcfe">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ openKasbank }}" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 12px;height:32px;font-size:12px;font-weight:600;cursor:pointer">+ Kas / Bank</button>
+          <button onClick="{{ openPenyaluran }}" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 12px;height:32px;font-size:12px;font-weight:600;cursor:pointer">+ Penyaluran Dana</button>
+          <button onClick="{{ openPenghimpunan }}" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 12px;height:32px;font-size:12px;font-weight:600;cursor:pointer">+ Penghimpunan Dana</button>
+          <button onClick="{{ openLedger }}" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 12px;height:32px;font-size:12px;font-weight:600;cursor:pointer">+ GL Accounting</button>
+        </div>
+        <button onClick="{{ resetDetail }}" style="border:1px solid #e3b4b0;background:#fbf1f0;color:#c0392b;border-radius:3px;padding:0 14px;height:32px;font-size:12px;font-weight:600;cursor:pointer">↻ Reset Detail</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:900px">
+          <thead>
+            <tr>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Jenis Detail</th>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Referensi</th>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Mutasi</th>
+              <sc-if value="{{ showCurrency }}"><th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Valuta</th></sc-if>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Nilai</th>
+              <sc-if value="{{ showCurrency }}"><th style="background:#eef3f8;padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Kurs</th></sc-if>
+              <sc-if value="{{ showCurrency }}"><th style="background:#eef3f8;padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Ekuivalen</th></sc-if>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap">Keterangan</th>
+              <th style="background:#eef3f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7b;border-bottom:1px solid #d4dde6;white-space:nowrap;width:120px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-if value="{{ emptyDetails }}">
+              <tr><td colspan="9" style="text-align:center;color:#829ab1;padding:30px;font-size:13px">Belum ada detail transaksi — gunakan tombol di atas untuk menambah.</td></tr>
+            </sc-if>
+            <sc-for list="{{ details }}" as="row" hint-placeholder-count="2">
+              <tr style="border-bottom:1px solid #eef2f6">
+                <td style="padding:8px 12px;font-size:12.5px;font-weight:500">{{ row.label }}</td>
+                <td style="padding:8px 12px;font-size:12.5px;font-family:'IBM Plex Mono',monospace;color:#3a4a5a">{{ row.reference }}</td>
+                <td style="padding:8px 12px">
+                  <sc-if value="{{ row.isDebit }}"><span style="display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600;background:#e3f3ea;color:#1f8a5b">Debit</span></sc-if>
+                  <sc-if value="{{ row.isKredit }}"><span style="display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600;background:#fbe7e7;color:#c0392b">Kredit</span></sc-if>
+                </td>
+                <sc-if value="{{ showCurrency }}"><td style="padding:8px 12px;font-size:12.5px">{{ row.valuta }}</td></sc-if>
+                <td style="padding:8px 12px;font-size:12.5px;text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums">{{ row.nilaiFmt }}</td>
+                <sc-if value="{{ showCurrency }}"><td style="padding:8px 12px;font-size:12.5px;text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;color:#6b7c8e">{{ row.kursFmt }}</td></sc-if>
+                <sc-if value="{{ showCurrency }}"><td style="padding:8px 12px;font-size:12.5px;text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-weight:600">{{ row.ekuivalenFmt }}</td></sc-if>
+                <td style="padding:8px 12px;font-size:12.5px;color:#52616f">{{ row.keterangan }}</td>
+                <td style="padding:8px 12px">
+                  <div style="display:flex;gap:4px">
+                    <button onClick="{{ row.onEdit }}" style="border:none;background:transparent;color:#0f4c81;padding:4px 7px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">Edit</button>
+                    <button onClick="{{ row.onDelete }}" style="border:none;background:transparent;color:#c0392b;padding:4px 7px;font-size:12px;font-weight:600;cursor:pointer;border-radius:3px">Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:11px 16px;border-top:1px solid #eef2f6;font-size:12px;color:#829ab1;font-style:italic">
+        Klik salah satu tombol &ldquo;+&rdquo; di atas untuk menambah detail transaksi. Pastikan total debit dan kredit seimbang sebelum disimpan.
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ DRAWER (shared) ============ -->
+  <sc-if value="{{ drawerOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;justify-content:flex-end;z-index:50;animation:fadeIn .15s ease-out">
+    <aside style="width:900px;max-width:100%;height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18);animation:drawerIn .2s ease-out">
+      <div style="padding:14px 20px;border-bottom:1px solid #d4dde6;background:#f4f7fa;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0;font-size:15px;font-weight:700;color:#1e2a36">{{ drawerTitle }}</h3>
+          <div style="font-size:11px;color:#6b7c8e;margin-top:3px;font-weight:500">{{ drawerSubtitle }}</div>
+        </div>
+        <button onClick="{{ closeDrawer }}" style="border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 14px;height:32px;font-size:12.5px;font-weight:600;cursor:pointer">Tutup</button>
+      </div>
+
+      <div style="padding:20px;overflow-y:auto;flex:1;background:#fbfdff">
+        <div style="display:grid;grid-template-columns:1.4fr .9fr;gap:16px;align-items:start">
+
+          <div>
+            <!-- KAS / BANK -->
+            <sc-if value="{{ typeKasbank }}">
+              <div style="border:1px solid #d4dde6;border-radius:5px;background:#fff;overflow:hidden">
+                <div style="padding:10px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a4a5a">Informasi Kas / Bank</div>
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Kas / Bank</label>
+                    <div style="display:grid;grid-template-columns:120px 1fr auto;gap:8px">
+                      <input name="kodeKasBank" value="{{ fd.kodeKasBank }}" onChange="{{ onField }}" placeholder="Kode" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="namaKasBank" value="{{ fd.namaKasBank }}" onChange="{{ onField }}" placeholder="Nama kas / bank" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari</button>
+                    </div>
+                    <div style="font-size:11px;color:#829ab1;margin-top:5px">Pilih rekening kas atau bank yang digunakan untuk transaksi.</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Valuta</label>
+                    <input name="valuta" value="{{ fd.valuta }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;max-width:160px" />
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Keterangan</label>
+                    <textarea name="keterangan" value="{{ fd.keterangan }}" onChange="{{ onField }}" placeholder="Keterangan transaksi kas / bank" style="border:1px solid #cdd8e2;border-radius:3px;padding:8px 9px;font-size:13px;min-height:60px;resize:vertical"></textarea>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- PENYALURAN -->
+            <sc-if value="{{ typePenyaluran }}">
+              <div style="border:1px solid #d4dde6;border-radius:5px;background:#fff;overflow:hidden">
+                <div style="padding:10px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a4a5a">Informasi Penyaluran</div>
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Nama Program</label>
+                    <div style="display:grid;grid-template-columns:120px 1fr auto;gap:8px">
+                      <input name="kodeProgram" value="{{ fd.kodeProgram }}" onChange="{{ onField }}" placeholder="Kode" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="namaProgram" value="{{ fd.namaProgram }}" onChange="{{ onField }}" placeholder="Nama program" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Sumber Dana</label>
+                    <div style="display:grid;grid-template-columns:120px 1fr auto;gap:8px">
+                      <input name="kodeSumber" value="{{ fd.kodeSumber }}" onChange="{{ onField }}" placeholder="Kode" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="sumberDana" value="{{ fd.sumberDana }}" onChange="{{ onField }}" placeholder="Sumber dana" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari</button>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Jenis Dana</label>
+                      <select name="jenisDana" value="{{ fd.jenisDana }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                        <option>Zakat</option><option>Infak</option><option>Sedekah</option><option>Wakaf</option><option>Amil</option>
+                      </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Ashnaf</label>
+                      <select name="ashnaf" value="{{ fd.ashnaf }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                        <option>Fakir</option><option>Miskin</option><option>Amil</option><option>Mualaf</option><option>Riqab</option><option>Gharimin</option><option>Fisabilillah</option><option>Ibnu Sabil</option>
+                      </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Valuta</label>
+                      <input name="valuta" value="{{ fd.valuta }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Keterangan</label>
+                    <textarea name="keterangan" value="{{ fd.keterangan }}" onChange="{{ onField }}" placeholder="Keterangan penyaluran dana" style="border:1px solid #cdd8e2;border-radius:3px;padding:8px 9px;font-size:13px;min-height:60px;resize:vertical"></textarea>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- PENGHIMPUNAN -->
+            <sc-if value="{{ typePenghimpunan }}">
+              <div style="border:1px solid #d4dde6;border-radius:5px;background:#fff;overflow:hidden">
+                <div style="padding:10px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a4a5a">Informasi Penghimpunan</div>
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Donatur</label>
+                    <div style="display:grid;grid-template-columns:150px 1fr auto;gap:8px">
+                      <input name="kodeDonatur" value="{{ fd.kodeDonatur }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="namaDonatur" value="{{ fd.namaDonatur }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari Donatur</button>
+                    </div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Produk</label>
+                      <input name="produk" value="{{ fd.produk }}" onChange="{{ onField }}" placeholder="Produk penghimpunan" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                    </div>
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Kode Valuta</label>
+                      <input name="valuta" value="{{ fd.valuta }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                    </div>
+                    <div style="display:flex;flex-direction:column">
+                      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Jenis Dana</label>
+                      <select name="jenisDana" value="{{ fd.jenisDana }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                        <option>Zakat</option><option>Infak</option><option>Sedekah</option><option>Wakaf</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Keterangan</label>
+                    <textarea name="keterangan" value="{{ fd.keterangan }}" onChange="{{ onField }}" placeholder="Keterangan penghimpunan dana" style="border:1px solid #cdd8e2;border-radius:3px;padding:8px 9px;font-size:13px;min-height:60px;resize:vertical"></textarea>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- LEDGER -->
+            <sc-if value="{{ typeLedger }}">
+              <div style="border:1px solid #d4dde6;border-radius:5px;background:#fff;overflow:hidden">
+                <div style="padding:10px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a4a5a">Informasi Ledger</div>
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Rekening Ledger</label>
+                    <div style="display:grid;grid-template-columns:150px 1fr auto;gap:8px">
+                      <input name="kodeLedger" value="{{ fd.kodeLedger }}" onChange="{{ onField }}" placeholder="Kode rekening" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="namaLedger" value="{{ fd.namaLedger }}" onChange="{{ onField }}" placeholder="Nama rekening ledger" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Valuta</label>
+                    <div style="display:grid;grid-template-columns:120px 1fr auto;gap:8px">
+                      <input name="valuta" value="{{ fd.valuta }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input value="RUPIAH" readonly style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#eef2f6;color:#64748b" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Kode Anggaran</label>
+                    <div style="display:grid;grid-template-columns:150px 1fr auto;gap:8px">
+                      <input name="kodeAnggaran" value="{{ fd.kodeAnggaran }}" onChange="{{ onField }}" placeholder="Kode anggaran" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;font-family:'IBM Plex Mono',monospace" />
+                      <input name="ketAnggaran" value="{{ fd.ketAnggaran }}" onChange="{{ onField }}" placeholder="Keterangan anggaran" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px" />
+                      <button type="button" style="border:1px solid #b9cfe4;background:#eef5fb;color:#0f4c81;border-radius:3px;padding:0 14px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Cari Anggaran</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column">
+                    <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Keterangan</label>
+                    <textarea name="keterangan" value="{{ fd.keterangan }}" onChange="{{ onField }}" placeholder="Keterangan GL accounting" style="border:1px solid #cdd8e2;border-radius:3px;padding:8px 9px;font-size:13px;min-height:60px;resize:vertical"></textarea>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- MONEY PANEL -->
+          <div style="border:1px solid #d4dde6;border-radius:5px;background:#fff;overflow:hidden;position:sticky;top:0">
+            <div style="padding:10px 14px;background:#f4f7fa;border-bottom:1px solid #d4dde6;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a4a5a">Nominal Transaksi</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;background:#e6f0fa;color:#0f4c81;font-size:10px;font-weight:700;letter-spacing:.03em">AUTO HITUNG</span>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;flex-direction:column">
+                <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Jenis Mutasi</label>
+                <sc-if value="{{ typePenghimpunan }}">
+                  <select name="mutasi" value="{{ fd.mutasi }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                    <option value="K">Kredit (Penerimaan)</option>
+                    <option value="D">Debit (Reversal Penerimaan)</option>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ typePenyaluran }}">
+                  <select name="mutasi" value="{{ fd.mutasi }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                    <option value="K">Kredit (Reversal Penyaluran)</option>
+                    <option value="D">Debit (Penyaluran)</option>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ genericMutasi }}">
+                  <select name="mutasi" value="{{ fd.mutasi }}" onChange="{{ onField }}" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:13px;background:#fff">
+                    <option value="D">Debit</option>
+                    <option value="K">Kredit</option>
+                  </select>
+                </sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column">
+                <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Nilai</label>
+                <input type="number" name="nilai" value="{{ fd.nilai }}" onChange="{{ onField }}" min="0" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:14px;font-family:'IBM Plex Mono',monospace;text-align:right" />
+              </div>
+              <sc-if value="{{ showCurrency }}">
+                <div style="display:flex;flex-direction:column">
+                  <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b7c8e;margin-bottom:5px">Nilai Kurs</label>
+                  <input type="number" name="kurs" value="{{ fd.kurs }}" onChange="{{ onField }}" min="1" style="border:1px solid #cdd8e2;border-radius:3px;padding:0 9px;height:34px;font-size:14px;font-family:'IBM Plex Mono',monospace;text-align:right" />
+                </div>
+              </sc-if>
+              <div style="border-radius:5px;background:#f1f5f9;padding:14px;border:1px dashed #bcccdc">
+                <span style="display:block;font-size:11px;color:#6b7c8e;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">Nilai Ekuivalen</span>
+                <strong style="font-size:22px;color:#0f4c81;font-family:'IBM Plex Mono',monospace;font-weight:600">{{ moneyPreview }}</strong>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="padding:14px 20px;border-top:1px solid #d4dde6;background:#f4f7fa;display:flex;justify-content:flex-end;gap:8px">
+        <button onClick="{{ closeDrawer }}" style="border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 16px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Batal</button>
+        <button onClick="{{ submitDetail }}" style="border:none;background:#1f8a5b;color:#fff;border-radius:3px;padding:0 18px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#1a774e">{{ actionLabel }}</button>
+      </div>
+    </aside>
+  </div>
+  </sc-if>
+
+  <!-- ============ CONFIRM MODAL ============ -->
+  <sc-if value="{{ confirmOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:70;animation:fadeIn .12s ease-out" onClick="{{ cancelConfirm }}">
+    <div style="width:420px;max-width:92%;background:#fff;border-radius:6px;box-shadow:0 18px 50px rgba(0,0,0,.28);overflow:hidden" onClick="{{ stopProp }}">
+      <div style="padding:16px 20px;border-bottom:1px solid #e6edf3;display:flex;align-items:center;gap:12px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#fbe7e7;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex:0 0 auto">!</div>
+        <h3 style="margin:0;font-size:15px;font-weight:700;color:#1e2a36">{{ confirmTitle }}</h3>
+      </div>
+      <div style="padding:18px 20px;font-size:13px;color:#52616f;line-height:1.55">{{ confirmMessage }}</div>
+      <div style="padding:14px 20px;border-top:1px solid #e6edf3;background:#f4f7fa;display:flex;justify-content:flex-end;gap:8px">
+        <button onClick="{{ cancelConfirm }}" style="border:1px solid #cdd8e2;background:#fff;color:#3a4a5a;border-radius:3px;padding:0 16px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer">Batal</button>
+        <button onClick="{{ proceedConfirm }}" style="border:none;background:#c0392b;color:#fff;border-radius:3px;padding:0 18px;height:34px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#a83227">{{ confirmAction }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;multiCurrency&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;balanceRequired&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  labels = {
+    kasbank: "Kas / Bank",
+    penyaluran: "Penyaluran Dana",
+    penghimpunan: "Penghimpunan Dana",
+    ledger: "GL Accounting"
+  };
+
+  state = {
+    variant: "A",
+    confirm: null,
+    drawerOpen: false,
+    currentType: "kasbank",
+    editIndex: null,
+    formData: this.blankForm("kasbank"),
+    details: [
+      {
+        type: "kasbank", label: "Kas / Bank", reference: "1101 Kas Operasional",
+        mutasi: "D", valuta: "IDR", nilai: 5000000, kurs: 1, ekuivalen: 5000000,
+        keterangan: "Penerimaan dana infak",
+        raw: { mutasi: "D", nilai: "5000000", kurs: "1", keterangan: "Penerimaan dana infak", valuta: "IDR", koreksi: false, kodeKasBank: "1101", namaKasBank: "Kas Operasional" }
+      },
+      {
+        type: "penghimpunan", label: "Penghimpunan Dana", reference: "00P00000000 HAMBA ALLAH",
+        mutasi: "K", valuta: "IDR", nilai: 5000000, kurs: 1, ekuivalen: 5000000,
+        keterangan: "Setoran infak umum",
+        raw: { mutasi: "K", nilai: "5000000", kurs: "1", keterangan: "Setoran infak umum", valuta: "IDR - RUPIAH", koreksi: false, kodeDonatur: "00P00000000", namaDonatur: "HAMBA ALLAH", produk: "Infak Umum", jenisDana: "Infak" }
+      }
+    ]
+  };
+
+  blankForm(type) {
+    const base = { mutasi: "D", nilai: "", kurs: "1", keterangan: "", valuta: "IDR", koreksi: false };
+    if (type === "kasbank") { base.kodeKasBank = ""; base.namaKasBank = ""; }
+    if (type === "penyaluran") { base.mutasi = "D"; base.kodeProgram = ""; base.namaProgram = ""; base.kodeSumber = ""; base.sumberDana = ""; base.jenisDana = "Zakat"; base.ashnaf = "Fakir"; }
+    if (type === "penghimpunan") { base.mutasi = "K"; base.kodeDonatur = "00P00000000"; base.namaDonatur = "HAMBA ALLAH"; base.produk = ""; base.valuta = "IDR - RUPIAH"; base.jenisDana = "Zakat"; }
+    if (type === "ledger") { base.kodeLedger = ""; base.namaLedger = ""; base.kodeAnggaran = ""; base.ketAnggaran = ""; }
+    return base;
+  }
+
+  fmt(v) { return new Intl.NumberFormat("id-ID").format(Number(v) || 0); }
+
+  componentDidMount() {
+    this._onKey = (e) => {
+      if (e.key === "Escape" && this.state.drawerOpen) {
+        this.closeDrawer();
+      }
+    };
+    window.addEventListener("keydown", this._onKey);
+  }
+
+  componentWillUnmount() {
+    if (this._onKey) window.removeEventListener("keydown", this._onKey);
+  }
+
+  setVariant = (v) => this.setState({ variant: v });
+
+  openDrawer = (type) => this.setState({ drawerOpen: true, currentType: type, editIndex: null, formData: this.blankForm(type) });
+
+  openEditDrawer = (i) => {
+    const d = this.state.details[i];
+    this.setState({ drawerOpen: true, currentType: d.type, editIndex: i, formData: { ...this.blankForm(d.type), ...d.raw } });
+  };
+
+  closeDrawer = () => this.setState({ drawerOpen: false, editIndex: null });
+
+  handleField = (e) => {
+    const { name, value } = e.target;
+    this.setState(s => ({ formData: { ...s.formData, [name]: value } }));
+  };
+
+  handleCheck = (e) => {
+    const { name, checked } = e.target;
+    this.setState(s => ({ formData: { ...s.formData, [name]: checked } }));
+  };
+
+  buildReference(type, d) {
+    if (type === "kasbank") return `${d.kodeKasBank || "-"} ${d.namaKasBank || ""}`.trim();
+    if (type === "penyaluran") return `${d.namaProgram || "-"} / ${d.sumberDana || "-"}`;
+    if (type === "penghimpunan") return `${d.kodeDonatur || "-"} ${d.namaDonatur || ""}`.trim();
+    if (type === "ledger") return `${d.kodeLedger || "-"} ${d.namaLedger || ""}`.trim();
+    return "-";
+  }
+
+  extractValuta(d) {
+    if (!d.valuta) return "IDR";
+    return String(d.valuta).split(" ")[0];
+  }
+
+  submitDetail = () => {
+    const multi = this.props.multiCurrency ?? true;
+    const d = this.state.formData;
+    const nilai = Number(d.nilai || 0);
+    const kurs = multi ? Number(d.kurs || 1) : 1;
+    if (nilai <= 0) { alert("Nilai transaksi harus lebih dari 0."); return; }
+    if (!d.mutasi) { alert("Jenis mutasi wajib dipilih."); return; }
+    const item = {
+      type: this.state.currentType,
+      label: this.labels[this.state.currentType],
+      reference: this.buildReference(this.state.currentType, d),
+      mutasi: d.mutasi,
+      valuta: this.extractValuta(d),
+      nilai, kurs, ekuivalen: nilai * kurs,
+      keterangan: d.keterangan || "",
+      raw: { ...d }
+    };
+    this.setState(s => {
+      const det = [...s.details];
+      if (s.editIndex === null) det.push(item); else det[s.editIndex] = item;
+      return { details: det, drawerOpen: false, editIndex: null };
+    });
+  };
+
+  deleteDetail = (i) => {
+    const d = this.state.details[i];
+    this.setState({ confirm: {
+      mode: "delete", index: i,
+      title: "Hapus Detail Transaksi",
+      message: `Hapus detail "${d ? d.label : ""}" senilai ${this.fmt(d ? d.ekuivalen : 0)}? Tindakan ini tidak dapat dibatalkan.`,
+      action: "Ya, Hapus"
+    } });
+  };
+
+  resetDetail = () => {
+    if (this.state.details.length === 0) return;
+    this.setState({ confirm: {
+      mode: "reset",
+      title: "Reset Detail Transaksi",
+      message: `Semua detail transaksi (${this.state.details.length} baris) akan dihapus. Lanjutkan?`,
+      action: "Ya, Reset"
+    } });
+  };
+
+  cancelConfirm = () => this.setState({ confirm: null });
+  stopProp = (e) => e.stopPropagation();
+
+  proceedConfirm = () => {
+    const c = this.state.confirm;
+    if (!c) return;
+    if (c.mode === "delete") {
+      this.setState(s => ({ details: s.details.filter((_, x) => x !== c.index), confirm: null }));
+    } else if (c.mode === "reset") {
+      this.setState({ details: [], confirm: null });
+    }
+  };
+
+  batalTransaction = () => {
+    if (!confirm("Batalkan input transaksi ini? Semua data header dan detail akan dikosongkan.")) return;
+    this.setState({ details: [], drawerOpen: false, editIndex: null });
+  };
+
+  saveTransaction = () => {
+    const required = this.props.balanceRequired ?? true;
+    const { details } = this.state;
+    if (details.length === 0) { alert("Detail transaksi belum diisi."); return; }
+    let td = 0, tk = 0;
+    details.forEach(it => { if (it.mutasi === "D") td += it.ekuivalen; else tk += it.ekuivalen; });
+    if (required && td - tk !== 0) { alert("Transaksi belum balance. Total debit dan kredit harus sama."); return; }
+    alert("Transaksi berhasil divalidasi dan siap disimpan.");
+  };
+
+  renderVals() {
+    const s = this.state;
+    const showCurrency = this.props.multiCurrency ?? true;
+    let td = 0, tk = 0;
+    s.details.forEach(it => { if (it.mutasi === "D") td += it.ekuivalen; else tk += it.ekuivalen; });
+    const selisih = td - tk;
+    const balanced = s.details.length > 0 && selisih === 0;
+    const rows = s.details.map((it, i) => ({
+      label: it.label,
+      reference: it.reference,
+      isDebit: it.mutasi === "D",
+      isKredit: it.mutasi !== "D",
+      valuta: it.valuta,
+      nilaiFmt: this.fmt(it.nilai),
+      kursFmt: this.fmt(it.kurs),
+      ekuivalenFmt: this.fmt(it.ekuivalen),
+      keterangan: it.keterangan || "-",
+      onEdit: () => this.openEditDrawer(i),
+      onDelete: () => this.deleteDetail(i)
+    }));
+    const fd = s.formData || {};
+    const moneyPreview = this.fmt(Number(fd.nilai || 0) * (showCurrency ? Number(fd.kurs || 1) : 1));
+
+    return {
+      isA: s.variant === "A",
+      isB: s.variant === "B",
+      setA: () => this.setVariant("A"),
+      setB: () => this.setVariant("B"),
+      showCurrency,
+      details: rows,
+      emptyDetails: s.details.length === 0,
+      totalDebit: this.fmt(td),
+      totalKredit: this.fmt(tk),
+      selisih: this.fmt(Math.abs(selisih)),
+      jumlahDetail: s.details.length,
+      balanced,
+      notBalanced: !balanced,
+      drawerOpen: s.drawerOpen,
+      typeKasbank: s.currentType === "kasbank",
+      typePenyaluran: s.currentType === "penyaluran",
+      typePenghimpunan: s.currentType === "penghimpunan",
+      genericMutasi: s.currentType !== "penghimpunan" && s.currentType !== "penyaluran",
+      typeLedger: s.currentType === "ledger",
+      drawerTitle: this.labels[s.currentType],
+      drawerSubtitle: s.editIndex !== null ? "Edit detail transaksi tanpa mengubah jenis form" : "Lengkapi form sesuai jenis detail",
+      actionLabel: s.editIndex !== null ? "Update Detail" : "Simpan Detail",
+      fd,
+      moneyPreview,
+      onField: this.handleField,
+      onCheck: this.handleCheck,
+      openKasbank: () => this.openDrawer("kasbank"),
+      openPenyaluran: () => this.openDrawer("penyaluran"),
+      openPenghimpunan: () => this.openDrawer("penghimpunan"),
+      openLedger: () => this.openDrawer("ledger"),
+      closeDrawer: this.closeDrawer,
+      submitDetail: this.submitDetail,
+      resetDetail: this.resetDetail,
+      saveTransaction: this.saveTransaction,
+      batalTransaction: this.batalTransaction,
+      confirmOpen: !!s.confirm,
+      confirmTitle: s.confirm ? s.confirm.title : "",
+      confirmMessage: s.confirm ? s.confirm.message : "",
+      confirmAction: s.confirm ? s.confirm.action : "",
+      cancelConfirm: this.cancelConfirm,
+      proceedConfirm: this.proceedConfirm,
+      stopProp: this.stopProp
+    };
+  }
+}
+</script>
+</body>
+</html>
