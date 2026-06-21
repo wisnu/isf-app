@@ -2,13 +2,13 @@
 import { Mail } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
-import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
-import CardDescription from '@/components/ui/CardDescription.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardTitle from '@/components/ui/CardTitle.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Button from '@/shared/components/Button.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
+import CardDescription from '@/shared/components/CardDescription.vue'
+import CardHeader from '@/shared/components/CardHeader.vue'
+import CardTitle from '@/shared/components/CardTitle.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()

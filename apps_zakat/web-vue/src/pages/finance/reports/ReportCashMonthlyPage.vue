@@ -2,8 +2,8 @@
 import { Download, Search } from 'lucide-vue-next'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 
-import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Button from '@/shared/components/Button.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useAuthStore } from '@/stores/auth'
 

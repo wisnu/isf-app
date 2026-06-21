@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import AppHeader from '@/components/AppHeader.vue'
-import AppSidebar from '@/components/AppSidebar.vue'
-import Toast from '@/components/ui/Toast.vue'
+import AppHeader from '@/layouts/AppHeader.vue'
+import AppSidebar from '@/layouts/AppSidebar.vue'
+import Toast from '@/shared/components/Toast.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()

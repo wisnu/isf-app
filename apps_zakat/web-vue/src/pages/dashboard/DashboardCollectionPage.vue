@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue'
 
-import PeriodFilter from '@/components/ui/PeriodFilter.vue'
-import Card from '@/components/ui/Card.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardTitle from '@/components/ui/CardTitle.vue'
-import CardContent from '@/components/ui/CardContent.vue'
+import PeriodFilter from '@/shared/components/PeriodFilter.vue'
+import Card from '@/shared/components/Card.vue'
+import CardHeader from '@/shared/components/CardHeader.vue'
+import CardTitle from '@/shared/components/CardTitle.vue'
+import CardContent from '@/shared/components/CardContent.vue'
 import KpiCard from '@/components/widgets/KpiCardWidget.vue'
 import TrendChart from '@/components/widgets/TrendChartWidget.vue'
 

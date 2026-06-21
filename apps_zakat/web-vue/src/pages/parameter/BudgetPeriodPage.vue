@@ -2,8 +2,8 @@
 import { Plus, X } from 'lucide-vue-next'
 import { onMounted, reactive, ref, shallowRef } from 'vue'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
+import Button from '@/shared/components/Button.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

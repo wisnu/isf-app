@@ -4,12 +4,12 @@
 // belum direkonstruksi. Lihat docs/recovery/README.md §"Still TODO".
 import { Construction } from 'lucide-vue-next'
 
-import Alert from '@/components/ui/Alert.vue'
-import Card from '@/components/ui/Card.vue'
-import CardContent from '@/components/ui/CardContent.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardTitle from '@/components/ui/CardTitle.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Card from '@/shared/components/Card.vue'
+import CardContent from '@/shared/components/CardContent.vue'
+import CardHeader from '@/shared/components/CardHeader.vue'
+import CardTitle from '@/shared/components/CardTitle.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 </script>
 
 <template>

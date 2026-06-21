@@ -3,7 +3,7 @@ import { LogOut, Moon, Sun, UserCircle2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/layouts/UserAvatar.vue'
 import DropdownMenu from '@/shared/components/DropdownMenu.vue'
 import { cn } from '@/shared/utils/utils'
 import { useAuthStore } from '@/stores/auth'

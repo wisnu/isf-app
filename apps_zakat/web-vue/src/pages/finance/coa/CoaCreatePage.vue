@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { reactive, shallowRef } from 'vue'
 
-import Alert from '@/components/ui/Alert.vue'
+import Alert from '@/shared/components/Alert.vue'
 import { api } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

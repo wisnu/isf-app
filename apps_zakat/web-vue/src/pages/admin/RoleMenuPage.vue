@@ -3,14 +3,14 @@ import { AlertCircle, Check, Loader2, RefreshCw, Save, Search, X } from 'lucide-
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 
-import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
-import Input from '@/components/ui/Input.vue'
-import CrudLayout from '@/components/layout/CrudLayout.vue'
-import DataPanel from '@/components/layout/DataPanel.vue'
-import FilterGroup from '@/components/layout/FilterGroup.vue'
-import FilterPanel from '@/components/layout/FilterPanel.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Button from '@/shared/components/Button.vue'
+import Input from '@/shared/components/Input.vue'
+import CrudLayout from '@/shared/components/CrudLayout.vue'
+import DataPanel from '@/shared/components/DataPanel.vue'
+import FilterGroup from '@/shared/components/FilterGroup.vue'
+import FilterPanel from '@/shared/components/FilterPanel.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
 import { api, ApiError } from '@/shared/api/client'
 
 interface RoleInfo {

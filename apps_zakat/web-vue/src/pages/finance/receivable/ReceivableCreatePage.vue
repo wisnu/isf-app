@@ -3,9 +3,9 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { shallowRef, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import Alert from '@/components/ui/Alert.vue'
-import DateField from '@/components/ui/DateField.vue'
-import SearchSelect from '@/components/ui/SearchSelect.vue'
+import Alert from '@/shared/components/Alert.vue'
+import DateField from '@/shared/components/DateField.vue'
+import SearchSelect from '@/shared/components/SearchSelect.vue'
 import { api } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

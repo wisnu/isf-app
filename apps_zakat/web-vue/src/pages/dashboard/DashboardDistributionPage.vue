@@ -4,7 +4,7 @@ import { onMounted, shallowRef, watch } from 'vue'
 import BudgetProgress from '@/components/widgets/BudgetProgressWidget.vue'
 import KpiCard from '@/components/widgets/KpiCardWidget.vue'
 import MemoList from '@/components/widgets/MemoListWidget.vue'
-import PeriodFilter from '@/components/ui/PeriodFilter.vue'
+import PeriodFilter from '@/shared/components/PeriodFilter.vue'
 import { api } from '@/shared/api/client'
 import { useFetch } from '@/shared/composables/useFetch'
 

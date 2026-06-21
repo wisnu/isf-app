@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, watch } from 'vue'
-import PeriodFilter from '@/components/ui/PeriodFilter.vue'
+import PeriodFilter from '@/shared/components/PeriodFilter.vue'
 import BudgetProgress from '@/components/widgets/BudgetProgressWidget.vue'
 import KpiCard from '@/components/widgets/KpiCardWidget.vue'
 import RekeningList from '@/components/widgets/RekeningListWidget.vue'

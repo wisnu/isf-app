@@ -2,9 +2,9 @@
 import { ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
-import DateField from '@/components/ui/DateField.vue'
+import Button from '@/shared/components/Button.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import DateField from '@/shared/components/DateField.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { dmy } from '@/shared/utils/date'
 import { formatIdr } from '@/shared/utils/format'

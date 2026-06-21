@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import SearchSelect from '@/components/ui/SearchSelect.vue'
+import SearchSelect from '@/shared/components/SearchSelect.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 

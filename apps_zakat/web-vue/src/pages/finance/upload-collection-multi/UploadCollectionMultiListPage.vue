@@ -3,9 +3,9 @@ import { List } from 'lucide-vue-next'
 import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import Alert from '@/components/ui/Alert.vue'
-import Button from '@/components/ui/Button.vue'
-import DateField from '@/components/ui/DateField.vue'
+import Alert from '@/shared/components/Alert.vue'
+import Button from '@/shared/components/Button.vue'
+import DateField from '@/shared/components/DateField.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { dmy } from '@/shared/utils/date'
 

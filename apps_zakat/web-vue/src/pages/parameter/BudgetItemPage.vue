@@ -2,10 +2,10 @@
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-vue-next'
 import { onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
-import Button from '@/components/ui/Button.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import Tooltip from '@/components/ui/Tooltip.vue'
+import Button from '@/shared/components/Button.vue'
+import PageHeader from '@/shared/components/PageHeader.vue'
+import TablePagination from '@/shared/components/TablePagination.vue'
+import Tooltip from '@/shared/components/Tooltip.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 
