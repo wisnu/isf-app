@@ -33,8 +33,8 @@ import { onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { cn } from '@/shared/utils/utils'
-import { useSidebarStore } from '@/stores/sidebar'
-import { useAuthStore } from '@/stores/auth'
+import { useSidebarStore } from '@/app/stores/sidebar.store'
+import { useAuthStore } from '@/app/stores/auth.store'
 import type { MenuKey } from '@/shared/constants/menu-keys'
 
 interface MenuItem {
@@ -76,7 +76,7 @@ const groups: MenuGroup[] = [
           { label: 'Kas',               to: '/finance/cash',              icon: Banknote,  menu_key: 'finance.cash' },
           { label: 'Bank',              to: '/finance/bank',              icon: Landmark,  menu_key: 'finance.bank' },
           { label: 'Kas Kecil',         to: '/finance/petty-cash',        icon: Wallet,    menu_key: 'finance.petty_cash' },
-          { label: 'Pemilik Anggaran',  to: '/parameter/budget-owner',    icon: Users,     menu_key: 'finance.parameter.budget_owner' },
+          { label: 'Pemilik Anggaran',  to: '/finance/master/budget-owner',    icon: Users,     menu_key: 'finance.parameter.budget_owner' },
         ],
       },
       {
@@ -86,8 +86,8 @@ const groups: MenuGroup[] = [
           { label: 'Buat Anggaran Baru', to: '/finance/budget/import',           icon: Upload,    menu_key: 'finance.budget.import' },
           { label: 'Revisi Anggaran',    to: '/finance/budget/revise',           icon: Pencil,    menu_key: 'finance.budget.revise' },
           { label: 'Inquiry Anggaran',   to: '/finance/budget/inquiry',          icon: Search,    menu_key: 'finance.budget.inquiry' },
-          { label: 'Item Anggaran',      to: '/parameter/anggaran/item',         icon: Tag,       menu_key: 'finance.parameter.budget.item' },
-          { label: 'Periode Anggaran',   to: '/parameter/anggaran/periode',      icon: Calendar,  menu_key: 'finance.parameter.budget.period' },
+          { label: 'Item Anggaran',      to: '/finance/budget/item',         icon: Tag,       menu_key: 'finance.parameter.budget.item' },
+          { label: 'Periode Anggaran',   to: '/finance/budget/period',      icon: Calendar,  menu_key: 'finance.parameter.budget.period' },
         ],
       },
       {

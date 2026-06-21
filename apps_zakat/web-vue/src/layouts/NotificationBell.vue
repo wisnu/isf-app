@@ -4,7 +4,7 @@ import { computed } from 'vue'
 
 import DropdownMenu from '@/shared/components/DropdownMenu.vue'
 import { cn } from '@/shared/utils/utils'
-import { useNotificationsStore, type NotificationKind } from '@/stores/notifications'
+import { useNotificationsStore, type NotificationKind } from '@/app/stores/notification.store'
 
 const notifications = useNotificationsStore()
 const items = computed(() => notifications.items)

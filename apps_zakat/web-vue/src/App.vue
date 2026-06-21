@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import AppHeader from '@/layouts/AppHeader.vue'
 import AppSidebar from '@/layouts/AppSidebar.vue'
 import Toast from '@/shared/components/Toast.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/app/stores/auth.store'
 
 const auth = useAuthStore()
 const showShell = computed(() => Boolean(auth.user) && Boolean(auth.activeTenantId))

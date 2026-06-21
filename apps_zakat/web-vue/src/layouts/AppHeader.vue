@@ -3,8 +3,8 @@ import { ChevronRight, KeyRound, LogOut, Menu } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useAuthStore } from '@/stores/auth'
-import { useSidebarStore } from '@/stores/sidebar'
+import { useAuthStore } from '@/app/stores/auth.store'
+import { useSidebarStore } from '@/app/stores/sidebar.store'
 
 const auth = useAuthStore()
 const sidebar = useSidebarStore()
