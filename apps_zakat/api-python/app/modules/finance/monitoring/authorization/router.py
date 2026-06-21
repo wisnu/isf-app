@@ -106,11 +106,10 @@ async def list_submissions(
         date_from=date_from, date_to=date_to,
         page=page, page_size=page_size,
     )
-    return JSONResponse({
-        'data': [_serialize(dict(r)) for r in rows],
+    return JSONResponse(ok({
+        'rows': [_serialize(dict(r)) for r in rows],
         'pagination': {'page': page, 'limit': page_size, 'total': total, 'total_pages': -(-total // page_size)},
-        'meta': {'request_id': ''},
-    })
+    }))
 
 
 @router.post('/submission/{submission_id}/approve')

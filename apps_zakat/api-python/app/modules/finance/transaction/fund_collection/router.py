@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
 from app.shared.response import err, ok
+from .schema import PenghimpunanCreate
 from . import service
 
 router = APIRouter(prefix='/finance/transaction/fund-collection', tags=['fund-collection'])
@@ -57,9 +58,10 @@ async def get_fund_collection(transaction_id: int):
 
 
 @router.post('/save-and-submit')
-async def create_fund_collection(body: dict):
-    try:
-        result = await service.create_fund_collection(body)
-        return ok(result)
-    except Exception as exc:
-        return JSONResponse(status_code=400, content=err('CREATE_ERROR', str(exc)))
+async def create_fund_collection(
+    body: PenghimpunanCreate,
+    user_id: str = Query(...),
+    branch_code: str = Query(...),
+):
+    result = await service.create_fund_collection(body, user_id, branch_code)
+    return ok(result)

@@ -103,25 +103,17 @@ async def create_general(body: GeneralCreate):
     user_id = payload.pop('inputer_id', '') or 'SYSTEM'
     branch_code = payload.pop('branch_code', '') or '001'
 
-    try:
-        result = await otorisasi_service.save_and_submit(
-            entity_type='transaksi_umum',
-            module='keuangan',
-            payload=payload,
-            user_id=user_id,
-            branch_code=branch_code,
-        )
-        return ok({
-            'submission_id': result.get('submission_id'),
-            'status': result.get('status'),
-            'transaction_id': result.get('transaction_id'),
-            'bypassed_auth': result.get('bypassed_auth', False),
-            'entity_type': 'transaksi_umum',
-        })
-    except Exception as exc:
-        import traceback
-        traceback.print_exc()
-        return JSONResponse(
-            status_code=400,
-            content=err('CREATE_ERROR', str(exc)),
-        )
+    result = await otorisasi_service.save_and_submit(
+        entity_type='transaksi_umum',
+        module='keuangan',
+        payload=payload,
+        user_id=user_id,
+        branch_code=branch_code,
+    )
+    return ok({
+        'submission_id': result.get('submission_id'),
+        'status': result.get('status'),
+        'transaction_id': result.get('transaction_id'),
+        'bypassed_auth': result.get('bypassed_auth', False),
+        'entity_type': 'transaksi_umum',
+    })

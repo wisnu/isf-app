@@ -1,7 +1,7 @@
 import pytest
 
-from app.modules.identity import service as identity_service
-from app.modules.identity.schema import ProfileResponse
+from app.modules.administration.identity import service as identity_service
+from app.modules.administration.identity.schema import ProfileResponse
 
 
 class _FakeDB:
@@ -129,7 +129,7 @@ from app import main as api_main
 def test_router_unknown_user_returns_404(monkeypatch):
     async def fake_get_profile(user_id: str):
         return None
-    monkeypatch.setattr("app.modules.identity.router.get_profile", fake_get_profile)
+    monkeypatch.setattr("app.modules.administration.identity.router.get_profile", fake_get_profile)
     client = TestClient(api_main.app)
     response = client.get("/api/identity/GHOST/profile")
     assert response.status_code == 404
@@ -138,12 +138,12 @@ def test_router_unknown_user_returns_404(monkeypatch):
 
 def test_router_normal_user_returns_envelope(monkeypatch):
     async def fake_get_profile(user_id: str):
-        from app.modules.identity.schema import ProfileResponse
+        from app.modules.administration.identity.schema import ProfileResponse
         return ProfileResponse(
             user_id=user_id, status="active",
             roles=[], branches=[], menus=["dashboard.overview"],
         )
-    monkeypatch.setattr("app.modules.identity.router.get_profile", fake_get_profile)
+    monkeypatch.setattr("app.modules.administration.identity.router.get_profile", fake_get_profile)
     client = TestClient(api_main.app)
     response = client.get("/api/identity/U1/profile")
     assert response.status_code == 200

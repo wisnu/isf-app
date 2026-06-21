@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.modules.transaksi_histori.repository import build_search_where
+from app.modules.finance.inquiry.transaction_history.repo import build_search_where
 
 
 def test_basic_date_filter():
@@ -65,11 +65,11 @@ def test_cash_account_filter():
     assert 'ACC001' in args
 
 
-from app.modules.transaksi_histori.export import build_histori_xlsx, _dmy
-from app.modules.transaksi_histori.schema import TransaksiRow
+from app.modules.finance.inquiry.transaction_history.export import build_histori_xlsx, _dmy
+from app.modules.finance.inquiry.transaction_history.schema import TransactionRow
 
 
-def _sample_row(**kw) -> TransaksiRow:
+def _sample_row(**kw) -> TransactionRow:
     base = dict(
         transactionid=1, transactionno='TX-001',
         transactiondate='2026-06-01', actualdate='2026-06-01',
@@ -80,7 +80,7 @@ def _sample_row(**kw) -> TransaksiRow:
         exttransactionid=None, titlesubsystem=None,
     )
     base.update(kw)
-    return TransaksiRow(**base)
+    return TransactionRow(**base)
 
 
 def test_dmy_converts_iso():

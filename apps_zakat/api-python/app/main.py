@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
 
 # ── Finance — Master Data ─────────────────────────────────────────────────────
 from app.modules.finance.master.coa.router import router as coa_router
@@ -39,7 +41,7 @@ from app.modules.administration.identity.router import router as identity_router
 
 # ── Shared ────────────────────────────────────────────────────────────────────
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
-from app.shared.response import ok
+from app.shared.response import err, ok
 
 
 @asynccontextmanager
@@ -54,6 +56,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="isf-app api-python", version="0.2.0", lifespan=lifespan)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content=err('HTTP_ERROR', exc.detail))
+
+
+@app.exception_handler(ValueError)
+async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
+    return JSONResponse(status_code=400, content=err('VALIDATION_ERROR', str(exc)))
+
+
+@app.exception_handler(Exception)
+async def generic_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=500, content=err('INTERNAL_ERROR', 'Internal server error'))
 
 
 @app.get("/health")

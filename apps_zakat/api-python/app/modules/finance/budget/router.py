@@ -129,8 +129,6 @@ async def create_budget(
         return ok(result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Edit ───────────────────────────────────────────────────────────────────────
@@ -158,8 +156,6 @@ async def edit_budget(
         return ok(result)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Delete ────────────────────────────────────────────────────────────────────
@@ -171,11 +167,8 @@ async def delete_budget(budget_id: int):
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    try:
-        await service.delete_budget(budget_id)
-        return ok({"budget_id": budget_id, "deleted": True})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    await service.delete_budget(budget_id)
+    return ok({"budget_id": budget_id, "deleted": True})
 
 
 # ── Revise ────────────────────────────────────────────────────────────────────
@@ -190,11 +183,8 @@ async def revise_budget(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    try:
-        result = await service.revise_budget(payload, user_id)
-        return ok(result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = await service.revise_budget(payload, user_id)
+    return ok(result)
 
 
 # ── Import ────────────────────────────────────────────────────────────────────
@@ -210,11 +200,8 @@ async def import_budgets(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    try:
-        result = await service.import_budgets(payload, branch_code, user_id)
-        return ok(result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = await service.import_budgets(payload, branch_code, user_id)
+    return ok(result)
 
 
 # ── Transactions ───────────────────────────────────────────────────────────────
@@ -261,11 +248,8 @@ async def list_parameter_items(
 async def create_parameter_item(payload: BudgetMasterItemRequest):
     if not await ping():
         return JSONResponse(status_code=503, content=err("DB_UNAVAILABLE", "Database not ready"))
-    try:
-        result = await service.create_master_item(payload)
-        return ok(result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = await service.create_master_item(payload)
+    return ok(result)
 
 
 @router.put("/parameter/items/{item_id}")
@@ -277,8 +261,6 @@ async def update_parameter_item(item_id: int, payload: BudgetMasterItemRequest):
         return ok(result)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/parameter/items/{item_id}")
@@ -290,8 +272,6 @@ async def delete_parameter_item(item_id: int):
         return ok({"item_id": item_id, "deleted": True})
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Parameter: BudgetPeriod master ────────────────────────────────────────────
@@ -313,8 +293,6 @@ async def create_parameter_period(year: int = Query(...)):
         return ok(result)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Search ────────────────────────────────────────────────────────────────────
@@ -331,13 +309,10 @@ async def search_budget_codes(
             status_code=503,
             content=err("DB_UNAVAILABLE", "Database connection not ready"),
         )
-    try:
-        data = await service.search_budget_codes(
-            actual_date,
-            branch_code,
-            filter_category=filter_category,
-            filter_text=filter_text,
-        )
-        return ok({"data": [item.model_dump() for item in data]})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    data = await service.search_budget_codes(
+        actual_date,
+        branch_code,
+        filter_category=filter_category,
+        filter_text=filter_text,
+    )
+    return ok({"data": [item.model_dump() for item in data]})

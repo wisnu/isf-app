@@ -11,7 +11,7 @@ from decimal import Decimal
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.modules.budget.schema import (
+from app.modules.finance.budget.schema import (
     BudgetOwnerItem,
     BudgetPeriodItem,
     BudgetRow,
@@ -20,7 +20,7 @@ from app.modules.budget.schema import (
     BudgetListResponse,
     Pagination,
 )
-from app.modules.budget.service import (
+from app.modules.finance.budget.service import (
     get_budget_owners,
     get_budget_periods,
     get_budget_periods_for_owner,
@@ -116,7 +116,7 @@ class TestGetBudgetOwners:
         """Should return only owners with is_detail='T' and status='A'."""
         mock_db.fetch_all.return_value = [sample_owner]
 
-        with patch("app.modules.budget.service.fetch_all", return_value=[sample_owner]):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[sample_owner]):
             result = await get_budget_owners(include_parent=False)
 
         assert len(result) == 1
@@ -132,14 +132,14 @@ class TestGetBudgetOwners:
             {"ownerid": 2, "ownercode": "OPS-A", "ownername": "OPS Pusat", "level": 2, "is_detail": "T", "parentownerid": 1, "status": "A"},
         ]
 
-        with patch("app.modules.budget.service.fetch_all", return_value=rows):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=rows):
             result = await get_budget_owners(include_parent=True)
 
         assert len(result) == 2
 
     async def test_returns_empty_when_no_owners(self):
         """Should return empty list when no detail owners exist."""
-        with patch("app.modules.budget.service.fetch_all", return_value=[]):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[]):
             result = await get_budget_owners()
 
         assert result == []
@@ -155,7 +155,7 @@ class TestGetBudgetPeriods:
 
     async def test_returns_root_periods_only(self, sample_period):
         """Should return only periods where parentperiodid IS NULL."""
-        with patch("app.modules.budget.service.fetch_all", return_value=[sample_period]):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[sample_period]):
             result = await get_budget_periods()
 
         assert len(result) == 1
@@ -171,7 +171,7 @@ class TestGetBudgetPeriods:
             {"periodid": 103, "periodvalue": 2025, "isopen": "F", "parentperiodid": None},
         ]
 
-        with patch("app.modules.budget.service.fetch_all", return_value=rows):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=rows):
             result = await get_budget_periods()
 
         assert result[0].period_value == 2026
@@ -189,7 +189,7 @@ class TestGetBudgetPeriodsForOwner:
 
     async def test_filters_by_owner_and_branch(self, sample_period):
         """Should return periods that have budgets for specific owner/branch."""
-        with patch("app.modules.budget.service.fetch_all", return_value=[sample_period]):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[sample_period]):
             result = await get_budget_periods_for_owner(owner_id=1, branch_code="001")
 
         assert len(result) == 1
@@ -197,7 +197,7 @@ class TestGetBudgetPeriodsForOwner:
 
     async def test_passes_correct_parameters_to_query(self):
         """Should pass owner_id and branch_code as query parameters."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
             await get_budget_periods_for_owner(owner_id=5, branch_code="002")
 
@@ -219,8 +219,8 @@ class TestListBudgetsPagination:
         """Should use default page=1, limit=25 if not provided."""
         mock_rows = [sample_budget_row]
 
-        with patch("app.modules.budget.service.fetch_all", return_value=mock_rows):
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 1}):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=mock_rows):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 1}):
                 result = await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     # page and limit omitted
@@ -233,9 +233,9 @@ class TestListBudgetsPagination:
 
     async def test_pagination_offset_calculation(self):
         """Offset should be (page - 1) * limit."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 100}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 100}):
                 await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     page=3, limit=10
@@ -249,8 +249,8 @@ class TestListBudgetsPagination:
 
     async def test_pagination_total_pages_calculation(self):
         """total_pages should be ceil(total / limit)."""
-        with patch("app.modules.budget.service.fetch_all", return_value=[]):
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 75}):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[]):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 75}):
                 result = await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     page=1, limit=25
@@ -261,8 +261,8 @@ class TestListBudgetsPagination:
 
     async def test_pagination_partial_last_page(self):
         """Last page with partial results should calculate correctly."""
-        with patch("app.modules.budget.service.fetch_all", return_value=[]):
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 52}):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=[]):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 52}):
                 result = await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     page=1, limit=25
@@ -282,9 +282,9 @@ class TestListBudgetsFilters:
 
     async def test_filters_by_owner_id(self):
         """WHERE clause should include owner_id filter."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 0}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 0}):
                 await list_budgets(owner_id=5, period_id=101, branch_code="001")
 
                 call_args = mock_fetch.call_args
@@ -293,9 +293,9 @@ class TestListBudgetsFilters:
 
     async def test_filters_by_period_id(self):
         """WHERE clause should include period_id filter."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 0}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 0}):
                 await list_budgets(owner_id=1, period_id=202, branch_code="001")
 
                 call_args = mock_fetch.call_args
@@ -304,9 +304,9 @@ class TestListBudgetsFilters:
 
     async def test_filters_by_branch_code(self):
         """WHERE clause should include branch_code filter."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 0}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 0}):
                 await list_budgets(owner_id=1, period_id=101, branch_code="003")
 
                 call_args = mock_fetch.call_args
@@ -315,9 +315,9 @@ class TestListBudgetsFilters:
 
     async def test_filters_by_search_text(self):
         """WHERE clause should include LIKE filter when search provided."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 0}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 0}):
                 await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     search="GAJI"
@@ -329,9 +329,9 @@ class TestListBudgetsFilters:
 
     async def test_optional_filters_none(self):
         """Should handle optional filters being None gracefully."""
-        with patch("app.modules.budget.service.fetch_all") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_all") as mock_fetch:
             mock_fetch.return_value = []
-            with patch("app.modules.budget.service.fetch_one", return_value={"total": 0}):
+            with patch("app.modules.finance.budget.service.fetch_one", return_value={"total": 0}):
                 result = await list_budgets(
                     owner_id=1, period_id=101, branch_code="001",
                     search=None
@@ -350,8 +350,8 @@ class TestGetBudgetDetail:
 
     async def test_returns_budget_with_items(self, sample_budget_row, sample_budget_item):
         """Should return budget detail including related items."""
-        with patch("app.modules.budget.service.fetch_one", return_value=sample_budget_row):
-            with patch("app.modules.budget.service.fetch_all", return_value=[sample_budget_item]):
+        with patch("app.modules.finance.budget.service.fetch_one", return_value=sample_budget_row):
+            with patch("app.modules.finance.budget.service.fetch_all", return_value=[sample_budget_item]):
                 result = await get_budget_detail(budget_id=1001, branch_code="001")
 
                 assert result.budget_id == 1001
@@ -361,14 +361,14 @@ class TestGetBudgetDetail:
 
     async def test_returns_none_when_not_found(self):
         """Should return None when budget_id not found."""
-        with patch("app.modules.budget.service.fetch_one", return_value=None):
+        with patch("app.modules.finance.budget.service.fetch_one", return_value=None):
             result = await get_budget_detail(budget_id=9999, branch_code="001")
 
             assert result is None
 
     async def test_filters_by_branch_for_security(self):
         """Should verify budget belongs to requested branch."""
-        with patch("app.modules.budget.service.fetch_one") as mock_fetch:
+        with patch("app.modules.finance.budget.service.fetch_one") as mock_fetch:
             mock_fetch.return_value = None
             await get_budget_detail(budget_id=1001, branch_code="999")
 
@@ -379,8 +379,8 @@ class TestGetBudgetDetail:
 
     async def test_handles_empty_items(self, sample_budget_row):
         """Should return empty items list when no detail items exist."""
-        with patch("app.modules.budget.service.fetch_one", return_value=sample_budget_row):
-            with patch("app.modules.budget.service.fetch_all", return_value=[]):
+        with patch("app.modules.finance.budget.service.fetch_one", return_value=sample_budget_row):
+            with patch("app.modules.finance.budget.service.fetch_all", return_value=[]):
                 result = await get_budget_detail(budget_id=1001, branch_code="001")
 
                 assert result.items == []
@@ -397,7 +397,7 @@ class TestBudgetRevision:
     async def test_revise_amount_validates_positive(self):
         """Revision amount must be positive (Decimal > 0)."""
         # This test verifies schema validation
-        from app.modules.budget.schema import BudgetReviseItem
+        from app.modules.finance.budget.schema import BudgetReviseItem
 
         # Should accept positive amount
         item = BudgetReviseItem(budget_id=1, amount=Decimal("100000.00"))
@@ -429,7 +429,7 @@ class TestSearchBudgetCodes:
             {"budget_id": 2, "budget_code": "BDG-2026-002", "budget_owner": "OPS", "item_group": None, "item_name": None},
         ]
 
-        with patch("app.modules.budget.service.fetch_all", return_value=rows):
+        with patch("app.modules.finance.budget.service.fetch_all", return_value=rows):
             # Assuming search_budget_codes function exists
             result = await fetch_all(
                 "SELECT * FROM transaction.budget WHERE budgetcode LIKE $1 AND branchcode = $2",

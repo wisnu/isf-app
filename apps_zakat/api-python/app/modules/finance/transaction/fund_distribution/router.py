@@ -58,8 +58,5 @@ async def get_fund_distribution(transaction_id: int):
 
 @router.post('/save-and-submit')
 async def create_fund_distribution(body: dict):
-    try:
-        result = await service.create_fund_distribution(body)
-        return ok(result)
-    except Exception as exc:
-        return JSONResponse(status_code=400, content=err('CREATE_ERROR', str(exc)))
+    result = await service.create_fund_distribution(body)
+    return ok(result)

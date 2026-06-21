@@ -1,6 +1,6 @@
 from datetime import date
-from app.modules.transaction.penyaluran_repo import build_list_where
-from app.modules.transaction.penyaluran_schema import FUND_ENTITY_MAP
+from app.modules.finance.transaction.fund_distribution.repo import build_list_where
+from app.modules.finance.transaction.fund_distribution.schema import FUND_ENTITY_MAP
 
 
 def test_fund_entity_map_z():
