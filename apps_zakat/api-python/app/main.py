@@ -31,10 +31,14 @@ from app.modules.finance.upload.hc_zis.router import router as hc_zis_router
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
 from app.modules.finance.inquiry.transaction_history.router import router as transaction_history_router
 from app.modules.finance.inquiry.cash_advance.router import router as ca_inquiry_router
+from app.modules.finance.inquiry.receivable.router import router as receivable_inquiry_router
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 from app.modules.finance.monitoring.authorization.router import router as authorization_router
 from app.modules.finance.monitoring.authorization.service import _register_defaults
+
+# ── Distribution — Data Mustahiq ─────────────────────────────────────────────
+from app.modules.distribution.mustahiq.router import router as mustahiq_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.router import router as admin_router
@@ -112,9 +116,13 @@ app.include_router(hc_zis_router,            prefix="/api")
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
 app.include_router(transaction_history_router, prefix="/api")
 app.include_router(ca_inquiry_router,            prefix="/api")
+app.include_router(receivable_inquiry_router,    prefix="/api")
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 app.include_router(authorization_router, prefix="/api")
+
+# ── Distribution — Data Mustahiq ─────────────────────────────────────────────
+app.include_router(mustahiq_router, prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")

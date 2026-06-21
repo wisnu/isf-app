@@ -33,6 +33,7 @@ export const MENU_KEYS = [
   'finance.reports.receivable_realization',
   'finance.reports.upz',
   'finance.inquiry.cash_advance',
+  'finance.inquiry.receivable',
   'finance.transactions.history',
   'finance.transactions.fund_distribution',
   'finance.transactions.fund_collection',
@@ -58,6 +59,8 @@ export const MENU_KEYS = [
   'finance.parameter.budget.owner',
   'finance.parameter.budget.item',
   'finance.parameter.budget.period',
+  'distribution.mustahiq.corporate',
+  'distribution.mustahiq.personal',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]

@@ -41,18 +41,15 @@ import {
 
 import { financeMenu }        from '@/modules/finance/menu'
 import { administrationMenu } from '@/modules/administration/menu'
+import { distributionMenu }   from '@/modules/distribution/menu'
 
 export const DOMAIN_MAP: Record<DomainId, DomainConfig> = {
   finance:        financeMenu,
   administration: administrationMenu,
+  distribution:   distributionMenu,
   fundraising: {
     id: 'fundraising', label: 'Penghimpunan', sub: 'Data muzakki & donasi',
     icon: Inbox, locked: true, lockedBadge: 'Fase 3',
-    defaultRoute: '/', groups: [],
-  },
-  distribution: {
-    id: 'distribution', label: 'Program / Penyaluran', sub: 'Manajemen program & distribusi',
-    icon: Users, locked: true, lockedBadge: 'Fase 3',
     defaultRoute: '/', groups: [],
   },
   enterprise: {

@@ -32,7 +32,7 @@ from app.modules.finance.transaction import (
 from app.modules.finance.upload import upload_collection_router, hc_zis_router
 
 # ── Finance — Inquiry ─────────────────────────────────────────────────────────
-from app.modules.finance.inquiry import router as transaction_history_router, ca_router as ca_inquiry_router
+from app.modules.finance.inquiry import router as transaction_history_router, ca_router as ca_inquiry_router, ar_router as ar_inquiry_router
 
 # ── Finance — Monitoring ──────────────────────────────────────────────────────
 from app.modules.finance.monitoring import router as authorization_router
@@ -40,6 +40,13 @@ from app.modules.finance.monitoring import router as authorization_router
 # ── Finance — Reports + Dashboard ────────────────────────────────────────────
 from app.modules.finance.reports import router as report_router
 from app.modules.finance.dashboard import router as dashboard_router
+
+# ── Distribution — Data Mustahiq ─────────────────────────────────────────────
+from app.modules.distribution.mustahiq import (
+    corporate_router as mustahiq_corporate_router,
+    personal_router as mustahiq_personal_router,
+    mustahiq_lookup_router,
+)
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.admin import router as admin_router
@@ -133,9 +140,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(hc_zis_router)
     app.include_router(transaction_history_router)
     app.include_router(ca_inquiry_router)
+    app.include_router(ar_inquiry_router)
     app.include_router(authorization_router)
     app.include_router(report_router)
     app.include_router(dashboard_router)
+
+    # Distribution — routers carry full /api/distribution/... prefix
+    app.include_router(mustahiq_corporate_router)
+    app.include_router(mustahiq_personal_router)
+    app.include_router(mustahiq_lookup_router)
 
     # Administration — router carries full /api/administration/... prefix
     app.include_router(admin_router)
