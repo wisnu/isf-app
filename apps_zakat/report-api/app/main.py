@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.modules.dashboard.router import router as dashboard_router
-from app.modules.report.router import router as report_router
+from app.modules.finance.dashboard.router import router as dashboard_router
+from app.modules.finance.reports.router import router as report_router
 from app.shared.db import (
     close_dwh_pool,
     close_pool,

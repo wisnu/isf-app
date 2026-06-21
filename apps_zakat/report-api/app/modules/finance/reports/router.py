@@ -3,7 +3,7 @@ from datetime import date as _date, datetime
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 
-from app.modules.report.export import (
+from app.modules.finance.reports.export import (
     build_cash_flow_xlsx,
     build_amil_cash_xlsx,
     build_distribution_xlsx,
@@ -24,7 +24,7 @@ from app.modules.report.export import (
     build_balance_sheet_xlsx,
     build_trial_balance_xlsx,
 )
-from app.modules.report.service import (
+from app.modules.finance.reports.service import (
     CAP,
     ReportValidationError,
     cash_flow,
@@ -69,7 +69,7 @@ from app.modules.report.service import (
 )
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/report", tags=["report"])
+router = APIRouter(prefix="/finance/report", tags=["report"])
 
 _DB_UNAVAILABLE = err("DB_UNAVAILABLE", "Database tidak tersedia")
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

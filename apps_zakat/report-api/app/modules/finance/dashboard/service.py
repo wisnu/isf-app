@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from app.modules.dashboard.schema import (
+from app.modules.finance.dashboard.schema import (
     # Legacy
     AsnafItem, Channel, DashboardSummary, Kpis, KpiPair, Trend, Transaction,
     # v2
