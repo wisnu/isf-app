@@ -13,4 +13,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalPage.vue'),
     meta: { title: 'Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
   },
+  {
+    path: '/distribution/proposal',
+    name: 'distribution-proposal-list',
+    component: () => import('@/modules/distribution/views/proposal/ProposalListView.vue'),
+    meta: { title: 'Proposal Bantuan Dana', menu_key: 'distribution.proposal.list', domain: 'distribution' },
+  },
 ]

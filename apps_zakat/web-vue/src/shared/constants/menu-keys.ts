@@ -61,6 +61,7 @@ export const MENU_KEYS = [
   'finance.parameter.budget.period',
   'distribution.mustahiq.corporate',
   'distribution.mustahiq.personal',
+  'distribution.proposal.list',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]

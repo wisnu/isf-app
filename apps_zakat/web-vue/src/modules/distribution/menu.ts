@@ -1,4 +1,4 @@
-import { Users, BookOpen } from 'lucide-vue-next'
+import { Users, BookOpen, FileText } from 'lucide-vue-next'
 import type { DomainConfig } from '@/shared/constants/domains'
 
 export const distributionMenu: DomainConfig = {
@@ -16,6 +16,14 @@ export const distributionMenu: DomainConfig = {
       items: [
         { label: 'Mustahiq Lembaga', to: '/distribution/mustahiq/corporate', menu_key: 'distribution.mustahiq.corporate' },
         { label: 'Mustahiq Individu', to: '/distribution/mustahiq/personal',  menu_key: 'distribution.mustahiq.personal' },
+      ],
+    },
+    {
+      id: 'kegiatan',
+      label: 'Kegiatan',
+      icon: FileText,
+      items: [
+        { label: 'Proposal Bantuan Dana', to: '/distribution/proposal', menu_key: 'distribution.proposal.list' },
       ],
     },
   ],

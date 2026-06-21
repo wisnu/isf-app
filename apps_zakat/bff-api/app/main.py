@@ -41,12 +41,13 @@ from app.modules.finance.monitoring import router as authorization_router
 from app.modules.finance.reports import router as report_router
 from app.modules.finance.dashboard import router as dashboard_router
 
-# ── Distribution — Data Mustahiq ─────────────────────────────────────────────
+# ── Distribution ─────────────────────────────────────────────────────────────
 from app.modules.distribution.mustahiq import (
     corporate_router as mustahiq_corporate_router,
     personal_router as mustahiq_personal_router,
     mustahiq_lookup_router,
 )
+from app.modules.distribution.proposal import router as proposal_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.admin import router as admin_router
@@ -149,6 +150,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(mustahiq_corporate_router)
     app.include_router(mustahiq_personal_router)
     app.include_router(mustahiq_lookup_router)
+    app.include_router(proposal_router)
 
     # Administration — router carries full /api/administration/... prefix
     app.include_router(admin_router)
