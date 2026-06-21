@@ -3,7 +3,7 @@ from datetime import date as _date
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.modules.dashboard.service import (
+from app.modules.finance.dashboard.service import (
     get_keuangan,
     get_keuangan_anggaran,
     get_keuangan_asnaf,
@@ -24,7 +24,7 @@ from app.shared.response import err, ok
 
 _DB_UNAVAILABLE = err("DB_UNAVAILABLE", "Database tidak tersedia")
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/finance/dashboard", tags=["dashboard"])
 
 
 @router.get("/summary")

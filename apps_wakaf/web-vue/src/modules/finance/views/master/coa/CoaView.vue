@@ -214,7 +214,7 @@ async function exportXlsx() {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const domain = (import.meta.env.VITE_PORTAL_DOMAIN as string | undefined) ?? ''
     const suggested = domain ? `coa-${domain}-${today}.xlsx` : `coa-${today}.xlsx`
-    const path = '/api/coa/accounts.xlsx' + (params.toString() ? '?' + params.toString() : '')
+    const path = '/api/finance/master/coa/accounts.xlsx' + (params.toString() ? '?' + params.toString() : '')
     await api.downloadBlob(path, suggested)
   } catch (e) {
     errorMsg.value = e instanceof ApiError ? `Export gagal: ${e.message}` : 'Export gagal'

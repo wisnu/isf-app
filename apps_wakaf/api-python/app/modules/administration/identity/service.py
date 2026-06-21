@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.modules.identity.schema import BranchInfo, ProfileResponse, RoleInfo
+from app.modules.administration.identity.schema import BranchInfo, ProfileResponse, RoleInfo
 from app.shared.db import fetch_all, fetch_all_isf_auth, fetch_one
 
 

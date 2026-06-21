@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.modules.identity.service import get_profile
+from app.modules.administration.identity.service import get_profile
 from app.shared.response import err, ok
 
 router = APIRouter(prefix="/identity", tags=["identity"])

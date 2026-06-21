@@ -1,15 +1,15 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.modules.admin.schema import RoleMenuUpdateRequest
-from app.modules.admin.service import (
+from app.modules.administration.schema import RoleMenuUpdateRequest
+from app.modules.administration.service import (
     ValidationError,
     list_role_menu,
     replace_role_menu,
 )
 from app.shared.response import err, ok
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/administration", tags=["admin"])
 
 
 @router.get("/role-menu")

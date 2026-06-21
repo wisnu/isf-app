@@ -7,7 +7,7 @@ from app.shared.db import ping
 from app.shared.response import err, ok
 from . import service
 
-router = APIRouter(prefix="/parameter", tags=["parameter"])
+router = APIRouter(prefix="/finance/master/parameter", tags=["parameter"])
 
 
 def _user_id(request: Request) -> str:

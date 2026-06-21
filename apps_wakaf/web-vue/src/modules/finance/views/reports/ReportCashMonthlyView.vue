@@ -31,7 +31,7 @@ const fmt = (n: number) => idr.format(Math.round(n ?? 0))
 
 async function loadBranches() {
   try {
-    branches.value = await api.get<BranchOption[]>('/api/report/cash-monthly/branches')
+    branches.value = await api.get<BranchOption[]>('/api/finance/report/cash-monthly/branches')
     if (!branch.value && branches.value.length) branch.value = branches.value[0].code
   } catch {
     branches.value = []

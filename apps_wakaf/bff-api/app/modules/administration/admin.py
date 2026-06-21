@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_api_python
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/api/administration", tags=["admin"])
 
 
 class MappingPairIn(BaseModel):

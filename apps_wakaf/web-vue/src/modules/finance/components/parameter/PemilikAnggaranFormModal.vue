@@ -49,7 +49,7 @@ onMounted(async () => {
     form.status        = props.initialData.status as 'A' | 'N'
   }
   try {
-    const res = await api.get<{ data: LookupItem[] }>('/api/parameter/pemilik-anggaran/lookup')
+    const res = await api.get<{ data: LookupItem[] }>('/api/finance/master/parameter/pemilik-anggaran/lookup')
     parentOpts.value = (res.data ?? []).map((item) => ({
       value: String(item.ownerid),
       label: `${item.ownercode} — ${item.ownername}`,
@@ -74,7 +74,7 @@ async function submit() {
   submitting.value = true
   try {
     if (props.mode === 'create') {
-      await api.post('/api/parameter/pemilik-anggaran', {
+      await api.post('/api/finance/master/parameter/pemilik-anggaran', {
         ownercode:     form.ownercode.trim().toUpperCase(),
         ownername:     form.ownername.trim(),
         is_detail:     form.is_detail,

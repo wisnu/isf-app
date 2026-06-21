@@ -147,7 +147,7 @@ async function load() {
   loading.value = true
   errorMsg.value = null
   try {
-    const snap = await api.get<Snapshot>('/api/admin/role-menu')
+    const snap = await api.get<Snapshot>('/api/administration/role-menu')
     roles.value = snap.roles
     menus.value = snap.menus
     const keys = new Set(snap.mapping.map((p) => pairKey(p.id_peran, p.menu_key)))
@@ -179,7 +179,7 @@ async function save() {
     return { id_peran: rp, menu_key: mk }
   })
   try {
-    const result = await api.put<UpdateResponse>('/api/admin/role-menu', { mapping })
+    const result = await api.put<UpdateResponse>('/api/administration/role-menu', { mapping })
     successMsg.value = `Tersimpan: +${result.diff.added.length} added, −${result.diff.removed.length} removed`
     original.value = new Set(current.value)
   } catch (e) {

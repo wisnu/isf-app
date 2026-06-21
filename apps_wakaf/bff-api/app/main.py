@@ -6,15 +6,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.routers.admin import router as admin_router
-from app.routers.auth import router as auth_router
-from app.routers.auth_google import router as google_router
-from app.routers.coa import router as coa_router
-from app.routers.dashboard import router as dashboard_router
-from app.routers.report import router as report_router
-from app.routers.tenants import router as tenants_router
-from app.routers.parameter import router as parameter_router
-from app.services.audit import AuditWriter
+from app.modules.core.auth import router as auth_router
+from app.modules.core.auth_google import router as google_router
+from app.modules.core.tenants import router as tenants_router
+from app.modules.finance.master import coa_router, parameter_router
+from app.modules.finance.dashboard import router as dashboard_router
+from app.modules.finance.reports import router as report_router
+from app.modules.administration.admin import router as admin_router
+
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
 from app.services.auth_providers.google import GoogleOAuthProvider
@@ -33,15 +32,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         pool = await auth_pool.init_pool(cfg.isf_auth_database_url or None)
         if pool is None:
-            raise RuntimeError(
-                "ISF_AUTH_DATABASE_URL belum di-set — BFF butuh koneksi ke isf_auth_<portal> DB"
-            )
+            raise RuntimeError("ISF_AUTH_DATABASE_URL belum di-set")
         db = AuthDB()
         await db.migrate_usernames_to_uppercase()
         if not await db.has_users():
             await seed_defaults(db)
         app.state.auth_db = db
-        app.state.audit = AuditWriter()
         app.state.settings = cfg
         app.state.password_provider = PasswordProvider(db)
         app.state.google_provider = GoogleOAuthProvider(db, cfg)
@@ -54,7 +50,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             await auth_pool.close_pool()
 
-    app = FastAPI(title="isf-app bff-api", version="0.2.0", lifespan=lifespan)
+    app = FastAPI(title="isf-app bff-api (wakaf)", version="0.2.0", lifespan=lifespan)
 
     register_exception_handlers(app)
 
@@ -72,7 +68,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        # Agar nama file export (.xlsx) terbaca oleh fetch lintas-origin di FE.
         expose_headers=["Content-Disposition"],
     )
 
@@ -80,14 +75,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict:
         return ok({"status": "ok"})
 
-    app.include_router(auth_router, prefix="/api")
-    app.include_router(google_router, prefix="/api")
+    app.include_router(auth_router,    prefix="/api")
+    app.include_router(google_router,  prefix="/api")
     app.include_router(tenants_router, prefix="/api")
-    app.include_router(dashboard_router, prefix="/api")
-    app.include_router(report_router, prefix="/api")
-    app.include_router(coa_router, prefix="/api")
-    app.include_router(admin_router, prefix="/api")
-    app.include_router(parameter_router, prefix="/api")
+    app.include_router(coa_router)
+    app.include_router(parameter_router)
+    app.include_router(dashboard_router)
+    app.include_router(report_router)
+    app.include_router(admin_router)
+
     return app
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.modules.dashboard.schema import (
+from app.modules.finance.dashboard.schema import (
     # Legacy
     AsnafItem, Channel, DashboardSummary, Kpis, KpiPair, Trend, Transaction,
     # v2
