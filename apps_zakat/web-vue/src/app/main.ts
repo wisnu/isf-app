@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 
-import App from '@/App.vue'
+import App from './App.vue'
 import '@/shared/utils/charts'
 import router from '@/router'
 import { useNotificationsStore } from '@/app/stores/notification.store'
