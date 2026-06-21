@@ -39,7 +39,7 @@ async def ping(request: Request):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_report_api("/api/report/ping")
+    downstream = await get_report_api("/api/finance/report/ping")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -47,7 +47,7 @@ async def _branches_for_session(request: Request):
     access = request.session.get("branch_access", "single")
     primary = request.session.get("primary_branch") or ""
     scope = "all" if access == "all" else primary
-    return await get_report_api("/api/report/branches", params={"scope": scope})
+    return await get_report_api("/api/finance/report/branches", params={"scope": scope})
 
 
 def _resolve_branch(request: Request, branch: str | None) -> tuple[str | None, JSONResponse | None]:
@@ -94,7 +94,7 @@ async def journal_daily(
     params: dict = {"begin": begin, "end": end, "page": page, "page_size": page_size}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api("/api/report/journal-daily", params=params)
+    downstream = await get_report_api("/api/finance/report/journal-daily", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -112,7 +112,7 @@ async def journal_daily_export(
     params: dict = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await stream_report_api("/api/report/journal-daily/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/journal-daily/export.xlsx", params=params)
     if downstream.status_code != 200:
         # error JSON dari report-api (mis. 422 REPORT_TOO_LARGE / 503) — teruskan apa adanya
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -162,7 +162,7 @@ async def general_transaction(
     params: dict = {"begin": begin, "end": end, "page": page, "page_size": page_size}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api("/api/report/general-transaction", params=params)
+    downstream = await get_report_api("/api/finance/report/general-transaction", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -180,7 +180,7 @@ async def general_transaction_export(
     params: dict = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await stream_report_api("/api/report/general-transaction/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/general-transaction/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(
@@ -219,7 +219,7 @@ async def cash_accounts(
         return JSONResponse(
             status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu")
         )
-    downstream = await get_report_api("/api/report/cash-accounts", params={"branch": resolved})
+    downstream = await get_report_api("/api/finance/report/cash-accounts", params={"branch": resolved})
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -234,7 +234,7 @@ async def cash_mutation(
     page_size: int = Query(default=50, ge=1, le=200),
 ):
     params = {"account": account, "begin": begin, "end": end, "page": page, "page_size": page_size}
-    downstream = await get_report_api("/api/report/cash-mutation", params=params)
+    downstream = await get_report_api("/api/finance/report/cash-mutation", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -247,7 +247,7 @@ async def cash_mutation_export(
     end: str = Query(...),
 ):
     params = {"account": account, "begin": begin, "end": end}
-    downstream = await stream_report_api("/api/report/cash-mutation/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/cash-mutation/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(
@@ -286,7 +286,7 @@ async def cash_summary(
     if not resolved:
         return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
     downstream = await get_report_api(
-        "/api/report/cash-summary", params={"branch": resolved, "begin": begin, "end": end}
+        "/api/finance/report/cash-summary", params={"branch": resolved, "begin": begin, "end": end}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -305,7 +305,7 @@ async def cash_summary_export(
     if not resolved:
         return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
     downstream = await stream_report_api(
-        "/api/report/cash-summary/export.xlsx", params={"branch": resolved, "begin": begin, "end": end}
+        "/api/finance/report/cash-summary/export.xlsx", params={"branch": resolved, "begin": begin, "end": end}
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -344,7 +344,7 @@ async def cash_monthly(
     if not resolved:
         return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
     downstream = await get_report_api(
-        "/api/report/cash-monthly", params={"branch": resolved, "year": year}
+        "/api/finance/report/cash-monthly", params={"branch": resolved, "year": year}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -362,7 +362,7 @@ async def cash_monthly_export(
     if not resolved:
         return JSONResponse(status_code=400, content=err("BRANCH_REQUIRED", "Pilih satu cabang dulu"))
     downstream = await stream_report_api(
-        "/api/report/cash-monthly/export.xlsx", params={"branch": resolved, "year": year}
+        "/api/finance/report/cash-monthly/export.xlsx", params={"branch": resolved, "year": year}
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -409,7 +409,7 @@ async def trial_balance(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/trial-balance", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/trial-balance", params=_tb_params(resolved, begin, end)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -426,7 +426,7 @@ async def trial_balance_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/trial-balance/export.xlsx", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/trial-balance/export.xlsx", params=_tb_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -474,7 +474,7 @@ async def balance_sheet(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/balance-sheet", params=_balance_sheet_params(resolved, date, period_type, level)
+        "/api/finance/report/balance-sheet", params=_balance_sheet_params(resolved, date, period_type, level)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -492,7 +492,7 @@ async def balance_sheet_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/balance-sheet/export.xlsx",
+        "/api/finance/report/balance-sheet/export.xlsx",
         params=_balance_sheet_params(resolved, date, period_type, level),
     )
     if downstream.status_code != 200:
@@ -538,7 +538,7 @@ async def cash_flow(
     resolved, error = _resolve_branch(request, branch)
     if error is not None:
         return error
-    downstream = await get_report_api("/api/report/cash-flow", params=_ak_params(resolved, begin, end))
+    downstream = await get_report_api("/api/finance/report/cash-flow", params=_ak_params(resolved, begin, end))
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -554,7 +554,7 @@ async def cash_flow_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/cash-flow/export.xlsx", params=_ak_params(resolved, begin, end)
+        "/api/finance/report/cash-flow/export.xlsx", params=_ak_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -600,7 +600,7 @@ async def general_ledger_accounts(
     if error is not None:
         return error
     params = {"branch": resolved} if resolved else {}
-    downstream = await get_report_api("/api/report/general-ledger/accounts", params=params)
+    downstream = await get_report_api("/api/finance/report/general-ledger/accounts", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -617,7 +617,7 @@ async def general_ledger(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/general-ledger", params=_gl_params(resolved, begin, end, account)
+        "/api/finance/report/general-ledger", params=_gl_params(resolved, begin, end, account)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -635,7 +635,7 @@ async def general_ledger_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/general-ledger/export.xlsx",
+        "/api/finance/report/general-ledger/export.xlsx",
         params=_gl_params(resolved, begin, end, account),
     )
     if downstream.status_code != 200:
@@ -675,7 +675,7 @@ async def fund_changes(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/fund-changes", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/fund-changes", params=_tb_params(resolved, begin, end)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -692,7 +692,7 @@ async def fund_changes_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/fund-changes/export.xlsx", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/fund-changes/export.xlsx", params=_tb_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -731,7 +731,7 @@ async def fund_changes_detail(
     if error is not None:
         return error
     downstream = await get_report_api(
-        "/api/report/fund-changes-detail", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/fund-changes-detail", params=_tb_params(resolved, begin, end)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -748,7 +748,7 @@ async def fund_changes_detail_export(
     if error is not None:
         return error
     downstream = await stream_report_api(
-        "/api/report/fund-changes-detail/export.xlsx", params=_tb_params(resolved, begin, end)
+        "/api/finance/report/fund-changes-detail/export.xlsx", params=_tb_params(resolved, begin, end)
     )
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
@@ -784,7 +784,7 @@ async def amil_cashin(
     params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api("/api/report/amil-cashin", params=params)
+    downstream = await get_report_api("/api/finance/report/amil-cashin", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -799,7 +799,7 @@ async def amil_cashin_export(
     params = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await stream_report_api("/api/report/amil-cashin/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/amil-cashin/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -824,7 +824,7 @@ async def amil_cashout(
     params = {"begin": begin, "end": end, "page": page, "page_size": page_size}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api("/api/report/amil-cashout", params=params)
+    downstream = await get_report_api("/api/finance/report/amil-cashout", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -839,7 +839,7 @@ async def amil_cashout_export(
     params = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await stream_report_api("/api/report/amil-cashout/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/amil-cashout/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -869,7 +869,7 @@ async def distribution(
         params["branch"] = resolved
     if fund:
         params["fund"] = fund
-    downstream = await get_report_api("/api/report/distribution", params=params)
+    downstream = await get_report_api("/api/finance/report/distribution", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -886,7 +886,7 @@ async def distribution_export(
         params["branch"] = resolved
     if fund:
         params["fund"] = fund
-    downstream = await stream_report_api("/api/report/distribution/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/distribution/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -916,7 +916,7 @@ async def collection(
         params["branch"] = resolved
     if fund:
         params["fund"] = fund
-    downstream = await get_report_api("/api/report/collection", params=params)
+    downstream = await get_report_api("/api/finance/report/collection", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -931,7 +931,7 @@ async def collection_rekap(
     params = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api("/api/report/collection/rekap", params=params)
+    downstream = await get_report_api("/api/finance/report/collection/rekap", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -948,7 +948,7 @@ async def collection_export(
         params["branch"] = resolved
     if fund:
         params["fund"] = fund
-    downstream = await stream_report_api("/api/report/collection/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/collection/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -966,7 +966,7 @@ async def _ar_proxy(request, menu, ep, begin, end, branch):
     params = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await get_report_api(f"/api/report/{ep}", params=params)
+    downstream = await get_report_api(f"/api/finance/report/{ep}", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -977,7 +977,7 @@ async def _ar_proxy_export(request, ep, begin, end, branch, fallback):
     params = {"begin": begin, "end": end}
     if resolved:
         params["branch"] = resolved
-    downstream = await stream_report_api(f"/api/report/{ep}/export.xlsx", params=params)
+    downstream = await stream_report_api(f"/api/finance/report/{ep}/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -1059,7 +1059,7 @@ async def cashadvance_list(request: Request, _: str = Depends(require_menu(_CA_L
         params["branch"] = resolved
     if lpj:
         params["lpj"] = lpj
-    downstream = await get_report_api("/api/report/cashadvance-list", params=params)
+    downstream = await get_report_api("/api/finance/report/cashadvance-list", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -1074,7 +1074,7 @@ async def cashadvance_list_export(request: Request, _: str = Depends(require_men
         params["branch"] = resolved
     if lpj:
         params["lpj"] = lpj
-    downstream = await stream_report_api("/api/report/cashadvance-list/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/cashadvance-list/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,
@@ -1116,7 +1116,7 @@ async def realization_memo(request: Request, _: str = Depends(require_menu(_MEMO
         params["branch"] = resolved
     if q:
         params["q"] = q
-    downstream = await get_report_api("/api/report/realization-memo", params=params)
+    downstream = await get_report_api("/api/finance/report/realization-memo", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -1131,7 +1131,7 @@ async def realization_memo_export(request: Request, _: str = Depends(require_men
         params["branch"] = resolved
     if q:
         params["q"] = q
-    downstream = await stream_report_api("/api/report/realization-memo/export.xlsx", params=params)
+    downstream = await stream_report_api("/api/finance/report/realization-memo/export.xlsx", params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(content=downstream.content, media_type=_XLSX_MIME,

@@ -32,7 +32,7 @@ async def summary(request: Request):
         )
 
     downstream = await get_report_api(
-        "/api/dashboard/summary", params={"tenant_id": active_tenant}
+        "/api/finance/dashboard/summary", params={"tenant_id": active_tenant}
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -49,7 +49,7 @@ async def finance(request: Request, month: int = None, year: int = None):
     if year is not None:
         params["year"] = year
 
-    downstream = await get_report_api("/api/dashboard/finance", params=params)
+    downstream = await get_report_api("/api/finance/dashboard/finance", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -65,7 +65,7 @@ async def fund_distribution(request: Request, month: int = None, year: int = Non
     if year is not None:
         params["year"] = year
 
-    downstream = await get_report_api("/api/dashboard/fund-distribution", params=params)
+    downstream = await get_report_api("/api/finance/dashboard/fund-distribution", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -77,7 +77,7 @@ async def finance_kpis(request: Request, month: int = None, year: int = None):
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/finance/kpis", params=_period_params(month, year)
+        "/api/finance/dashboard/finance/kpis", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -88,7 +88,7 @@ async def finance_trend(request: Request, month: int = None, year: int = None):
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/finance/trend", params=_period_params(month, year)
+        "/api/finance/dashboard/finance/trend", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -99,7 +99,7 @@ async def finance_asnaf(request: Request, month: int = None, year: int = None):
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/finance/asnaf", params=_period_params(month, year)
+        "/api/finance/dashboard/finance/asnaf", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -112,7 +112,7 @@ async def finance_anggaran(request: Request, year: int = None):
     params: dict = {}
     if year is not None:
         params["year"] = year
-    downstream = await get_report_api("/api/dashboard/finance/anggaran", params=params)
+    downstream = await get_report_api("/api/finance/dashboard/finance/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -121,7 +121,7 @@ async def finance_rekening(request: Request):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_report_api("/api/dashboard/finance/rekening")
+    downstream = await get_report_api("/api/finance/dashboard/finance/rekening")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -131,7 +131,7 @@ async def fund_distribution_kpis(request: Request, month: int = None, year: int 
     if error_response is not None:
         return error_response
     downstream = await get_report_api(
-        "/api/dashboard/fund-distribution/kpis", params=_period_params(month, year)
+        "/api/finance/dashboard/fund-distribution/kpis", params=_period_params(month, year)
     )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
@@ -144,7 +144,7 @@ async def fund_distribution_anggaran(request: Request, year: int = None):
     params: dict = {}
     if year is not None:
         params["year"] = year
-    downstream = await get_report_api("/api/dashboard/fund-distribution/anggaran", params=params)
+    downstream = await get_report_api("/api/finance/dashboard/fund-distribution/anggaran", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -153,5 +153,19 @@ async def fund_distribution_memo(request: Request):
     _, error_response = await current_user_id_or_401(request)
     if error_response is not None:
         return error_response
-    downstream = await get_report_api("/api/dashboard/fund-distribution/memo")
+    downstream = await get_report_api("/api/finance/dashboard/fund-distribution/memo")
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.get("/finance/budget")
+async def finance_budget(request: Request, year: int = None):
+    _, error_response = await current_user_id_or_401(request)
+    if error_response is not None:
+        return error_response
+    params = {}
+    if year is not None:
+        params["year"] = year
+    downstream = await get_report_api(
+        "/api/finance/dashboard/finance/budget", params=params
+    )
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
