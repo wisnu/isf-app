@@ -1,4 +1,4 @@
-import { Users, BookOpen, FileText } from 'lucide-vue-next'
+import { Users, BookOpen, FileText, BarChart2 } from 'lucide-vue-next'
 import type { DomainConfig } from '@/shared/constants/domains'
 
 export const distributionMenu: DomainConfig = {
@@ -33,6 +33,20 @@ export const distributionMenu: DomainConfig = {
         { label: 'Realisasi Program Non Rutin', to: '/distribution/realization/non-regular', menu_key: 'distribution.realization.non-regular.list' },
         { label: 'Monitoring Program Penyaluran', to: '/distribution/monitoring', menu_key: 'distribution.monitoring.list' },
         { label: 'Pengembalian Realisasi Program', to: '/distribution/realization-return', menu_key: 'distribution.realization-return.list' },
+      ],
+    },
+    {
+      id: 'laporan',
+      label: 'Laporan',
+      icon: BarChart2,
+      items: [
+        { label: 'Laporan Proposal Masuk',            to: '/distribution/report/proposal-incoming',       menu_key: 'distribution.report.proposal-incoming' },
+        { label: 'Laporan Daftar Mustahiq',           to: '/distribution/report/mustahiq-list',           menu_key: 'distribution.report.mustahiq-list' },
+        { label: 'Laporan Penyaluran Rutin',          to: '/distribution/report/realization-regular',     menu_key: 'distribution.report.realization-regular' },
+        { label: 'Laporan Penyaluran Non Rutin',      to: '/distribution/report/realization-non-regular', menu_key: 'distribution.report.realization-non-regular' },
+        { label: 'Laporan Piutang Realisasi',         to: '/distribution/report/realization-receivable',  menu_key: 'distribution.report.realization-receivable' },
+        { label: 'Laporan Pengembalian Realisasi',    to: '/distribution/report/realization-return',      menu_key: 'distribution.report.realization-return' },
+        { label: 'Laporan Penyaluran Per Mustahiq',   to: '/distribution/report/realization-by-mustahiq', menu_key: 'distribution.report.realization-by-mustahiq' },
       ],
     },
   ],

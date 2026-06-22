@@ -73,4 +73,47 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/realization-return/RealizationReturnView.vue'),
     meta: { title: 'Pengembalian Realisasi Program', menu_key: 'distribution.realization-return.list', domain: 'distribution' },
   },
+  // ── Laporan ───────────────────────────────────────────────────────────────
+  {
+    path: '/distribution/report/proposal-incoming',
+    name: 'distribution-report-proposal-incoming',
+    component: () => import('@/modules/distribution/views/reports/LaporanProposalIncomingView.vue'),
+    meta: { title: 'Laporan Proposal Masuk', menu_key: 'distribution.report.proposal-incoming', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/mustahiq-list',
+    name: 'distribution-report-mustahiq-list',
+    component: () => import('@/modules/distribution/views/reports/LaporanMustahiqListView.vue'),
+    meta: { title: 'Laporan Daftar Mustahiq', menu_key: 'distribution.report.mustahiq-list', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/realization-regular',
+    name: 'distribution-report-realization-regular',
+    component: () => import('@/modules/distribution/views/reports/LaporanRealizationRegularView.vue'),
+    meta: { title: 'Laporan Program Penyaluran Rutin', menu_key: 'distribution.report.realization-regular', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/realization-non-regular',
+    name: 'distribution-report-realization-non-regular',
+    component: () => import('@/modules/distribution/views/reports/LaporanRealizationNonRegularView.vue'),
+    meta: { title: 'Laporan Program Penyaluran Non Rutin', menu_key: 'distribution.report.realization-non-regular', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/realization-receivable',
+    name: 'distribution-report-realization-receivable',
+    component: () => import('@/modules/distribution/views/reports/LaporanRealizationReceivableView.vue'),
+    meta: { title: 'Laporan Piutang Realisasi Penyaluran', menu_key: 'distribution.report.realization-receivable', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/realization-return',
+    name: 'distribution-report-realization-return',
+    component: () => import('@/modules/distribution/views/reports/LaporanRealizationReturnView.vue'),
+    meta: { title: 'Laporan Pengembalian Realisasi', menu_key: 'distribution.report.realization-return', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/report/realization-by-mustahiq',
+    name: 'distribution-report-realization-by-mustahiq',
+    component: () => import('@/modules/distribution/views/reports/LaporanRealizationByMustahiqView.vue'),
+    meta: { title: 'Laporan Penyaluran Per Mustahiq', menu_key: 'distribution.report.realization-by-mustahiq', domain: 'distribution' },
+  },
 ]

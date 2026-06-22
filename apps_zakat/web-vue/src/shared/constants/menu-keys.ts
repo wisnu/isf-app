@@ -71,6 +71,13 @@ export const MENU_KEYS = [
   'distribution.realization.non-regular.list',
   'distribution.monitoring.list',
   'distribution.realization-return.list',
+  'distribution.report.proposal-incoming',
+  'distribution.report.mustahiq-list',
+  'distribution.report.realization-regular',
+  'distribution.report.realization-non-regular',
+  'distribution.report.realization-receivable',
+  'distribution.report.realization-return',
+  'distribution.report.realization-by-mustahiq',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
