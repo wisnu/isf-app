@@ -39,7 +39,6 @@ interface MustahiqOption {
   name: string
 }
 
-const auth = useAuthStore()
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const errorMsg = shallowRef<string | null>(null)
