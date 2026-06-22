@@ -1,4 +1,4 @@
-import { Settings, Users } from 'lucide-vue-next'
+import { Building2, Settings, Users } from 'lucide-vue-next'
 import type { DomainConfig } from '@/shared/constants/domains'
 
 export const appadminMenu: DomainConfig = {
@@ -16,6 +16,14 @@ export const appadminMenu: DomainConfig = {
       items: [
         { label: 'List User',   to: '/appadmin/users',    menu_key: 'appadmin.users' },
         { label: 'Role & Menu', to: '/appadmin/role-menu', menu_key: 'appadmin.role_menu' },
+      ],
+    },
+    {
+      id: 'branch-mgmt',
+      label: 'Manajemen Cabang',
+      icon: Building2,
+      items: [
+        { label: 'Inquiry Cabang', to: '/appadmin/branches', menu_key: 'appadmin.branch.list' },
       ],
     },
   ],

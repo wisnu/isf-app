@@ -14,4 +14,10 @@ export const appadminRoutes: RouteRecordRaw[] = [
     component: () => import('./views/users/UsersView.vue'),
     meta: { title: 'List User', menu_key: 'appadmin.users' as MenuKey, domain: 'appadmin' },
   },
+  {
+    path: '/appadmin/branches',
+    name: 'appadmin-branches',
+    component: () => import('./views/branches/BranchesView.vue'),
+    meta: { title: 'Inquiry Cabang', menu_key: 'appadmin.branch.list' as MenuKey, domain: 'appadmin' },
+  },
 ]
