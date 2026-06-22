@@ -61,4 +61,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/realization/NonRegularRealizationView.vue'),
     meta: { title: 'Realisasi Program Non Rutin', menu_key: 'distribution.realization.non-regular.list', domain: 'distribution' },
   },
+  {
+    path: '/distribution/monitoring',
+    name: 'distribution-monitoring',
+    component: () => import('@/modules/distribution/views/monitoring/MonitoringVisitView.vue'),
+    meta: { title: 'Monitoring Program Penyaluran', menu_key: 'distribution.monitoring.list', domain: 'distribution' },
+  },
 ]

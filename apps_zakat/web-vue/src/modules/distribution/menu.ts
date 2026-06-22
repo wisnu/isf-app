@@ -31,6 +31,7 @@ export const distributionMenu: DomainConfig = {
         { label: 'Memo Penyaluran Non Rutin', to: '/distribution/program/memo-non-regular', menu_key: 'distribution.program.memo-non-regular' },
         { label: 'Realisasi Program Rutin',     to: '/distribution/realization/regular',     menu_key: 'distribution.realization.regular.list' },
         { label: 'Realisasi Program Non Rutin', to: '/distribution/realization/non-regular', menu_key: 'distribution.realization.non-regular.list' },
+        { label: 'Monitoring Program Penyaluran', to: '/distribution/monitoring', menu_key: 'distribution.monitoring.list' },
       ],
     },
   ],
