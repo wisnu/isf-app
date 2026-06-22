@@ -154,6 +154,12 @@ export const financeRoutes: RouteRecordRaw[] = [
     component: () => import('./views/inquiry/cash-advance/CashAdvanceInquiryView.vue'),
     meta: { title: 'Uang Muka Kegiatan', menu_key: 'finance.inquiry.cash_advance' as MenuKey, domain: 'finance' },
   },
+  {
+    path: '/finance/inquiry/receivable',
+    name: 'finance-inquiry-receivable',
+    component: () => import('./views/inquiry/receivable/ReceivableInquiryView.vue'),
+    meta: { title: 'Piutang Karyawan / Non Karyawan', menu_key: 'finance.inquiry.receivable' as MenuKey, domain: 'finance' },
+  },
 
   // ── Transaction ───────────────────────────────────────────────────────────
   {
