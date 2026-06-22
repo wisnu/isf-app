@@ -43,6 +43,7 @@ from app.modules.distribution.partner.router import router as partner_router
 from app.modules.distribution.proposal.router import router as proposal_router
 from app.modules.distribution.regular_program.router import router as regular_program_router
 from app.modules.distribution.non_regular_program.router import router as non_regular_program_router
+from app.modules.distribution.realization_memo.router import regular_router as realization_memo_regular_router, non_regular_router as realization_memo_non_regular_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.router import router as admin_router
@@ -131,6 +132,8 @@ app.include_router(partner_router,         prefix="/api")
 app.include_router(proposal_router,        prefix="/api")
 app.include_router(regular_program_router,     prefix="/api")
 app.include_router(non_regular_program_router, prefix="/api")
+app.include_router(realization_memo_regular_router,     prefix="/api")
+app.include_router(realization_memo_non_regular_router, prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")
