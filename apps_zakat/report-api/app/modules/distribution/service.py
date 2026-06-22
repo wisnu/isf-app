@@ -372,8 +372,9 @@ async def realization_non_regular_page(
 async def realization_receivable_count(date_from: str, date_to: str) -> int:
     df = date.fromisoformat(date_from)
     dt = date.fromisoformat(date_to)
+    # dwh.v_program_realization: statusreceivables='Y' already baked in
     row = await fetch_one_dwh(
-        "SELECT count(*) AS n FROM dwh.v_report_realization_receivable "
+        "SELECT count(*) AS n FROM dwh.v_program_realization "
         "WHERE realizationdate >= $1::date AND realizationdate <= $2::date",
         df, dt,
     )
@@ -385,14 +386,14 @@ async def realization_receivable_rows(date_from: str, date_to: str) -> list[dict
     dt = date.fromisoformat(date_to)
     return await fetch_all_dwh(
         """
-        SELECT realization_id, CAST(realizationdate AS VARCHAR) AS realizationdate,
-               realization_amount, realization_input_user, realization_type,
-               realization_description, realmemo_number, employee_name,
-               receivable_report_user_input, report_amount,
-               CAST(receivable_report_date AS VARCHAR) AS receivable_report_date
-        FROM dwh.v_report_realization_receivable
+        SELECT realizationid, CAST(realizationdate AS VARCHAR) AS realizationdate,
+               CAST(amount AS FLOAT8) AS realization_amount, input_user, realization_type,
+               description AS realization_description, memo_number,
+               employee_name, report_user, report_amount,
+               CAST(report_date AS VARCHAR) AS report_date
+        FROM dwh.v_program_realization
         WHERE realizationdate >= $1::date AND realizationdate <= $2::date
-        ORDER BY realizationdate DESC, realization_id DESC
+        ORDER BY realizationdate DESC, realizationid DESC
         LIMIT %d
         """ % CAP,
         df, dt,
@@ -410,14 +411,14 @@ async def realization_receivable_page(
     offset = (page - 1) * page_size
     rows = await fetch_all_dwh(
         """
-        SELECT realization_id, CAST(realizationdate AS VARCHAR) AS realizationdate,
-               realization_amount, realization_input_user, realization_type,
-               realization_description, realmemo_number, employee_name,
-               receivable_report_user_input, report_amount,
-               CAST(receivable_report_date AS VARCHAR) AS receivable_report_date
-        FROM dwh.v_report_realization_receivable
+        SELECT realizationid, CAST(realizationdate AS VARCHAR) AS realizationdate,
+               CAST(amount AS FLOAT8) AS realization_amount, input_user, realization_type,
+               description AS realization_description, memo_number,
+               employee_name, report_user, report_amount,
+               CAST(report_date AS VARCHAR) AS report_date
+        FROM dwh.v_program_realization
         WHERE realizationdate >= $1::date AND realizationdate <= $2::date
-        ORDER BY realizationdate DESC, realization_id DESC
+        ORDER BY realizationdate DESC, realizationid DESC
         LIMIT $3 OFFSET $4
         """,
         df, dt, page_size, offset,
@@ -451,8 +452,8 @@ async def realization_return_rows(date_from: str, date_to: str) -> list[dict]:
     return await fetch_all_dwh(
         """
         SELECT return_id, CAST(return_date AS VARCHAR) AS return_date,
-               realization_amount, return_amount, realmemo_number, return_description,
-               input_user, realizationid, cost_item_description, cost_amount
+               realization_amount, return_amount, memo_number, return_description,
+               input_user, realization_id, cost_item_description, cost_amount
         FROM dwh.v_report_realization_return
         WHERE return_date >= $1::date AND return_date < ($2::date + INTERVAL '1 day')
         ORDER BY return_date DESC, return_id DESC
@@ -474,8 +475,8 @@ async def realization_return_page(
     rows = await fetch_all_dwh(
         """
         SELECT return_id, CAST(return_date AS VARCHAR) AS return_date,
-               realization_amount, return_amount, realmemo_number, return_description,
-               input_user, realizationid, cost_item_description, cost_amount
+               realization_amount, return_amount, memo_number, return_description,
+               input_user, realization_id, cost_item_description, cost_amount
         FROM dwh.v_report_realization_return
         WHERE return_date >= $1::date AND return_date < ($2::date + INTERVAL '1 day')
         ORDER BY return_date DESC, return_id DESC

@@ -377,15 +377,15 @@ def build_realization_receivable_xlsx(rows: list[dict], period_label: str) -> by
         values = [
             i - header_row,
             _dmy(r.get("realizationdate")),
-            r.get("realmemo_number"),
+            r.get("memo_number"),
             "Rutin" if r.get("realization_type") == "R" else "Non Rutin",
             r.get("realization_description"),
             realization_amt,
             report_amt,
             sisa,
             r.get("employee_name"),
-            r.get("realization_input_user"),
-            r.get("receivable_report_user_input"),
+            r.get("input_user"),
+            r.get("report_user"),
         ]
         for col_idx, val in enumerate(values, 1):
             cell = ws.cell(row=i, column=col_idx, value=val)
@@ -439,7 +439,7 @@ def build_realization_return_xlsx(rows: list[dict], period_label: str) -> bytes:
             float(r.get("realization_amount") or 0),
             float(r.get("return_amount") or 0),
             "",
-            r.get("realmemo_number"),
+            r.get("memo_number"),
             r.get("return_description"),
             r.get("input_user"),
         ]
