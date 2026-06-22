@@ -73,6 +73,31 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/realization-return/RealizationReturnView.vue'),
     meta: { title: 'Pengembalian Realisasi Program', menu_key: 'distribution.realization-return.list', domain: 'distribution' },
   },
+  // ── Parameter ────────────────────────────────────────────────────────────
+  {
+    path: '/distribution/parameter/program-type',
+    name: 'distribution-parameter-program-type',
+    component: () => import('@/modules/distribution/views/parameter/ProgramTypeView.vue'),
+    meta: { title: 'Jenis Program', menu_key: 'distribution.parameter.program-type', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/parameter/program',
+    name: 'distribution-parameter-program',
+    component: () => import('@/modules/distribution/views/parameter/DistributionProgramView.vue'),
+    meta: { title: 'Program Penyaluran', menu_key: 'distribution.parameter.program', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/parameter/work-sector',
+    name: 'distribution-parameter-work-sector',
+    component: () => import('@/modules/distribution/views/parameter/WorkSectorView.vue'),
+    meta: { title: 'Bidang Pekerjaan', menu_key: 'distribution.parameter.work-sector', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/parameter/cost-item',
+    name: 'distribution-parameter-cost-item',
+    component: () => import('@/modules/distribution/views/parameter/CostItemView.vue'),
+    meta: { title: 'Rincian Biaya Realisasi', menu_key: 'distribution.parameter.cost-item', domain: 'distribution' },
+  },
   // ── Laporan ───────────────────────────────────────────────────────────────
   {
     path: '/distribution/report/proposal-incoming',

@@ -1,4 +1,4 @@
-import { Users, BookOpen, FileText, BarChart2 } from 'lucide-vue-next'
+import { Users, BookOpen, FileText, BarChart2, Settings } from 'lucide-vue-next'
 import type { DomainConfig } from '@/shared/constants/domains'
 
 export const distributionMenu: DomainConfig = {
@@ -9,6 +9,17 @@ export const distributionMenu: DomainConfig = {
   locked: false,
   defaultRoute: '/distribution/mustahiq/corporate',
   groups: [
+    {
+      id: 'parameter',
+      label: 'Parameter',
+      icon: Settings,
+      items: [
+        { label: 'Jenis Program',           to: '/distribution/parameter/program-type', menu_key: 'distribution.parameter.program-type' },
+        { label: 'Program Penyaluran',      to: '/distribution/parameter/program',      menu_key: 'distribution.parameter.program' },
+        { label: 'Bidang Pekerjaan',        to: '/distribution/parameter/work-sector',  menu_key: 'distribution.parameter.work-sector' },
+        { label: 'Rincian Biaya Realisasi', to: '/distribution/parameter/cost-item',    menu_key: 'distribution.parameter.cost-item' },
+      ],
+    },
     {
       id: 'mustahiq',
       label: 'Data Mustahiq',
