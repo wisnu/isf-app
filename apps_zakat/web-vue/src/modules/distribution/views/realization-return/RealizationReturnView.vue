@@ -920,7 +920,7 @@ const realizationTypeOptions = [
     </Dialog>
 
     <!-- ── Delete Confirmation Modal ── -->
-    <Modal v-model:open="showDelete" title="Hapus Pengembalian Realisasi">
+    <Modal v-if="showDelete" v-model:open="showDelete" title="Hapus Pengembalian Realisasi">
       <div v-if="selected" class="space-y-3 text-sm">
         <p class="text-zinc-600 dark:text-zinc-400">
           Konfirmasi hapus data pengembalian realisasi berikut:
