@@ -46,6 +46,7 @@ from app.modules.distribution.non_regular_program.router import router as non_re
 from app.modules.distribution.realization_memo.router import regular_router as realization_memo_regular_router, non_regular_router as realization_memo_non_regular_router
 from app.modules.distribution.realization.router import regular_router as realization_regular_router, non_regular_router as realization_non_regular_router
 from app.modules.distribution.monitoring.router import router as monitoring_router
+from app.modules.distribution.realization_return.router import router as realization_return_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.router import router as admin_router
@@ -139,6 +140,7 @@ app.include_router(realization_memo_non_regular_router, prefix="/api")
 app.include_router(realization_regular_router,     prefix="/api")
 app.include_router(realization_non_regular_router, prefix="/api")
 app.include_router(monitoring_router,            prefix="/api")
+app.include_router(realization_return_router,    prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")
