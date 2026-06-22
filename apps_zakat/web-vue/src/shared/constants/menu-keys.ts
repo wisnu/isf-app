@@ -65,6 +65,8 @@ export const MENU_KEYS = [
   'distribution.partner.list',
   'distribution.program.regular',
   'distribution.program.non-regular',
+  'distribution.program.memo-regular',
+  'distribution.program.memo-non-regular',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
