@@ -59,6 +59,7 @@ from app.modules.distribution.realization import (
     regular_router as realization_regular_router,
     non_regular_router as realization_non_regular_router,
 )
+from app.modules.distribution.monitoring import router as monitoring_visits_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.admin import router as admin_router
@@ -169,6 +170,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(realization_memo_non_regular_router)
     app.include_router(realization_regular_router)
     app.include_router(realization_non_regular_router)
+    app.include_router(monitoring_visits_router)
 
     # Administration — router carries full /api/administration/... prefix
     app.include_router(admin_router)
