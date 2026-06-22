@@ -12,7 +12,7 @@ from app.modules.core.tenants import router as tenants_router
 from app.modules.finance.master import coa_router, parameter_router
 from app.modules.finance.dashboard import router as dashboard_router
 from app.modules.finance.reports import router as report_router
-from app.modules.administration.admin import router as admin_router
+from app.modules.appadmin.admin import router as admin_router
 
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB

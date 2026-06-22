@@ -53,8 +53,8 @@ from app.modules.distribution.parameter.work_sector.router import router as dist
 from app.modules.distribution.parameter.cost_item.router import router as dist_param_cost_item_router
 
 # ── Administration ────────────────────────────────────────────────────────────
-from app.modules.administration.router import router as admin_router
-from app.modules.administration.identity.router import router as identity_router
+from app.modules.appadmin.router import router as admin_router
+from app.modules.appadmin.identity.router import router as identity_router
 
 # ── Shared ────────────────────────────────────────────────────────────────────
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping

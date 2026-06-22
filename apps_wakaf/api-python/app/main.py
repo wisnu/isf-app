@@ -4,8 +4,8 @@ from fastapi import FastAPI
 
 from app.modules.finance.master.coa.router import router as coa_router
 from app.modules.finance.master.parameter.router import router as parameter_router
-from app.modules.administration.router import router as admin_router
-from app.modules.administration.identity.router import router as identity_router
+from app.modules.appadmin.router import router as admin_router
+from app.modules.appadmin.identity.router import router as identity_router
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
 from app.shared.response import ok
 

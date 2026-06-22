@@ -39,7 +39,7 @@ const breadcrumbs = computed<string[]>(() => {
     'finance-upload':                  'Upload',
     'finance-reports':                 'Laporan',
     'finance-monitoring':              'Monitoring',
-    'administration':                  'Administrasi',
+    'appadmin':                        'Pengaturan Akses',
     'profile':                         'Profil',
   }
 

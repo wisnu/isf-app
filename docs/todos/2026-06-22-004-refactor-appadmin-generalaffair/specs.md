@@ -128,7 +128,18 @@ UPDATE isf_auth.role_menu SET menu_key = 'appadmin.role_menu' WHERE menu_key = '
 
 ---
 
-### 5. Tidak Berubah
+### 5. Mapping Schema Business DB
+
+| Modul | Business DB Schema | Keterangan |
+|---|---|---|
+| `appadmin` | `enterprise` | User/branch/role data ada di schema enterprise |
+| `generalaffair` | `personalia` | Data kepegawaian, surat, aset di schema personalia |
+
+Tidak ada perubahan struktur schema — hanya referensi nama modul yang selaras dengan schema yang sudah ada.
+
+---
+
+### 6. Tidak Berubah
 
 - Semua file Vue di `views/users/` dan `views/role-menu/` — hanya pindah folder, konten sama
 - Logic service, schema api-python — hanya import path yang berubah

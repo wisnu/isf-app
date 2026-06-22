@@ -70,7 +70,7 @@ from app.modules.distribution.parameter import (
 )
 
 # ── Administration ────────────────────────────────────────────────────────────
-from app.modules.administration.admin import router as admin_router
+from app.modules.appadmin.admin import router as admin_router
 
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
@@ -186,7 +186,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dist_param_work_sector_router)
     app.include_router(dist_param_cost_item_router)
 
-    # Administration — router carries full /api/administration/... prefix
+    # Appadmin — router carries full /api/appadmin/... prefix
     app.include_router(admin_router)
 
     return app

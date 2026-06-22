@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { financeRoutes }        from '@/modules/finance/routes'
-import { administrationRoutes } from '@/modules/administration/routes'
-import { fundraisingRoutes }    from '@/modules/fundraising/routes'
-import { distributionRoutes }   from '@/modules/distribution/routes'
-import { enterpriseRoutes }     from '@/modules/enterprise/routes'
-import { registerGuards }       from '@/app/router/guards'
+import { financeRoutes }       from '@/modules/finance/routes'
+import { appadminRoutes }      from '@/modules/appadmin/routes'
+import { generalaffairRoutes } from '@/modules/generalaffair/routes'
+import { fundraisingRoutes }   from '@/modules/fundraising/routes'
+import { distributionRoutes }  from '@/modules/distribution/routes'
+import { registerGuards }      from '@/app/router/guards'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -32,10 +32,10 @@ const router = createRouter({
 
     // ── Domain module routes ──────────────────────────────────────────────
     ...financeRoutes,
-    ...administrationRoutes,
+    ...appadminRoutes,
+    ...generalaffairRoutes,
     ...fundraisingRoutes,
     ...distributionRoutes,
-    ...enterpriseRoutes,
 
     { path: '/:catchAll(.*)', redirect: '/' },
   ],
