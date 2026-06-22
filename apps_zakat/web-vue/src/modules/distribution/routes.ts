@@ -31,4 +31,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/regular-program/RegularProgramView.vue'),
     meta: { title: 'Program Rutin', menu_key: 'distribution.program.regular', domain: 'distribution' },
   },
+  {
+    path: '/distribution/program/non-regular',
+    name: 'distribution-program-non-regular',
+    component: () => import('@/modules/distribution/views/non-regular-program/NonRegularProgramView.vue'),
+    meta: { title: 'Program Non Rutin', menu_key: 'distribution.program.non-regular', domain: 'distribution' },
+  },
 ]
