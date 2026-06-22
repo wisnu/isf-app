@@ -124,7 +124,7 @@ grep -n "WHERE\|AND" apps_{portal}/api-python/app/modules/{domain}/service.py | 
 psql -d isf_auth_zakat -c "SELECT role_code FROM isf_auth.role_menu WHERE menu_key = '{menu_key}'"
 
 # 4. Cek field di Vue form:
-grep "v-model" apps_{portal}/web-vue/src/pages/{domain}/{Nama}Page.vue
+grep "v-model" apps_{portal}/web-vue/src/modules/{domain}/views/{subpath}/{Nama}View.vue
 ```
 
 ---

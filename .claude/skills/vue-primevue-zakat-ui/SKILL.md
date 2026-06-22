@@ -406,13 +406,16 @@ Use `lg:` as the single pivot between mobile and desktop layout variants.
 
 | Type | Pattern | Example |
 |---|---|---|
-| Pages | `[Feature]Page.vue` | `CoaPage.vue` |
-| List pages | `[Feature]ListPage.vue` | `MuzakkiListPage.vue` |
-| Laporan pages | `Laporan[Name]Page.vue` | `LaporanKasPage.vue` |
+| Pages / Views | `[Feature]View.vue` | `CoaView.vue` |
+| List views | `[Feature]ListView.vue` | `MuzakkiListView.vue` |
+| Laporan views | `Laporan[Name]View.vue` | `LaporanKasView.vue` |
 | Reusable UI | `components/ui/[Name].vue` | `SearchSelect.vue` |
 | Widget (chart) | `components/widgets/[Name]Widget.vue` | `PenghimpunanWidget.vue` |
 | Composables | `lib/use[Name].ts` | `useFetch.ts` |
 | Stores | `stores/[feature].ts` | `stores/auth.ts` |
+
+> **Konvensi sufiks**: Semua file halaman menggunakan suffix **`View.vue`** (bukan `Page.vue`).
+> Contoh: `RegularProgramView.vue`, `ProposalListView.vue`, `MustahiqCorporateView.vue`.
 
 All files use **TypeScript** (`.ts`, `<script setup lang="ts">`).
 
@@ -436,7 +439,7 @@ All other UI (buttons, inputs, cards) → use `components/ui/` instead of PrimeV
 
 ## #13 Rule — Transaction List Page Pattern (Standar Wajib)
 
-> Referensi implementasi: `PenyaluranDanaPage.vue`. Semua list page transaksi keuangan wajib mengikuti pola ini.
+> Referensi implementasi: `PenyaluranDanaView.vue`. Semua list view transaksi keuangan wajib mengikuti pola ini.
 
 ### Struktur
 
@@ -663,7 +666,7 @@ brand-muted:     #7F8C8D  (secondary text, placeholders)
 
 ## Adding a New Laporan Page (Frontend Steps Only)
 
-1. Create `src/pages/keuangan/Laporan[Name]Page.vue`
+1. Create `src/modules/finance/views/reports/Laporan[Name]View.vue`
    - Filter form at top
    - "Tampilkan" button to trigger fetch (no auto-load on mount)
    - DataTable with top Paginator

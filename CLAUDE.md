@@ -286,7 +286,7 @@ When asked to add a laporan/report page, always follow this order:
 1. **DWH view** — `dwh.v_<name>` in `mziss_*` (backend, not frontend)
 2. **report-api module** — `service.py` + `router.py` + `export.py` (openpyxl)
 3. **BFF route** — `require_menu('keuangan.report.<key>')` + `_resolve_branch` + `stream_report_api` for xlsx
-4. **Frontend** — new `pages/keuangan/Laporan*Page.vue` + key in `shared/constants/menu-keys.ts` + sidebar child in "Laporan" group + route with `meta.menu_key`
+4. **Frontend** — new `modules/finance/views/reports/Laporan*View.vue` + key in `shared/constants/menu-keys.ts` + sidebar child in "Laporan" group + route with `meta.menu_key`
 5. **Seed** — menu + role_menu rows in `seed-menu-and-rolemenu.sql`, apply to `isf_auth_zakat`
 
 Frontend step (4) is the only step this agent handles.
@@ -401,7 +401,7 @@ Status batch: `'P'`=pending, `'Q'`=processing, `'A'`=authorized, `'F'`=failed
 
 ### UI — Halaman Otorisasi
 
-- Route: `/keuangan/monitoring/otorisasi` — `OtorisasiPage.vue`
+- Route: `/keuangan/monitoring/otorisasi` — `OtorisasiView.vue`
 - Komponen badge: `components/otorisasi/StatusBadge.vue`
 - **Auto-refresh 5 detik** aktif selama ada rows dengan status `PROCESSING`
 - Bulk approve: centang multiple rows → tombol "Otorisasi (N)"
