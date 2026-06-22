@@ -15,6 +15,7 @@ export const appadminMenu: DomainConfig = {
       icon: Users,
       items: [
         { label: 'List User',   to: '/appadmin/users',    menu_key: 'appadmin.users' },
+        { label: 'List Role',   to: '/appadmin/roles',    menu_key: 'appadmin.roles' },
         { label: 'Role & Menu', to: '/appadmin/role-menu', menu_key: 'appadmin.role_menu' },
       ],
     },
