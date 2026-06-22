@@ -67,4 +67,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/monitoring/MonitoringVisitView.vue'),
     meta: { title: 'Monitoring Program Penyaluran', menu_key: 'distribution.monitoring.list', domain: 'distribution' },
   },
+  {
+    path: '/distribution/realization-return',
+    name: 'distribution-realization-return',
+    component: () => import('@/modules/distribution/views/realization-return/RealizationReturnView.vue'),
+    meta: { title: 'Pengembalian Realisasi Program', menu_key: 'distribution.realization-return.list', domain: 'distribution' },
+  },
 ]

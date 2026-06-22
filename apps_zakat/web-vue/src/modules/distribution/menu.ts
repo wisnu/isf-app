@@ -32,6 +32,7 @@ export const distributionMenu: DomainConfig = {
         { label: 'Realisasi Program Rutin',     to: '/distribution/realization/regular',     menu_key: 'distribution.realization.regular.list' },
         { label: 'Realisasi Program Non Rutin', to: '/distribution/realization/non-regular', menu_key: 'distribution.realization.non-regular.list' },
         { label: 'Monitoring Program Penyaluran', to: '/distribution/monitoring', menu_key: 'distribution.monitoring.list' },
+        { label: 'Pengembalian Realisasi Program', to: '/distribution/realization-return', menu_key: 'distribution.realization-return.list' },
       ],
     },
   ],
