@@ -48,6 +48,7 @@ from app.modules.distribution.mustahiq import (
     mustahiq_lookup_router,
 )
 from app.modules.distribution.proposal import router as proposal_router
+from app.modules.distribution.partner import router as partner_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.admin import router as admin_router
@@ -151,6 +152,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(mustahiq_personal_router)
     app.include_router(mustahiq_lookup_router)
     app.include_router(proposal_router)
+    app.include_router(partner_router)
 
     # Administration — router carries full /api/administration/... prefix
     app.include_router(admin_router)

@@ -39,6 +39,7 @@ from app.modules.finance.monitoring.authorization.service import _register_defau
 
 # ── Distribution ─────────────────────────────────────────────────────────────
 from app.modules.distribution.mustahiq.router import router as mustahiq_router
+from app.modules.distribution.partner.router import router as partner_router
 from app.modules.distribution.proposal.router import router as proposal_router
 
 # ── Administration ────────────────────────────────────────────────────────────
@@ -124,6 +125,7 @@ app.include_router(authorization_router, prefix="/api")
 
 # ── Distribution ─────────────────────────────────────────────────────────────
 app.include_router(mustahiq_router,  prefix="/api")
+app.include_router(partner_router,   prefix="/api")
 app.include_router(proposal_router,  prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────

@@ -24,6 +24,7 @@ export const distributionMenu: DomainConfig = {
       icon: FileText,
       items: [
         { label: 'Proposal Bantuan Dana', to: '/distribution/proposal', menu_key: 'distribution.proposal.list' },
+        { label: 'Mitra', to: '/distribution/partner', menu_key: 'distribution.partner.list' },
       ],
     },
   ],

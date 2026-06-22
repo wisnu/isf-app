@@ -19,4 +19,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/proposal/ProposalListView.vue'),
     meta: { title: 'Proposal Bantuan Dana', menu_key: 'distribution.proposal.list', domain: 'distribution' },
   },
+  {
+    path: '/distribution/partner',
+    name: 'distribution-partner-list',
+    component: () => import('@/modules/distribution/views/partner/PartnerPage.vue'),
+    meta: { title: 'Mitra', menu_key: 'distribution.partner.list', domain: 'distribution' },
+  },
 ]
