@@ -38,7 +38,7 @@ LOGIN=$(curl -s -w "\n%{http_code}" -c "$COOKIE_JAR" -X POST "$BFF/api/auth/logi
   -d '{"username":"HADI","password":"test1234"}')
 LOGIN_BODY=$(echo "$LOGIN" | head -n -1)
 LOGIN_STATUS=$(echo "$LOGIN" | tail -1)
-check "Login HADI" "$LOGIN_STATUS" "$LOGIN_BODY" "access_token"
+check "Login HADI" "$LOGIN_STATUS" "$LOGIN_BODY" '"username"'
 
 # ── Direct api-python tests (no auth required at this layer) ───────────────
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from datetime import date as _Date
 
 from app.modules.distribution.regular_program.schema import (
     CreateRegularProgramBody,
@@ -87,12 +88,12 @@ async def list_regular_programs(
     params: list = []
 
     if date_from:
-        params.append(date_from)
-        conds.append(f'mp.datestart >= ${len(params)}')
+        params.append(_Date.fromisoformat(date_from))
+        conds.append(f'CAST(mp.datestart AS DATE) >= ${len(params)}')
 
     if date_to:
-        params.append(date_to)
-        conds.append(f'mp.datestart <= ${len(params)}')
+        params.append(_Date.fromisoformat(date_to))
+        conds.append(f'CAST(mp.datestart AS DATE) <= ${len(params)}')
 
     if product_id is not None:
         params.append(product_id)
@@ -261,8 +262,8 @@ async def create_regular_program(body: CreateRegularProgramBody) -> int:
             body.product_id,
             body.program_detail_name,
             body.distribution_amount,
-            body.date_start,
-            body.date_end,
+            _Date.fromisoformat(body.date_start),
+            _Date.fromisoformat(body.date_end),
             body.proposal_id,
             body.branch_code,
             body.ashnaf,
@@ -294,8 +295,8 @@ async def update_regular_program(program_id: int, body: UpdateRegularProgramBody
             body.product_id,
             body.program_detail_name,
             body.distribution_amount,
-            body.date_start,
-            body.date_end,
+            _Date.fromisoformat(body.date_start),
+            _Date.fromisoformat(body.date_end),
             body.proposal_id,
             body.ashnaf,
         )
