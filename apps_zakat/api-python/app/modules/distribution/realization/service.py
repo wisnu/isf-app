@@ -100,7 +100,7 @@ async def lookup_memo_detail(memo_id: int) -> list[MemoDetailItem]:
             mp.ashnaf,
             mp.productid AS fund_product_id,
             COALESCE(ca.accountno, '') AS account_no,
-            COALESCE(ca.accountname, '') AS account_name,
+            COALESCE(ca.bankname, ca.accountno, '') AS account_name,
             CAST(pr.proposaldate AS DATE) AS proposal_date,
             pr.proposalnominal AS proposal_nominal,
             pr.proposalreferenceby AS proposal_reference_by
@@ -251,7 +251,7 @@ async def get_realization(realization_id: int, realization_type: str) -> Realiza
             c.customername,
             mp.mustahiqproductname,
             COALESCE(d.accountno, '') AS account_no,
-            COALESCE(ca.accountname, '') AS account_name,
+            COALESCE(ca.bankname, ca.accountno, '') AS account_name,
             d.ashnaf,
             d.fundproductid
         FROM program.realizationdetail d
