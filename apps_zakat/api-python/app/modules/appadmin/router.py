@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.modules.appadmin.branch import router as branch_router
+from app.modules.appadmin.role import router as role_router
+from app.modules.appadmin.user import router as user_router
 from app.modules.appadmin.schema import RoleMenuUpdateRequest
 from app.modules.appadmin.service import (
     ValidationError,
@@ -12,6 +14,8 @@ from app.shared.response import err, ok
 
 router = APIRouter(prefix="/appadmin", tags=["appadmin"])
 router.include_router(branch_router.router)
+router.include_router(user_router.router)
+router.include_router(role_router.router)
 
 
 @router.get("/role-menu")
