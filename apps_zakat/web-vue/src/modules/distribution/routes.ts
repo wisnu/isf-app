@@ -49,4 +49,16 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/realization-memo/NonRegularMemoView.vue'),
     meta: { title: 'Memo Penyaluran Non Rutin', menu_key: 'distribution.program.memo-non-regular', domain: 'distribution' },
   },
+  {
+    path: '/distribution/realization/regular',
+    name: 'distribution-realization-regular',
+    component: () => import('@/modules/distribution/views/realization/RegularRealizationView.vue'),
+    meta: { title: 'Realisasi Program Rutin', menu_key: 'distribution.realization.regular.list', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/realization/non-regular',
+    name: 'distribution-realization-non-regular',
+    component: () => import('@/modules/distribution/views/realization/NonRegularRealizationView.vue'),
+    meta: { title: 'Realisasi Program Non Rutin', menu_key: 'distribution.realization.non-regular.list', domain: 'distribution' },
+  },
 ]

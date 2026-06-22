@@ -35,6 +35,7 @@ def _row_to_realization(r: dict) -> RealizationRow:
         realization_description=r['realizationdescription'],
         realization_location=r['realizationlocation'],
         memo_number=r['realmemonumber'],
+        memo_id=r.get('realmemoid'),  # NEW: track memo ID
         status_receivables=r['statusreceivables'],
         status_reclpj=r['statusreclpj'],
         branch_code=r['branchcode'],
@@ -186,6 +187,7 @@ async def list_realizations(
             r.realizationdescription,
             r.realizationlocation,
             rm.realmemonumber,
+            rm.realmemoid,
             r.statusreceivables,
             r.statusreclpj,
             r.branchcode,
@@ -221,6 +223,7 @@ async def get_realization(realization_id: int, realization_type: str) -> Realiza
             r.realizationdescription,
             r.realizationlocation,
             rm.realmemonumber,
+            rm.realmemoid,
             r.statusreceivables,
             r.statusreclpj,
             r.branchcode,

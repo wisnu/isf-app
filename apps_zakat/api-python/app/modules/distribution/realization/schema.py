@@ -23,6 +23,7 @@ class RealizationRow(BaseModel):
     realization_description: str | None
     realization_location: str | None
     memo_number: str | None
+    memo_id: int | None = None  # NEW: for edit form to track memo selection
     status_receivables: str | None  # 'T' or 'Y'
     status_reclpj: str | None  # NULL, 'Y'
     branch_code: str | None

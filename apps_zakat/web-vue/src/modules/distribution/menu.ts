@@ -29,6 +29,8 @@ export const distributionMenu: DomainConfig = {
         { label: 'Program Non Rutin',         to: '/distribution/program/non-regular',      menu_key: 'distribution.program.non-regular' },
         { label: 'Memo Penyaluran Rutin',     to: '/distribution/program/memo-regular',     menu_key: 'distribution.program.memo-regular' },
         { label: 'Memo Penyaluran Non Rutin', to: '/distribution/program/memo-non-regular', menu_key: 'distribution.program.memo-non-regular' },
+        { label: 'Realisasi Program Rutin',     to: '/distribution/realization/regular',     menu_key: 'distribution.realization.regular.list' },
+        { label: 'Realisasi Program Non Rutin', to: '/distribution/realization/non-regular', menu_key: 'distribution.realization.non-regular.list' },
       ],
     },
   ],
