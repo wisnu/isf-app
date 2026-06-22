@@ -62,6 +62,12 @@ from app.modules.distribution.realization import (
 from app.modules.distribution.monitoring import router as monitoring_visits_router
 from app.modules.distribution.realization_return import router as realization_return_router
 from app.modules.distribution.reports import router as distribution_report_router
+from app.modules.distribution.parameter import (
+    router_program_type as dist_param_program_type_router,
+    router_program as dist_param_program_router,
+    router_work_sector as dist_param_work_sector_router,
+    router_cost_item as dist_param_cost_item_router,
+)
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.administration.admin import router as admin_router
@@ -175,6 +181,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(monitoring_visits_router)
     app.include_router(realization_return_router)
     app.include_router(distribution_report_router)
+    app.include_router(dist_param_program_type_router)
+    app.include_router(dist_param_program_router)
+    app.include_router(dist_param_work_sector_router)
+    app.include_router(dist_param_cost_item_router)
 
     # Administration — router carries full /api/administration/... prefix
     app.include_router(admin_router)
