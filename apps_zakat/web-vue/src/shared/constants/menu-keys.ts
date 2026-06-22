@@ -67,6 +67,8 @@ export const MENU_KEYS = [
   'distribution.program.non-regular',
   'distribution.program.memo-regular',
   'distribution.program.memo-non-regular',
+  'distribution.realization.regular.list',
+  'distribution.realization.non-regular.list',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
