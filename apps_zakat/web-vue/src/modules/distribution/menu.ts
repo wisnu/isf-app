@@ -25,6 +25,7 @@ export const distributionMenu: DomainConfig = {
       items: [
         { label: 'Proposal Bantuan Dana', to: '/distribution/proposal', menu_key: 'distribution.proposal.list' },
         { label: 'Mitra', to: '/distribution/partner', menu_key: 'distribution.partner.list' },
+        { label: 'Program Rutin', to: '/distribution/program/regular', menu_key: 'distribution.program.regular' },
       ],
     },
   ],

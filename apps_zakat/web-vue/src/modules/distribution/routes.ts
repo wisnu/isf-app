@@ -25,4 +25,10 @@ export const distributionRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/distribution/views/partner/PartnerPage.vue'),
     meta: { title: 'Mitra', menu_key: 'distribution.partner.list', domain: 'distribution' },
   },
+  {
+    path: '/distribution/program/regular',
+    name: 'distribution-program-regular',
+    component: () => import('@/modules/distribution/views/regular-program/RegularProgramPage.vue'),
+    meta: { title: 'Program Rutin', menu_key: 'distribution.program.regular', domain: 'distribution' },
+  },
 ]
