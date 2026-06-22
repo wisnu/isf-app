@@ -72,6 +72,9 @@ from app.modules.distribution.parameter import (
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.appadmin.admin import router as admin_router
 
+# ── General Affair ─────────────────────────────────────────────────────────────
+from app.modules.generalaffair.document import router as ga_document_router
+
 from app.services.audit import AuditWriter
 from app.services.auth import register_exception_handlers
 from app.services.auth_db import AuthDB
@@ -188,6 +191,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Appadmin — router carries full /api/appadmin/... prefix
     app.include_router(admin_router)
+
+    # General Affair — router carries full /api/generalaffair/... prefix
+    app.include_router(ga_document_router)
 
     return app
 

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.modules.finance.dashboard.router import router as dashboard_router
 from app.modules.finance.reports.router import router as report_router
 from app.modules.distribution.router import router as distribution_router
+from app.modules.generalaffair.document.router import router as ga_document_router
 from app.shared.db import (
     close_dwh_pool,
     close_pool,
@@ -43,3 +44,4 @@ async def ready() -> dict:
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(report_router, prefix="/api")
 app.include_router(distribution_router, prefix="/api")
+app.include_router(ga_document_router, prefix="/api")

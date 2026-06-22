@@ -56,6 +56,9 @@ from app.modules.distribution.parameter.cost_item.router import router as dist_p
 from app.modules.appadmin.router import router as admin_router
 from app.modules.appadmin.identity.router import router as identity_router
 
+# ── General Affair ────────────────────────────────────────────────────────────
+from app.modules.generalaffair.document.router import router as ga_document_router
+
 # ── Shared ────────────────────────────────────────────────────────────────────
 from app.shared.db import close_pool, init_isf_auth_pool, init_pool, ping
 from app.shared.response import err, ok
@@ -153,3 +156,6 @@ app.include_router(dist_param_cost_item_router,    prefix="/api")
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")
 app.include_router(identity_router, prefix="/api")
+
+# ── General Affair ────────────────────────────────────────────────────────────
+app.include_router(ga_document_router, prefix="/api")
