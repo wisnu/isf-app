@@ -202,3 +202,61 @@ async def ca_history_export(
         media_type=_XLSX_MIME,
         headers={'Content-Disposition': f'attachment; filename="{fname}"'},
     )
+
+
+# ── Receivable Inquiry (Piutang Karyawan / Non Karyawan) ─────────────────────
+
+ar_router = APIRouter(prefix='/api/finance/inquiry/receivable', tags=['receivable-inquiry'])
+
+_AR_MENU = 'finance.inquiry.receivable'
+
+
+@ar_router.get('/accounts')
+async def ar_accounts(
+    request: Request,
+    _: str = Depends(require_menu(_AR_MENU)),
+):
+    branch = _branch_from_session(request)
+    downstream = await get_api_python(
+        '/api/finance/inquiry/receivable/accounts',
+        params={'branch': branch},
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@ar_router.get('/history')
+async def ar_history(
+    request: Request,
+    _: str = Depends(require_menu(_AR_MENU)),
+    account_no: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+):
+    downstream = await get_api_python(
+        '/api/finance/inquiry/receivable/history',
+        params={'account_no': account_no, 'begin': begin, 'end': end},
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@ar_router.get('/history/export.xlsx')
+async def ar_history_export(
+    request: Request,
+    _: str = Depends(require_menu(_AR_MENU)),
+    account_no: str = Query(...),
+    begin: str = Query(...),
+    end: str = Query(...),
+):
+    downstream = await stream_api_python(
+        '/api/finance/inquiry/receivable/history/export.xlsx',
+        params={'account_no': account_no, 'begin': begin, 'end': end},
+    )
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    safe = account_no.replace('/', '-')
+    fname = f'riwayat-piutang-{safe}-{begin}-{end}.xlsx'
+    return Response(
+        content=downstream.content,
+        media_type=_XLSX_MIME,
+        headers={'Content-Disposition': f'attachment; filename="{fname}"'},
+    )
