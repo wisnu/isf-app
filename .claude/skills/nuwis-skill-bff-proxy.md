@@ -53,8 +53,8 @@ apps_{portal}/bff-api/app/
 │   │   ├── monitoring.py    ← authorization_router
 │   │   ├── reports.py       ← report_router
 │   │   └── dashboard.py     ← dashboard_router
-│   └── administration/
-│       └── admin.py         ← admin_router
+│   └── appadmin/
+│       └── admin.py         ← admin_router (prefix /api/appadmin)
 ├── services/
 │   ├── auth.py              ← require_menu(), current_user_id_or_401()
 │   ├── proxy.py             ← get_api_python(), stream_report_api()

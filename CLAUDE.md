@@ -206,13 +206,13 @@ src/
 │   │       ├── upload/       ← collection/, zis-routine/
 │   │       ├── reports/      ← all Report*View.vue
 │   │       └── monitoring/   ← AuthorizationView, SubmissionHistoryView
-│   ├── administration/       ← Admin domain
+│   ├── appadmin/             ← Pengaturan Akses (user, role, branch)
 │   │   ├── routes.ts
 │   │   ├── menu.ts
 │   │   └── views/users/, views/role-menu/
 │   ├── fundraising/          ← Fase 3 stub
-│   ├── distribution/         ← Fase 3 stub
-│   └── enterprise/           ← Fase 4 stub
+│   ├── distribution/         ← Penyaluran (active)
+│   └── generalaffair/        ← Administrasi & Umum stub (kepegawaian, aset, surat)
 ```
 
 ---

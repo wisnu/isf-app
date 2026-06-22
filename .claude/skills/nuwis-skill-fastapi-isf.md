@@ -56,7 +56,7 @@ apps_{portal}/api-python/app/modules/
 │   │   └── transaction_history/
 │   └── monitoring/
 │       └── authorization/
-├── administration/
+├── appadmin/
 │   ├── router.py
 │   ├── service.py
 │   ├── schema.py
