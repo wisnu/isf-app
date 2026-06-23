@@ -147,7 +147,6 @@ async def google_callback(
     request.session["branches"] = [b["branch_code"] for b in profile["branches"]]
     primary = next((b["branch_code"] for b in profile["branches"] if b.get("is_primary")), None)
     request.session["primary_branch"] = primary
-    request.session["menus"] = list(profile["menus"])
 
     if memberships:
         default = next((t for t in memberships if t.get("is_default")), memberships[0])
