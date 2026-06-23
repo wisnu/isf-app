@@ -27,10 +27,29 @@ Vue (browser) → BFF-API (:7000/:7001) → api-python (:8000/:8001)
 ```
 
 BFF bertanggung jawab:
-1. **Auth**: validasi JWT token, cek menu permission
-2. **Session injection**: masukkan `inputer_id`, `branch_id`, `tenant_id` ke request
-3. **Branch resolution**: cek tipe akses cabang, restrict jika Tunggal
+1. **Auth**: validasi session cookie, cek menu permission dengan `require_menu()`
+2. **Session injection**: masukkan `updated_by`, `branch_id`, `tenant_id` ke request body
+3. **Branch resolution**: cek tipe akses cabang, restrict jika Tunggal (`tipe_akses_cabang='T'`)
 4. **Proxy**: forward request ke api-python atau report-api
+
+### `require_menu(menu_key)` — Cara Kerja (2026-06-23+)
+
+```python
+from app.services.auth import require_menu
+
+# Dependency factory — pakai di semua endpoint yang butuh auth:
+user_id: str = Depends(require_menu("finance.fund_collection"))
+```
+
+Internally, `require_menu` fetches `menus` from `role_menu_permission` dan **cek action `'view'`**:
+```python
+# Gate berhasil hanya jika role punya action='view' untuk menu ini:
+if not any(m["menu_key"] == menu_key and "view" in m.get("actions", []) for m in menus):
+    raise 403 MENU_FORBIDDEN
+```
+
+> **Penting:** Sejak 2026-06-23, `menus` adalah `list[dict]` dengan `{menu_key, actions[]}` —
+> bukan `list[str]` lagi. Jangan hardcode `if menu_key in menus` — gunakan `require_menu()` decorator.
 
 Vue **tidak pernah** memanggil api-python atau report-api langsung.
 

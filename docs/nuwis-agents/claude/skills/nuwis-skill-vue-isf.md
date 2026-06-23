@@ -210,6 +210,52 @@ import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, ChevronRightIcon } from 'l
 
 ---
 
+## Rule 5b: Permission Guard dengan usePermission
+
+Sejak 2026-06-23, akses per-menu menggunakan **5 aksi** (view/tambah/edit/hapus/detail).
+Gunakan `usePermission()` composable untuk menyembunyikan tombol sesuai aksi yang diizinkan role.
+
+```typescript
+import { usePermission } from '@/shared/composables/usePermission'
+import { MENU_KEYS } from '@/shared/constants/menu-keys'
+
+// Di <script setup>:
+const { canView, canAdd, canEdit, canDelete, canDetail } = usePermission(MENU_KEYS.FINANCE_FUND_COLLECTION)
+```
+
+```vue
+<!-- Di template — v-if sesuai aksi: -->
+<Button v-if="canAdd" @click="openAdd">Tambah</Button>
+<Button v-if="canEdit" @click="edit(row)">Edit</Button>
+<Button v-if="canDelete" @click="del(row)">Hapus</Button>
+<router-link v-if="canDetail" :to="detailRoute(row)">Detail</router-link>
+```
+
+**Backward compat:** `auth.hasMenu(key)` dan `auth.menus.includes(key)` masih bekerja
+dan cek `view` access. Gunakan `usePermission` untuk granularity aksi.
+
+**Jangan gunakan** `window.confirm()` — Rule 9 melarang ini. Untuk navigation guard
+(unsaved changes), gunakan pattern promise-based + `Modal.vue`:
+
+```typescript
+const showConfirmModal = ref(false)
+let confirmResolve: ((v: boolean) => void) | null = null
+
+function confirmUnsaved(msg: string): Promise<boolean> {
+  confirmMessage.value = msg
+  showConfirmModal.value = true
+  return new Promise(resolve => { confirmResolve = resolve })
+}
+function onConfirmOk()     { showConfirmModal.value = false; confirmResolve?.(true) }
+function onConfirmCancel() { showConfirmModal.value = false; confirmResolve?.(false) }
+
+// Dalam watch atau onBeforeRouteLeave (async):
+const ok = await confirmUnsaved('Ada perubahan belum disimpan.')
+if (!ok) return
+```
+
+---
+
 ## Rule 6: Komponen UI yang Sudah Ada
 
 Cek `shared/components/` sebelum buat komponen baru:

@@ -28,13 +28,16 @@
 ## Tabel yang Relevan
 
 ```sql
-isf_auth.menu          -- menu registry: semua menu items
-isf_auth.role_menu     -- permission: role → menu mapping
-isf_auth.users         -- user registry
-isf_auth.user_credentials -- password hash
+isf_auth.menu                  -- menu registry: semua menu items
+isf_auth.role_menu_permission  -- permission: role → menu → action (BARU per 2026-06-23)
+isf_auth.users                 -- user registry
+isf_auth.user_credentials      -- password hash
 isf_auth.tenants
 isf_auth.tenant_memberships
 ```
+
+> ⚠️ `isf_auth.role_menu` (model lama boolean) sudah **DIHAPUS** per 2026-06-23.
+> Gunakan `role_menu_permission` dengan kolom `action` untuk semua seeding permission baru.
 
 ---
 
@@ -68,17 +71,27 @@ ON CONFLICT (menu_key) DO UPDATE SET
   path       = EXCLUDED.path;
 
 
--- ── 2. Role assignments ──────────────────────────────────────────────────────
--- Kolom di isf_auth.role_menu: id_peran (BUKAN role_code), menu_key
--- PK: (id_peran, menu_key)
+-- ── 2. Role permissions ──────────────────────────────────────────────────────
+-- Tabel: isf_auth.role_menu_permission
+-- Kolom: role_id, menu_key, action
+-- Valid actions: 'view', 'tambah', 'edit', 'hapus', 'detail'
+-- PK: UNIQUE (role_id, menu_key, action)
+--
+-- Minimal: selalu tambah 'view'. Tambah aksi lain sesuai kebutuhan role.
 
-INSERT INTO isf_auth.role_menu (id_peran, menu_key)
+INSERT INTO isf_auth.role_menu_permission (role_id, menu_key, action)
 VALUES
-  ('{ROLE1}', '{menu_key}'),
-  ('{ROLE2}', '{menu_key}')
-  -- Tambah semua role yang harus punya akses
+  -- Role dengan akses penuh:
+  ('{ROLE1}', '{menu_key}', 'view'),
+  ('{ROLE1}', '{menu_key}', 'tambah'),
+  ('{ROLE1}', '{menu_key}', 'edit'),
+  ('{ROLE1}', '{menu_key}', 'hapus'),
+  ('{ROLE1}', '{menu_key}', 'detail'),
 
-ON CONFLICT (id_peran, menu_key) DO NOTHING;
+  -- Role dengan view-only:
+  ('{ROLE2}', '{menu_key}', 'view')
+
+ON CONFLICT (role_id, menu_key, action) DO NOTHING;
 ```
 
 ---
