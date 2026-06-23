@@ -91,6 +91,11 @@ export const MENU_KEYS = [
   'distribution.parameter.program',
   'distribution.parameter.work-sector',
   'distribution.parameter.cost-item',
+  'generalaffair.parameter.document-type',
+  'generalaffair.document.incoming',
+  'generalaffair.document.outgoing',
+  'generalaffair.report.incoming-document',
+  'generalaffair.report.outgoing-document',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
