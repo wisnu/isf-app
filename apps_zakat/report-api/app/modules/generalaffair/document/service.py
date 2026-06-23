@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from app.shared.db import fetch_all, ping
 
@@ -22,9 +22,9 @@ async def incoming_document_rows(
         return None
 
     df = date.fromisoformat(date_from)
-    dt = date.fromisoformat(date_to)
+    dt = date.fromisoformat(date_to) + timedelta(days=1)
     args: list = [df, dt]
-    clause = "dm.tanggalterima >= $1 AND dm.tanggalterima < ($2 + INTERVAL '1 day')"
+    clause = "dm.tanggalterima >= $1 AND dm.tanggalterima < $2"
 
     if id_jenis_dokumen:
         args.append(id_jenis_dokumen)
@@ -69,9 +69,9 @@ async def outgoing_document_rows(
         return None
 
     df = date.fromisoformat(date_from)
-    dt = date.fromisoformat(date_to)
+    dt = date.fromisoformat(date_to) + timedelta(days=1)
     args: list = [df, dt]
-    clause = "d.tipedokumen = 'K' AND d.tanggaldokumen >= $1 AND d.tanggaldokumen < ($2 + INTERVAL '1 day')"
+    clause = "d.tipedokumen = 'K' AND d.tanggaldokumen >= $1 AND d.tanggaldokumen < $2"
 
     if id_jenis_dokumen:
         args.append(id_jenis_dokumen)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import date as _date, datetime
 
 from app.modules.generalaffair.document.schema import (
     CreateDocumentTypeBody,
@@ -35,6 +35,12 @@ def _parse_date(val) -> str | None:
         return s[:10] if len(s) >= 10 else s
 
 
+def _to_date(s: str | None) -> _date | None:
+    if not s:
+        return None
+    return _date.fromisoformat(str(s)[:10])
+
+
 def _roman_month(month: int) -> str:
     months = {
         1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI',
@@ -63,44 +69,29 @@ async def _next_seq(conn, idname: str, idcode: str) -> int:
     return new_id
 
 
-async def _next_dokumen_id(conn) -> int:
+async def _next_id(conn, id_code: str, table: str, pk_col: str) -> int:
     row = await conn.fetchrow(
-        'SELECT last_id FROM personalia.id_gen WHERE id_code=$1 FOR UPDATE',
-        'DOKUMEN'
+        'SELECT last_id FROM personalia.id_gen WHERE id_code=$1 FOR UPDATE', id_code
     )
     if row:
         new_id = row['last_id'] + 1
-        await conn.execute(
-            'UPDATE personalia.id_gen SET last_id=$1 WHERE id_code=$2',
-            new_id, 'DOKUMEN'
-        )
+        await conn.execute('UPDATE personalia.id_gen SET last_id=$1 WHERE id_code=$2', new_id, id_code)
     else:
-        new_id = 1
+        current_max = await conn.fetchval(f'SELECT COALESCE(MAX({pk_col}), 0) FROM {table}')
+        new_id = current_max + 1
         await conn.execute(
             'INSERT INTO personalia.id_gen(id_code, last_id, locked) VALUES($1,$2,$3)',
-            'DOKUMEN', 1, 'F'
+            id_code, new_id, 'F'
         )
     return new_id
+
+
+async def _next_dokumen_id(conn) -> int:
+    return await _next_id(conn, 'DOKUMEN', 'personalia.dokumen', 'dokumenid')
 
 
 async def _next_disposisi_id(conn) -> int:
-    row = await conn.fetchrow(
-        'SELECT last_id FROM personalia.id_gen WHERE id_code=$1 FOR UPDATE',
-        'DISPOSISI'
-    )
-    if row:
-        new_id = row['last_id'] + 1
-        await conn.execute(
-            'UPDATE personalia.id_gen SET last_id=$1 WHERE id_code=$2',
-            new_id, 'DISPOSISI'
-        )
-    else:
-        new_id = 1
-        await conn.execute(
-            'INSERT INTO personalia.id_gen(id_code, last_id, locked) VALUES($1,$2,$3)',
-            'DISPOSISI', 1, 'F'
-        )
-    return new_id
+    return await _next_id(conn, 'DISPOSISI', 'personalia.disposisi', 'disposisiid')
 
 
 def _generate_incoming_nomor(seq: int, jenis_kode: str, branch_code: str, tanggal: str) -> str:
@@ -275,12 +266,12 @@ async def list_incoming(
         params.append(id_jenis_dokumen)
 
     if date_from:
-        conds.append('CAST(d.tanggaldokumen AS DATE) >= CAST($' + str(len(params) + 1) + ' AS DATE)')
-        params.append(date_from)
+        conds.append('CAST(d.tanggaldokumen AS DATE) >= $' + str(len(params) + 1))
+        params.append(_to_date(date_from))
 
     if date_to:
-        conds.append('CAST(d.tanggaldokumen AS DATE) <= CAST($' + str(len(params) + 1) + ' AS DATE)')
-        params.append(date_to)
+        conds.append('CAST(d.tanggaldokumen AS DATE) <= $' + str(len(params) + 1))
+        params.append(_to_date(date_to))
 
     if branch:
         conds.append('d.branchcode = $' + str(len(params) + 1))
@@ -425,18 +416,18 @@ async def create_incoming(data: CreateIncomingBody, user_input: str, branch_code
                 '''
                 INSERT INTO personalia.dokumen
                     (dokumenid, idjenisdokumen, nomor, perihal, tanggaldokumen, tipedokumen, branchcode, keterangan, userinput, tanggalinput)
-                VALUES ($1, $2, $3, $4, CAST($5 AS DATE), NULL, $6, $7, $8, NOW())
+                VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, NOW())
                 ''',
-                dokumen_id, data.id_jenis_dokumen, nomor, data.perihal, data.tanggal_dokumen, branch_code, data.keterangan, user_input
+                dokumen_id, data.id_jenis_dokumen, nomor, data.perihal, _to_date(data.tanggal_dokumen), branch_code, data.keterangan, user_input
             )
 
             await conn.execute(
                 '''
                 INSERT INTO personalia.dokumenmasuk
                     (dokumenid, pengirim, tanggalterima, ditujukanke, nomoreksternaldokumen)
-                VALUES ($1, $2, CAST($3 AS DATE), $4, $5)
+                VALUES ($1, $2, $3, $4, $5)
                 ''',
-                dokumen_id, data.pengirim, data.tanggal_terima, data.ditujukan_ke, data.nomor_eksternal_dokumen
+                dokumen_id, data.pengirim, _to_date(data.tanggal_terima), data.ditujukan_ke, data.nomor_eksternal_dokumen
             )
 
             for disp in data.disposisi:
@@ -445,9 +436,9 @@ async def create_incoming(data: CreateIncomingBody, user_input: str, branch_code
                     '''
                     INSERT INTO personalia.disposisi
                         (disposisiid, dokumenid, tanggal, disposisioleh, keterangandisposisi)
-                    VALUES ($1, $2, CAST($3 AS DATE), $4, $5)
+                    VALUES ($1, $2, $3, $4, $5)
                     ''',
-                    disp_id, dokumen_id, disp.tanggal, disp.disposisi_oleh, disp.keterangan_disposisi
+                    disp_id, dokumen_id, _to_date(disp.tanggal), disp.disposisi_oleh, disp.keterangan_disposisi
                 )
 
     return {'nomor': nomor, 'dokumen_id': dokumen_id}
@@ -460,19 +451,19 @@ async def update_incoming(dokumen_id: int, data: UpdateIncomingBody, user_ubah: 
             await conn.execute(
                 '''
                 UPDATE personalia.dokumen
-                SET idjenisdokumen=$1, perihal=$2, tanggaldokumen=CAST($3 AS DATE), keterangan=$4, userubah=$5, tanggalubah=NOW()
+                SET idjenisdokumen=$1, perihal=$2, tanggaldokumen=$3, keterangan=$4, userubah=$5, tanggalubah=NOW()
                 WHERE dokumenid=$6
                 ''',
-                data.id_jenis_dokumen, data.perihal, data.tanggal_dokumen, data.keterangan, user_ubah, dokumen_id
+                data.id_jenis_dokumen, data.perihal, _to_date(data.tanggal_dokumen), data.keterangan, user_ubah, dokumen_id
             )
 
             await conn.execute(
                 '''
                 UPDATE personalia.dokumenmasuk
-                SET pengirim=$1, tanggalterima=CAST($2 AS DATE), ditujukanke=$3, nomoreksternaldokumen=$4
+                SET pengirim=$1, tanggalterima=$2, ditujukanke=$3, nomoreksternaldokumen=$4
                 WHERE dokumenid=$5
                 ''',
-                data.pengirim, data.tanggal_terima, data.ditujukan_ke, data.nomor_eksternal_dokumen, dokumen_id
+                data.pengirim, _to_date(data.tanggal_terima), data.ditujukan_ke, data.nomor_eksternal_dokumen, dokumen_id
             )
 
             await conn.execute('DELETE FROM personalia.disposisi WHERE dokumenid=$1', dokumen_id)
@@ -483,9 +474,9 @@ async def update_incoming(dokumen_id: int, data: UpdateIncomingBody, user_ubah: 
                     '''
                     INSERT INTO personalia.disposisi
                         (disposisiid, dokumenid, tanggal, disposisioleh, keterangandisposisi)
-                    VALUES ($1, $2, CAST($3 AS DATE), $4, $5)
+                    VALUES ($1, $2, $3, $4, $5)
                     ''',
-                    disp_id, dokumen_id, disp.tanggal, disp.disposisi_oleh, disp.keterangan_disposisi
+                    disp_id, dokumen_id, _to_date(disp.tanggal), disp.disposisi_oleh, disp.keterangan_disposisi
                 )
 
     return {'dokumen_id': dokumen_id}
@@ -520,12 +511,12 @@ async def list_outgoing(
         params.append(id_jenis_dokumen)
 
     if date_from:
-        conds.append('CAST(d.tanggaldokumen AS DATE) >= CAST($' + str(len(params) + 1) + ' AS DATE)')
-        params.append(date_from)
+        conds.append('CAST(d.tanggaldokumen AS DATE) >= $' + str(len(params) + 1))
+        params.append(_to_date(date_from))
 
     if date_to:
-        conds.append('CAST(d.tanggaldokumen AS DATE) <= CAST($' + str(len(params) + 1) + ' AS DATE)')
-        params.append(date_to)
+        conds.append('CAST(d.tanggaldokumen AS DATE) <= $' + str(len(params) + 1))
+        params.append(_to_date(date_to))
 
     if branch:
         conds.append('d.branchcode = $' + str(len(params) + 1))
@@ -664,18 +655,18 @@ async def create_outgoing(data: CreateOutgoingBody, user_input: str, branch_code
                 '''
                 INSERT INTO personalia.dokumen
                     (dokumenid, idjenisdokumen, nomor, perihal, tanggaldokumen, tipedokumen, branchcode, keterangan, userinput, tanggalinput)
-                VALUES ($1, $2, $3, $4, CAST($5 AS DATE), 'K', $6, $7, $8, NOW())
+                VALUES ($1, $2, $3, $4, $5, 'K', $6, $7, $8, NOW())
                 ''',
-                dokumen_id, data.id_jenis_dokumen, nomor, data.perihal, data.tanggal_dokumen, branch_code, data.keterangan, user_input
+                dokumen_id, data.id_jenis_dokumen, nomor, data.perihal, _to_date(data.tanggal_dokumen), branch_code, data.keterangan, user_input
             )
 
             await conn.execute(
                 '''
                 INSERT INTO personalia.dokumenkeluar
                     (dokumenid, pic, konseptor, tujuan, tanggalkirim, workunitid)
-                VALUES ($1, $2, $3, $4, CAST($5 AS DATE), $6)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 ''',
-                dokumen_id, data.pic, data.konseptor, data.tujuan, data.tanggal_kirim, data.work_unit_id
+                dokumen_id, data.pic, data.konseptor, data.tujuan, _to_date(data.tanggal_kirim), data.work_unit_id
             )
 
     return {'nomor': nomor, 'dokumen_id': dokumen_id}
@@ -688,19 +679,19 @@ async def update_outgoing(dokumen_id: int, data: UpdateOutgoingBody, user_ubah: 
             await conn.execute(
                 '''
                 UPDATE personalia.dokumen
-                SET idjenisdokumen=$1, perihal=$2, tanggaldokumen=CAST($3 AS DATE), keterangan=$4, userubah=$5, tanggalubah=NOW()
+                SET idjenisdokumen=$1, perihal=$2, tanggaldokumen=$3, keterangan=$4, userubah=$5, tanggalubah=NOW()
                 WHERE dokumenid=$6
                 ''',
-                data.id_jenis_dokumen, data.perihal, data.tanggal_dokumen, data.keterangan, user_ubah, dokumen_id
+                data.id_jenis_dokumen, data.perihal, _to_date(data.tanggal_dokumen), data.keterangan, user_ubah, dokumen_id
             )
 
             await conn.execute(
                 '''
                 UPDATE personalia.dokumenkeluar
-                SET pic=$1, konseptor=$2, tujuan=$3, tanggalkirim=CAST($4 AS DATE), statuskirim=$5, workunitid=$6
+                SET pic=$1, konseptor=$2, tujuan=$3, tanggalkirim=$4, statuskirim=$5, workunitid=$6
                 WHERE dokumenid=$7
                 ''',
-                data.pic, data.konseptor, data.tujuan, data.tanggal_kirim, data.status_kirim, data.work_unit_id, dokumen_id
+                data.pic, data.konseptor, data.tujuan, _to_date(data.tanggal_kirim), data.status_kirim, data.work_unit_id, dokumen_id
             )
 
     return {'dokumen_id': dokumen_id}
