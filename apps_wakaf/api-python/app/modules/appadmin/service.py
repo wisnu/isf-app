@@ -275,32 +275,43 @@ async def replace_role_menu_permission(
 
 
 _DOMAIN_ORDER = ["finance", "distribution", "fundraising", "generalaffair", "appadmin", "dashboard"]
-_DOMAIN_SORT = {d: i for i, d in enumerate(_DOMAIN_ORDER)}
+_DOMAIN_SORT  = {d: i for i, d in enumerate(_DOMAIN_ORDER)}
+_DOMAIN_LABEL = {
+    "finance":       "KEUANGAN",
+    "distribution":  "PROGRAM / PENYALURAN",
+    "fundraising":   "PENGHIMPUNAN",
+    "generalaffair": "ADMINISTRASI & UMUM",
+    "appadmin":      "PENGATURAN AKSES",
+    "dashboard":     "DASHBOARD",
+}
+_ACTION_LABELS = [
+    ("view",   "List (Lihat Daftar)"),
+    ("tambah", "Create (Tambah Data)"),
+    ("detail", "Read (Detail Data)"),
+    ("edit",   "Edit (Ubah Data)"),
+    ("hapus",  "Delete (Hapus Data)"),
+]
 
 
 async def export_role_menu_permission_excel(
     role_id: str | None = None,
     domain: str | None = None,
 ) -> bytes:
-    """Generate Excel matrix: rows=role x menu, columns=V/T/E/H/D.
+    """Generate Excel — rows = menu × action, columns = roles (matches UI layout).
 
     role_id: filter to one role (None = all roles)
     domain:  filter to one domain prefix e.g. 'finance' (None = all domains)
     """
     try:
         import openpyxl
-        from openpyxl.styles import Alignment, Font, PatternFill
+        from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     except ImportError:
         raise RuntimeError("openpyxl not installed")
 
-    # Roles
+    # ── Roles ──
     if role_id:
         role_rows = await fetch_all(
-            """
-            SELECT p.id_peran AS role_id, p.nama_peran AS role_name
-            FROM enterprise.peran p
-            WHERE p.status_peran = 'A' AND p.id_peran = $1
-            """,
+            "SELECT p.id_peran AS role_id, p.nama_peran AS role_name FROM enterprise.peran p WHERE p.status_peran = 'A' AND p.id_peran = $1",
             role_id,
         )
     else:
@@ -314,7 +325,7 @@ async def export_role_menu_permission_excel(
             """
         )
 
-    # Menus — filter by domain prefix if specified
+    # ── Menus ──
     if domain:
         menu_rows = await fetch_all_isf_auth(
             "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' AND menu_key LIKE $1 ORDER BY sort_order, menu_key",
@@ -325,65 +336,101 @@ async def export_role_menu_permission_excel(
             "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' ORDER BY sort_order, menu_key"
         )
 
-    # Sort menus by domain order then sort_order
-    def _menu_sort_key(m: dict) -> tuple:
-        prefix = m["menu_key"].split(".")[0]
-        return (_DOMAIN_SORT.get(prefix, 99), m["sort_order"], m["menu_key"])
+    def _domain_prefix(key: str) -> str:
+        return key.split(".")[0]
 
-    menu_rows = sorted(menu_rows, key=_menu_sort_key)
+    menu_rows = sorted(
+        menu_rows,
+        key=lambda m: (_DOMAIN_SORT.get(_domain_prefix(m["menu_key"]), 99), m["sort_order"], m["menu_key"]),
+    )
 
-    # Permissions
+    # Group menus by domain
+    from collections import OrderedDict
+    domain_groups: dict[str, list] = OrderedDict()
+    for m in menu_rows:
+        d = _domain_prefix(m["menu_key"])
+        if d not in domain_groups:
+            domain_groups[d] = []
+        domain_groups[d].append(m)
+
+    # ── Permissions ──
     role_ids = [r["role_id"] for r in role_rows]
-    if not role_ids:
-        perm_set: set = set()
-    else:
+    perm_set: set = set()
+    if role_ids:
         perm_rows = await fetch_all_isf_auth(
-            "SELECT role_id, menu_key, action FROM isf_auth.role_menu_permission WHERE role_id = ANY(CAST($1 AS text[])) ORDER BY role_id, menu_key, action",
+            "SELECT role_id, menu_key, action FROM isf_auth.role_menu_permission WHERE role_id = ANY(CAST($1 AS text[]))",
             role_ids,
         )
         perm_set = {(r["role_id"], r["menu_key"], r["action"]) for r in perm_rows}
 
-    actions = ["view", "tambah", "edit", "hapus", "detail"]
-    action_headers = ["V", "T", "E", "H", "D"]
-
+    # ── Build workbook ──
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Permission Matrix"
 
-    header_fill = PatternFill("solid", fgColor="4472C4")
-    header_font = Font(bold=True, color="FFFFFF")
-    center = Alignment(horizontal="center")
+    # Styles
+    hdr_fill   = PatternFill("solid", fgColor="1F2937")   # dark header (matches UI)
+    hdr_font   = Font(bold=True, color="FFFFFF", size=9)
+    dom_fill   = PatternFill("solid", fgColor="374151")   # domain row
+    dom_font   = Font(bold=True, color="FFFFFF", size=9)
+    menu_fill  = PatternFill("solid", fgColor="F3F4F6")   # menu header row
+    menu_font  = Font(bold=True, color="374151", size=9)
+    act_font   = Font(size=9, color="4B5563")
+    chk_font   = Font(size=9, color="1D4ED8", bold=True)
+    center_al  = Alignment(horizontal="center", vertical="center")
+    left_al    = Alignment(horizontal="left",   vertical="center")
+    thin_side  = Side(style="thin", color="D1D5DB")
+    thin_bdr   = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
 
-    # Header row
-    headers = ["Role ID", "Role Name", "Domain", "Menu"] + action_headers
-    for col, h in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col, value=h)
-        cell.font = header_font
-        cell.fill = header_fill
-        if col > 4:
-            cell.alignment = center
+    n_roles = len(role_rows)
+    last_col = n_roles + 1  # col 1 = menu label, col 2..n_roles+1 = roles
+
+    # ── Row 1: header ──
+    cell = ws.cell(row=1, column=1, value="Menu & Hak Akses")
+    cell.font = hdr_font; cell.fill = hdr_fill; cell.alignment = left_al; cell.border = thin_bdr
+    for ci, role in enumerate(role_rows, start=2):
+        cell = ws.cell(row=1, column=ci, value=role["role_name"].upper())
+        cell.font = hdr_font; cell.fill = hdr_fill; cell.alignment = center_al; cell.border = thin_bdr
+
+    ws.freeze_panes = "B2"
+    ws.row_dimensions[1].height = 28
 
     row_num = 2
-    for role in role_rows:
-        for menu in menu_rows:
-            ws.cell(row=row_num, column=1, value=role["role_id"])
-            ws.cell(row=row_num, column=2, value=role["role_name"])
-            ws.cell(row=row_num, column=3, value=menu["group_label"])
-            ws.cell(row=row_num, column=4, value=menu["label"])
-            for col, action in enumerate(actions, start=5):
-                v = "v" if (role["role_id"], menu["menu_key"], action) in perm_set else ""
-                ws.cell(row=row_num, column=col, value=v).alignment = center
+    for d_key, menus in domain_groups.items():
+        # ── Domain section header ──
+        ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=last_col)
+        cell = ws.cell(row=row_num, column=1, value=_DOMAIN_LABEL.get(d_key, d_key.upper()))
+        cell.font = dom_font; cell.fill = dom_fill; cell.alignment = left_al; cell.border = thin_bdr
+        ws.row_dimensions[row_num].height = 18
+        row_num += 1
+
+        for menu in menus:
+            # ── Menu sub-header ──
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=last_col)
+            cell = ws.cell(row=row_num, column=1, value=f"📁  {menu['label']}")
+            cell.font = menu_font; cell.fill = menu_fill; cell.alignment = left_al; cell.border = thin_bdr
+            ws.row_dimensions[row_num].height = 16
             row_num += 1
 
-    ws.column_dimensions["A"].width = 14
-    ws.column_dimensions["B"].width = 22
-    ws.column_dimensions["C"].width = 22
-    ws.column_dimensions["D"].width = 38
-    for col_letter in ["E", "F", "G", "H", "I"]:
-        ws.column_dimensions[col_letter].width = 5
+            # ── Action rows ──
+            for action_key, action_label in _ACTION_LABELS:
+                cell = ws.cell(row=row_num, column=1, value=f"    ↳  {action_label}")
+                cell.font = act_font; cell.alignment = left_al; cell.border = thin_bdr
+                for ci, role in enumerate(role_rows, start=2):
+                    has = (role["role_id"], menu["menu_key"], action_key) in perm_set
+                    cell = ws.cell(row=row_num, column=ci, value="✓" if has else "")
+                    cell.font = chk_font if has else act_font
+                    cell.alignment = center_al
+                    cell.border = thin_bdr
+                ws.row_dimensions[row_num].height = 15
+                row_num += 1
 
-    # Freeze header row
-    ws.freeze_panes = "A2"
+    # ── Column widths ──
+    ws.column_dimensions["A"].width = 38
+    # Role columns: narrow
+    for ci in range(2, n_roles + 2):
+        col_letter = ws.cell(row=1, column=ci).column_letter
+        ws.column_dimensions[col_letter].width = max(14, len(role_rows[ci - 2]["role_name"]) + 2)
 
     buf = io.BytesIO()
     wb.save(buf)
