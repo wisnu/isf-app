@@ -24,7 +24,7 @@ export const appadminMenu: DomainConfig = {
       label: 'Manajemen Cabang',
       icon: Building2,
       items: [
-        { label: 'Inquiry Cabang', to: '/appadmin/branches', menu_key: 'appadmin.branch.list' },
+        { label: 'List Cabang', to: '/appadmin/branches', menu_key: 'appadmin.branch.list' },
       ],
     },
   ],

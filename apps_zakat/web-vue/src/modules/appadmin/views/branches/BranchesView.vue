@@ -326,7 +326,7 @@ function getBranchTypeLabel(type: string): string {
 
 <template>
   <div class="space-y-4">
-    <PageHeader title="Inquiry Cabang" subtitle="Lihat dan kelola data cabang organisasi" />
+    <PageHeader title="List Cabang" subtitle="Lihat dan kelola data cabang organisasi" />
 
     <!-- Error message -->
     <div v-if="errorMsg" class="flex items-center gap-2 rounded-lg border border-red-200

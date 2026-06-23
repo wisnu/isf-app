@@ -14,7 +14,7 @@
 INSERT INTO isf_auth.menu (menu_key, label, group_label, sort_order, status)
 VALUES
   -- Group: Manajemen Cabang
-  ('appadmin.branch.list', 'Inquiry Cabang', 'Manajemen Cabang', 930, 'A'),
+  ('appadmin.branch.list', 'List Cabang', 'Manajemen Cabang', 930, 'A'),
   ('appadmin.branch.create', 'Input Data Cabang Baru', 'Manajemen Cabang', 931, 'A'),
   ('appadmin.branch.edit', 'Koreksi Data Cabang', 'Manajemen Cabang', 932, 'A'),
   ('appadmin.branch.detail', 'Lihat Data Cabang', 'Manajemen Cabang', 933, 'A')
