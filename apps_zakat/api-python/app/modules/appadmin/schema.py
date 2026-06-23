@@ -39,3 +39,39 @@ class RoleMenuUpdateResponse(BaseModel):
     updated: bool
     total_rows: int
     diff: RoleMenuDiff
+
+
+# ── New: action-level permission models ──────────────────────────────────────
+
+VALID_ACTIONS = frozenset({"view", "tambah", "edit", "hapus", "detail"})
+
+
+class MenuPermission(BaseModel):
+    menu_key: str
+    actions: list[str]
+
+
+class RoleMenuPermissionSnapshot(BaseModel):
+    roles: list[RoleInfo]
+    menus: list[MenuInfo]
+    permissions: list[MenuPermission]  # scoped to one role_id
+
+
+class RoleMenuPermissionUpdateRequest(BaseModel):
+    role_id: str
+    permissions: list[MenuPermission]
+    updated_by: str
+
+
+class RoleMenuPermissionUpdateResponse(BaseModel):
+    updated: bool
+    role_id: str
+    total_pairs: int
+    added_count: int
+    removed_count: int
+
+
+class AllRolesPermissionSnapshot(BaseModel):
+    roles: list[RoleInfo]
+    menus: list[MenuInfo]
+    all_permissions: list[dict]  # [{role_id, menu_key, action}]
