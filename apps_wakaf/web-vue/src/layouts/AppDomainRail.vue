@@ -22,7 +22,7 @@ const visibleDomains = computed(() => {
     const domain = DOMAIN_MAP[id]
     if (domain.locked) return true
     const keys = domain.groups
-      .flatMap(g => g.items.filter(isNavItem))
+      .flatMap(g => (g.items ?? []).filter(isNavItem))
       .map(item => item.menu_key)
       .filter(Boolean) as string[]
     if (keys.length === 0) return true
