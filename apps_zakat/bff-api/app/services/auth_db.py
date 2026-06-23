@@ -159,12 +159,22 @@ class AuthDB:
 
     # --- menus -----------------------------------------------------------
 
-    async def get_menus_by_roles(self, roles: list[str]) -> list[str]:
-        """Return distinct menu_keys assigned to the given role ids."""
+    async def get_menus_by_roles(self, roles: list[str]) -> list[dict]:
+        """Return menu permissions for roles as [{menu_key, actions[]}].
+
+        Aggregates across all roles — union of actions per menu_key.
+        """
         if not roles:
             return []
         rows = await fetch_all(
-            "SELECT DISTINCT menu_key FROM isf_auth.role_menu WHERE id_peran = ANY($1)",
+            """
+            SELECT menu_key,
+                   array_agg(DISTINCT action ORDER BY action) AS actions
+            FROM isf_auth.role_menu_permission
+            WHERE role_id = ANY($1)
+            GROUP BY menu_key
+            ORDER BY menu_key
+            """,
             roles,
         )
-        return [r["menu_key"] for r in rows]
+        return [{"menu_key": r["menu_key"], "actions": list(r["actions"])} for r in rows]

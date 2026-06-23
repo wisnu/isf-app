@@ -85,7 +85,8 @@ async def get_role(role_id: str) -> RoleDetail | None:
         return None
 
     menu_rows = await fetch_all_isf_auth(
-        "SELECT menu_key FROM isf_auth.role_menu WHERE id_peran=$1 ORDER BY menu_key", role_id
+        "SELECT DISTINCT menu_key FROM isf_auth.role_menu_permission WHERE role_id=$1 ORDER BY menu_key",
+        role_id,
     )
     return RoleDetail(
         role_id=row["id_peran"],

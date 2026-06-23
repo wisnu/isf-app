@@ -34,8 +34,16 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
     role_ids = [r["id_peran"] for r in role_rows]
     if role_ids:
         # isf_auth sekarang di DB terpisah — pakai pool isf_auth, bukan enterprise pool.
+        # role_menu_permission menggantikan role_menu — aggregate actions per menu_key.
         menu_rows = await fetch_all_isf_auth(
-            "SELECT DISTINCT menu_key FROM isf_auth.role_menu WHERE id_peran = ANY($1::text[])",
+            """
+            SELECT menu_key,
+                   array_agg(DISTINCT action ORDER BY action) AS actions
+            FROM isf_auth.role_menu_permission
+            WHERE role_id = ANY($1::text[])
+            GROUP BY menu_key
+            ORDER BY menu_key
+            """,
             role_ids,
         )
     else:
@@ -55,7 +63,7 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
             for r in role_rows
         ],
         branches=branches,
-        menus=sorted({m["menu_key"] for m in menu_rows}),
+        menus=[{"menu_key": m["menu_key"], "actions": list(m["actions"])} for m in menu_rows],
         primary_branch=primary_branch,
         branch_access="all" if user.get("tipe_akses_cabang") == "S" else "single",
     )
