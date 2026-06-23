@@ -3,10 +3,8 @@ from __future__ import annotations
 import bcrypt
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
-
-from fastapi.responses import StreamingResponse
 
 from app.services.auth import require_menu
 from app.services.proxy import get_api_python, post_api_python, stream_api_python
@@ -54,7 +52,6 @@ class BranchUpdateIn(BaseModel):
 
 @router.get("/role-menu")
 async def get_role_menu(
-    request: Request,
     user_id: str = Depends(require_menu("appadmin.role_menu")),
 ):
     downstream = await get_api_python("/api/appadmin/role-menu")
@@ -161,9 +158,10 @@ async def export_role_menu_permission(
     user_id: str = Depends(require_menu("appadmin.role_menu")),
 ):
     downstream = await stream_api_python("/api/appadmin/role-menu-permission/export")
-    return StreamingResponse(
-        content=iter([downstream.content]),
-        status_code=downstream.status_code,
+    if downstream.status_code != 200:
+        return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+    return Response(
+        content=downstream.content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=role-menu-permission.xlsx"},
     )

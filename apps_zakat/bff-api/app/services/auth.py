@@ -125,7 +125,7 @@ def require_menu(menu_key: str):
         roles = request.session.get("roles") or []
         db: AuthDB = request.app.state.auth_db
         menus = await get_menus_for_roles(roles, db)
-        if not any(m["menu_key"] == menu_key for m in menus):
+        if not any(m["menu_key"] == menu_key and "view" in m.get("actions", []) for m in menus):
             audit = getattr(request.app.state, "audit", None)
             if audit is not None:
                 await audit.log(

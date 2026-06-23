@@ -40,7 +40,7 @@ async def get_profile(user_id: str) -> ProfileResponse | None:
             SELECT menu_key,
                    array_agg(DISTINCT action ORDER BY action) AS actions
             FROM isf_auth.role_menu_permission
-            WHERE role_id = ANY($1::text[])
+            WHERE role_id = ANY(CAST($1 AS text[]))
             GROUP BY menu_key
             ORDER BY menu_key
             """,

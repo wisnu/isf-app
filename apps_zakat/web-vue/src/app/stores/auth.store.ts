@@ -5,6 +5,12 @@ import { api, ApiError } from '@/shared/api/client'
 import type { MenuKey } from '@/shared/constants/menu-keys'
 
 export interface Tenant { id: string; name: string }
+
+export interface MenuPermission {
+  menu_key: string
+  actions: string[]
+}
+
 export interface User {
   username: string
   name: string
@@ -13,7 +19,7 @@ export interface User {
   roles: string[]
   branches: string[]
   primary_branch: string | null
-  menus: string[]
+  menus: MenuPermission[]
   branch_access?: 'all' | 'single'
 }
 
@@ -34,10 +40,20 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value.tenants.find((t) => t.id === activeTenantId.value) ?? null
   })
   const hasTenant = computed(() => Boolean(activeTenantId.value))
-  const menus = computed(() => user.value?.menus ?? [])
+
+  // Backward-compat: list of menu_keys the user has access to
+  const menus = computed<string[]>(() =>
+    user.value?.menus.map(m => m.menu_key) ?? []
+  )
+
+  // New: action lookup by menu_key
+  const menuActions = computed<Record<string, string[]>>(() => {
+    if (!user.value) return {}
+    return Object.fromEntries(user.value.menus.map(m => [m.menu_key, m.actions]))
+  })
 
   function hasMenu(key: MenuKey | string): boolean {
-    return Boolean(user.value && user.value.menus.includes(key))
+    return Boolean(user.value?.menus.some(m => m.menu_key === key))
   }
 
   async function loadProviders() {
@@ -109,6 +125,7 @@ export const useAuthStore = defineStore('auth', () => {
     activeTenant,
     hasTenant,
     menus,
+    menuActions,
     hasMenu,
     loadProviders,
     bootstrap,
