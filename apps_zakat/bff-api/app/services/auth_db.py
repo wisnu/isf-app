@@ -160,18 +160,11 @@ class AuthDB:
     # --- menus -----------------------------------------------------------
 
     async def get_menus_by_roles(self, roles: list[str]) -> list[str]:
-        """Return distinct active menu_keys for the given role ids."""
+        """Return distinct menu_keys assigned to the given role ids."""
         if not roles:
             return []
         rows = await fetch_all(
-            """
-            SELECT DISTINCT rm.menu_key
-            FROM isf_auth.role_menu rm
-            JOIN isf_auth.menu m ON rm.menu_key = m.menu_key
-            WHERE rm.id_peran = ANY($1)
-              AND m.status = 'active'
-            ORDER BY rm.menu_key
-            """,
+            "SELECT DISTINCT menu_key FROM isf_auth.role_menu WHERE id_peran = ANY($1)",
             roles,
         )
         return [r["menu_key"] for r in rows]
