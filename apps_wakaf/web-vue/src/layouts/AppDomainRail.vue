@@ -3,13 +3,32 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSidebarStore } from '@/app/stores/sidebar.store'
 import { DOMAIN_MAP, DOMAIN_ORDER } from '@/shared/constants/domains'
-import type { DomainId } from '@/shared/constants/domains'
+import type { DomainId, NavItem } from '@/shared/constants/domains'
+import { useAuthStore } from '@/app/stores/auth.store'
 
 const route  = useRoute()
 const router = useRouter()
 const sidebar = useSidebarStore()
+const auth   = useAuthStore()
 
 const activeDomain = computed(() => route.meta.domain as DomainId | undefined)
+
+function isNavItem(item: unknown): item is NavItem {
+  return typeof item === 'object' && item !== null && 'to' in item
+}
+
+const visibleDomains = computed(() => {
+  return DOMAIN_ORDER.filter(id => {
+    const domain = DOMAIN_MAP[id]
+    if (domain.locked) return true
+    const keys = domain.groups
+      .flatMap(g => g.items.filter(isNavItem))
+      .map(item => item.menu_key)
+      .filter(Boolean) as string[]
+    if (keys.length === 0) return true
+    return keys.some(k => auth.hasMenu(k))
+  })
+})
 
 function handleDomainClick(id: DomainId) {
   const domain = DOMAIN_MAP[id]
@@ -39,7 +58,7 @@ function handleDomainClick(id: DomainId) {
     <div class="w-8 h-px bg-white/10 mb-1 shrink-0" />
 
     <!-- Domain buttons -->
-    <template v-for="id in DOMAIN_ORDER" :key="id">
+    <template v-for="id in visibleDomains" :key="id">
       <div class="relative group">
         <button
           type="button"
