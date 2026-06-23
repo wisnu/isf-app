@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { KeyRound, Pencil, Plus, Search, ShieldCheck, UserCheck, UserX } from 'lucide-vue-next'
+import { KeyRound, Pencil, Plus, Search, ShieldCheck, Sliders, UserCheck, UserX } from 'lucide-vue-next'
 import { onMounted, reactive, ref, shallowRef, watch } from 'vue'
 
 import Button from '@/shared/components/Button.vue'
@@ -74,6 +74,17 @@ const savingPassword = shallowRef(false)
 const showStatusModal = shallowRef(false)
 const statusTarget = ref<UserListItem | null>(null)
 const savingStatus = shallowRef(false)
+
+// ----- limit transaksi modal -----
+interface LimitItem { jenis_limit: string; nilai_limit: number }
+const JENIS_LIMIT_LABEL: Record<string, string> = {
+  O: 'Limit Otorisasi Otomatis',
+  T: 'Limit Transaksi',
+}
+const showLimitModal = shallowRef(false)
+const limitTarget = ref<UserListItem | null>(null)
+const limitRows = ref<LimitItem[]>([])
+const savingLimit = shallowRef(false)
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(searchInput, () => {
@@ -243,6 +254,33 @@ function toggleBranch(code: string) {
   else form.selected_branches.splice(idx, 1)
 }
 
+async function openLimitModal(row: UserListItem) {
+  limitTarget.value = row
+  try {
+    const res = await api.get<LimitItem[]>(`/api/appadmin/users/${row.user_id}/limits`)
+    limitRows.value = res.length > 0 ? res : [{ jenis_limit: 'O', nilai_limit: 0 }]
+  } catch {
+    limitRows.value = [{ jenis_limit: 'O', nilai_limit: 0 }]
+  }
+  showLimitModal.value = true
+}
+
+async function saveLimit() {
+  if (!limitTarget.value) return
+  savingLimit.value = true
+  try {
+    await api.put(`/api/appadmin/users/${limitTarget.value.user_id}/limits`, {
+      limits: limitRows.value.map(r => ({ jenis_limit: r.jenis_limit, nilai_limit: r.nilai_limit })),
+    })
+    toast.success('Limit transaksi berhasil disimpan')
+    showLimitModal.value = false
+  } catch (e) {
+    toast.error(e instanceof ApiError ? e.message : 'Gagal menyimpan limit')
+  } finally {
+    savingLimit.value = false
+  }
+}
+
 onMounted(async () => {
   await Promise.all([loadData(), loadRolesAndBranches()])
 })
@@ -394,6 +432,14 @@ onMounted(async () => {
                     @click="openPasswordReset(row)"
                   >
                     <KeyRound class="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    v-if="auth.hasMenu('appadmin.users.edit')"
+                    class="rounded border border-border p-1 text-muted hover:border-violet-500 hover:text-violet-600 transition"
+                    title="Limit Transaksi"
+                    @click="openLimitModal(row)"
+                  >
+                    <Sliders class="w-3.5 h-3.5" />
                   </button>
                   <button
                     v-if="auth.hasMenu('appadmin.users.edit')"
@@ -615,6 +661,60 @@ onMounted(async () => {
             @click="confirmStatusToggle"
           >
             {{ savingStatus ? 'Memproses...' : (statusTarget?.status === 'active' ? 'Nonaktifkan' : 'Aktifkan') }}
+          </Button>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- Limit Transaksi Modal -->
+    <Modal v-if="showLimitModal" max-width="max-w-md" @close="showLimitModal = false">
+      <template #header>
+        <h2 class="text-base font-semibold">Ubah Limit Transaksi</h2>
+      </template>
+
+      <div class="space-y-3">
+        <div class="rounded bg-surface-50 px-3 py-2 text-sm">
+          <span class="text-muted text-xs">User:</span>
+          <span class="ml-2 font-mono font-medium">{{ limitTarget?.user_id }}</span>
+          <span class="ml-2 text-xs text-muted">{{ limitTarget?.display_name }}</span>
+        </div>
+
+        <p class="text-xs text-muted">
+          Jika <strong>Nilai Limit &gt; 0</strong>, transaksi di bawah nilai ini akan diotorisasi otomatis.
+          Nilai <strong>0</strong> = semua transaksi selalu butuh persetujuan supervisor.
+        </p>
+
+        <table class="w-full text-sm border border-border rounded">
+          <thead class="text-[10px] text-muted uppercase tracking-widest bg-surface-50 border-b border-border">
+            <tr>
+              <th class="px-3 py-2 text-left">Jenis Limit</th>
+              <th class="px-3 py-2 text-right">Nilai Limit (Rp)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(lim, i) in limitRows" :key="lim.jenis_limit" class="border-t border-border">
+              <td class="px-3 py-2 text-xs">
+                {{ JENIS_LIMIT_LABEL[lim.jenis_limit] ?? lim.jenis_limit }}
+              </td>
+              <td class="px-3 py-2">
+                <input
+                  v-model.number="limitRows[i].nilai_limit"
+                  type="number"
+                  min="0"
+                  step="1000000"
+                  class="h-8 w-full rounded border border-border px-2 text-right text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showLimitModal = false">Batal</Button>
+          <Button variant="success" :disabled="savingLimit" @click="saveLimit">
+            {{ savingLimit ? 'Menyimpan...' : 'Simpan Limit' }}
           </Button>
         </div>
       </template>

@@ -59,3 +59,14 @@ class UserBranchesRequest(BaseModel):
 class UserStatusRequest(BaseModel):
     status: str   # 'active' | 'inactive'
     updated_by: str = "SYSTEM"
+
+
+class UserLimitItem(BaseModel):
+    jenis_limit: str     # 'O' = Limit Otorisasi Otomatis
+    nilai_limit: float
+    entity_labels: list[str] = []  # transaction codes that use this jenis_limit
+
+
+class UserLimitsUpdateRequest(BaseModel):
+    limits: list[dict]   # [{jenis_limit, nilai_limit}]
+    updated_by: str = "SYSTEM"

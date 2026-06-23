@@ -7,6 +7,7 @@ from app.modules.appadmin.user import service
 from app.modules.appadmin.user.schema import (
     UserBranchesRequest,
     UserCreateRequest,
+    UserLimitsUpdateRequest,
     UserPasswordRequest,
     UserRolesRequest,
     UserStatusRequest,
@@ -94,3 +95,21 @@ async def update_branches(user_id: str, payload: UserBranchesRequest):
         return JSONResponse(status_code=404, content=err("NOT_FOUND", f"User '{user_id}' tidak ditemukan"))
     result = await service.update_user_branches(user_id.upper(), payload)
     return ok(result.model_dump())
+
+
+@router.get("/{user_id}/limits")
+async def get_limits(user_id: str):
+    existing = await service.get_user(user_id.upper())
+    if existing is None:
+        return JSONResponse(status_code=404, content=err("NOT_FOUND", f"User '{user_id}' tidak ditemukan"))
+    result = await service.get_user_limits(user_id.upper())
+    return ok([r.model_dump() for r in result])
+
+
+@router.put("/{user_id}/limits")
+async def update_limits(user_id: str, payload: UserLimitsUpdateRequest):
+    existing = await service.get_user(user_id.upper())
+    if existing is None:
+        return JSONResponse(status_code=404, content=err("NOT_FOUND", f"User '{user_id}' tidak ditemukan"))
+    result = await service.update_user_limits(user_id.upper(), payload)
+    return ok([r.model_dump() for r in result])

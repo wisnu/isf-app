@@ -395,6 +395,34 @@ async def update_user_branches(
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
+class UserLimitsIn(BaseModel):
+    limits: list[dict]
+
+
+@router.get("/users/{target_user_id}/limits")
+async def get_user_limits(
+    target_user_id: str,
+    request: Request,
+    user_id: str = Depends(require_menu("appadmin.users")),
+):
+    downstream = await get_api_python(f"/api/appadmin/users/{target_user_id.upper()}/limits")
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
+@router.put("/users/{target_user_id}/limits")
+async def update_user_limits(
+    target_user_id: str,
+    payload: UserLimitsIn,
+    request: Request,
+    user_id: str = Depends(require_menu("appadmin.users.edit")),
+):
+    body = {**payload.model_dump(), "updated_by": user_id}
+    downstream = await post_api_python(
+        f"/api/appadmin/users/{target_user_id.upper()}/limits", json_body=body, method="PUT"
+    )
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
 # ============================================================================
 # ROLE MANAGEMENT ENDPOINTS
 # ============================================================================

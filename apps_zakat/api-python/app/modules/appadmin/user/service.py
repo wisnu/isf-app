@@ -18,6 +18,8 @@ from app.modules.appadmin.user.schema import (
     UserBranchesRequest,
     UserCreateRequest,
     UserDetail,
+    UserLimitItem,
+    UserLimitsUpdateRequest,
     UserListItem,
     UserPasswordRequest,
     UserRolesRequest,
@@ -164,6 +166,18 @@ async def create_user(payload: UserCreateRequest) -> UserDetail:
                     "VALUES ($1, $2) ON CONFLICT DO NOTHING",
                     [(user_id, b) for b in branches],
                 )
+            # Auto-create limit row (jenis_limit='O') — mirrors legacy CreateLimitTransaksi()
+            existing_limit = await conn.fetchval(
+                "SELECT COUNT(*) FROM enterprise.limittransaksi WHERE id_user=$1 AND jenis_limit='O'",
+                user_id,
+            )
+            if not existing_limit:
+                await conn.execute(
+                    "INSERT INTO enterprise.limittransaksi "
+                    "(id_user, jenis_limit, nilai_limit, nilai_limit_akumulasi, jumlah_item_limit) "
+                    "VALUES ($1, 'O', 0, 0, 0)",
+                    user_id,
+                )
 
     isf_pool = get_isf_auth_pool()
     async with isf_pool.acquire() as conn:
@@ -260,3 +274,55 @@ async def update_user_branches(user_id: str, payload: UserBranchesRequest) -> Us
     result = await get_user(user_id)
     assert result is not None
     return result
+
+
+# ── Limit Transaksi ──────────────────────────────────────────────────────────
+
+JENIS_LIMIT_LABEL = {
+    "O": "Limit Otorisasi Otomatis",
+    "T": "Limit Transaksi",
+}
+
+
+async def get_user_limits(user_id: str) -> list[UserLimitItem]:
+    rows = await fetch_all(
+        "SELECT lt.jenis_limit, lt.nilai_limit, "
+        "COALESCE(ARRAY_AGG(tt.transactioncode ORDER BY tt.transactioncode) "
+        "  FILTER (WHERE tt.transactioncode IS NOT NULL), ARRAY[]::text[]) AS tx_codes "
+        "FROM enterprise.limittransaksi lt "
+        "LEFT JOIN transaction.transactiontype tt USING (jenis_limit) "
+        "WHERE lt.id_user = UPPER($1) "
+        "GROUP BY lt.jenis_limit, lt.nilai_limit "
+        "ORDER BY lt.jenis_limit",
+        user_id,
+    )
+    return [
+        UserLimitItem(
+            jenis_limit=r["jenis_limit"],
+            nilai_limit=float(r["nilai_limit"] or 0),
+            entity_labels=list(r["tx_codes"] or []),
+        )
+        for r in rows
+    ]
+
+
+async def update_user_limits(user_id: str, payload: UserLimitsUpdateRequest) -> list[UserLimitItem]:
+    async with get_pool().acquire() as conn:
+        async with conn.transaction():
+            for item in payload.limits:
+                jenis = item.get("jenis_limit", "O")
+                nilai = float(item.get("nilai_limit", 0))
+                # Update existing row, or insert if none
+                updated = await conn.execute(
+                    "UPDATE enterprise.limittransaksi SET nilai_limit=$1 "
+                    "WHERE id_user=$2 AND jenis_limit=$3",
+                    nilai, user_id, jenis,
+                )
+                if updated == "UPDATE 0":
+                    await conn.execute(
+                        "INSERT INTO enterprise.limittransaksi "
+                        "(id_user, jenis_limit, nilai_limit, nilai_limit_akumulasi, jumlah_item_limit) "
+                        "VALUES ($1, $2, $3, 0, 0)",
+                        user_id, jenis, nilai,
+                    )
+    return await get_user_limits(user_id)
