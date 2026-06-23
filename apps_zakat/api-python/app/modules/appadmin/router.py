@@ -45,7 +45,13 @@ async def put_role_menu(payload: RoleMenuUpdateRequest):
 
 @router.get("/role-menu-permission")
 async def get_role_menu_permission(role_id: str):
-    snapshot = await list_role_menu_permission(role_id)
+    try:
+        snapshot = await list_role_menu_permission(role_id)
+    except ValidationError as exc:
+        return JSONResponse(
+            status_code=400,
+            content=err(exc.code, exc.message, details=exc.details),
+        )
     return ok(snapshot.model_dump())
 
 

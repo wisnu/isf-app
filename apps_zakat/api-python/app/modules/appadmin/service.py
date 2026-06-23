@@ -8,8 +8,19 @@ isf_auth.role_menu (sumber kebenaran mapping role→menu).
 
 from __future__ import annotations
 
+import io
+
 from app.modules.appadmin.schema import (
-    MappingPair, MenuInfo, RoleInfo, RoleMenuDiff, RoleMenuSnapshot, RoleMenuUpdateResponse,
+    VALID_ACTIONS,
+    MappingPair,
+    MenuInfo,
+    MenuPermission,
+    RoleInfo,
+    RoleMenuDiff,
+    RoleMenuPermissionSnapshot,
+    RoleMenuPermissionUpdateResponse,
+    RoleMenuSnapshot,
+    RoleMenuUpdateResponse,
 )
 from app.shared.db import fetch_all, fetch_all_isf_auth, get_isf_auth_pool
 
@@ -136,16 +147,6 @@ async def replace_role_menu(
 
 # ── New: action-level permission functions ───────────────────────────────────
 
-import io  # noqa: E402
-
-from app.modules.appadmin.schema import (  # noqa: E402
-    VALID_ACTIONS,
-    AllRolesPermissionSnapshot,
-    MenuPermission,
-    RoleMenuPermissionSnapshot,
-    RoleMenuPermissionUpdateResponse,
-)
-
 
 def _build_permission_map(rows: list[dict]) -> dict[tuple[str, str], list[str]]:
     """Group action rows into {(role_id, menu_key): [actions]} dict."""
@@ -160,6 +161,14 @@ def _build_permission_map(rows: list[dict]) -> dict[tuple[str, str], list[str]]:
 
 async def list_role_menu_permission(role_id: str) -> RoleMenuPermissionSnapshot:
     """Return roles, menus, and permissions for one role_id."""
+    # Validate role exists
+    valid = await fetch_all(
+        "SELECT id_peran FROM enterprise.peran WHERE id_peran = $1 AND status_peran = 'A'",
+        role_id,
+    )
+    if not valid:
+        raise ValidationError("INVALID_ROLE", f"role_id '{role_id}' tidak ditemukan", [role_id])
+
     role_rows = await fetch_all(
         """
         SELECT p.id_peran AS role_id, p.nama_peran AS role_name,
