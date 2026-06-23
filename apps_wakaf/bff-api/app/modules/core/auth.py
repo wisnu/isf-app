@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.services.auth import build_user_public, current_user_id_or_401
+from app.services.auth import build_user_public, current_user_id_or_401, get_menus_for_roles
 from app.services.auth_db import normalize_username
 from app.services.identity_client import IdentityTimeout, IdentityUnavailable, IdentityUserNotFound
 from app.shared.response import err, ok
@@ -124,7 +124,6 @@ async def login(payload: LoginPayload, request: Request):
     )
     request.session["primary_branch"] = primary
     request.session["branch_access"] = profile.get("branch_access", "single")
-    request.session["menus"] = list(profile["menus"])
 
     user_public = await build_user_public(
         db, result.user_id,
@@ -209,7 +208,6 @@ async def refresh_profile(request: Request):
     request.session["primary_branch"] = next(
         (b["kode_cabang"] for b in profile["branches"] if b.get("is_primary")), None
     )
-    request.session["menus"] = list(profile["menus"])
 
     await audit.log(
         "profile_refreshed",
@@ -283,12 +281,14 @@ async def me(request: Request):
     if error_response is not None:
         return error_response
     db = request.app.state.auth_db
+    roles = request.session.get("roles") or []
+    menus = await get_menus_for_roles(roles, db)
     user_public = await build_user_public(
         db, user_id,
-        roles=request.session.get("roles") or [],
+        roles=roles,
         branches=request.session.get("branches") or [],
         primary_branch=request.session.get("primary_branch"),
-        menus=request.session.get("menus") or [],
+        menus=menus,
         branch_access=request.session.get("branch_access", "single"),
     )
     if user_public is None:

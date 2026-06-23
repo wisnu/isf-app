@@ -2,11 +2,32 @@
 
 from __future__ import annotations
 
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.services.auth_db import AuthDB
 from app.shared.response import err
+
+# ---------------------------------------------------------------------------
+# In-process menu cache keyed by frozenset(roles), TTL 5 minutes.
+# Avoids storing menus in the session cookie (which can exceed 4096 bytes for
+# users with many roles such as ADM).
+# ---------------------------------------------------------------------------
+_menu_cache: dict[frozenset, tuple[list[str], float]] = {}
+_CACHE_TTL = 300.0  # seconds
+
+
+async def get_menus_for_roles(roles: list[str], db: AuthDB) -> list[str]:
+    key = frozenset(roles)
+    now = time.monotonic()
+    cached = _menu_cache.get(key)
+    if cached is not None and now - cached[1] < _CACHE_TTL:
+        return cached[0]
+    menus = await db.get_menus_by_roles(list(roles))
+    _menu_cache[key] = (menus, now)
+    return menus
 
 
 class AppHTTPError(Exception):
@@ -42,6 +63,11 @@ async def build_user_public(
     menus: list[str] | None = None,
     branch_access: str = "single",
 ) -> dict | None:
+    """Build the public user payload returned to the frontend.
+
+    `menus` can be supplied by the caller (e.g. freshly fetched from identity).
+    When omitted, it is resolved from the cache / DB via `roles`.
+    """
     user = await db.get_user_by_id(user_id)
     if not user:
         return None
@@ -50,6 +76,7 @@ async def build_user_public(
         (t["id"] for t in tenants if t.get("is_default")),
         tenants[0]["id"] if tenants else None,
     )
+    resolved_menus = menus if menus is not None else await get_menus_for_roles(roles or [], db)
     return {
         "username": user["username"],
         "name": user["display_name"],
@@ -58,7 +85,7 @@ async def build_user_public(
         "roles": roles or [],
         "branches": branches or [],
         "primary_branch": primary_branch,
-        "menus": menus or [],
+        "menus": resolved_menus,
         "branch_access": branch_access,
     }
 
@@ -84,7 +111,7 @@ def require_menu(menu_key: str):
 
     Returns dependency yang:
       - 401 kalau user tidak login (delegate ke current_user_id_or_401)
-      - 403 MENU_FORBIDDEN kalau menu_key tidak ada di session["menus"]
+      - 403 MENU_FORBIDDEN kalau menu_key tidak ada di cache/DB menus for session roles
         (audit_log: menu_denied)
       - else return user_id
     """
@@ -95,7 +122,9 @@ def require_menu(menu_key: str):
                 status_code=error_response.status_code,
                 content=err("UNAUTHORIZED", "Not authenticated"),
             )
-        menus = request.session.get("menus") or []
+        roles = request.session.get("roles") or []
+        db: AuthDB = request.app.state.auth_db
+        menus = await get_menus_for_roles(roles, db)
         if menu_key not in menus:
             audit = getattr(request.app.state, "audit", None)
             if audit is not None:
