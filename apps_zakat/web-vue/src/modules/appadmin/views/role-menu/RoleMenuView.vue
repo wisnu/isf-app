@@ -156,7 +156,7 @@ async function loadRoles() {
   try {
     // Load roles list from dedicated endpoint
     const response = await api.get<{ rows: RoleInfo[]; pagination: { page: number; limit: number; total: number; total_pages: number } }>(
-      '/api/appadmin/roles?limit=200&status=active'
+      '/api/appadmin/roles?limit=100'
     )
     allRoles.value = response.rows
     // Menus will be loaded when a role is selected via loadPermissions()
