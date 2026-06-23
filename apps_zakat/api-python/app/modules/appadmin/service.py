@@ -274,32 +274,77 @@ async def replace_role_menu_permission(
     )
 
 
-async def export_role_menu_permission_excel() -> bytes:
-    """Generate Excel matrix: rows=role x menu, columns=actions."""
+_DOMAIN_ORDER = ["finance", "distribution", "fundraising", "generalaffair", "appadmin", "dashboard"]
+_DOMAIN_SORT = {d: i for i, d in enumerate(_DOMAIN_ORDER)}
+
+
+async def export_role_menu_permission_excel(
+    role_id: str | None = None,
+    domain: str | None = None,
+) -> bytes:
+    """Generate Excel matrix: rows=role x menu, columns=V/T/E/H/D.
+
+    role_id: filter to one role (None = all roles)
+    domain:  filter to one domain prefix e.g. 'finance' (None = all domains)
+    """
     try:
         import openpyxl
-        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.styles import Alignment, Font, PatternFill
     except ImportError:
         raise RuntimeError("openpyxl not installed")
 
-    role_rows = await fetch_all(
-        """
-        SELECT p.id_peran AS role_id, p.nama_peran AS role_name
-        FROM enterprise.peran p
-        WHERE p.status_peran = 'A'
-          AND EXISTS (SELECT 1 FROM enterprise.listperanuser WHERE id_peran = p.id_peran)
-        ORDER BY p.id_peran
-        """
-    )
-    menu_rows = await fetch_all_isf_auth(
-        "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' ORDER BY group_label, sort_order, menu_key"
-    )
-    all_perm_rows = await fetch_all_isf_auth(
-        "SELECT role_id, menu_key, action FROM isf_auth.role_menu_permission ORDER BY role_id, menu_key, action"
-    )
+    # Roles
+    if role_id:
+        role_rows = await fetch_all(
+            """
+            SELECT p.id_peran AS role_id, p.nama_peran AS role_name
+            FROM enterprise.peran p
+            WHERE p.status_peran = 'A' AND p.id_peran = $1
+            """,
+            role_id,
+        )
+    else:
+        role_rows = await fetch_all(
+            """
+            SELECT p.id_peran AS role_id, p.nama_peran AS role_name
+            FROM enterprise.peran p
+            WHERE p.status_peran = 'A'
+              AND EXISTS (SELECT 1 FROM enterprise.listperanuser WHERE id_peran = p.id_peran)
+            ORDER BY p.id_peran
+            """
+        )
 
-    perm_set = {(r["role_id"], r["menu_key"], r["action"]) for r in all_perm_rows}
+    # Menus — filter by domain prefix if specified
+    if domain:
+        menu_rows = await fetch_all_isf_auth(
+            "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' AND menu_key LIKE $1 ORDER BY sort_order, menu_key",
+            f"{domain}.%",
+        )
+    else:
+        menu_rows = await fetch_all_isf_auth(
+            "SELECT menu_key, label, group_label, sort_order FROM isf_auth.menu WHERE status = 'A' ORDER BY sort_order, menu_key"
+        )
+
+    # Sort menus by domain order then sort_order
+    def _menu_sort_key(m: dict) -> tuple:
+        prefix = m["menu_key"].split(".")[0]
+        return (_DOMAIN_SORT.get(prefix, 99), m["sort_order"], m["menu_key"])
+
+    menu_rows = sorted(menu_rows, key=_menu_sort_key)
+
+    # Permissions
+    role_ids = [r["role_id"] for r in role_rows]
+    if not role_ids:
+        perm_set: set = set()
+    else:
+        perm_rows = await fetch_all_isf_auth(
+            "SELECT role_id, menu_key, action FROM isf_auth.role_menu_permission WHERE role_id = ANY(CAST($1 AS text[])) ORDER BY role_id, menu_key, action",
+            role_ids,
+        )
+        perm_set = {(r["role_id"], r["menu_key"], r["action"]) for r in perm_rows}
+
     actions = ["view", "tambah", "edit", "hapus", "detail"]
+    action_headers = ["V", "T", "E", "H", "D"]
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -310,20 +355,13 @@ async def export_role_menu_permission_excel() -> bytes:
     center = Alignment(horizontal="center")
 
     # Header row
-    ws.cell(row=1, column=1, value="Role ID").font = header_font
-    ws.cell(row=1, column=1).fill = header_fill
-    ws.cell(row=1, column=2, value="Role Name").font = header_font
-    ws.cell(row=1, column=2).fill = header_fill
-    ws.cell(row=1, column=3, value="Domain").font = header_font
-    ws.cell(row=1, column=3).fill = header_fill
-    ws.cell(row=1, column=4, value="Menu").font = header_font
-    ws.cell(row=1, column=4).fill = header_fill
-
-    for i, action in enumerate(actions, start=5):
-        cell = ws.cell(row=1, column=i, value=action.upper()[:1])
+    headers = ["Role ID", "Role Name", "Domain", "Menu"] + action_headers
+    for col, h in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=h)
         cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = center
+        if col > 4:
+            cell.alignment = center
 
     row_num = 2
     for role in role_rows:
@@ -332,15 +370,20 @@ async def export_role_menu_permission_excel() -> bytes:
             ws.cell(row=row_num, column=2, value=role["role_name"])
             ws.cell(row=row_num, column=3, value=menu["group_label"])
             ws.cell(row=row_num, column=4, value=menu["label"])
-            for i, action in enumerate(actions, start=5):
-                has = "v" if (role["role_id"], menu["menu_key"], action) in perm_set else ""
-                ws.cell(row=row_num, column=i, value=has).alignment = center
+            for col, action in enumerate(actions, start=5):
+                v = "v" if (role["role_id"], menu["menu_key"], action) in perm_set else ""
+                ws.cell(row=row_num, column=col, value=v).alignment = center
             row_num += 1
 
-    ws.column_dimensions["A"].width = 12
-    ws.column_dimensions["B"].width = 20
-    ws.column_dimensions["C"].width = 18
-    ws.column_dimensions["D"].width = 35
+    ws.column_dimensions["A"].width = 14
+    ws.column_dimensions["B"].width = 22
+    ws.column_dimensions["C"].width = 22
+    ws.column_dimensions["D"].width = 38
+    for col_letter in ["E", "F", "G", "H", "I"]:
+        ws.column_dimensions[col_letter].width = 5
+
+    # Freeze header row
+    ws.freeze_panes = "A2"
 
     buf = io.BytesIO()
     wb.save(buf)

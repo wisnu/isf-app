@@ -50,8 +50,11 @@ async def put_role_menu_permission(payload: RoleMenuPermissionUpdateRequest):
 
 
 @router.get("/role-menu-permission/export")
-async def export_role_menu_permission():
-    xlsx_bytes = await export_role_menu_permission_excel()
+async def export_role_menu_permission(
+    role_id: str | None = None,
+    domain: str | None = None,
+):
+    xlsx_bytes = await export_role_menu_permission_excel(role_id=role_id, domain=domain)
     return StreamingResponse(
         io.BytesIO(xlsx_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

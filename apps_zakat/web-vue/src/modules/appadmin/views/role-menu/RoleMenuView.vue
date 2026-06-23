@@ -256,7 +256,14 @@ async function exportExcel() {
   exporting.value = true
   error.value     = ''
   try {
-    await api.downloadBlob('/api/appadmin/role-menu-permission/export', 'role-menu-permission.xlsx')
+    const params = new URLSearchParams()
+    if (domainFilter.value) params.set('domain', domainFilter.value)
+    if (roleFilter.value)   params.set('role_id', roleFilter.value)
+    const qs = params.toString()
+    const path = qs
+      ? `/api/appadmin/role-menu-permission/export?${qs}`
+      : '/api/appadmin/role-menu-permission/export'
+    await api.downloadBlob(path, 'role-menu-permission.xlsx')
   } catch (e: unknown) {
     error.value = e instanceof ApiError ? e.message : 'Gagal export Excel'
   } finally {

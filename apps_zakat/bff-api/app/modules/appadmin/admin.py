@@ -104,9 +104,20 @@ async def put_role_menu_permission(
 
 @router.get("/role-menu-permission/export")
 async def export_role_menu_permission(
+    role_id: str | None = None,
+    domain: str | None = None,
     user_id: str = Depends(require_menu("appadmin.role_menu")),
 ):
-    downstream = await stream_api_python("/api/appadmin/role-menu-permission/export")
+    params: dict = {}
+    if role_id:
+        params["role_id"] = role_id
+    if domain:
+        params["domain"] = domain
+    path = "/api/appadmin/role-menu-permission/export"
+    if params:
+        from urllib.parse import urlencode
+        path = f"{path}?{urlencode(params)}"
+    downstream = await stream_api_python(path)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
     return Response(
