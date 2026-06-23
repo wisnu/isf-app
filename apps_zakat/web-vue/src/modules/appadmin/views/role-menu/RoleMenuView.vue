@@ -139,10 +139,12 @@ async function loadRoles() {
   loading.value = true
   error.value   = ''
   try {
-    // Fetch with no role_id to get roles+menus catalog (permissions will be empty)
-    const snap = await api.get<PermissionSnapshot>('/api/appadmin/role-menu-permission')
-    allRoles.value = snap.roles
-    allMenus.value = snap.menus
+    // Load roles list from dedicated endpoint
+    const response = await api.get<{ rows: RoleInfo[]; pagination: { page: number; limit: number; total: number; total_pages: number } }>(
+      '/api/appadmin/roles?limit=200&status=active'
+    )
+    allRoles.value = response.rows
+    // Menus will be loaded when a role is selected via loadPermissions()
   } catch (e: unknown) {
     error.value = e instanceof ApiError ? e.message : 'Gagal memuat daftar role'
   } finally {
