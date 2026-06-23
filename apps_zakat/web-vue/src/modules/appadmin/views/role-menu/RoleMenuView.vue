@@ -228,10 +228,12 @@ async function onSave() {
   error.value   = ''
   success.value = ''
   try {
-    const permissions: MenuPermission[] = []
-    current.value.forEach((actSet, menu_key) => {
-      permissions.push({ menu_key, actions: Array.from(actSet) })
-    })
+    const permissions: MenuPermission[] = Array.from(current.value.entries())
+      .filter(([, actSet]) => actSet.size > 0)
+      .map(([menu_key, actSet]) => ({
+        menu_key,
+        actions: Array.from(actSet),
+      }))
     const result = await api.put<UpdateResult>(
       '/api/appadmin/role-menu-permission',
       { role_id: selectedRoleId.value, permissions }
@@ -259,13 +261,15 @@ async function exportExcel() {
 
 // ── Watchers ──────────────────────────────────────────────────────────────────
 
+let reverting = false
 watch(selectedRoleId, async (newId: string, oldId: string) => {
-  if (!newId) return
+  if (reverting || !newId) return
   if (oldId && isDirty.value) {
     const ok = window.confirm('Ada perubahan yang belum disimpan. Lanjutkan pindah role?')
     if (!ok) {
-      // Revert selection — avoid recursive watch by assigning directly
+      reverting = true
       selectedRoleId.value = oldId
+      reverting = false
       return
     }
   }
@@ -367,12 +371,12 @@ loadRoles()
         class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
       >
         <!-- Group header -->
-        <button
-          type="button"
-          class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
-          @click="toggleGroup(group.label)"
-        >
-          <span class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+        <div class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <button
+            type="button"
+            class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer"
+            @click="toggleGroup(group.label)"
+          >
             <component
               :is="expandedGroups.has(group.label) ? ChevronDown : ChevronRight"
               class="w-4 h-4 shrink-0"
@@ -381,15 +385,15 @@ loadRoles()
             <span class="text-xs text-gray-400 font-normal">
               ({{ activeMenuCount(group) }} dari {{ group.menus.length }} menu aktif)
             </span>
-          </span>
+          </button>
           <button
             type="button"
             class="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-2 py-0.5 border border-emerald-300 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shrink-0"
-            @click.stop="activateAll(group.label)"
+            @click="activateAll(group.label)"
           >
             Aktifkan Semua
           </button>
-        </button>
+        </div>
 
         <!-- Menu table -->
         <div v-show="expandedGroups.has(group.label)" class="overflow-x-auto">
