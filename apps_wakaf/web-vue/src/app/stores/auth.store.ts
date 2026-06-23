@@ -1,9 +1,16 @@
-import { defineStore } from 'pinia'
+import { computed, shallowRef } from 'vue'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { api, ApiError } from '@/shared/api/client'
 import type { MenuKey } from '@/shared/constants/menu-keys'
 
 export interface Tenant { id: string; name: string }
+
+export interface MenuPermission {
+  menu_key: string
+  actions: string[]
+}
+
 export interface User {
   username: string
   name: string
@@ -12,7 +19,7 @@ export interface User {
   roles: string[]
   branches: string[]
   primary_branch: string | null
-  menus: string[]
+  menus: MenuPermission[]
   branch_access?: 'all' | 'single'
 }
 
@@ -21,102 +28,116 @@ export interface AuthProviders {
   google: boolean
 }
 
-interface State {
-  initialized: boolean
-  user: User | null
-  activeTenantId: string | null
-  providers: AuthProviders
-  providersLoaded: boolean
-}
+export const useAuthStore = defineStore('auth', () => {
+  const initialized = shallowRef(false)
+  const user = shallowRef<User | null>(null)
+  const activeTenantId = shallowRef<string | null>(null)
+  const providers = shallowRef<AuthProviders>({ password: true, google: false })
+  const providersLoaded = shallowRef(false)
 
-export const useAuthStore = defineStore('auth', {
-  state: (): State => ({
-    initialized: false,
-    user: null,
-    activeTenantId: null,
-    providers: { password: true, google: false },
-    providersLoaded: false,
-  }),
-  getters: {
-    activeTenant(state): Tenant | null {
-      if (!state.user || !state.activeTenantId) return null
-      return state.user.tenants.find((t) => t.id === state.activeTenantId) ?? null
-    },
-    hasTenant(state): boolean {
-      return Boolean(state.activeTenantId)
-    },
-    menus(state): string[] {
-      return state.user?.menus ?? []
-    },
-    hasMenu(state) {
-      return (key: MenuKey | string): boolean =>
-        Boolean(state.user && state.user.menus.includes(key))
-    },
-  },
-  actions: {
-    async loadProviders() {
-      if (this.providersLoaded) return
-      try {
-        const result = await api.get<AuthProviders>('/api/auth/providers')
-        this.providers = result
-      } catch {
-        // fallback to defaults
-      } finally {
-        this.providersLoaded = true
-      }
-    },
+  const activeTenant = computed<Tenant | null>(() => {
+    if (!user.value || !activeTenantId.value) return null
+    return user.value.tenants.find((t) => t.id === activeTenantId.value) ?? null
+  })
+  const hasTenant = computed(() => Boolean(activeTenantId.value))
 
-    async bootstrap() {
-      try {
-        const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
-        this.user = me.user
-        this.activeTenantId = me.active_tenant_id
-      } catch (e) {
-        if (e instanceof ApiError && e.status === 401) {
-          this.user = null
-          this.activeTenantId = null
-        } else {
-          throw e
-        }
-      } finally {
-        this.initialized = true
-      }
-    },
+  // Backward-compat: list of menu_keys the user has access to
+  const menus = computed<string[]>(() =>
+    user.value?.menus.map(m => m.menu_key) ?? []
+  )
 
-    async login(username: string, password: string) {
-      const result = await api.post<{ user: User; active_tenant_id: string }>(
-        '/api/auth/login', { username, password },
-      )
-      this.user = result.user
-      this.activeTenantId = result.active_tenant_id
-    },
+  // New: action lookup by menu_key
+  const menuActions = computed<Record<string, string[]>>(() => {
+    if (!user.value) return {}
+    return Object.fromEntries(user.value.menus.map(m => [m.menu_key, m.actions]))
+  })
 
-    async logout() {
-      try {
-        await api.post('/api/auth/logout')
-      } finally {
-        this.user = null
-        this.activeTenantId = null
-      }
-    },
+  function hasMenu(key: MenuKey | string): boolean {
+    return Boolean(user.value?.menus.some(m => m.menu_key === key))
+  }
 
-    async switchTenant(tenantId: string) {
-      const result = await api.post<{ active_tenant_id: string }>(
-        '/api/tenants/switch', { tenant_id: tenantId },
-      )
-      this.activeTenantId = result.active_tenant_id
-      console.log('[audit] tenant switched', {
-        tenant_id: tenantId,
-        at: new Date().toISOString(),
-      })
-    },
+  async function loadProviders() {
+    if (providersLoaded.value) return
+    try {
+      const result = await api.get<AuthProviders>('/api/auth/providers')
+      providers.value = result
+    } catch {
+      // fallback to defaults
+    } finally {
+      providersLoaded.value = true
+    }
+  }
 
-    async refreshProfile() {
-      await api.post('/api/auth/refresh-profile')
-      // Re-bootstrap untuk dapat user shape baru dari /me
+  async function bootstrap() {
+    try {
       const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
-      this.user = me.user
-      this.activeTenantId = me.active_tenant_id
-    },
-  },
+      user.value = me.user
+      activeTenantId.value = me.active_tenant_id
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        user.value = null
+        activeTenantId.value = null
+      } else {
+        throw e
+      }
+    } finally {
+      initialized.value = true
+    }
+  }
+
+  async function login(username: string, password: string) {
+    const result = await api.post<{ user: User; active_tenant_id: string }>(
+      '/api/auth/login', { username, password },
+    )
+    user.value = result.user
+    activeTenantId.value = result.active_tenant_id
+  }
+
+  async function logout() {
+    try {
+      await api.post('/api/auth/logout')
+    } finally {
+      user.value = null
+      activeTenantId.value = null
+    }
+  }
+
+  async function switchTenant(tenantId: string) {
+    const result = await api.post<{ active_tenant_id: string }>(
+      '/api/tenants/switch', { tenant_id: tenantId },
+    )
+    activeTenantId.value = result.active_tenant_id
+  }
+
+  async function refreshProfile() {
+    await api.post('/api/auth/refresh-profile')
+    const me = await api.get<{ user: User; active_tenant_id: string | null }>('/api/auth/me')
+    user.value = me.user
+    activeTenantId.value = me.active_tenant_id
+  }
+
+  return {
+    initialized,
+    user,
+    activeTenantId,
+    providers,
+    providersLoaded,
+    activeTenant,
+    hasTenant,
+    menus,
+    menuActions,
+    hasMenu,
+    loadProviders,
+    bootstrap,
+    login,
+    logout,
+    switchTenant,
+    refreshProfile,
+  }
 })
+
+// Preserve store state across Vite HMR — prevents the app shell (header +
+// sidebar) from vanishing when components are hot-reloaded during dev.
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot))
+}

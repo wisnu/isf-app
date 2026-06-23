@@ -1,360 +1,451 @@
 <script setup lang="ts">
-import { AlertCircle, Check, Loader2, RefreshCw, Save, Search, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
+import { ChevronDown, ChevronRight, Download, RefreshCw, Save, X } from 'lucide-vue-next'
 
+import { api, ApiError } from '@/shared/api/client'
 import Alert from '@/shared/components/Alert.vue'
 import Button from '@/shared/components/Button.vue'
-import Input from '@/shared/components/Input.vue'
-import CrudLayout from '@/shared/components/CrudLayout.vue'
-import DataPanel from '@/shared/components/DataPanel.vue'
-import FilterGroup from '@/shared/components/FilterGroup.vue'
-import FilterPanel from '@/shared/components/FilterPanel.vue'
-import PageHeader from '@/shared/components/PageHeader.vue'
-import { api, ApiError } from '@/shared/api/client'
 
-interface RoleInfo {
-  id_peran: string
-  nama_peran: string
-  user_count: number
-}
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-interface MenuInfo {
-  menu_key: string
-  label: string
-  group_label: string
-  sort_order: number
-}
+interface RoleInfo       { role_id: string; role_name: string; user_count: number }
+interface MenuInfo       { menu_key: string; label: string; group_label: string; sort_order: number }
+interface MenuPermission { menu_key: string; actions: string[] }
 
-interface MappingPair {
-  id_peran: string
-  menu_key: string
-}
-
-interface Snapshot {
+interface PermissionSnapshot {
   roles: RoleInfo[]
   menus: MenuInfo[]
-  mapping: MappingPair[]
+  permissions: MenuPermission[]
 }
 
-interface UpdateResponse {
+interface UpdateResult {
   updated: boolean
-  total_rows: number
-  diff: { added: MappingPair[]; removed: MappingPair[] }
+  role_id: string
+  added_count: number
+  removed_count: number
 }
 
-const loading = ref(true)
-const saving = ref(false)
-const errorMsg = ref<string | null>(null)
-const successMsg = ref<string | null>(null)
+const ACTIONS = [
+  { key: 'view',   label: 'V', title: 'View' },
+  { key: 'tambah', label: 'T', title: 'Tambah' },
+  { key: 'edit',   label: 'E', title: 'Edit' },
+  { key: 'hapus',  label: 'H', title: 'Hapus' },
+  { key: 'detail', label: 'D', title: 'Detail' },
+] as const
 
-const roles = ref<RoleInfo[]>([])
-const menus = ref<MenuInfo[]>([])
+type ActionKey = typeof ACTIONS[number]['key']
 
-const original = ref<Set<string>>(new Set())
-const current = ref<Set<string>>(new Set())
+// ── State ─────────────────────────────────────────────────────────────────────
 
-const searchRole = ref('')
-const visibleGroups = ref<Set<string>>(new Set())
+const loading   = ref(false)
+const saving    = ref(false)
+const exporting = ref(false)
+const error     = ref('')
+const success   = ref('')
 
-const pairKey = (id_peran: string, menu_key: string) => `${id_peran}|${menu_key}`
+const allRoles = ref<RoleInfo[]>([])
+const allMenus = ref<MenuInfo[]>([])
 
-const dirty = computed(() => {
-  const added: MappingPair[] = []
-  const removed: MappingPair[] = []
-  for (const k of current.value) {
-    if (!original.value.has(k)) {
-      const [rp, mk] = k.split('|')
-      added.push({ id_peran: rp, menu_key: mk })
-    }
-  }
-  for (const k of original.value) {
-    if (!current.value.has(k)) {
-      const [rp, mk] = k.split('|')
-      removed.push({ id_peran: rp, menu_key: mk })
-    }
-  }
-  return { added, removed, count: added.length + removed.length }
-})
+// selectedRoleId uses '' as "no selection" to match SearchSelect's string modelValue
+const selectedRoleId = ref('')
 
-const isDirty = computed(() => dirty.value.count > 0)
+// current: menu_key → Set of actions (editable copy)
+// original: menu_key → Set of actions (snapshot for dirty tracking)
+const current  = ref(new Map<string, Set<string>>())
+const original = ref(new Map<string, Set<string>>())
 
-const menuGroups = computed(() => {
-  const groups = new Map<string, MenuInfo[]>()
-  for (const m of menus.value) {
-    if (!groups.has(m.group_label)) groups.set(m.group_label, [])
-    groups.get(m.group_label)!.push(m)
-  }
-  return Array.from(groups.entries())
-})
+const expandedGroups = ref(new Set<string>())
 
-const filteredMenus = computed(() =>
-  menus.value.filter((m) => visibleGroups.value.has(m.group_label))
+// ── Derived ───────────────────────────────────────────────────────────────────
+
+const roleOptions = computed(() =>
+  allRoles.value.map(r => ({
+    value: r.role_id,
+    label: `${r.role_id} — ${r.role_name}`,
+  }))
 )
 
-const filteredRoles = computed(() => {
-  const q = searchRole.value.trim().toLowerCase()
-  if (!q) return roles.value
-  return roles.value.filter(
-    (r) =>
-      r.id_peran.toLowerCase().includes(q) ||
-      r.nama_peran.toLowerCase().includes(q)
-  )
+const groupedMenus = computed(() => {
+  const groups = new Map<string, MenuInfo[]>()
+  for (const menu of allMenus.value) {
+    if (!groups.has(menu.group_label)) groups.set(menu.group_label, [])
+    groups.get(menu.group_label)!.push(menu)
+  }
+  return Array.from(groups.entries()).map(([label, menus]) => ({ label, menus }))
 })
 
-function isChecked(id_peran: string, menu_key: string): boolean {
-  return current.value.has(pairKey(id_peran, menu_key))
-}
-
-function isCellDirty(id_peran: string, menu_key: string): boolean {
-  const k = pairKey(id_peran, menu_key)
-  return original.value.has(k) !== current.value.has(k)
-}
-
-function toggleCell(id_peran: string, menu_key: string) {
-  const k = pairKey(id_peran, menu_key)
-  const next = new Set(current.value)
-  if (next.has(k)) next.delete(k)
-  else next.add(k)
-  current.value = next
-}
-
-function toggleRowAll(id_peran: string) {
-  const visibleKeys = filteredMenus.value.map((m) => pairKey(id_peran, m.menu_key))
-  const allOn = visibleKeys.every((k) => current.value.has(k))
-  const next = new Set(current.value)
-  if (allOn) {
-    visibleKeys.forEach((k) => next.delete(k))
-  } else {
-    visibleKeys.forEach((k) => next.add(k))
+const isDirty = computed(() => {
+  if (current.value.size !== original.value.size) return true
+  for (const [mk, acts] of current.value) {
+    const orig = original.value.get(mk) ?? new Set<string>()
+    if (acts.size !== orig.size) return true
+    for (const a of acts) if (!orig.has(a)) return true
   }
-  current.value = next
-}
+  return false
+})
 
-function toggleColumnAll(menu_key: string) {
-  const visibleKeys = filteredRoles.value.map((r) => pairKey(r.id_peran, menu_key))
-  const allOn = visibleKeys.every((k) => current.value.has(k))
-  const next = new Set(current.value)
-  if (allOn) {
-    visibleKeys.forEach((k) => next.delete(k))
-  } else {
-    visibleKeys.forEach((k) => next.add(k))
+const dirtyCount = computed(() => {
+  let count = 0
+  const allKeys = new Set([...current.value.keys(), ...original.value.keys()])
+  for (const mk of allKeys) {
+    const curr = current.value.get(mk) ?? new Set<string>()
+    const orig = original.value.get(mk) ?? new Set<string>()
+    for (const a of ACTIONS.map(a => a.key)) {
+      if (curr.has(a) !== orig.has(a)) count++
+    }
   }
-  current.value = next
+  return count
+})
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function hasAction(menuKey: string, action: string): boolean {
+  return current.value.get(menuKey)?.has(action) ?? false
 }
 
-async function load() {
+function isDirtyCell(menuKey: string, action: string): boolean {
+  const curr = current.value.get(menuKey)?.has(action) ?? false
+  const orig = original.value.get(menuKey)?.has(action) ?? false
+  return curr !== orig
+}
+
+function activeMenuCount(group: { menus: MenuInfo[] }): number {
+  return group.menus.filter(m => (current.value.get(m.menu_key)?.size ?? 0) > 0).length
+}
+
+function cloneMap(src: Map<string, Set<string>>): Map<string, Set<string>> {
+  return new Map(Array.from(src.entries()).map(([k, v]) => [k, new Set(v)]))
+}
+
+function applySnapshot(permissions: MenuPermission[]) {
+  const map = new Map<string, Set<string>>()
+  for (const p of permissions) {
+    map.set(p.menu_key, new Set(p.actions))
+  }
+  // Ensure all menus have an entry (even empty) so dirty checks work
+  for (const m of allMenus.value) {
+    if (!map.has(m.menu_key)) map.set(m.menu_key, new Set())
+  }
+  current.value  = map
+  original.value = cloneMap(map)
+}
+
+// ── Data loading ──────────────────────────────────────────────────────────────
+
+async function loadRoles() {
+  if (allRoles.value.length > 0) return
   loading.value = true
-  errorMsg.value = null
+  error.value   = ''
   try {
-    const snap = await api.get<Snapshot>('/api/appadmin/role-menu')
-    roles.value = snap.roles
-    menus.value = snap.menus
-    const keys = new Set(snap.mapping.map((p) => pairKey(p.id_peran, p.menu_key)))
-    original.value = keys
-    current.value = new Set(keys)
-    // Default semua group menu visible
-    visibleGroups.value = new Set(snap.menus.map((m) => m.group_label))
-  } catch (e) {
-    errorMsg.value =
-      e instanceof ApiError ? e.message : 'Gagal memuat data. Coba refresh.'
+    // Load roles via the role-menu snapshot (wakaf portal doesn't have a dedicated roles endpoint)
+    const snap = await api.get<PermissionSnapshot>(
+      '/api/appadmin/role-menu-permission?role_id=ADM'
+    )
+    allRoles.value = snap.roles
+    allMenus.value = snap.menus
+    // Don't pre-select a role — let user pick
+  } catch (e: unknown) {
+    // Non-fatal: roles can still be loaded when user picks a role
+    error.value = e instanceof ApiError ? e.message : 'Gagal memuat daftar role'
   } finally {
     loading.value = false
   }
 }
 
-function discard() {
-  current.value = new Set(original.value)
-  successMsg.value = null
-  errorMsg.value = null
+async function loadPermissions(roleId: string) {
+  loading.value = true
+  error.value   = ''
+  success.value = ''
+  try {
+    const snap = await api.get<PermissionSnapshot>(
+      `/api/appadmin/role-menu-permission?role_id=${encodeURIComponent(roleId)}`
+    )
+    // Update catalogs if not yet populated
+    if (allRoles.value.length === 0) allRoles.value = snap.roles
+    if (allMenus.value.length === 0)  allMenus.value  = snap.menus
+    applySnapshot(snap.permissions)
+    // Expand all groups on first load
+    if (expandedGroups.value.size === 0) {
+      expandedGroups.value = new Set(allMenus.value.map(m => m.group_label))
+    }
+  } catch (e: unknown) {
+    error.value = e instanceof ApiError ? e.message : 'Gagal memuat permission'
+  } finally {
+    loading.value = false
+  }
 }
 
-async function save() {
-  if (!isDirty.value || saving.value) return
-  saving.value = true
-  errorMsg.value = null
-  successMsg.value = null
-  const mapping: MappingPair[] = [...current.value].map((k) => {
-    const [rp, mk] = k.split('|')
-    return { id_peran: rp, menu_key: mk }
-  })
+// ── Actions ───────────────────────────────────────────────────────────────────
+
+function toggleAction(menuKey: string, action: ActionKey, event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+  const map = cloneMap(current.value)
+  const actions = map.get(menuKey) ?? new Set<string>()
+  const next = new Set(actions)
+
+  if (action === 'view' && !checked) {
+    // Unchecking view clears all actions
+    next.clear()
+  } else if (action !== 'view' && checked) {
+    // Checking any non-view action also enables view
+    next.add('view')
+    next.add(action)
+  } else {
+    if (checked) next.add(action)
+    else next.delete(action)
+  }
+
+  map.set(menuKey, next)
+  current.value = map
+}
+
+function toggleGroup(groupLabel: string) {
+  const next = new Set(expandedGroups.value)
+  if (next.has(groupLabel)) next.delete(groupLabel)
+  else next.add(groupLabel)
+  expandedGroups.value = next
+}
+
+function activateAll(groupLabel: string) {
+  const group = groupedMenus.value.find(g => g.label === groupLabel)
+  if (!group) return
+  const map = cloneMap(current.value)
+  for (const m of group.menus) {
+    map.set(m.menu_key, new Set(ACTIONS.map(a => a.key)))
+  }
+  current.value = map
+}
+
+function onDiscard() {
+  current.value = cloneMap(original.value)
+  success.value = ''
+  error.value   = ''
+}
+
+async function onSave() {
+  if (!selectedRoleId.value || !isDirty.value) return
+  saving.value  = true
+  error.value   = ''
+  success.value = ''
   try {
-    const result = await api.put<UpdateResponse>('/api/appadmin/role-menu', { mapping })
-    successMsg.value = `Tersimpan: +${result.diff.added.length} added, −${result.diff.removed.length} removed`
-    original.value = new Set(current.value)
-  } catch (e) {
-    if (e instanceof ApiError) {
-      errorMsg.value = `${e.code}: ${e.message}`
-    } else {
-      errorMsg.value = 'Gagal menyimpan. Coba lagi.'
-    }
+    const permissions: MenuPermission[] = Array.from(current.value.entries())
+      .filter(([, actSet]) => actSet.size > 0)
+      .map(([menu_key, actSet]) => ({
+        menu_key,
+        actions: Array.from(actSet),
+      }))
+    const result = await api.put<UpdateResult>(
+      '/api/appadmin/role-menu-permission',
+      { role_id: selectedRoleId.value, permissions }
+    )
+    original.value = cloneMap(current.value)
+    success.value  = `Tersimpan: +${result.added_count} ditambah, −${result.removed_count} dihapus`
+  } catch (e: unknown) {
+    error.value = e instanceof ApiError ? e.message : 'Gagal menyimpan permission'
   } finally {
     saving.value = false
   }
 }
 
-function toggleGroup(label: string) {
-  const next = new Set(visibleGroups.value)
-  if (next.has(label)) next.delete(label)
-  else next.add(label)
-  visibleGroups.value = next
+async function exportExcel() {
+  exporting.value = true
+  error.value     = ''
+  try {
+    await api.downloadBlob('/api/appadmin/role-menu-permission/export', 'role-menu-permission.xlsx')
+  } catch (e: unknown) {
+    error.value = e instanceof ApiError ? e.message : 'Gagal export Excel'
+  } finally {
+    exporting.value = false
+  }
 }
 
-function onBeforeUnloadHandler(e: BeforeUnloadEvent) {
+// ── Watchers ──────────────────────────────────────────────────────────────────
+
+let reverting = false
+watch(selectedRoleId, async (newId: string, oldId: string) => {
+  if (reverting || !newId) return
+  if (oldId && isDirty.value) {
+    const ok = window.confirm('Ada perubahan yang belum disimpan. Lanjutkan pindah role?')
+    if (!ok) {
+      reverting = true
+      selectedRoleId.value = oldId
+      reverting = false
+      return
+    }
+  }
+  await loadPermissions(newId)
+})
+
+const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
   if (isDirty.value) {
     e.preventDefault()
     e.returnValue = ''
   }
 }
+window.addEventListener('beforeunload', beforeUnloadHandler)
+onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnloadHandler))
 
-onMounted(() => {
-  load()
-  window.addEventListener('beforeunload', onBeforeUnloadHandler)
+onBeforeRouteLeave((_to: unknown, _from: unknown, next: (ok?: boolean) => void) => {
+  if (!isDirty.value) return next()
+  const ok = window.confirm('Ada perubahan yang belum disimpan. Keluar halaman?')
+  next(ok)
 })
 
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', onBeforeUnloadHandler)
-})
+// ── Init ──────────────────────────────────────────────────────────────────────
 
-onBeforeRouteLeave(() => {
-  if (isDirty.value) {
-    return window.confirm(
-      `Anda punya ${dirty.value.count} perubahan belum disimpan. Tinggalkan halaman?`
-    )
-  }
-})
+loadRoles()
 </script>
 
 <template>
-  <CrudLayout>
-    <template #header>
-      <PageHeader title="Mapping Role-Menu">
-        <template #actions>
-          <Button :disabled="loading || saving" variant="ghost" size="sm" @click="load">
-            <RefreshCw class="w-4 h-4" /> Refresh
-          </Button>
-          <Button :disabled="!isDirty || saving" variant="outline" size="sm" @click="discard">
-            <X class="w-4 h-4" /> Discard
-          </Button>
-          <Button :disabled="!isDirty || saving" size="sm" @click="save">
-            <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
-            <Save v-else class="w-4 h-4" />
-            Save Changes
-            <span v-if="isDirty" class="ml-1 text-xs opacity-75">({{ dirty.count }})</span>
-          </Button>
-        </template>
-      </PageHeader>
-    </template>
+  <div class="flex flex-col gap-4 p-4 max-w-screen-xl mx-auto">
 
-    <template #alert>
-      <Alert v-if="errorMsg" variant="destructive">
-        <AlertCircle class="w-4 h-4 shrink-0" />
-        {{ errorMsg }}
-      </Alert>
-      <Alert v-else-if="successMsg" class="bg-positive/10 text-positive border-positive/30">
-        <Check class="w-4 h-4 shrink-0" />
-        {{ successMsg }}
-      </Alert>
-      <Alert v-else-if="isDirty" class="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/40">
-        Anda punya {{ dirty.count }} perubahan belum disimpan
-      </Alert>
-    </template>
+    <!-- Header -->
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pengaturan Menu</h1>
+      <div class="flex items-center gap-2 flex-wrap">
+        <Button variant="outline" size="sm" :disabled="exporting" @click="exportExcel">
+          <Download class="w-3.5 h-3.5" />
+          Export Excel
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="!selectedRoleId || loading"
+          @click="selectedRoleId && loadPermissions(selectedRoleId)"
+        >
+          <RefreshCw class="w-3.5 h-3.5" :class="loading ? 'animate-spin' : ''" />
+          Refresh
+        </Button>
+        <Button variant="outline" size="sm" :disabled="!isDirty" @click="onDiscard">
+          <X class="w-3.5 h-3.5" />
+          Discard
+        </Button>
+        <Button size="sm" :disabled="!isDirty || saving" @click="onSave">
+          <Save class="w-3.5 h-3.5" />
+          {{ saving ? 'Menyimpan...' : 'Simpan' }}
+        </Button>
+      </div>
+    </div>
 
-    <template #filter>
-      <FilterPanel>
-        <FilterGroup label="Cari role">
-          <div class="relative">
-            <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
-            <Input v-model="searchRole" placeholder="id_peran atau nama..." class="pl-8 text-xs h-8" />
-          </div>
-        </FilterGroup>
-        <FilterGroup label="Group menu">
-          <div class="space-y-0.5">
-            <label
-              v-for="[groupLabel, items] in menuGroups"
-              :key="groupLabel"
-              class="flex items-center gap-2 text-xs cursor-pointer py-1 hover:text-foreground text-muted"
-            >
-              <input
-                type="checkbox"
-                :checked="visibleGroups.has(groupLabel)"
-                class="rounded"
-                @change="toggleGroup(groupLabel)"
-              />
-              <span>{{ groupLabel }} <span class="opacity-50">({{ items.length }})</span></span>
-            </label>
-          </div>
-        </FilterGroup>
-      </FilterPanel>
-    </template>
+    <!-- Alerts -->
+    <Alert v-if="error" variant="destructive">{{ error }}</Alert>
+    <Alert
+      v-if="success"
+      class="bg-positive/10 text-positive border-positive/30"
+    >{{ success }}</Alert>
+    <Alert
+      v-if="isDirty && !error && !success"
+      class="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/40"
+    >
+      {{ dirtyCount }} perubahan belum disimpan
+    </Alert>
 
-    <template #data>
-      <DataPanel title="Matrix Role-Menu" :loading="loading && roles.length === 0" :is-empty="!loading && filteredRoles.length === 0">
-        <template #empty>Tidak ada role yang cocok dengan '{{ searchRole }}'</template>
+    <!-- Role picker -->
+    <div class="flex items-center gap-3">
+      <label class="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Role</label>
+      <select
+        v-model="selectedRoleId"
+        class="w-72 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        <option value="">Pilih role...</option>
+        <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+    </div>
 
-        <div class="overflow-x-auto">
-          <table class="text-xs w-full">
-            <thead class="sticky top-0 bg-surface border-b border-border z-10">
-              <tr>
-                <th class="text-left p-2 sticky left-0 bg-surface z-20 min-w-[180px] font-semibold">
-                  Role
-                </th>
+    <!-- Prompt state: no role selected -->
+    <div v-if="!selectedRoleId" class="flex items-center justify-center py-16 text-sm text-gray-400 italic">
+      Pilih role untuk melihat dan mengatur permission menu.
+    </div>
+
+    <!-- Loading state -->
+    <div v-else-if="loading" class="flex items-center justify-center py-16 text-sm text-gray-500">
+      <RefreshCw class="w-4 h-4 animate-spin mr-2" />
+      Memuat...
+    </div>
+
+    <!-- Accordion per group -->
+    <div v-else class="space-y-2">
+      <div
+        v-for="group in groupedMenus"
+        :key="group.label"
+        class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+      >
+        <!-- Group header -->
+        <div class="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <button
+            type="button"
+            class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer"
+            @click="toggleGroup(group.label)"
+          >
+            <component
+              :is="expandedGroups.has(group.label) ? ChevronDown : ChevronRight"
+              class="w-4 h-4 shrink-0"
+            />
+            {{ group.label }}
+            <span class="text-xs text-gray-400 font-normal">
+              ({{ activeMenuCount(group) }} dari {{ group.menus.length }} menu aktif)
+            </span>
+          </button>
+          <button
+            type="button"
+            class="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-2 py-0.5 border border-emerald-300 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shrink-0"
+            @click="activateAll(group.label)"
+          >
+            Aktifkan Semua
+          </button>
+        </div>
+
+        <!-- Menu table -->
+        <div v-show="expandedGroups.has(group.label)" class="overflow-x-auto">
+          <table class="w-full text-sm border-t border-gray-100 dark:border-gray-700">
+            <thead>
+              <tr class="bg-white dark:bg-gray-900">
+                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Menu</th>
                 <th
-                  v-for="m in filteredMenus"
-                  :key="m.menu_key"
-                  class="p-2 text-center min-w-[90px] cursor-pointer hover:bg-background transition-colors"
-                  :title="`Klik untuk toggle semua: ${m.menu_key}`"
-                  @click="toggleColumnAll(m.menu_key)"
+                  v-for="action in ACTIONS"
+                  :key="action.key"
+                  class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 text-center w-12"
+                  :title="action.title"
                 >
-                  <div class="font-medium leading-tight">{{ m.label }}</div>
-                  <div class="text-[9px] text-muted mt-0.5">{{ m.group_label }}</div>
+                  {{ action.label }}
                 </th>
-                <th class="p-2 text-center min-w-[60px] font-semibold">Bulk</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="role in filteredRoles"
-                :key="role.id_peran"
-                class="border-b border-border hover:bg-background/50 transition-colors"
+                v-for="menu in group.menus"
+                :key="menu.menu_key"
+                class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               >
-                <td
-                  class="p-2 sticky left-0 bg-surface"
-                  :title="`${role.user_count} user`"
-                >
-                  <div class="font-mono font-semibold text-[11px]">{{ role.id_peran }}</div>
-                  <div class="text-[10px] text-muted">{{ role.nama_peran }}</div>
+                <td class="px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <span>{{ menu.label }}</span>
+                  <span class="ml-2 text-xs text-gray-400 font-mono">{{ menu.menu_key }}</span>
                 </td>
                 <td
-                  v-for="m in filteredMenus"
-                  :key="m.menu_key"
-                  class="p-2 text-center transition-colors"
-                  :class="isCellDirty(role.id_peran, m.menu_key)
-                    ? 'bg-amber-100 dark:bg-amber-900/30'
+                  v-for="action in ACTIONS"
+                  :key="action.key"
+                  class="px-3 py-2 text-center transition-colors"
+                  :class="isDirtyCell(menu.menu_key, action.key)
+                    ? 'bg-amber-50 dark:bg-amber-900/20'
                     : ''"
                 >
                   <input
                     type="checkbox"
-                    :checked="isChecked(role.id_peran, m.menu_key)"
+                    :checked="hasAction(menu.menu_key, action.key)"
                     :disabled="saving"
-                    class="cursor-pointer disabled:cursor-not-allowed"
-                    @change="toggleCell(role.id_peran, m.menu_key)"
+                    class="h-4 w-4 rounded border-gray-300 text-emerald-600 cursor-pointer disabled:cursor-not-allowed"
+                    @change="toggleAction(menu.menu_key, action.key as ActionKey, $event)"
                   />
-                </td>
-                <td class="p-2 text-center">
-                  <button
-                    type="button"
-                    class="text-[10px] underline text-muted hover:text-foreground transition-colors"
-                    @click="toggleRowAll(role.id_peran)"
-                  >
-                    Toggle
-                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </DataPanel>
-    </template>
-  </CrudLayout>
+      </div>
+    </div>
+
+  </div>
 </template>

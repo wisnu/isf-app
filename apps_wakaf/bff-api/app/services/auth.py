@@ -15,11 +15,11 @@ from app.shared.response import err
 # Avoids storing menus in the session cookie (which can exceed 4096 bytes for
 # users with many roles such as ADM).
 # ---------------------------------------------------------------------------
-_menu_cache: dict[frozenset, tuple[list[str], float]] = {}
+_menu_cache: dict[frozenset, tuple[list[dict], float]] = {}
 _CACHE_TTL = 300.0  # seconds
 
 
-async def get_menus_for_roles(roles: list[str], db: AuthDB) -> list[str]:
+async def get_menus_for_roles(roles: list[str], db: AuthDB) -> list[dict]:
     key = frozenset(roles)
     now = time.monotonic()
     cached = _menu_cache.get(key)
@@ -60,7 +60,7 @@ async def build_user_public(
     roles: list[str] | None = None,
     branches: list[str] | None = None,
     primary_branch: str | None = None,
-    menus: list[str] | None = None,
+    menus: list[dict] | None = None,
     branch_access: str = "single",
 ) -> dict | None:
     """Build the public user payload returned to the frontend.
@@ -125,7 +125,7 @@ def require_menu(menu_key: str):
         roles = request.session.get("roles") or []
         db: AuthDB = request.app.state.auth_db
         menus = await get_menus_for_roles(roles, db)
-        if menu_key not in menus:
+        if not any(m["menu_key"] == menu_key and "view" in m.get("actions", []) for m in menus):
             audit = getattr(request.app.state, "audit", None)
             if audit is not None:
                 await audit.log(
