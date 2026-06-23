@@ -20,6 +20,22 @@ interface PermissionSnapshot {
   permissions: MenuPermission[]
 }
 
+// Domain mapping — sesuai domain rail
+const DOMAIN_LABELS: Record<string, string> = {
+  finance:       'Keuangan',
+  distribution:  'Program / Penyaluran',
+  fundraising:   'Penghimpunan',
+  generalaffair: 'Administrasi & Umum',
+  appadmin:      'Pengaturan Akses',
+  dashboard:     'Dashboard',
+}
+const DOMAIN_ORDER = ['finance', 'distribution', 'fundraising', 'generalaffair', 'appadmin', 'dashboard']
+
+function getDomain(menuKey: string): string { return menuKey.split('.')[0] ?? 'other' }
+function getDomainLabel(menuKey: string): string {
+  return DOMAIN_LABELS[getDomain(menuKey)] ?? getDomain(menuKey)
+}
+
 const ACTION_ROWS = [
   { key: 'view',   label: 'List (Lihat Daftar)' },
   { key: 'tambah', label: 'Create (Tambah Data)' },
@@ -58,7 +74,11 @@ let   confirmResolve: ((v: boolean) => void) | null = null
 
 // ── Derived ───────────────────────────────────────────────────────────────────
 
-const domains = computed(() => [...new Set(allMenus.value.map((m: MenuInfo) => m.group_label))])
+// Ordered list of domains present in menu catalog
+const domains = computed(() => {
+  const present = new Set(allMenus.value.map((m: MenuInfo) => getDomain(m.menu_key)))
+  return DOMAIN_ORDER.filter(d => present.has(d)).map(d => ({ id: d, label: DOMAIN_LABELS[d] ?? d }))
+})
 
 const visibleRoles = computed(() =>
   roleFilter.value ? allRoles.value.filter((r: RoleInfo) => r.role_id === roleFilter.value) : allRoles.value
@@ -66,14 +86,18 @@ const visibleRoles = computed(() =>
 
 const groupedMenus = computed(() => {
   const menus = domainFilter.value
-    ? allMenus.value.filter((m: MenuInfo) => m.group_label === domainFilter.value)
+    ? allMenus.value.filter((m: MenuInfo) => getDomain(m.menu_key) === domainFilter.value)
     : allMenus.value
+  // Group by domain, ordered
   const groups = new Map<string, MenuInfo[]>()
   for (const m of menus) {
-    if (!groups.has(m.group_label)) groups.set(m.group_label, [])
-    groups.get(m.group_label)!.push(m)
+    const d = getDomain(m.menu_key)
+    if (!groups.has(d)) groups.set(d, [])
+    groups.get(d)!.push(m)
   }
-  return Array.from(groups.entries()).map(([label, items]) => ({ label, items }))
+  return DOMAIN_ORDER
+    .filter(d => groups.has(d))
+    .map(d => ({ id: d, label: DOMAIN_LABELS[d] ?? d, items: groups.get(d)! }))
 })
 
 const isDirty = computed(() => {
@@ -315,7 +339,7 @@ loadAll()
                  px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         >
           <option value="">Semua Domain</option>
-          <option v-for="d in domains" :key="d" :value="d">{{ d }}</option>
+          <option v-for="d in domains" :key="d.id" :value="d.id">{{ d.label }}</option>
         </select>
       </div>
       <div class="flex-1 max-w-sm">
@@ -357,18 +381,28 @@ loadAll()
           </tr>
         </thead>
         <tbody>
-          <template v-for="group in groupedMenus" :key="group.label">
+          <template v-for="group in groupedMenus" :key="group.id">
+            <!-- Domain section header -->
+            <tr class="bg-gray-800 dark:bg-gray-950 border-t-4 border-gray-600">
+              <td
+                :colspan="visibleRoles.length + 1"
+                class="px-4 py-2 sticky left-0 bg-gray-800 dark:bg-gray-950"
+              >
+                <span class="text-sm font-bold text-white tracking-wide uppercase">
+                  {{ group.label }}
+                </span>
+              </td>
+            </tr>
             <template v-for="menu in group.items" :key="menu.menu_key">
               <!-- Menu header row -->
-              <tr class="bg-gray-100 dark:bg-gray-800/60 border-t-2 border-gray-300 dark:border-gray-600">
+              <tr class="bg-gray-100 dark:bg-gray-800/60 border-t border-gray-300 dark:border-gray-600">
                 <td
                   :colspan="visibleRoles.length + 1"
-                  class="px-4 py-2 sticky left-0 bg-gray-100 dark:bg-gray-800/60"
+                  class="px-4 py-2 pl-6 sticky left-0 bg-gray-100 dark:bg-gray-800/60"
                 >
                   <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                     📁 {{ menu.label }}
                   </span>
-                  <span class="ml-2 text-[10px] text-gray-400 font-normal">{{ menu.group_label }}</span>
                 </td>
               </tr>
               <!-- Action sub-rows -->
@@ -377,8 +411,8 @@ loadAll()
                 :key="`${menu.menu_key}:${actionRow.key}`"
                 class="border-t border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/20"
               >
-                <td class="px-4 py-1.5 text-gray-600 dark:text-gray-300 pl-10 sticky left-0 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/20">
-                  <span class="text-gray-400 mr-1.5">↳</span>{{ actionRow.label }}
+                <td class="px-4 py-1.5 pl-12 text-gray-600 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/20">
+                  <span class="text-gray-400 mr-1.5 text-xs">↳</span>{{ actionRow.label }}
                 </td>
                 <td
                   v-for="role in visibleRoles"
