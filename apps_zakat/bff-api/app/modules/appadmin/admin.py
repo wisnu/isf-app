@@ -14,15 +14,6 @@ router = APIRouter(prefix="/api/appadmin", tags=["appadmin"])
 MIN_PASSWORD_LENGTH = 8
 
 
-class MappingPairIn(BaseModel):
-    role_id: str
-    menu_key: str
-
-
-class RoleMenuUpdateIn(BaseModel):
-    mapping: list[MappingPairIn]
-
-
 class BranchCreateIn(BaseModel):
     branch_code: str
     branch_name: str
@@ -48,48 +39,6 @@ class BranchUpdateIn(BaseModel):
     office_phone1: str | None = None
     office_phone2: str | None = None
     office_phone3: str | None = None
-
-
-@router.get("/role-menu")
-async def get_role_menu(
-    user_id: str = Depends(require_menu("appadmin.role_menu")),
-):
-    downstream = await get_api_python("/api/appadmin/role-menu")
-    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
-
-
-@router.put("/role-menu")
-async def put_role_menu(
-    payload: RoleMenuUpdateIn,
-    request: Request,
-    user_id: str = Depends(require_menu("appadmin.role_menu")),
-):
-    body = {
-        "mapping": [p.model_dump() for p in payload.mapping],
-        "updated_by": user_id,
-    }
-    downstream = await post_api_python(
-        "/api/appadmin/role-menu", json_body=body, method="PUT"
-    )
-
-    audit = getattr(request.app.state, "audit", None)
-    if audit is not None and downstream.status_code == 200:
-        try:
-            result = downstream.json()
-            diff = result.get("data", {}).get("diff", {})
-            await audit.log(
-                "role_menu_updated",
-                user_id=user_id,
-                payload={
-                    "total_rows": result.get("data", {}).get("total_rows"),
-                    "added_count": len(diff.get("added", [])),
-                    "removed_count": len(diff.get("removed", [])),
-                },
-            )
-        except Exception:
-            pass
-
-    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
 # ============================================================================

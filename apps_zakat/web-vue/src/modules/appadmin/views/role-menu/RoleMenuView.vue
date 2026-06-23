@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Download, RefreshCw, Save, X } from 'lucide-
 import { api, ApiError } from '@/shared/api/client'
 import Alert from '@/shared/components/Alert.vue'
 import Button from '@/shared/components/Button.vue'
+import Modal from '@/shared/components/Modal.vue'
 import SearchSelect from '@/shared/components/SearchSelect.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -57,6 +58,20 @@ const current  = ref(new Map<string, Set<string>>())
 const original = ref(new Map<string, Set<string>>())
 
 const expandedGroups = ref(new Set<string>())
+
+// ── Confirm modal (replaces window.confirm) ───────────────────────────────────
+
+const showConfirmModal = ref(false)
+const confirmMessage = ref('')
+let confirmResolve: ((v: boolean) => void) | null = null
+
+function confirmUnsaved(message: string): Promise<boolean> {
+  confirmMessage.value = message
+  showConfirmModal.value = true
+  return new Promise(resolve => { confirmResolve = resolve })
+}
+function onConfirmOk() { showConfirmModal.value = false; confirmResolve?.(true) }
+function onConfirmCancel() { showConfirmModal.value = false; confirmResolve?.(false) }
 
 // ── Derived ───────────────────────────────────────────────────────────────────
 
@@ -265,7 +280,7 @@ let reverting = false
 watch(selectedRoleId, async (newId: string, oldId: string) => {
   if (reverting || !newId) return
   if (oldId && isDirty.value) {
-    const ok = window.confirm('Ada perubahan yang belum disimpan. Lanjutkan pindah role?')
+    const ok = await confirmUnsaved('Ada perubahan yang belum disimpan. Lanjutkan pindah role?')
     if (!ok) {
       reverting = true
       selectedRoleId.value = oldId
@@ -285,9 +300,9 @@ const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
 window.addEventListener('beforeunload', beforeUnloadHandler)
 onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnloadHandler))
 
-onBeforeRouteLeave((_to: unknown, _from: unknown, next: (ok?: boolean) => void) => {
+onBeforeRouteLeave(async (_to: unknown, _from: unknown, next: (ok?: boolean) => void) => {
   if (!isDirty.value) return next()
-  const ok = window.confirm('Ada perubahan yang belum disimpan. Keluar halaman?')
+  const ok = await confirmUnsaved('Ada perubahan yang belum disimpan. Keluar halaman?')
   next(ok)
 })
 
@@ -297,6 +312,20 @@ loadRoles()
 </script>
 
 <template>
+  <!-- Confirm modal for unsaved-changes guard -->
+  <Modal v-if="showConfirmModal" max-width="max-w-sm" @close="onConfirmCancel">
+    <template #header>
+      <span class="text-base font-semibold text-gray-900 dark:text-gray-100">Ada perubahan belum disimpan</span>
+    </template>
+    <p class="text-sm text-gray-600 dark:text-gray-300">{{ confirmMessage }}</p>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" size="sm" @click="onConfirmCancel">Batal</Button>
+        <Button variant="destructive" size="sm" @click="onConfirmOk">Lanjutkan</Button>
+      </div>
+    </template>
+  </Modal>
+
   <div class="flex flex-col gap-4 p-4 max-w-screen-xl mx-auto">
 
     <!-- Header -->

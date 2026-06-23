@@ -6,11 +6,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from app.modules.appadmin.branch import router as branch_router
 from app.modules.appadmin.role import router as role_router
 from app.modules.appadmin.user import router as user_router
-from app.modules.appadmin.schema import RoleMenuUpdateRequest, RoleMenuPermissionUpdateRequest
+from app.modules.appadmin.schema import RoleMenuPermissionUpdateRequest
 from app.modules.appadmin.service import (
     ValidationError,
-    list_role_menu,
-    replace_role_menu,
     list_role_menu_permission,
     replace_role_menu_permission,
     export_role_menu_permission_excel,
@@ -23,25 +21,7 @@ router.include_router(user_router.router)
 router.include_router(role_router.router)
 
 
-@router.get("/role-menu")
-async def get_role_menu():
-    snapshot = await list_role_menu()
-    return ok(snapshot.model_dump())
-
-
-@router.put("/role-menu")
-async def put_role_menu(payload: RoleMenuUpdateRequest):
-    try:
-        result = await replace_role_menu(payload.mapping, payload.updated_by)
-    except ValidationError as exc:
-        return JSONResponse(
-            status_code=400,
-            content=err(exc.code, exc.message, details=exc.details),
-        )
-    return ok(result.model_dump())
-
-
-# ── New: action-level permission endpoints ───────────────────────────────────
+# ── Action-level permission endpoints ────────────────────────────────────────
 
 @router.get("/role-menu-permission")
 async def get_role_menu_permission(role_id: str):

@@ -89,7 +89,7 @@ async def replace_role_menu(
     input_perans = list({m.role_id for m in mapping})
     if input_perans:
         valid_rows = await fetch_all(
-            "SELECT id_peran FROM enterprise.peran WHERE id_peran = ANY($1::text[]) AND status_peran = 'A'",
+            "SELECT id_peran FROM enterprise.peran WHERE id_peran = ANY(CAST($1 AS text[])) AND status_peran = 'A'",
             input_perans,
         )
         valid_perans = {r["id_peran"] for r in valid_rows}
@@ -108,7 +108,7 @@ async def replace_role_menu(
             input_menus = list({m.menu_key for m in mapping})
             if input_menus:
                 valid_rows = await conn.fetch(
-                    "SELECT menu_key FROM isf_auth.menu WHERE menu_key = ANY($1::text[]) AND status = 'A'",
+                    "SELECT menu_key FROM isf_auth.menu WHERE menu_key = ANY(CAST($1 AS text[])) AND status = 'A'",
                     input_menus,
                 )
                 valid_menus = {r["menu_key"] for r in valid_rows}
