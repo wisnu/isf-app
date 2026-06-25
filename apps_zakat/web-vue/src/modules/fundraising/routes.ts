@@ -39,4 +39,11 @@ export const fundraisingRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/fundraising/views/donor/IndividualDonorFormView.vue'),
     meta: { domain: 'fundraising', menu_key: 'fundraising.donor.individual' },
   },
+  // ── Konfirmasi Transaksi Donasi ─────────────────────────────────────
+  {
+    path: '/fundraising/donation-confirm',
+    name: 'fundraising-donation-confirm',
+    component: () => import('@/modules/fundraising/views/DonationConfirmPage.vue'),
+    meta: { domain: 'fundraising', menu_key: 'fundraising.donation.confirm' },
+  },
 ]
