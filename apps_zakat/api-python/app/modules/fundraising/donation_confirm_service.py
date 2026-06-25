@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from fastapi import HTTPException
 
 from app.modules.fundraising.donation_confirm_schema import (
@@ -42,10 +43,10 @@ async def list_transactions(
     conds.append("d2.mutationtype = 'C'")
     conds.append("a.transactioncode IN ('SD001', 'SD002')")
 
-    # Date range
-    params.append(begin_date)
-    params.append(end_date)
-    conds.append(f"CAST(a.actualdate AS DATE) BETWEEN CAST($1 AS DATE) AND CAST($2 AS DATE)")
+    # Date range — pass as datetime.date so asyncpg binds correctly
+    params.append(date.fromisoformat(begin_date))
+    params.append(date.fromisoformat(end_date))
+    conds.append("CAST(a.actualdate AS DATE) BETWEEN $1 AND $2")
 
     # Branch access
     if not is_all_branch and user_branch_code:
@@ -101,12 +102,12 @@ async def list_transactions(
             a.transactionid AS transaction_id,
             a.transactionno AS transaction_no,
             CAST(a.actualdate AS TEXT) AS actual_date,
-            ati.donorid AS donor_no,
+            CAST(ati.donorid AS TEXT) AS donor_no,
             d.donorname AS donor_name,
             d2.amount AS amount,
             a.description AS description,
             a.branchcode AS branch_code,
-            c.namacabang AS branch_name,
+            c.nama_cabang AS branch_name,
             fa_ch.accountname AS channel_name,
             a.channelaccountno AS channel_code,
             fa_pr.accountname AS product_name,
@@ -119,7 +120,7 @@ async def list_transactions(
         LEFT JOIN fund.donor d ON ati.donorid = d.donorid
         LEFT JOIN transaction.financialaccount fa_ch ON a.channelaccountno = fa_ch.accountno
         LEFT JOIN transaction.financialaccount fa_pr ON ati.accountno = fa_pr.accountno
-        LEFT JOIN enterprise.cabang c ON a.branchcode = c.kodecabang
+        LEFT JOIN enterprise.cabang c ON a.branchcode = c.kode_cabang
         {where_clause}
         ORDER BY a.actualdate DESC, a.transactionid DESC
         LIMIT ${limit_param} OFFSET ${offset_param}
