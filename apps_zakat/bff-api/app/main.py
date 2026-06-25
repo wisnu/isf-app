@@ -77,6 +77,7 @@ from app.modules.fundraising.donors import (
 )
 from app.modules.fundraising.donation_confirm import router as fundraising_donation_confirm_router
 from app.modules.fundraising.bsz import router as fundraising_bsz_router
+from app.modules.fundraising.export import router as fundraising_export_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.appadmin.admin import router as admin_router
@@ -204,6 +205,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(fundraising_lookup_router)
     app.include_router(fundraising_donation_confirm_router)
     app.include_router(fundraising_bsz_router)
+    app.include_router(fundraising_export_router)
 
     # Appadmin — router carries full /api/appadmin/... prefix
     app.include_router(admin_router)
