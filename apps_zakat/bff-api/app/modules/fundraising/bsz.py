@@ -16,6 +16,20 @@ router = APIRouter(
 )
 
 
+# ── GET /api/fundraising/bsz/lookup/donor ────────────────────────────────────
+@router.get('/lookup/donor')
+async def lookup_donor(
+    request: Request,
+    _: str = Depends(require_menu(_MENU)),
+    q: str = Query(default=''),
+):
+    _, err_resp = await current_user_id_or_401(request)
+    if err_resp:
+        return err_resp
+    downstream = await get_api_python('/api/fundraising/bsz/lookup/donor', params={'q': q})
+    return JSONResponse(status_code=downstream.status_code, content=downstream.json())
+
+
 # ── GET /api/fundraising/bsz/zakat-objects ────────────────────────────────────
 @router.get('/zakat-objects')
 async def get_zakat_objects(

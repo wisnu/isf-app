@@ -67,6 +67,20 @@ async def _next_bsz_number(conn, year: int, month: int) -> str:
     return f"{new_id:03d}/{_ROMAN[month]}/BPZIS/{year}"
 
 
+async def lookup_donor(q: str) -> list[dict]:
+    term = f'%{q}%'
+    async with get_pool().acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT donorid, donorno, donorname
+            FROM fund.donor
+            WHERE status = 'A'
+              AND (donorname ILIKE $1 OR donorno ILIKE $1)
+            ORDER BY donorname
+            LIMIT 30
+        """, term)
+    return [{'donor_id': r['donorid'], 'donor_no': r['donorno'] or '', 'donor_name': r['donorname'] or ''} for r in rows]
+
+
 async def list_zakat_objects() -> list[ZakatObjectItem]:
     async with get_pool().acquire() as conn:
         rows = await conn.fetch(

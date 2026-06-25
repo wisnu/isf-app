@@ -11,11 +11,20 @@ from app.modules.fundraising.bsz.service import (
     get_bsz_detail,
     list_bsz,
     list_zakat_objects,
+    lookup_donor,
 )
 from app.shared.db import ping
 from app.shared.response import err, ok
 
 router = APIRouter(prefix='/fundraising/bsz', tags=['fundraising-bsz'])
+
+
+@router.get('/lookup/donor')
+async def donor_lookup(q: str = Query(default='')):
+    if not await ping():
+        return JSONResponse(status_code=503, content=err('DB_UNAVAILABLE', 'Database not ready'))
+    items = await lookup_donor(q)
+    return ok(items)
 
 
 @router.get('/zakat-objects')

@@ -100,6 +100,7 @@ export const MENU_KEYS = [
   'fundraising.donor.corporate',
   'fundraising.donor.individual',
   'fundraising.donation.confirm',
+  'fundraising.donation.bsz',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
