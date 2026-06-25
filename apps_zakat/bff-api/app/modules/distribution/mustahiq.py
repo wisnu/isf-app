@@ -29,7 +29,7 @@ async def list_corporate(
     params: dict = {"page": page, "page_size": page_size}
     if search:
         params["search"] = search
-    downstream = await get_api_python("/distribution/mustahiq/corporate", params=params)
+    downstream = await get_api_python("/api/distribution/mustahiq/corporate", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -42,7 +42,7 @@ async def get_corporate(
     _, err_resp = await current_user_id_or_401(request)
     if err_resp:
         return err_resp
-    downstream = await get_api_python(f"/distribution/mustahiq/corporate/{mustahiq_id}")
+    downstream = await get_api_python(f"/api/distribution/mustahiq/corporate/{mustahiq_id}")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -55,7 +55,7 @@ async def create_corporate(
     if err_resp:
         return err_resp
     body = await request.json()
-    downstream = await post_api_python("/distribution/mustahiq/corporate", json_body=body)
+    downstream = await post_api_python("/api/distribution/mustahiq/corporate", json_body=body)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -135,7 +135,7 @@ async def list_personal(
     params: dict = {"page": page, "page_size": page_size}
     if search:
         params["search"] = search
-    downstream = await get_api_python("/distribution/mustahiq/personal", params=params)
+    downstream = await get_api_python("/api/distribution/mustahiq/personal", params=params)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -148,7 +148,7 @@ async def get_personal(
     _, err_resp = await current_user_id_or_401(request)
     if err_resp:
         return err_resp
-    downstream = await get_api_python(f"/distribution/mustahiq/personal/{mustahiq_id}")
+    downstream = await get_api_python(f"/api/distribution/mustahiq/personal/{mustahiq_id}")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -161,7 +161,7 @@ async def create_personal(
     if err_resp:
         return err_resp
     body = await request.json()
-    downstream = await post_api_python("/distribution/mustahiq/personal", json_body=body)
+    downstream = await post_api_python("/api/distribution/mustahiq/personal", json_body=body)
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -234,7 +234,7 @@ async def lookup_provinces(
     _, err_resp = await current_user_id_or_401(request)
     if err_resp:
         return err_resp
-    downstream = await get_api_python("/distribution/mustahiq/lookup/provinces")
+    downstream = await get_api_python("/api/distribution/mustahiq/lookup/provinces")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())
 
 
@@ -246,5 +246,5 @@ async def lookup_banks(
     _, err_resp = await current_user_id_or_401(request)
     if err_resp:
         return err_resp
-    downstream = await get_api_python("/distribution/mustahiq/lookup/banks")
+    downstream = await get_api_python("/api/distribution/mustahiq/lookup/banks")
     return JSONResponse(status_code=downstream.status_code, content=downstream.json())

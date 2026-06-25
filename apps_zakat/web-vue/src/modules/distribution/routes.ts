@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 
 export const distributionRoutes: RouteRecordRaw[] = [
+  // ── Mustahiq ─────────────────────────────────────────────────────────────
   {
     path: '/distribution/mustahiq/corporate',
     name: 'distribution-mustahiq-corporate',
@@ -8,10 +9,34 @@ export const distributionRoutes: RouteRecordRaw[] = [
     meta: { title: 'Mustahiq Lembaga', menu_key: 'distribution.mustahiq.corporate', domain: 'distribution' },
   },
   {
+    path: '/distribution/mustahiq/corporate/create',
+    name: 'distribution-mustahiq-corporate-create',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqCorporateFormView.vue'),
+    meta: { title: 'Tambah Mustahiq Lembaga', menu_key: 'distribution.mustahiq.corporate', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/mustahiq/corporate/:id/edit',
+    name: 'distribution-mustahiq-corporate-edit',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqCorporateFormView.vue'),
+    meta: { title: 'Ubah Mustahiq Lembaga', menu_key: 'distribution.mustahiq.corporate', domain: 'distribution' },
+  },
+  {
     path: '/distribution/mustahiq/personal',
     name: 'distribution-mustahiq-personal',
     component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalView.vue'),
     meta: { title: 'Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/mustahiq/personal/create',
+    name: 'distribution-mustahiq-personal-create',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalFormView.vue'),
+    meta: { title: 'Tambah Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/mustahiq/personal/:id/edit',
+    name: 'distribution-mustahiq-personal-edit',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalFormView.vue'),
+    meta: { title: 'Ubah Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
   },
   {
     path: '/distribution/proposal',
