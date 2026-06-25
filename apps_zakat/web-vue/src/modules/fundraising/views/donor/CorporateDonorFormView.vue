@@ -35,13 +35,13 @@ const countries = ref<CountryLookup[]>([])
 const marketers = ref<MarketerLookup[]>([])
 
 const provinceOptions = computed(() =>
-  provinces.value.map(p => ({ value: String(p.id_propinsi), label: p.province_name }))
+  provinces.value.map((p: ProvinceLookup) => ({ value: String(p.id_propinsi), label: p.province_name }))
 )
 const countryOptions = computed(() =>
-  countries.value.map(c => ({ value: String(c.id_negara), label: c.country_name }))
+  countries.value.map((c: CountryLookup) => ({ value: String(c.id_negara), label: c.country_name }))
 )
 const marketerOptions = computed(() =>
-  marketers.value.map(m => ({ value: String(m.marketer_id), label: `${m.marketer_code ?? ''} — ${m.marketer_name ?? ''}` }))
+  marketers.value.map((m: MarketerLookup) => ({ value: String(m.marketer_id), label: `${m.marketer_code ?? ''} — ${m.marketer_name ?? ''}` }))
 )
 
 async function loadLookups() {

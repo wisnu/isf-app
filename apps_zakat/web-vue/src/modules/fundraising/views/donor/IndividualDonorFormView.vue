@@ -38,11 +38,11 @@ const marketers   = ref<MarketerLookup[]>([])
 const fieldOfWork = ref<FieldOfWorkLookup[]>([])
 const workAreas   = ref<WorkAreaLookup[]>([])
 
-const provinceOptions   = computed(() => provinces.value.map(p => ({ value: String(p.id_propinsi), label: p.province_name })))
-const countryOptions    = computed(() => countries.value.map(c => ({ value: String(c.id_negara), label: c.country_name })))
-const marketerOptions   = computed(() => marketers.value.map(m => ({ value: String(m.marketer_id), label: `${m.marketer_code ?? ''} — ${m.marketer_name ?? ''}` })))
-const fieldOfWorkOptions = computed(() => fieldOfWork.value.map(f => ({ value: String(f.fwork_id), label: `${f.fwork_code ?? ''} — ${f.fwork_name ?? ''}` })))
-const workAreaOptions   = computed(() => workAreas.value.map(w => ({ value: String(w.work_area_id), label: `${w.work_area_code ?? ''} — ${w.work_area_name ?? ''}` })))
+const provinceOptions   = computed(() => provinces.value.map((p: ProvinceLookup) => ({ value: String(p.id_propinsi), label: p.province_name })))
+const countryOptions    = computed(() => countries.value.map((c: CountryLookup) => ({ value: String(c.id_negara), label: c.country_name })))
+const marketerOptions   = computed(() => marketers.value.map((m: MarketerLookup) => ({ value: String(m.marketer_id), label: `${m.marketer_code ?? ''} — ${m.marketer_name ?? ''}` })))
+const fieldOfWorkOptions = computed(() => fieldOfWork.value.map((f: FieldOfWorkLookup) => ({ value: String(f.fwork_id), label: `${f.fwork_code ?? ''} — ${f.fwork_name ?? ''}` })))
+const workAreaOptions   = computed(() => workAreas.value.map((w: WorkAreaLookup) => ({ value: String(w.work_area_id), label: `${w.work_area_code ?? ''} — ${w.work_area_name ?? ''}` })))
 
 async function loadLookups() {
   try {
@@ -139,7 +139,7 @@ const formError   = shallowRef<string | null>(null)
 const isEmployee = computed(() => form.is_internal_employee === 'T')
 const isMarried  = computed(() => form.marital_state === 'K')
 
-watch(() => form.is_internal_employee, (val) => {
+watch(() => form.is_internal_employee, (val: string) => {
   if (val !== 'T') {
     form.work_identity_number = ''; form.work_area_id = ''; form.work_area_id_initial = ''
     form.work_unit = ''; form.work_position = ''; form.work_business_area = ''
