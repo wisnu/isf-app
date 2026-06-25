@@ -2,7 +2,7 @@
 
 > Islamic Social Finance — a zakat & waqf management platform.
 
-> **Status:** design phase. Source code is not yet scaffolded; [`docs/architecture.md`](docs/architecture.md) is the source of truth for every decision in this README.
+> **Status:** active development. Two portals live — Zakat (`:5173`) and Wakaf (`:5174`).
 
 ## What is this?
 
@@ -73,19 +73,78 @@ isf-app/
 
 ## Running locally
 
+Use `make help` to list all available targets.
+
+### Fresh checkout (first time)
+
 ```bash
-cd infra
+# 1. Create & seed isf_auth_zakat + isf_auth_wakaf databases
+make migrate
 
-# Portal Zakat (default)
-podman-compose -f docker-compose.zakat.yml up -d --build
-# → http://localhost:5173
+# 2. Pre-build all images (required once; repeat when pyproject.toml / package.json changes)
+make build
 
-# Portal Wakaf (independent stack)
-podman-compose -f docker-compose.wakaf.yml up -d --build
-# → http://localhost:5174
+# 3. Start both stacks
+make run
+#    → Zakat:  http://localhost:5173  (bff-api :7000, api-python :8000, report-api :8010)
+#    → Wakaf:  http://localhost:5174  (bff-api :7001, api-python :8001, report-api :8011)
+
+# 4. Smoke-test all services
+make health
 ```
 
-Demo akun (sama di kedua portal): `admin/admin123`, `finance.a/finance123`, `finance.b/finance123`.
+> **Note (SELinux / Fedora):** `podman build` inside `podman-compose up --build` fails due to MCS
+> mprotect blocks. Always pre-build with `make build` first, then `make run` without `--build`.
+
+### Day-to-day
+
+```bash
+make run          # start both portals
+make run-zakat    # start zakat only
+make run-wakaf    # start wakaf only
+
+make stop         # stop both
+make restart      # stop + run
+
+make ps           # show isf-* container status
+make logs         # tail both stacks (Ctrl+C to exit)
+make logs-zakat   # tail zakat only
+make logs-wakaf   # tail wakaf only
+
+make health       # curl /health on all BFFs + api-pythons
+```
+
+### Database management
+
+```bash
+make migrate      # create DBs + apply schema + seed (safe to re-run)
+make db-create    # create isf_auth_zakat + isf_auth_wakaf if absent
+make db-apply     # apply schema dumps (idempotent)
+make db-seed      # seed menu + role_menu rows
+
+make db-drop      # DESTRUCTIVE — prompts "yes" before dropping both auth DBs
+```
+
+Override DB credentials (defaults: `postgres` / `solusi`):
+
+```bash
+make PG_USER=postgres PG_PASS=mypass migrate
+```
+
+### Cleanup
+
+```bash
+make clean        # stop + remove named volumes (PG data on host persists)
+                  # use db-drop separately to also drop the auth databases
+```
+
+### Dev accounts
+
+| Username | Password | Roles | Portal |
+|----------|----------|-------|--------|
+| `HADI`   | `test1234` | DIST / SPVDIST (branch_access=all) | Zakat |
+| `RAIS`   | `test1234` | ACC / KEU (branch_access=single, branch 001) | Zakat |
+| `ADM`    | `test1234` | Admin | Zakat |
 
 ## Roadmap
 
