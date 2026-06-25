@@ -65,4 +65,17 @@ export const fundraisingRoutes: RouteRecordRaw[] = [
     component: () => import('@/modules/fundraising/views/bsz/BszPrintPage.vue'),
     meta: { domain: 'fundraising', menu_key: 'fundraising.donation.bsz' },
   },
+  // ── Export Penghimpunan Website ─────────────────────────────────
+  {
+    path: '/fundraising/reports/export-hc-batch',
+    name: 'fundraising-report-export-hc-batch',
+    component: () => import('@/modules/fundraising/views/reports/ExportPenghimpunanHcBatchPage.vue'),
+    meta: { domain: 'fundraising', menu_key: 'fundraising.report.export-penghimpunan-website-hc-batch' },
+  },
+  {
+    path: '/fundraising/reports/export-website-new',
+    name: 'fundraising-report-export-website-new',
+    component: () => import('@/modules/fundraising/views/reports/ExportPenghimpunanWebsiteNewPage.vue'),
+    meta: { domain: 'fundraising', menu_key: 'fundraising.report.export-penghimpunan-website-new' },
+  },
 ]

@@ -1,4 +1,4 @@
-import { Inbox, BookOpen } from 'lucide-vue-next'
+import { Inbox, BookOpen, FileDown } from 'lucide-vue-next'
 import type { DomainConfig } from '@/shared/constants/domains'
 
 export const fundraisingMenu: DomainConfig = {
@@ -18,6 +18,15 @@ export const fundraisingMenu: DomainConfig = {
         { label: 'Data Donatur Individu', to: '/fundraising/donors/individual', menu_key: 'fundraising.donor.individual' },
         { label: 'Konfirmasi Donasi', to: '/fundraising/donation-confirm', menu_key: 'fundraising.donation.confirm' },
         { label: 'Cetak Bukti Setor Zakat', to: '/fundraising/bsz', menu_key: 'fundraising.donation.bsz' },
+      ],
+    },
+    {
+      id: 'laporan',
+      label: 'Laporan',
+      icon: FileDown,
+      items: [
+        { label: 'Export Donasi HC Batch', to: '/fundraising/reports/export-hc-batch', menu_key: 'fundraising.report.export-penghimpunan-website-hc-batch' },
+        { label: 'Export Donasi Website (Baru)', to: '/fundraising/reports/export-website-new', menu_key: 'fundraising.report.export-penghimpunan-website-new' },
       ],
     },
   ],
