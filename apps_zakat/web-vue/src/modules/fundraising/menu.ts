@@ -25,8 +25,8 @@ export const fundraisingMenu: DomainConfig = {
       label: 'Laporan',
       icon: FileDown,
       items: [
-        { label: 'Export Donasi HC Batch', to: '/fundraising/reports/export-hc-batch', menu_key: 'fundraising.report.export-penghimpunan-website-hc-batch' },
-        { label: 'Export Donasi Website (Baru)', to: '/fundraising/reports/export-website-new', menu_key: 'fundraising.report.export-penghimpunan-website-new' },
+        { label: 'Export Donasi HC Batch', to: '/fundraising/report/export-penghimpunan-website-hc-batch', menu_key: 'fundraising.report.export-penghimpunan-website-hc-batch' },
+        { label: 'Export Donasi Website (Baru)', to: '/fundraising/report/export-penghimpunan-website-new', menu_key: 'fundraising.report.export-penghimpunan-website-new' },
       ],
     },
   ],
