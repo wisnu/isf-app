@@ -56,6 +56,7 @@ from app.modules.distribution.parameter.cost_item.router import router as dist_p
 from app.modules.fundraising.donors.router import router as fundraising_donors_router
 from app.modules.fundraising.donation_confirm_router import router as donation_confirm_router
 from app.modules.fundraising.bsz.router import router as bsz_router
+from app.modules.fundraising.export_router import router as fundraising_export_router
 
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.appadmin.router import router as admin_router
@@ -162,6 +163,7 @@ app.include_router(dist_param_cost_item_router,    prefix="/api")
 app.include_router(fundraising_donors_router, prefix="/api")
 app.include_router(donation_confirm_router, prefix="/api")
 app.include_router(bsz_router,              prefix="/api")
+app.include_router(fundraising_export_router, prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")
