@@ -69,6 +69,13 @@ from app.modules.distribution.parameter import (
     router_cost_item as dist_param_cost_item_router,
 )
 
+# ── Fundraising ──────────────────────────────────────────────────────────────
+from app.modules.fundraising.donors import (
+    corporate_router as fundraising_corp_router,
+    individual_router as fundraising_ind_router,
+    lookup_router as fundraising_lookup_router,
+)
+
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.appadmin.admin import router as admin_router
 
@@ -188,6 +195,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dist_param_program_router)
     app.include_router(dist_param_work_sector_router)
     app.include_router(dist_param_cost_item_router)
+
+    # Fundraising — routers carry full /api/fundraising/... prefix
+    app.include_router(fundraising_corp_router)
+    app.include_router(fundraising_ind_router)
+    app.include_router(fundraising_lookup_router)
 
     # Appadmin — router carries full /api/appadmin/... prefix
     app.include_router(admin_router)
