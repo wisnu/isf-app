@@ -31,7 +31,16 @@ def _parse_date(val) -> str | None:
         return s[:10] if len(s) >= 10 else s
 
 
-async def _next_id_gen(conn, id_code: str, table: str, pk_col: str) -> int:
+_SEQ_MAP = {
+    'DONOR':           "SELECT nextval('fund.seq_donor')",
+    'BANKACCOUNTLIST': "SELECT nextval('fund.seq_bankaccountlist')",
+    'DONORCOMMITMENT': "SELECT nextval('fund.seq_donorcommitment')",
+}
+
+
+async def _next_id_gen(conn, id_code: str, table: str = '', pk_col: str = '') -> int:
+    if id_code in _SEQ_MAP:
+        return await conn.fetchval(_SEQ_MAP[id_code])
     row = await conn.fetchrow(
         'SELECT last_id FROM fund.id_gen WHERE id_code=$1 FOR UPDATE', id_code
     )

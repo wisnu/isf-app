@@ -43,18 +43,31 @@ ON CONFLICT (menu_key) DO UPDATE SET
   status      = EXCLUDED.status;
 
 -- ============================================================================
--- PART 2: Role assignments (isf_auth.role_menu)
+-- PART 2: Role permissions (isf_auth.role_menu_permission)
 -- Roles: PHP (Penghimpunan), SPVPHP (Supervisor), ADM (Admin)
+-- Actions: view, tambah, edit (hapus tidak tersedia — hanya nonaktif/aktif)
 -- ============================================================================
 
-INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by)
+INSERT INTO isf_auth.role_menu_permission (role_id, menu_key, action)
 VALUES
-  ('ADM',    'fundraising.donor.corporate',  'system'),
-  ('PHP',    'fundraising.donor.corporate',  'system'),
-  ('SPVPHP', 'fundraising.donor.corporate',  'system'),
-  ('ADM',    'fundraising.donor.individual', 'system'),
-  ('PHP',    'fundraising.donor.individual', 'system'),
-  ('SPVPHP', 'fundraising.donor.individual', 'system')
-ON CONFLICT DO NOTHING;
+  ('ADM',    'fundraising.donor.corporate',  'view'),
+  ('ADM',    'fundraising.donor.corporate',  'tambah'),
+  ('ADM',    'fundraising.donor.corporate',  'edit'),
+  ('PHP',    'fundraising.donor.corporate',  'view'),
+  ('PHP',    'fundraising.donor.corporate',  'tambah'),
+  ('PHP',    'fundraising.donor.corporate',  'edit'),
+  ('SPVPHP', 'fundraising.donor.corporate',  'view'),
+  ('SPVPHP', 'fundraising.donor.corporate',  'tambah'),
+  ('SPVPHP', 'fundraising.donor.corporate',  'edit'),
+  ('ADM',    'fundraising.donor.individual', 'view'),
+  ('ADM',    'fundraising.donor.individual', 'tambah'),
+  ('ADM',    'fundraising.donor.individual', 'edit'),
+  ('PHP',    'fundraising.donor.individual', 'view'),
+  ('PHP',    'fundraising.donor.individual', 'tambah'),
+  ('PHP',    'fundraising.donor.individual', 'edit'),
+  ('SPVPHP', 'fundraising.donor.individual', 'view'),
+  ('SPVPHP', 'fundraising.donor.individual', 'tambah'),
+  ('SPVPHP', 'fundraising.donor.individual', 'edit')
+ON CONFLICT (role_id, menu_key, action) DO NOTHING;
 
 COMMIT;
