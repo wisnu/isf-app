@@ -15,6 +15,12 @@ export const distributionRoutes: RouteRecordRaw[] = [
     meta: { title: 'Tambah Mustahiq Lembaga', menu_key: 'distribution.mustahiq.corporate', domain: 'distribution' },
   },
   {
+    path: '/distribution/mustahiq/corporate/:id',
+    name: 'distribution-mustahiq-corporate-detail',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqCorporateDetailView.vue'),
+    meta: { title: 'Detail Mustahiq Lembaga', menu_key: 'distribution.mustahiq.corporate', domain: 'distribution' },
+  },
+  {
     path: '/distribution/mustahiq/corporate/:id/edit',
     name: 'distribution-mustahiq-corporate-edit',
     component: () => import('@/modules/distribution/views/mustahiq/MustahiqCorporateFormView.vue'),
@@ -31,6 +37,12 @@ export const distributionRoutes: RouteRecordRaw[] = [
     name: 'distribution-mustahiq-personal-create',
     component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalFormView.vue'),
     meta: { title: 'Tambah Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
+  },
+  {
+    path: '/distribution/mustahiq/personal/:id',
+    name: 'distribution-mustahiq-personal-detail',
+    component: () => import('@/modules/distribution/views/mustahiq/MustahiqPersonalDetailView.vue'),
+    meta: { title: 'Detail Mustahiq Individu', menu_key: 'distribution.mustahiq.personal', domain: 'distribution' },
   },
   {
     path: '/distribution/mustahiq/personal/:id/edit',

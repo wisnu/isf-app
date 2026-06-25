@@ -10,7 +10,6 @@ import Modal from '@/shared/components/Modal.vue'
 import PageHeader from '@/shared/components/PageHeader.vue'
 import TablePagination from '@/shared/components/TablePagination.vue'
 import { api, ApiError } from '@/shared/api/client'
-import { dmy } from '@/shared/utils/date'
 import { useToast } from '@/shared/composables/useToast'
 import { useAuthStore } from '@/app/stores/auth.store'
 
@@ -23,60 +22,6 @@ interface MustahiqRow {
   address: string | null
   phone_number: string | null
   status: string | null
-}
-
-interface BankAccountDetail {
-  bank_account_id: number
-  account_no: string | null
-  account_name: string | null
-  bank_code: string | null
-  is_default: string | null
-}
-
-interface PersonalDetail {
-  mustahiq_id: number
-  no_mustahiq: string | null
-  name: string
-  address: string | null
-  address_kelurahan: string | null
-  address_kecamatan: string | null
-  province_id: number | null
-  postal_code: string | null
-  reference_by: string | null
-  phone_number: string | null
-  gender: string | null
-  ashnaf: string | null
-  birth_place: string | null
-  birth_date: string | null
-  identity_number: string | null
-  identity_type: string | null
-  religion: number | null
-  total_family: number | null
-  formal_education: string | null
-  income: number | null
-  marital: string | null
-  work_sector: string | null
-  status: string | null
-  bank_accounts: BankAccountDetail[]
-}
-
-// ── Enum labels ───────────────────────────────────────────────────────────────
-
-const GENDER_MAP: Record<string, string>  = { L: 'Laki-Laki', P: 'Perempuan' }
-const IDENTITY_MAP: Record<string, string> = { K: 'KTP', S: 'SIM', F: 'Kartu Keluarga', P: 'Passport' }
-const RELIGION_MAP: Record<number, string> = { 1: 'Islam', 2: 'Katolik', 3: 'Protestan', 4: 'Hindu', 5: 'Budha', 6: 'Aliran Kepercayaan' }
-const MARITAL_MAP: Record<string, string>  = { K: 'Menikah', B: 'Belum Menikah', S: 'Duda/Janda' }
-const EDUCATION_MAP: Record<string, string> = { '0': 'Tdk Sekolah Formal', '1': 'SD', '2': 'SMP', '3': 'SMU/Sederajat', '4': 'S1', '5': 'S2', '6': 'S3' }
-const ASHNAF_MAP: Record<string, string>   = { F: 'Fakir', M: 'Miskin', U: 'Mualaf', H: 'Hamba Sahaya', G: 'Gharimin', S: 'Fisabilillah', I: 'Ibnu Sabil', A: 'Amil' }
-const SECTOR_MAP: Record<string, string>   = {
-  '1': 'Pertanian/Perkebunan/Perikanan', '2': 'Pertambangan', '3': 'Industri/Pabrik',
-  '4': 'Listrik/Gas/Air', '5': 'Konstruksi', '6': 'Perdagangan',
-  '7': 'Pengangkutan/Pergudangan', '8': 'Jasa Keuangan', '9': 'Jasa Sosial',
-}
-
-function lbl<T extends string | number>(map: Record<T, string>, val: T | null | undefined): string {
-  if (val == null || val === '') return '—'
-  return (map as any)[val] ?? String(val)
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -124,27 +69,16 @@ function changePageSize(s: number) { pageSize.value = s; page.value = 1; loadDat
 
 // ── Modals ────────────────────────────────────────────────────────────────────
 
-type ModalMode = 'detail' | 'delete' | 'status'
+type ModalMode = 'delete' | 'status'
 
-const modalMode    = shallowRef<ModalMode>('detail')
-const modalOpen    = shallowRef(false)
-const modalLoading = shallowRef(false)
-const modalError   = shallowRef<string | null>(null)
-const selectedRow  = ref<MustahiqRow | null>(null)
-const detailData   = ref<PersonalDetail | null>(null)
+const modalMode     = shallowRef<ModalMode>('delete')
+const modalOpen     = shallowRef(false)
+const modalLoading  = shallowRef(false)
+const modalError    = shallowRef<string | null>(null)
+const selectedRow   = ref<MustahiqRow | null>(null)
 const pendingStatus = shallowRef<'A' | 'N'>('A')
 
 function closeModal() { modalOpen.value = false }
-
-async function openDetail(row: MustahiqRow) {
-  selectedRow.value = row; modalMode.value = 'detail'; modalError.value = null
-  detailData.value = null; modalLoading.value = true; modalOpen.value = true
-  try {
-    detailData.value = await api.get<PersonalDetail>(`/api/distribution/mustahiq/personal/${row.mustahiq_id}`)
-  } catch (e) {
-    modalError.value = e instanceof ApiError ? e.message : 'Gagal memuat detail'
-  } finally { modalLoading.value = false }
-}
 
 function openDelete(row: MustahiqRow) {
   selectedRow.value = row; modalMode.value = 'delete'; modalError.value = null; modalOpen.value = true
@@ -177,8 +111,6 @@ async function confirmStatus() {
     modalError.value = e instanceof ApiError ? e.message : 'Gagal mengubah status.'
   } finally { modalLoading.value = false }
 }
-
-const idr = new Intl.NumberFormat('id-ID')
 
 onMounted(loadData)
 </script>
@@ -249,7 +181,8 @@ onMounted(loadData)
               </td>
               <td class="px-4 py-1.5">
                 <div class="flex items-center justify-end gap-0.5">
-                  <button class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground text-[10px]" @click="openDetail(row)">Detail</button>
+                  <button class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground text-[10px]"
+                    @click="router.push({ name: 'distribution-mustahiq-personal-detail', params: { id: row.mustahiq_id } })">Detail</button>
                   <button class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-blue-600 transition-colors" title="Ubah"
                     @click="router.push({ name: 'distribution-mustahiq-personal-edit', params: { id: row.mustahiq_id } })">
                     <Pencil class="w-3.5 h-3.5" />
@@ -264,62 +197,6 @@ onMounted(loadData)
         </table>
       </div>
     </div>
-
-    <!-- Detail Modal -->
-    <Modal v-if="modalOpen && modalMode === 'detail'" max-width="max-w-2xl" @close="closeModal">
-      <template #header><h2 class="text-base font-semibold">Detail Mustahiq Individu</h2></template>
-      <div v-if="modalLoading" class="py-8 text-center text-muted-foreground text-sm">Memuat...</div>
-      <div v-else-if="modalError" class="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ modalError }}</div>
-      <div v-else-if="detailData" class="space-y-4 text-sm max-h-[65vh] overflow-y-auto pr-1">
-        <div class="grid grid-cols-2 gap-x-6 gap-y-2">
-          <div><span class="text-xs text-muted-foreground block">No. Mustahiq</span><p class="font-mono">{{ detailData.no_mustahiq || '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Status</span>
-            <span class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold"
-              :class="detailData.status === 'A' ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'">
-              {{ detailData.status === 'A' ? 'Aktif' : 'NonAktif' }}
-            </span>
-          </div>
-          <div class="col-span-2"><span class="text-xs text-muted-foreground block">Nama</span><p class="font-medium">{{ detailData.name }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Jenis Kelamin</span><p>{{ lbl(GENDER_MAP, detailData.gender) }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Ashnaf</span><p>{{ lbl(ASHNAF_MAP, detailData.ashnaf) }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Tempat Lahir</span><p>{{ detailData.birth_place || '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Tanggal Lahir</span><p>{{ detailData.birth_date ? dmy(detailData.birth_date) : '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Jenis Identitas</span><p>{{ lbl(IDENTITY_MAP, detailData.identity_type) }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">No. Identitas</span><p>{{ detailData.identity_number || '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Agama</span><p>{{ detailData.religion ? lbl(RELIGION_MAP, detailData.religion) : '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Status Pernikahan</span><p>{{ lbl(MARITAL_MAP, detailData.marital) }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Pendidikan</span><p>{{ lbl(EDUCATION_MAP, detailData.formal_education ?? '') }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Bidang Pekerjaan</span><p>{{ lbl(SECTOR_MAP, detailData.work_sector ?? '') }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Jumlah Keluarga</span><p>{{ detailData.total_family ?? '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Pendapatan/Bulan</span><p>{{ detailData.income != null ? 'Rp ' + idr.format(detailData.income) : '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Alamat</span><p>{{ detailData.address || '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Telepon</span><p>{{ detailData.phone_number || '—' }}</p></div>
-          <div><span class="text-xs text-muted-foreground block">Referensi</span><p>{{ detailData.reference_by || '—' }}</p></div>
-        </div>
-        <div v-if="detailData.bank_accounts.length > 0">
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Rekening Bank</p>
-          <table class="w-full text-xs border border-border rounded overflow-hidden">
-            <thead class="bg-muted/30"><tr>
-              <th class="px-3 py-1 text-left font-medium">No. Rek</th>
-              <th class="px-3 py-1 text-left font-medium">Nama Rek</th>
-              <th class="px-3 py-1 text-left font-medium">Bank</th>
-              <th class="px-3 py-1 text-center font-medium w-16">Default</th>
-            </tr></thead>
-            <tbody>
-              <tr v-for="ba in detailData.bank_accounts" :key="ba.bank_account_id" class="border-t border-border">
-                <td class="px-3 py-1">{{ ba.account_no || '—' }}</td>
-                <td class="px-3 py-1">{{ ba.account_name || '—' }}</td>
-                <td class="px-3 py-1">{{ ba.bank_code || '—' }}</td>
-                <td class="px-3 py-1 text-center">{{ ba.is_default === 'T' ? '✓' : '' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <template #footer>
-        <div class="flex justify-end"><Button variant="outline" size="sm" @click="closeModal">Tutup</Button></div>
-      </template>
-    </Modal>
 
     <!-- Delete Modal -->
     <Modal v-if="modalOpen && modalMode === 'delete'" max-width="max-w-md" @close="closeModal">

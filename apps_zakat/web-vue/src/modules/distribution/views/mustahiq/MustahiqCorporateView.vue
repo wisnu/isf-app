@@ -10,8 +10,6 @@ import TablePagination from '@/shared/components/TablePagination.vue'
 import { api, ApiError } from '@/shared/api/client'
 import { useToast } from '@/shared/composables/useToast'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface MustahiqRow {
   mustahiq_id: number
   no_mustahiq: string | null
@@ -21,36 +19,8 @@ interface MustahiqRow {
   status: string | null
 }
 
-interface BankAccountDetail {
-  bank_account_id: number
-  account_no: string | null
-  account_name: string | null
-  bank_code: string | null
-  is_default: string | null
-}
-
-interface CorporateDetail {
-  mustahiq_id: number
-  no_mustahiq: string | null
-  name: string
-  address: string | null
-  address_kelurahan: string | null
-  address_kecamatan: string | null
-  province_id: number | null
-  postal_code: string | null
-  reference_by: string | null
-  phone_number: string | null
-  cp_name: string | null
-  cp_phone_number: string | null
-  cp_mobile_number: string | null
-  status: string | null
-  bank_accounts: BankAccountDetail[]
-}
-
 interface Pagination { page: number; page_size: number; total: number; total_pages: number }
 interface ListResponse { rows: MustahiqRow[]; pagination: Pagination }
-
-// ── State ─────────────────────────────────────────────────────────────────────
 
 const router = useRouter()
 const toast  = useToast()
@@ -92,46 +62,29 @@ function prevPage() { if (page.value > 1) { page.value--; loadData() } }
 function nextPage() { if (page.value < totalPages.value) { page.value++; loadData() } }
 function changePageSize(s: number) { pageSize.value = s; page.value = 1; loadData() }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-
 function goCreate() { router.push({ name: 'distribution-mustahiq-corporate-create' }) }
 function goEdit(row: MustahiqRow) {
   router.push({ name: 'distribution-mustahiq-corporate-edit', params: { id: row.mustahiq_id } })
 }
+function goDetail(row: MustahiqRow) {
+  router.push({ name: 'distribution-mustahiq-corporate-detail', params: { id: row.mustahiq_id } })
+}
 
-// ── Modals ────────────────────────────────────────────────────────────────────
+// ── Delete & Status modals ────────────────────────────────────────────────────
 
-type ModalMode = 'detail' | 'delete' | 'status'
-
-const modalMode    = shallowRef<ModalMode>('detail')
+type ModalMode = 'delete' | 'status'
+const modalMode    = shallowRef<ModalMode>('delete')
 const modalOpen    = shallowRef(false)
 const modalLoading = shallowRef(false)
 const modalError   = shallowRef<string | null>(null)
 const selectedRow  = ref<MustahiqRow | null>(null)
-const detailData   = ref<CorporateDetail | null>(null)
 const pendingStatus = shallowRef<'A' | 'N'>('A')
 
 function closeModal() { modalOpen.value = false }
 
-async function openDetail(row: MustahiqRow) {
-  selectedRow.value  = row
-  modalMode.value    = 'detail'
-  modalError.value   = null
-  modalLoading.value = true
-  modalOpen.value    = true
-  try {
-    detailData.value = await api.get<CorporateDetail>(`/api/distribution/mustahiq/corporate/${row.mustahiq_id}`)
-  } catch (e) {
-    modalError.value = e instanceof ApiError ? e.message : 'Gagal memuat detail'
-  } finally {
-    modalLoading.value = false
-  }
-}
-
 function openDelete(row: MustahiqRow) {
   selectedRow.value = row; modalMode.value = 'delete'; modalError.value = null; modalOpen.value = true
 }
-
 function openStatus(row: MustahiqRow, s: 'A' | 'N') {
   selectedRow.value = row; pendingStatus.value = s; modalMode.value = 'status'; modalError.value = null; modalOpen.value = true
 }
@@ -225,7 +178,7 @@ onMounted(loadData)
               </td>
               <td class="px-4 py-2">
                 <div class="flex items-center justify-end gap-0.5">
-                  <button class="px-1.5 py-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-[10px] font-medium" @click="openDetail(row)">Detail</button>
+                  <button class="px-1.5 py-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-[10px] font-medium" @click="goDetail(row)">Detail</button>
                   <button class="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-blue-600 transition-colors" title="Ubah" @click="goEdit(row)"><Pencil class="w-3.5 h-3.5" /></button>
                   <button v-if="row.status === 'A'" class="p-1.5 rounded hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors" title="NonAktifkan" @click="openStatus(row, 'N')"><XCircle class="w-3.5 h-3.5" /></button>
                   <button v-else class="p-1.5 rounded hover:bg-emerald-50 text-muted-foreground hover:text-emerald-600 transition-colors" title="Aktifkan" @click="openStatus(row, 'A')"><CheckCircle2 class="w-3.5 h-3.5" /></button>
@@ -237,57 +190,6 @@ onMounted(loadData)
         </table>
       </div>
     </div>
-
-    <!-- Detail Modal -->
-    <Modal v-if="modalOpen && modalMode === 'detail'" max-width="max-w-2xl" @close="closeModal">
-      <template #header><h2 class="text-base font-semibold">Detail Mustahiq Lembaga</h2></template>
-      <div v-if="modalLoading" class="py-8 text-center text-muted-foreground text-sm">Memuat...</div>
-      <div v-else-if="modalError" class="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ modalError }}</div>
-      <div v-else-if="detailData" class="space-y-4 text-sm">
-        <div class="grid grid-cols-2 gap-x-6 gap-y-2.5">
-          <div><p class="text-xs text-muted-foreground mb-0.5">No. Mustahiq</p><p class="font-mono">{{ detailData.no_mustahiq || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Status</p>
-            <span class="inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold" :class="detailData.status === 'A' ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'">{{ detailData.status === 'A' ? 'Aktif' : 'NonAktif' }}</span>
-          </div>
-          <div class="col-span-2"><p class="text-xs text-muted-foreground mb-0.5">Nama Lembaga</p><p class="font-medium">{{ detailData.name }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Alamat</p><p>{{ detailData.address || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Kelurahan</p><p>{{ detailData.address_kelurahan || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Kecamatan</p><p>{{ detailData.address_kecamatan || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Kode Pos</p><p>{{ detailData.postal_code || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Telepon</p><p>{{ detailData.phone_number || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Referensi</p><p>{{ detailData.reference_by || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Kontak Person</p><p>{{ detailData.cp_name || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">Telp Kontak</p><p>{{ detailData.cp_phone_number || '—' }}</p></div>
-          <div><p class="text-xs text-muted-foreground mb-0.5">HP Kontak</p><p>{{ detailData.cp_mobile_number || '—' }}</p></div>
-        </div>
-        <div>
-          <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Rekening Bank</p>
-          <p v-if="detailData.bank_accounts.length === 0" class="text-xs text-muted-foreground italic">Tidak ada rekening terdaftar.</p>
-          <table v-else class="w-full text-xs border border-border rounded overflow-hidden">
-            <thead class="bg-muted/30"><tr>
-              <th class="px-3 py-1.5 text-left font-medium">No. Rekening</th>
-              <th class="px-3 py-1.5 text-left font-medium">Nama Rekening</th>
-              <th class="px-3 py-1.5 text-left font-medium">Bank</th>
-              <th class="px-3 py-1.5 text-center font-medium w-16">Default</th>
-            </tr></thead>
-            <tbody>
-              <tr v-for="ba in detailData.bank_accounts" :key="ba.bank_account_id" class="border-t border-border">
-                <td class="px-3 py-1.5">{{ ba.account_no || '—' }}</td>
-                <td class="px-3 py-1.5">{{ ba.account_name || '—' }}</td>
-                <td class="px-3 py-1.5">{{ ba.bank_code || '—' }}</td>
-                <td class="px-3 py-1.5 text-center">{{ ba.is_default === 'T' ? '✓' : '' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <Button variant="outline" size="sm" @click="goEdit(selectedRow!); closeModal()">Ubah</Button>
-          <Button variant="outline" size="sm" @click="closeModal">Tutup</Button>
-        </div>
-      </template>
-    </Modal>
 
     <!-- Delete Modal -->
     <Modal v-if="modalOpen && modalMode === 'delete'" max-width="max-w-md" @close="closeModal">
