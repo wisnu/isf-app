@@ -31,26 +31,19 @@ export interface DomainConfig {
   groups: NavGroup[]
 }
 
-import {
-  Coins,
-  Inbox,
-} from 'lucide-vue-next'
 
 import { financeMenu }       from '@/modules/finance/menu'
 import { appadminMenu }      from '@/modules/appadmin/menu'
 import { generalaffairMenu } from '@/modules/generalaffair/menu'
 import { distributionMenu }  from '@/modules/distribution/menu'
+import { fundraisingMenu }   from '@/modules/fundraising/menu'
 
 export const DOMAIN_MAP: Record<DomainId, DomainConfig> = {
   finance:      financeMenu,
   appadmin:     appadminMenu,
   generalaffair: generalaffairMenu,
   distribution: distributionMenu,
-  fundraising: {
-    id: 'fundraising', label: 'Penghimpunan', sub: 'Data muzakki & donasi',
-    icon: Inbox, locked: true, lockedBadge: 'Fase 3',
-    defaultRoute: '/', groups: [],
-  },
+  fundraising:  fundraisingMenu,
 }
 
 export const DOMAIN_ORDER: DomainId[] = [

@@ -96,6 +96,9 @@ export const MENU_KEYS = [
   'generalaffair.document.outgoing',
   'generalaffair.report.incoming-document',
   'generalaffair.report.outgoing-document',
+  // Fundraising — Penghimpunan
+  'fundraising.donor.corporate',
+  'fundraising.donor.individual',
 ] as const
 
 export type MenuKey = typeof MENU_KEYS[number]
