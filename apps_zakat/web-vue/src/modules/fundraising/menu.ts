@@ -16,6 +16,7 @@ export const fundraisingMenu: DomainConfig = {
       items: [
         { label: 'Data Donatur Korporat', to: '/fundraising/donors/corporate', menu_key: 'fundraising.donor.corporate' },
         { label: 'Data Donatur Individu', to: '/fundraising/donors/individual', menu_key: 'fundraising.donor.individual' },
+        { label: 'Konfirmasi Donasi', to: '/fundraising/donation-confirm', menu_key: 'fundraising.donation.confirm' },
       ],
     },
   ],

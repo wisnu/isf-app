@@ -206,13 +206,10 @@ async function confirmPostJournal() {
 // ── Receipt Download ─────────────────────────────────────────────────────
 async function downloadReceipt(row: DonationTransaction) {
   try {
-    const blob = await api.blob(`/api/fundraising/donation-confirm/${row.transaction_id}/receipt`)
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Kwitansi_${row.transaction_no}.pdf`
-    a.click()
-    window.URL.revokeObjectURL(url)
+    await api.downloadBlob(
+      `/api/fundraising/donation-confirm/${row.transaction_id}/receipt`,
+      `Kwitansi_${row.transaction_no}.pdf`,
+    )
   } catch (e) {
     toast.error(e instanceof ApiError ? e.message : 'Gagal mengunduh kwitansi.')
   }

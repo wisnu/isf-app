@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import urllib.parse
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -98,15 +100,15 @@ async def delete_donation_confirm(
     branch_access = request.session.get('branch_access', 'single')
     roles = request.session.get('roles', [])
 
-    params: dict = {}
+    qs_params: dict = {'user_branch_access': branch_access}
     if branch_code is not None:
-        params['user_branch_code'] = branch_code
-    params['user_branch_access'] = branch_access
+        qs_params['user_branch_code'] = branch_code
     if roles:
-        params['user_roles'] = ','.join(roles)
+        qs_params['user_roles'] = ','.join(roles)
 
+    qs = urllib.parse.urlencode(qs_params)
     downstream = await post_api_python(
-        f'/api/fundraising/donation-confirm/{transaction_id}',
+        f'/api/fundraising/donation-confirm/{transaction_id}?{qs}',
         json_body={},
         method='DELETE',
     )
