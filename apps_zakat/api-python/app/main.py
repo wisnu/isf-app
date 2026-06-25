@@ -52,6 +52,9 @@ from app.modules.distribution.parameter.program.router import router as dist_par
 from app.modules.distribution.parameter.work_sector.router import router as dist_param_work_sector_router
 from app.modules.distribution.parameter.cost_item.router import router as dist_param_cost_item_router
 
+# ── Fundraising ──────────────────────────────────────────────────────────────
+from app.modules.fundraising.donors.router import router as fundraising_donors_router
+
 # ── Administration ────────────────────────────────────────────────────────────
 from app.modules.appadmin.router import router as admin_router
 from app.modules.appadmin.identity.router import router as identity_router
@@ -152,6 +155,9 @@ app.include_router(dist_param_program_type_router, prefix="/api")
 app.include_router(dist_param_program_router,      prefix="/api")
 app.include_router(dist_param_work_sector_router,  prefix="/api")
 app.include_router(dist_param_cost_item_router,    prefix="/api")
+
+# ── Fundraising ──────────────────────────────────────────────────────────────
+app.include_router(fundraising_donors_router, prefix="/api")
 
 # ── Administration ────────────────────────────────────────────────────────────
 app.include_router(admin_router,    prefix="/api")
