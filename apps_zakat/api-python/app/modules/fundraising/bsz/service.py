@@ -107,12 +107,12 @@ async def list_bsz(
         params.append(donor_id)
         p += 1
     if begin_date:
-        conditions.append(f"b.bszdate::date >= ${p}::date")
-        params.append(begin_date)
+        conditions.append(f"CAST(b.bszdate AS date) >= ${p}")
+        params.append(datetime.date.fromisoformat(begin_date))
         p += 1
     if end_date:
-        conditions.append(f"b.bszdate::date <= ${p}::date")
-        params.append(end_date)
+        conditions.append(f"CAST(b.bszdate AS date) <= ${p}")
+        params.append(datetime.date.fromisoformat(end_date))
         p += 1
 
     where = ' AND '.join(conditions)
@@ -267,7 +267,7 @@ async def get_available_transactions(
     begin_date: str,
     end_date: str,
 ) -> list[AvailableTransaction]:
-    # end_date exclusive (next day) to match legacy behavior
+    begin_dt = datetime.date.fromisoformat(begin_date)
     end_dt = datetime.date.fromisoformat(end_date) + datetime.timedelta(days=1)
 
     async with get_pool().acquire() as conn:
@@ -290,13 +290,13 @@ async def get_available_transactions(
             JOIN transaction.financialaccount fa ON ati.accountno = fa.accountno
             LEFT JOIN transaction.productaccount pa ON fa.accountno = pa.accountno
             LEFT JOIN transaction.product p ON pa.productid = p.productid
-            WHERE t.actualdate >= $2::date
-              AND t.actualdate < $3::date
+            WHERE CAST(t.actualdate AS date) >= $2
+              AND CAST(t.actualdate AS date) < $3
               AND NOT EXISTS (
                   SELECT 1 FROM fund.bsztransaction bt WHERE bt.transactionitemid = ti.transactionitemid
               )
             ORDER BY ti.transactionitemid, t.actualdate, t.transactionno
-        """, donor_id, begin_date, str(end_dt))
+        """, donor_id, begin_dt, end_dt)
 
     return [
         AvailableTransaction(
@@ -328,10 +328,12 @@ async def create_bsz(body: CreateBszBody) -> BszDetail:
             bsz_id = await _next_id_gen(conn, 'BSZ', 'fund.bsz', 'bszid')
             bsz_number = await _next_bsz_number(conn, now.year, now.month)
 
+            period_begin_dt = datetime.date.fromisoformat(body.period_begin)
+            period_end_dt = datetime.date.fromisoformat(body.period_end)
             await conn.execute("""
                 INSERT INTO fund.bsz (bszid, bsznumber, donorid, bszdate, bszperiodbegin, bszperiodend)
-                VALUES ($1, $2, $3, $4, $5::date, $6::date)
-            """, bsz_id, bsz_number, body.donor_id, now, body.period_begin, body.period_end)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            """, bsz_id, bsz_number, body.donor_id, now, period_begin_dt, period_end_dt)
 
             for detail in body.items:
                 if detail.zakah_value == 0:
