@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF (Zakat + Wakaf) |
-| Versi Dokumen | 1.1 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan) |
+| Versi Dokumen | 1.2 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan; koreksi faktual otorisasi) |
 | Tanggal | 2026-11-08 |
 | Status | Draft untuk review stakeholder |
 | Menggantikan | — (melengkapi [`prd.md`](./prd.md) v0.3; dokumen lama tetap dipertahankan sebagai histori) |
@@ -201,24 +201,26 @@ Legenda status: ✅ Tersedia · 🟡 Sebagian · ⬜ Rencana
 | --- | --- |
 | OTO-01 | Semua input transaksi keuangan disimpan sebagai **submission** (`otorisasi.submission`, payload JSONB) sebelum diposting ke tabel utama. |
 | OTO-02 | Konfigurasi per jenis entitas di `otorisasi.entity_config` (modul, label, `menu_key`, `level_required` untuk multi-level). |
-| OTO-03 | Status: `DRAFT → SUBMITTED → APPROVED → (posted via dispatcher)`, cabang `REJECTED` (maker dapat revisi & submit ulang). Riwayat di `otorisasi.approval_log`. |
+| OTO-03 | Status aktual: `DRAFT → PENDING → PROCESSING → AUTHORIZED`. Dispatcher gagal di `PROCESSING` → kembali ke `PENDING` + `dispatch_error` terisi. Supervisor reject di `PENDING` → `REJECTED` (maker revisi → kembali `DRAFT`). Riwayat di `otorisasi.approval_log`. |
 | OTO-04 | Posting ke tabel legacy dilakukan oleh **dispatcher registry** per `entity_type` secara asinkron (BackgroundTasks) dengan `processing_status` untuk memantau kegagalan posting. |
 | OTO-05 | Maker tidak boleh meng-approve submission miliknya sendiri (dienforce di backend). |
 | OTO-06 | Halaman **Otorisasi** (antrian approver) dan **Riwayat Submission** (milik maker) tersedia di menu Monitoring Keuangan. |
-| OTO-07 | Entitas tercakup saat ini: penghimpunan, penyaluran, upload penghimpunan, transfer antar rekening, uang muka & LPJ/pengembalian, transaksi umum, penerimaan amil, pengeluaran amil, piutang, master COA/kas/bank. |
+| OTO-07 | Entitas tercakup saat ini (dispatcher terdaftar di `_register_defaults()`): penghimpunan, penyaluran, bank, pemilik anggaran (budget_owner), upload/hapus/update-tanggal ZIS rutin (hc_zis_upload/delete/update_date), uang muka & pengembalian, transfer antar rekening, piutang, transaksi umum, penerimaan amil, pengeluaran amil. **Belum tercakup**: master COA dan Kas — dispatcher belum ada (lihat §7.1.2 dan catatan "Entity Types & Dispatcher Registry" di `CLAUDE.md`). |
 | OTO-08 ⬜ | Notifikasi in-app (bell) untuk approver saat ada submission baru; email opsional. |
 | OTO-09 ⬜ | SLA approval & eskalasi otomatis ke tier di atasnya. |
 | OTO-10 ⬜ | **Eskalasi berdasarkan nilai**: transaksi di atas ambang tertentu (usulan awal: penyaluran ≥ Rp 500 juta) wajib disetujui juga oleh approver tier eksekutif (Pimpinan) via `level_required` > 1. Nilai ambang dikonfigurasi per jenis entitas. |
-| OTO-11 ⬜ | **Recall**: maker dapat menarik kembali submission berstatus `SUBMITTED` sebelum diputuskan approver → status `RECALLED`, dapat diedit & submit ulang. |
+| OTO-11 ⬜ | **Recall**: maker dapat menarik kembali submission berstatus `PENDING` sebelum diputuskan approver → status `RECALLED`, dapat diedit & submit ulang. |
 | OTO-12 ⬜ | Perluasan cakupan otorisasi di luar keuangan: master asnaf & channel penghimpunan, pengajuan/pembatalan program (lihat PRG-04), registrasi wakaf produktif (§7.6), provisioning user baru / role escalation / perubahan akses cabang. |
+| OTO-13 ⬜ | **Dispatcher COA & Kas**: daftarkan dispatcher untuk `entity_type` `coa` dan `kas` di `_register_defaults()` agar paritas dengan `bank` (lihat OTO-07). |
 
-State machine target (gabungan yang sudah ada + OTO-11):
+State machine aktual (sesuai `apps_zakat/api-python/.../authorization/service.py`) + target OTO-11:
 
 ```text
-DRAFT ──submit──► SUBMITTED ──approve──► APPROVED ──dispatch──► POSTED
-                     │
-                     ├──reject──► REJECTED (maker revisi → submit ulang)
-                     └──recall──► RECALLED (maker tarik balik → edit → submit ulang)
+DRAFT ──submit──► PENDING ──approve──► PROCESSING ──dispatch ok──► AUTHORIZED
+                     │                     │
+                     │                     └──dispatch gagal──► PENDING (+ dispatch_error)
+                     ├──reject──► REJECTED (maker revisi → DRAFT)
+                     └──recall──► RECALLED (maker tarik balik → edit → submit ulang)  ⬜ rencana (OTO-11)
 ```
 
 #### 7.0.5 Limit Transaksi per User — ✅
@@ -536,3 +538,4 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | --- | --- | --- |
 | 1.0 | 2026-11-06 | Dokumen baru. Baseline produk berdasarkan kondisi repositori aktual: Portal Zakat dengan 5 domain & transaksi tulis, otorisasi terpusat, limit transaksi, RBAC per aksi; Portal Wakaf parsial. Roadmap direvisi dari read-first (v0.3) ke paritas legacy DAF + pengembangan Wakaf. `prd.md` v0.3 dipertahankan sebagai histori. |
 | 1.1 | 2026-11-08 | Integrasi 12 gap dari `prd.md` v0.3: SSO lintas portal & tanpa switcher antar-portal (AUTH-08..10), field `domain` (§7.0.1a), ketentuan umum dashboard (DSH-01..04), eskalasi nilai, recall & perluasan cakupan otorisasi (OTO-10..12), audit immutable & akses laporan sensitif, super-user di luar matriks, NFR kapasitas/maintenance/i18n, asumsi jaringan internal & manajemen induk, risiko R9–R11, channel penghimpunan (FND-04), status program (PRG-05..06), glosarium. |
+| 1.2 | 2026-11-08 | Koreksi faktual §7.0.4 setelah verifikasi terhadap kode: state machine otorisasi diperbaiki dari `DRAFT→SUBMITTED→APPROVED→POSTED` (tidak pernah diimplementasi) menjadi status aktual `DRAFT→PENDING→PROCESSING→AUTHORIZED` (OTO-03, diagram, OTO-11). OTO-07 dikoreksi — master COA & Kas **belum** punya dispatcher otorisasi (hanya `bank`); ditambah OTO-13 sebagai gap tindak lanjut. |
