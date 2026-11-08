@@ -4,7 +4,9 @@ Status setiap fitur tercatat di `README.md` masing-masing folder.
 
 ## Aktif
 
-*(kosong saat ini)*
+| Folder | Fitur | Status |
+|--------|-------|--------|
+| [2026-11-08-001-fix-dispatcher-coa-kas](2026-11-08-001-fix-dispatcher-coa-kas/) | Bug: dispatcher otorisasi `coa`/`kas` belum terdaftar — submission stuck | BELUM |
 
 ## Selesai
 
