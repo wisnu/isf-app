@@ -3,10 +3,10 @@
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF (Zakat + Wakaf) |
-| Versi Dokumen | 1.3 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan; koreksi faktual otorisasi) |
+| Versi Dokumen | 1.4 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan; koreksi faktual otorisasi; acuan tunggal) |
 | Tanggal | 2026-11-08 |
 | Status | Draft untuk review stakeholder |
-| Menggantikan | — (melengkapi [`prd.md`](./prd.md) v0.3; dokumen lama tetap dipertahankan sebagai histori) |
+| Menggantikan | `prd.md` v0.3 — **dihapus dari repo** (seluruh gap sudah diintegrasikan sejak v1.1); histori tetap dapat dilihat via `git log -- docs/reference/prd/prd.md` |
 | Dokumen Terkait | [`architecture.md`](../architecture/architecture.md), [`rbac-permission-model.md`](../architecture/rbac-permission-model.md), [`PRD_Dashboard_Keuangan_Zakat.md`](./PRD_Dashboard_Keuangan_Zakat.md), [`PRD_Dashboard_Penyaluran_Zakat.md`](./PRD_Dashboard_Penyaluran_Zakat.md), [`PRD_Dashboard_Penghimpunan_ZIS.md`](./PRD_Dashboard_Penghimpunan_ZIS.md), [`docs/todos/`](../../todos/README.md) |
 
 ---
@@ -15,7 +15,7 @@
 
 `isf-app` adalah platform **Islamic Social Finance** internal yang menggantikan aplikasi legacy **DAF** (modul `core`, `enterprise`, `fund`, `program`, `personalia`) secara bertahap dengan stack modern (Vue 3 + FastAPI BFF + FastAPI backend, migrasi bertahap ke Go).
 
-PRD v0.3 (`prd.md`) memposisikan produk sebagai **portal read-first** (dashboard + laporan) dengan fitur input yang baru dimulai di Fase 4+. Kondisi aktual repositori telah melampaui rencana tersebut:
+PRD v0.3 (`prd.md`, sudah dihapus dari repo — lihat `git log` untuk arsip) memposisikan produk sebagai **portal read-first** (dashboard + laporan) dengan fitur input yang baru dimulai di Fase 4+. Kondisi aktual repositori telah melampaui rencana tersebut:
 
 - **Portal Zakat** sudah memiliki **±128 halaman** di 5 domain (Keuangan, Program/Penyaluran, Penghimpunan, Administrasi & Umum, Pengaturan Akses) — termasuk **transaksi tulis** (penghimpunan, penyaluran, uang muka, transaksi umum, amil, piutang, anggaran) dengan **otorisasi maker–checker terpusat** dan **limit transaksi per user**.
 - **Portal Wakaf** berjalan dengan cakupan terbatas (dashboard, master data keuangan, 5 laporan kas/jurnal, manajemen user & role-menu).
@@ -540,3 +540,4 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | 1.1 | 2026-11-08 | Integrasi 12 gap dari `prd.md` v0.3: SSO lintas portal & tanpa switcher antar-portal (AUTH-08..10), field `domain` (§7.0.1a), ketentuan umum dashboard (DSH-01..04), eskalasi nilai, recall & perluasan cakupan otorisasi (OTO-10..12), audit immutable & akses laporan sensitif, super-user di luar matriks, NFR kapasitas/maintenance/i18n, asumsi jaringan internal & manajemen induk, risiko R9–R11, channel penghimpunan (FND-04), status program (PRG-05..06), glosarium. |
 | 1.2 | 2026-11-08 | Koreksi faktual §7.0.4 setelah verifikasi terhadap kode: state machine otorisasi diperbaiki dari `DRAFT→SUBMITTED→APPROVED→POSTED` (tidak pernah diimplementasi) menjadi status aktual `DRAFT→PENDING→PROCESSING→AUTHORIZED` (OTO-03, diagram, OTO-11). OTO-07 dikoreksi — master COA & Kas **belum** punya dispatcher otorisasi (hanya `bank`); ditambah OTO-13 sebagai gap tindak lanjut. |
 | 1.3 | 2026-11-08 | Koreksi §7.1.2 (status domain Keuangan diturunkan ✅→🟡): COA & Kas ternyata submit ke alur otorisasi (`save-and-submit`, `entity_config` sudah ter-seed) tetapi approval-nya **macet** karena dispatcher belum terdaftar (`PENDING`/`dispatch_error` permanen) — konsisten dengan OTO-07/OTO-13. Ini gap operasional, bukan cuma redaksi dokumen. |
+| 1.4 | 2026-11-08 | `prd.md` v0.3 **dihapus** dari repo — seluruh gap sudah diintegrasikan sejak v1.1, dokumen ini menjadi **acuan tunggal**. Histori v0.3 tetap tersedia via git (`git log -- docs/reference/prd/prd.md`). Referensi ke `prd.md` di §1 dan header diperbarui. |
