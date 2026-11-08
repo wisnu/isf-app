@@ -3,8 +3,8 @@
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF (Zakat + Wakaf) |
-| Versi Dokumen | 1.0 (Baseline operasional — migrasi legacy DAF) |
-| Tanggal | 2026-11-06 |
+| Versi Dokumen | 1.1 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan) |
+| Tanggal | 2026-11-08 |
 | Status | Draft untuk review stakeholder |
 | Menggantikan | — (melengkapi [`prd.md`](./prd.md) v0.3; dokumen lama tetap dipertahankan sebagai histori) |
 | Dokumen Terkait | [`architecture.md`](../architecture/architecture.md), [`rbac-permission-model.md`](../architecture/rbac-permission-model.md), [`PRD_Dashboard_Keuangan_Zakat.md`](./PRD_Dashboard_Keuangan_Zakat.md), [`PRD_Dashboard_Penyaluran_Zakat.md`](./PRD_Dashboard_Penyaluran_Zakat.md), [`PRD_Dashboard_Penghimpunan_ZIS.md`](./PRD_Dashboard_Penghimpunan_ZIS.md), [`docs/todos/`](../../todos/README.md) |
@@ -129,6 +129,8 @@ Tiap portal **single-tenant, multi-cabang**, di-deploy independen (`web-vue` →
 - DB legacy tetap menjadi *system of record*; legacy DAF dan portal dapat berjalan paralel selama masa transisi per modul.
 - Identitas user mengikuti `enterprise.userapp` dan peran `enterprise.listperanuser`.
 - Struktur cabang mengikuti data cabang existing (`branch_code`); satu cabang ditandai HQ.
+- Kedua lembaga (LAZ & Wakaf) berada di bawah **satu manajemen induk**; pengelolaan user dikoordinasikan terpusat walau auth DB tiap portal terpisah.
+- Portal diakses melalui **jaringan internal/VPN** organisasi; tidak public-facing pada v1.x.
 
 ### 6.2 Constraint
 
@@ -162,6 +164,15 @@ Legenda status: ✅ Tersedia · 🟡 Sebagian · ⬜ Rencana
 | AUTH-05 | Endpoint `me`, `logout`, `refresh-profile`, `change-password` tersedia. |
 | AUTH-06 | Login sukses/gagal/terblokir dicatat di `isf_auth.audit_log` beserta IP & user-agent. |
 | AUTH-07 ⬜ | Kebijakan password (panjang/kompleksitas), lockout setelah N kali gagal, idle timeout terkonfigurasi. |
+| AUTH-08 | **Satu identitas untuk dua portal**: Google SSO menjadi shared identity — user login sekali di Google, masing-masing portal memverifikasi token secara mandiri. **Tidak ada session sharing** antar portal; tiap portal memiliki cookie session sendiri. |
+| AUTH-09 | Fallback: bila Google SSO belum dikonfigurasi, user login terpisah di tiap portal dengan password lokal masing-masing. |
+| AUTH-10 | **Tidak ada switcher antar-portal** di UI — berpindah portal = navigasi ke URL portal lain (opsional: tautan statis di menu user). |
+
+#### 7.0.1a Identitas Portal (Domain) — ⬜
+
+- Konfigurasi portal menyertakan field `domain ∈ {zakat, wakaf}`.
+- Frontend memakai field ini untuk branding (nama lembaga, logo, warna aksen), ikon, dan visibilitas menu/widget khas domain — widget atau menu khusus domain hanya tampil di portal yang sesuai.
+- Backend tiap portal hanya mengenal DB-nya sendiri (single DSN); tidak ada query lintas portal. Kebutuhan konsolidasi lintas lembaga harus dibangun sebagai lapisan agregasi terpisah (lihat §5.3 & §13).
 
 #### 7.0.2 Multi-Cabang — 🟡
 
@@ -197,6 +208,18 @@ Legenda status: ✅ Tersedia · 🟡 Sebagian · ⬜ Rencana
 | OTO-07 | Entitas tercakup saat ini: penghimpunan, penyaluran, upload penghimpunan, transfer antar rekening, uang muka & LPJ/pengembalian, transaksi umum, penerimaan amil, pengeluaran amil, piutang, master COA/kas/bank. |
 | OTO-08 ⬜ | Notifikasi in-app (bell) untuk approver saat ada submission baru; email opsional. |
 | OTO-09 ⬜ | SLA approval & eskalasi otomatis ke tier di atasnya. |
+| OTO-10 ⬜ | **Eskalasi berdasarkan nilai**: transaksi di atas ambang tertentu (usulan awal: penyaluran ≥ Rp 500 juta) wajib disetujui juga oleh approver tier eksekutif (Pimpinan) via `level_required` > 1. Nilai ambang dikonfigurasi per jenis entitas. |
+| OTO-11 ⬜ | **Recall**: maker dapat menarik kembali submission berstatus `SUBMITTED` sebelum diputuskan approver → status `RECALLED`, dapat diedit & submit ulang. |
+| OTO-12 ⬜ | Perluasan cakupan otorisasi di luar keuangan: master asnaf & channel penghimpunan, pengajuan/pembatalan program (lihat PRG-04), registrasi wakaf produktif (§7.6), provisioning user baru / role escalation / perubahan akses cabang. |
+
+State machine target (gabungan yang sudah ada + OTO-11):
+
+```text
+DRAFT ──submit──► SUBMITTED ──approve──► APPROVED ──dispatch──► POSTED
+                     │
+                     ├──reject──► REJECTED (maker revisi → submit ulang)
+                     └──recall──► RECALLED (maker tarik balik → edit → submit ulang)
+```
 
 #### 7.0.5 Limit Transaksi per User — ✅
 
@@ -212,6 +235,9 @@ Legenda status: ✅ Tersedia · 🟡 Sebagian · ⬜ Rencana
 - ✅ Login/logout/gagal login, perubahan permission (`updated_by`, `updated_at`), jejak approval submission.
 - ⬜ **Audit Log Viewer** (filter user, periode, aksi, entitas) untuk role `ADM`/`QAC`.
 - ⬜ Audit perubahan master data non-keuangan (mustahiq, donatur, dokumen) dengan ringkasan before/after.
+- ⬜ **Immutability**: audit log bersifat append-only — tidak dapat diubah/dihapus melalui aplikasi; hak `UPDATE/DELETE` pada tabel audit dicabut di level DB.
+- ⬜ (Opsional, configurable) Audit **akses** ke laporan berisi data sensitif (mis. daftar mustahiq, data donatur).
+- ⬜ Aktivitas **System Administrator** (super-user) dicatat dengan penanda khusus (lihat §8).
 
 #### 7.0.7 Standar UI Lintas Modul — ✅
 
@@ -227,6 +253,13 @@ Legenda status: ✅ Tersedia · 🟡 Sebagian · ⬜ Rencana
 #### 7.1.1 Dashboard — ✅
 
 Overview, Keuangan, Penyaluran, Penghimpunan. Spesifikasi widget mengacu pada PRD dashboard terkait (`PRD_Dashboard_*.md`). Tiap widget dimuat independen (satu widget gagal tidak menggagalkan halaman).
+
+Ketentuan umum dashboard (berlaku di kedua portal):
+
+- DSH-01: Dashboard menjadi **halaman landing** setelah login.
+- DSH-02: Konten dashboard **mengikuti role** user — hanya tab/widget yang menu key-nya dimiliki user yang ditampilkan.
+- DSH-03: Setiap dashboard menampilkan indikator cabang aktif, ringkasan KPI, dan filter periode (hari/bulan/tahun/custom).
+- DSH-04: Klik pada widget melakukan **drill-down** ke halaman modul/laporan terkait dengan filter periode & cabang yang sama.
 
 #### 7.1.2 Master Data — ✅
 
@@ -305,6 +338,8 @@ flowchart LR
 - PRG-02: Validasi duplikasi mustahiq (NIK/identitas) saat pendaftaran.
 - PRG-03 ⬜: Klasifikasi asnaf wajib pada setiap realisasi zakat agar laporan per asnaf akurat.
 - PRG-04 ⬜: Persetujuan proposal & memo memakai otorisasi terpusat (saat ini mengikuti status legacy).
+- PRG-05 ⬜: Status program yang seragam di seluruh list & laporan: **Rencana / Berjalan / Selesai / Dibatalkan**, dipetakan dari status legacy.
+- PRG-06 ⬜: Detail program menampilkan persentase realisasi anggaran, jumlah penerima manfaat, milestone, dan dokumen pendukung.
 
 ---
 
@@ -323,7 +358,7 @@ flowchart LR
 | Komitmen donasi rutin (donor commitment) & pengingat | ⬜ |
 | Riwayat kontribusi donatur & statement tahunan (untuk pengurang pajak) | ⬜ |
 
-**Requirement:** FND-01 nomor BSZ unik & tidak dapat dicetak ulang tanpa jejak; FND-02 satu transaksi hanya dapat masuk satu BSZ; FND-03 donatur dapat dicari via lookup lintas form (penghimpunan, BSZ, konfirmasi).
+**Requirement:** FND-01 nomor BSZ unik & tidak dapat dicetak ulang tanpa jejak; FND-02 satu transaksi hanya dapat masuk satu BSZ; FND-03 donatur dapat dicari via lookup lintas form (penghimpunan, BSZ, konfirmasi); FND-04 ⬜ setiap transaksi penerimaan terkategori **channel** baku — transfer bank, gerai/counter, payroll (potong gaji), e-wallet/payment gateway, website, jemput/UPZ — sebagai dimensi filter laporan & dashboard.
 
 ---
 
@@ -378,6 +413,8 @@ List User (termasuk limit transaksi), List Role, Role & Menu (matriks permission
 
 Role dapat digabung; hak efektif = gabungan aksi dari seluruh role user.
 
+**System Administrator (super-user)** berada di luar matriks di atas: dipakai terbatas untuk operasional sistem (provisioning, troubleshooting), jumlah akun minimal, dan setiap aktivitasnya tercatat di audit log dengan penanda khusus (§7.0.6). Super-user tetap tunduk pada aturan maker–checker (tidak boleh meng-approve submission sendiri).
+
 ---
 
 ## 9. Persyaratan Non-Fungsional
@@ -387,12 +424,13 @@ Role dapat digabung; hak efektif = gabungan aksi dari seluruh role user.
 | Keamanan | HTTPS di production; cookie `Secure`/`HttpOnly`/`SameSite`; RBAC & scope cabang dienforce di server; tidak ada secret di env `VITE_*`; query ter-parameter (asyncpg) |
 | Integritas data | Posting transaksi bersifat atomik; sequence legacy (`fund.seq_*`, dll.) dipakai agar tidak bentrok dengan DAF yang masih berjalan paralel |
 | Performa | Dashboard < 3 dtk; API p95 < 500 ms; laporan besar < 10 dtk atau via ekspor asinkron |
-| Ketersediaan | Uptime 99% jam kerja; degraded mode bila `report-api` down (transaksi tetap jalan) |
+| Kapasitas | ≥ 50 user aktif bersamaan per portal; dapat di-scale horizontal (BFF & backend stateless) |
+| Ketersediaan | Uptime 99% jam kerja; degraded mode bila `report-api` down (transaksi tetap jalan); maintenance di luar jam kerja dengan notifikasi minimal H-1 |
 | Observabilitas | Request-ID end-to-end (BFF → backend), log terstruktur, monitor `processing_status` dispatcher otorisasi |
 | Testing | Unit test (Vitest/pytest), E2E smoke per fitur (`testing/`, skrip `e2e-*.sh`), parity test laporan vs legacy |
 | Kompatibilitas | Browser evergreen; desktop ≥ 1280×800; tidak rusak di layar kecil |
 | Aksesibilitas | WCAG 2.1 AA (kontras, keyboard, label form) |
-| Lokalisasi | Bahasa Indonesia, locale `id-ID`, mata uang IDR, zona waktu Asia/Jakarta |
+| Lokalisasi | Bahasa Indonesia, locale `id-ID`, mata uang IDR, zona waktu Asia/Jakarta; struktur kode **i18n-ready** (string UI dapat dipisah ke file terjemahan) walau hanya satu bahasa |
 | Maintainability | Struktur modular per domain (`modules/<domain>`) di FE, BFF, dan backend; nama kode Inggris, label UI Indonesia |
 
 ---
@@ -440,6 +478,9 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | R6 | Drift kode antara `apps_zakat` dan `apps_wakaf` (clone) | Sedang | Tinggi | Ekstraksi komponen bersama ke `packages/`; checklist mirror di DoD |
 | R7 | Ketergantungan pada pengetahuan legacy DAF yang terbatas | Sedang | Sedang | Analisis legacy terdokumentasi per fitur (`nuwis-analyze`) |
 | R8 | Scope creep domain wakaf | Sedang | Tinggi | PRD terpisah untuk modul wakaf sebelum v2.0 dimulai |
+| R9 | DB existing menjadi single point of failure (DB down → portal down) | Tinggi | Rendah | Cache data panas via Redis, circuit breaker & timeout di BFF, halaman degraded mode |
+| R10 | Domain lead tunggal per modul menjadi bottleneck UAT | Sedang | Sedang | Tunjuk reviewer cadangan per modul; jadwal UAT disepakati di awal fitur |
+| R11 | Agregasi laporan/dashboard lambat pada dataset besar | Sedang | Sedang | Review index DB, materialized view untuk `dwh` berat, pre-aggregation, ekspor asinkron |
 
 ---
 
@@ -458,6 +499,10 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | Istilah | Definisi |
 | --- | --- |
 | ZISWAF | Zakat, Infaq, Sadaqah, Wakaf |
+| Zakat | Kewajiban mengeluarkan harta tertentu menurut syariat Islam |
+| Infaq | Pemberian dana sukarela untuk kebaikan |
+| Sadaqah | Pemberian sukarela dalam bentuk apa pun (lebih luas dari infaq) |
+| Wakaf | Penyerahan hak atas aset untuk dimanfaatkan jangka panjang sesuai syariat |
 | LAZ | Lembaga Amil Zakat |
 | Muzakki / Donatur | Pemberi zakat / donasi |
 | Mustahiq | Penerima zakat (8 asnaf) |
@@ -475,6 +520,13 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | Maker–Checker | Pemisahan pembuat dan penyetuju transaksi |
 | Submission | Record staging transaksi di `otorisasi.submission` sebelum diposting |
 | BFF | Backend-for-Frontend (`bff-api`) — satu-satunya API yang diakses browser |
+| RBAC | Role-Based Access Control — otorisasi berbasis peran |
+| Portal | Aplikasi end-to-end (web + BFF + backend + DB) untuk satu domain: Portal Zakat, Portal Wakaf |
+| Domain | Lini bisnis yang dilayani satu portal — `zakat` atau `wakaf` |
+| Tenant | Konteks lembaga yang menentukan isolasi data; tiap portal single-tenant |
+| Cabang / HQ | Unit operasional di bawah lembaga; satu cabang ditandai HQ (kantor pusat) |
+| Konsolidasi | Tampilan agregat lintas cabang dalam satu portal (bukan lintas portal) |
+| UAT | User Acceptance Testing oleh pengguna bisnis |
 
 ---
 
@@ -483,3 +535,4 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | Versi | Tanggal | Catatan |
 | --- | --- | --- |
 | 1.0 | 2026-11-06 | Dokumen baru. Baseline produk berdasarkan kondisi repositori aktual: Portal Zakat dengan 5 domain & transaksi tulis, otorisasi terpusat, limit transaksi, RBAC per aksi; Portal Wakaf parsial. Roadmap direvisi dari read-first (v0.3) ke paritas legacy DAF + pengembangan Wakaf. `prd.md` v0.3 dipertahankan sebagai histori. |
+| 1.1 | 2026-11-08 | Integrasi 12 gap dari `prd.md` v0.3: SSO lintas portal & tanpa switcher antar-portal (AUTH-08..10), field `domain` (§7.0.1a), ketentuan umum dashboard (DSH-01..04), eskalasi nilai, recall & perluasan cakupan otorisasi (OTO-10..12), audit immutable & akses laporan sensitif, super-user di luar matriks, NFR kapasitas/maintenance/i18n, asumsi jaringan internal & manajemen induk, risiko R9–R11, channel penghimpunan (FND-04), status program (PRG-05..06), glosarium. |
