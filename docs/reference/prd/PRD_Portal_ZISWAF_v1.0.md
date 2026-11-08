@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 | --- | --- |
 | Nama Produk | `isf-app` — Portal ZISWAF (Zakat + Wakaf) |
-| Versi Dokumen | 1.2 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan; koreksi faktual otorisasi) |
+| Versi Dokumen | 1.3 (Baseline operasional — migrasi legacy DAF; gap dari v0.3 diintegrasikan; koreksi faktual otorisasi) |
 | Tanggal | 2026-11-08 |
 | Status | Draft untuk review stakeholder |
 | Menggantikan | — (melengkapi [`prd.md`](./prd.md) v0.3; dokumen lama tetap dipertahankan sebagai histori) |
@@ -263,13 +263,13 @@ Ketentuan umum dashboard (berlaku di kedua portal):
 - DSH-03: Setiap dashboard menampilkan indikator cabang aktif, ringkasan KPI, dan filter periode (hari/bulan/tahun/custom).
 - DSH-04: Klik pada widget melakukan **drill-down** ke halaman modul/laporan terkait dengan filter periode & cabang yang sama.
 
-#### 7.1.2 Master Data — ✅
+#### 7.1.2 Master Data — 🟡
 
 | Menu | Key | Catatan |
 | --- | --- | --- |
-| Chart of Accounts | `finance.coa` | CRUD via otorisasi |
-| Kas | `finance.cash` | CRUD via otorisasi |
-| Bank (rekening) | `finance.bank` | CRUD via otorisasi |
+| Chart of Accounts | `finance.coa` | Submit via otorisasi (`save-and-submit`) 🟡 — approval **belum dapat diselesaikan**: dispatcher `coa` belum terdaftar, submission macet di `PENDING`/`dispatch_error` setelah di-approve (lihat OTO-07/OTO-13) |
+| Kas | `finance.cash` | Submit via otorisasi (`save-and-submit`) 🟡 — approval **belum dapat diselesaikan**: dispatcher `kas` belum terdaftar, submission macet di `PENDING`/`dispatch_error` setelah di-approve (lihat OTO-07/OTO-13) |
+| Bank (rekening) | `finance.bank` | CRUD via otorisasi — ✅ dispatcher `bank` terdaftar, alur lengkap hingga `AUTHORIZED` |
 | Kas Kecil | `finance.petty_cash` | CRUD |
 | Pemilik Anggaran | `finance.parameter.budget_owner` | |
 
@@ -539,3 +539,4 @@ Setiap fitur baru/migrasi dianggap selesai bila:
 | 1.0 | 2026-11-06 | Dokumen baru. Baseline produk berdasarkan kondisi repositori aktual: Portal Zakat dengan 5 domain & transaksi tulis, otorisasi terpusat, limit transaksi, RBAC per aksi; Portal Wakaf parsial. Roadmap direvisi dari read-first (v0.3) ke paritas legacy DAF + pengembangan Wakaf. `prd.md` v0.3 dipertahankan sebagai histori. |
 | 1.1 | 2026-11-08 | Integrasi 12 gap dari `prd.md` v0.3: SSO lintas portal & tanpa switcher antar-portal (AUTH-08..10), field `domain` (§7.0.1a), ketentuan umum dashboard (DSH-01..04), eskalasi nilai, recall & perluasan cakupan otorisasi (OTO-10..12), audit immutable & akses laporan sensitif, super-user di luar matriks, NFR kapasitas/maintenance/i18n, asumsi jaringan internal & manajemen induk, risiko R9–R11, channel penghimpunan (FND-04), status program (PRG-05..06), glosarium. |
 | 1.2 | 2026-11-08 | Koreksi faktual §7.0.4 setelah verifikasi terhadap kode: state machine otorisasi diperbaiki dari `DRAFT→SUBMITTED→APPROVED→POSTED` (tidak pernah diimplementasi) menjadi status aktual `DRAFT→PENDING→PROCESSING→AUTHORIZED` (OTO-03, diagram, OTO-11). OTO-07 dikoreksi — master COA & Kas **belum** punya dispatcher otorisasi (hanya `bank`); ditambah OTO-13 sebagai gap tindak lanjut. |
+| 1.3 | 2026-11-08 | Koreksi §7.1.2 (status domain Keuangan diturunkan ✅→🟡): COA & Kas ternyata submit ke alur otorisasi (`save-and-submit`, `entity_config` sudah ter-seed) tetapi approval-nya **macet** karena dispatcher belum terdaftar (`PENDING`/`dispatch_error` permanen) — konsisten dengan OTO-07/OTO-13. Ini gap operasional, bukan cuma redaksi dokumen. |
