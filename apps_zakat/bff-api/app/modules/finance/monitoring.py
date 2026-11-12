@@ -77,7 +77,7 @@ async def list_pending(
     downstream = await get_api_python('/api/finance/monitoring/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
-    raw = downstream.json()
+    raw = _flatten_list(downstream.json())
     # api-python returns flat {data: [...], pagination: {...}, meta: {...}}
     # Repack to standard ok({rows, pagination}) so api.get() unwraps correctly
     return JSONResponse(ok({
@@ -175,6 +175,18 @@ async def create_submission(request: Request):
     return JSONResponse(status_code=resp.status_code, content=resp.json())
 
 
+def _flatten_list(raw: dict) -> dict:
+    """Normalize api-python list responses to flat {data: [...], pagination: {...}}.
+
+    api-python may return either the flat shape or ok({rows, pagination}) where
+    data is already {rows, pagination}; repacking the latter as-is yields rows.rows.
+    """
+    data = raw.get('data')
+    if isinstance(data, dict) and 'rows' in data:
+        return {'data': data.get('rows', []), 'pagination': data.get('pagination', {})}
+    return raw
+
+
 @router.get('/my-submissions/')
 async def my_submissions(
     request: Request,
@@ -208,7 +220,7 @@ async def my_submissions(
     downstream = await get_api_python('/api/finance/monitoring/authorization/submissions/', params=params)
     if downstream.status_code != 200:
         return JSONResponse(status_code=downstream.status_code, content=downstream.json())
-    raw = downstream.json()
+    raw = _flatten_list(downstream.json())
     # Repack to standard ok({rows, pagination}) so api.get() unwraps correctly
     return JSONResponse(ok({
         'rows': raw.get('data', []),
