@@ -29,9 +29,9 @@ const router = useRouter()
 const route = useRoute()
 
 const demoAccounts = [
-  { user: 'admin', pass: 'admin123', scope: '2 perusahaan' },
-  { user: 'finance.a', pass: 'finance123', scope: 'Perusahaan A saja' },
-  { user: 'finance.b', pass: 'finance123', scope: 'Perusahaan B saja' },
+  { user: 'RAIS', pass: 'test1234', scope: 'Keuangan (ACC/KEU)' },
+  { user: 'HADI', pass: 'test1234', scope: 'Penyaluran (DIST/SPVDIST)' },
+  { user: 'ADM', pass: 'test1234', scope: 'Semua role' },
 ]
 
 const ssoErrorMessages: Record<string, string> = {
