@@ -23,6 +23,10 @@
    default `'P'`). Seluruh 2.456 batch produksi sudah diotorisasi di sistem lama; tanpa
    penanganan khusus semuanya tampil *pending* dan bisa di-approve ulang → **posting ganda**.
    Skrip migrasi menyetelnya ke `'A'` bila `authorizeduser` terisi.
+5. **Auth DB (`isf_auth_zakat`) dibangun baru** (§6): schema + menu/RBAC dari isf-app,
+   user dari `enterprise.userapp` produksi. Password legacy tidak bisa dikonversi →
+   32 user aktif mendapat password sementara (CSV 0600). Login user produksi sudah
+   diuji end-to-end melalui BFF + api-python terhadap DB hasil migrasi.
 
 ## 2. Ringkasan volume
 
@@ -111,16 +115,21 @@ Interpretasi per kategori:
 - [ ] Arahkan `DATABASE_URL_ZAKAT` (api-python, report-api, bff-api) ke DB hasil migrasi; restart service.
 - [ ] Smoke test: login, dashboard, 1 laporan per kelompok (jurnal harian, neraca, penghimpunan), Upload Penghimpunan (pastikan batch lama tampil **Authorized**), halaman Otorisasi (kosong).
 
-### 5.2 Wajib — auth DB (`isf_auth_zakat`), di luar skrip ini
+### 5.2 Wajib — auth DB (`isf_auth_zakat`) — skrip: `run_auth_migration.sh`
 
+Legacy tidak punya auth DB; `isf_auth_<portal>` dibuat **baru** di server target.
 Login isf-app butuh user di **dua** tempat: `enterprise.userapp` (business DB: peran,
 cabang, `tipe_akses_cabang`) **dan** `isf_auth.users` + `user_credentials` +
-`tenant_memberships` (auth DB).
+`tenant_memberships` (auth DB). Lihat §6.
 
-- [x] Dicek 2026-11-18: **ke-32 user aktif produksi sudah ada** di `isf_auth_zakat.users`.
-- [ ] Hapus/nonaktifkan akun dev di `isf_auth_zakat` sebelum go-live: `ADMIN`, `FINANCE.A`, `FINANCE.B`, `TESTUSR01` (tidak ada di `userapp` produksi → login akan gagal `UNKNOWN_IDENTITY` anyway). Juga reset password dev `test1234` (HADI, RAIS, ADM).
-- [ ] Peran **`IMZ` (SOP VENDOR)** ada di produksi tapi **tidak punya baris `role_menu_permission`** → user aktif `ARIS` hanya mendapat menu dari peran lain. Tentukan menu untuk IMZ atau biarkan.
-- [ ] Ulangi pengecekan user saat backup final (user baru di legacy setelah 2026-11-17 harus diprovisikan ke `isf_auth`).
+- [ ] `createdb` auth DB (owner = role aplikasi), lalu `run_auth_migration.sh init <business_db> <auth_db> --out <csv>`.
+- [ ] **Bagikan password sementara** dari CSV (0600) lewat jalur aman, lalu **hapus CSV**. Minta user mengganti password (Profil → Ganti Password).
+- [ ] Arahkan `ISF_AUTH_DATABASE_URL_ZAKAT` ke auth DB baru. **Jangan start bff-api sebelum init selesai** (users kosong → BFF men-seed `ADMIN/admin123`).
+- [ ] Menjelang cut-over: `run_auth_migration.sh sync-users …` untuk user baru di legacy (password yang sudah ada tidak berubah).
+- [ ] 4 user aktif **tanpa peran** di legacy → login berhasil tapi menu kosong: `IKA`, `MAYA`, `MELVA`, `SYAFII`. Beri peran via Pengelolaan User atau biarkan.
+- [ ] `AZZAM`: `status_profil='A'` tapi `kunci_akses='T'` di legacy → di isf-app tetap **aktif** (isf-app hanya memetakan `status_profil`, sama seperti `update_user_status`). Nonaktifkan manual bila memang terkunci.
+- [ ] Peran **`IMZ` (SOP VENDOR)** belum punya `role_menu_permission` → user aktif `ARIS` hanya mendapat menu dari peran lain.
+- [ ] Akun demo/dev (`ADMIN`, `FINANCE.A`, `FINANCE.B`, `TESTUSR01`) **tidak ikut** — auth DB dibangun dari `userapp` produksi; `13_postcheck.sql` menolak bila ada yang aktif.
 
 ### 5.3 Wajib — DWH / ETL
 
@@ -145,7 +154,30 @@ cabang, `tipe_akses_cabang`) **dan** `isf_auth.users` + `user_credentials` +
 - [ ] Portal **Wakaf**: backup `db/mziss_wakaf_2026-11-17_21.00.backup` sudah tersedia — ulangi alur yang sama (`compare_schema.py` → `data_diff.py` → `gen_new_schema_ddl.sh` dengan `mziss_wakaf`). Config balancesum wakaf berbeda (lihat memory *BalanceSum config per-portal*).
 - [ ] Seluruh perubahan schema isf-app ke depan sebaiknya ditulis sebagai migrasi bernomor di repo, lalu `05_postcheck.sql` diperbarui — supaya diff berikutnya tetap nol.
 
-## 6. Bukti uji
+## 6. Migrasi auth DB (`isf_auth_zakat`)
+
+### 6.1 Apa yang dibawa
+
+| Objek | Sumber | Keterangan |
+|---|---|---|
+| Schema `isf_auth` (8 tabel, 2 sequence) | `isf_auth_zakat` dev (generated, PG12-clean) | `users`, `user_credentials`, `user_provider_links`, `tenants`, `tenant_memberships`, `menu`, `role_menu_permission`, `audit_log` |
+| `tenants` (2), `menu` (105), `role_menu_permission` (377) | snapshot dev 2026-11-18 | config RBAC — id peran (`ACC`, `KEU`, `SPVKEU`, …) sama dengan `enterprise.peran` produksi |
+| `users`, `tenant_memberships` | `enterprise.userapp` **produksi** | 82 user: `status_profil='A'` → `active` (32), lainnya `inactive` (50); `id = username = UPPER(id_user)`; tenant default `perusahaan_a` |
+| `user_credentials` | **dibuat baru** | password sementara acak 12 karakter, bcrypt (library sama dengan BFF), hanya untuk user aktif |
+| `audit_log`, `user_provider_links` | — | tidak dibawa (log dev / belum ada link Google) |
+
+### 6.2 Kenapa password legacy tidak bisa dipakai
+Password legacy disimpan oleh server "Corporate" DAF (`Function_Code='LOGIN'`/`'CHPASS'`
+di `docs/legacy-apps/program/script_modules/Corporate.py`) dengan encoding sendiri
+(bukan plaintext/hex/base64, 8–11 karakter) — tidak dapat dikonversi ke bcrypt.
+Karena itu semua user aktif diberi password sementara.
+
+### 6.3 Temuan & perbaikan saat menyiapkan auth
+- **Menu `finance.transactions.fund_transfer` (Transfer Antar Rekening) tidak ada** di `isf_auth.menu` dev padahal dipakai FE + BFF: seed-nya masih menulis ke tabel `isf_auth.role_menu` yang sudah di-drop. Seed diperbaiki (`role_menu_permission`, aksi `view` untuk KEU/ACC/SPVKEU/ADM) dan diterapkan ke `isf_auth_zakat` dev → ikut snapshot.
+- Menu key lama yang masih tersisa di `isf_auth.menu` tapi tidak dipakai FE/BFF: `finance.monitoring`, `finance.receivable` (label grup), dan duplikat `finance.parameter.budget.owner` vs `finance.parameter.budget_owner(.create/.edit/.delete)`. Tidak berbahaya; kandidat cleanup.
+- `infra/db/migrations/isf_auth/recovered-schema-*.sql` sudah usang (masih punya `role_menu`, belum `role_menu_permission`). Acuan schema auth sekarang = `zakat/auth/11_schema_isf_auth.sql` (generated).
+
+## 7. Bukti uji
 
 | Uji | Hasil |
 |---|---|
@@ -156,5 +188,18 @@ cabang, `tipe_akses_cabang`) **dan** `isf_auth.users` + `user_credentials` +
 | Migrasi penuh di `mziss_laz_migtest` (PG18) + `compare_schema.py` vs `mziss_laz` | 0 tabel/kolom/index/sequence/schema berbeda; 4 view + 3 CHECK beda format deparse saja |
 | Semua 29 view `dwh` dieksekusi terhadap data produksi (postcheck) | OK |
 
-DB `mziss_laz_migtest` (PG18, sudah ter-migrasi) dibiarkan untuk uji aplikasi isf-app
-terhadap data produksi. Hapus bila tidak perlu: `dropdb -U transaction mziss_laz_migtest`.
+**Auth DB:**
+
+| Uji | Hasil |
+|---|---|
+| `run_auth_migration.sh init … --dry-run` | SQL valid, ROLLBACK |
+| `init` ke `isf_auth_migtest` (PG18) dari `mziss_laz_migtest` | 82 user (32 aktif + password), postcheck OK |
+| `sync-users` ulang | insert 0, update 82, password baru 0 (idempoten) |
+| `bcrypt.checkpw` (image bff-api) untuk 32 password CSV | 32 OK / 0 gagal |
+| `compare_schema.py` `isf_auth_migtest` vs `isf_auth_zakat` | 0 selisih (1 CHECK beda format deparse) |
+| 10–12 di container `postgres:12-alpine` | OK |
+| **Login nyata**: bff-api + api-python sementara diarahkan ke `mziss_laz_migtest` + `isf_auth_migtest`, login user produksi `RAIS` | OK — peran `ACC,KEU`, cabang `001`, `branch_access=single`, 48 menu (termasuk `fund_transfer`); RBAC menolak menu di luar peran (`MENU_FORBIDDEN`); batch upload produksi 13-11-2026 tampil `authstatus=A` |
+
+DB `mziss_laz_migtest` + `isf_auth_migtest` (PG18, sudah ter-migrasi) dibiarkan untuk uji aplikasi isf-app
+terhadap data produksi. Hapus bila tidak perlu:
+`dropdb -U transaction mziss_laz_migtest && dropdb -U transaction isf_auth_migtest`.

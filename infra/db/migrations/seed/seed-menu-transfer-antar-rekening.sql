@@ -25,9 +25,11 @@ ON CONFLICT (menu_key) DO UPDATE SET
   status      = EXCLUDED.status;
 
 -- 2. Role assignments — KEU, ACC, SPVKEU, ADM dapat akses
-INSERT INTO isf_auth.role_menu (id_peran, menu_key, created_by) VALUES
-  ('KEU',    'finance.transactions.fund_transfer', 'system'),
-  ('ACC',    'finance.transactions.fund_transfer', 'system'),
-  ('SPVKEU', 'finance.transactions.fund_transfer', 'system'),
-  ('ADM',    'finance.transactions.fund_transfer', 'system')
-ON CONFLICT DO NOTHING;
+--    (2026-11-18: dulu menulis ke isf_auth.role_menu yang sudah di-drop oleh
+--     add-role-menu-permission.sql → seed ini gagal & menu tidak pernah muncul)
+INSERT INTO isf_auth.role_menu_permission (role_id, menu_key, action, updated_by) VALUES
+  ('KEU',    'finance.transactions.fund_transfer', 'view', 'system'),
+  ('ACC',    'finance.transactions.fund_transfer', 'view', 'system'),
+  ('SPVKEU', 'finance.transactions.fund_transfer', 'view', 'system'),
+  ('ADM',    'finance.transactions.fund_transfer', 'view', 'system')
+ON CONFLICT (role_id, menu_key, action) DO NOTHING;
