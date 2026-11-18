@@ -28,3 +28,6 @@ docs/legacy-apps/
 .claude/*
 !.claude/skills/
 .playwright-mcp/
+
+# Backup DB produksi (pg_dump) — data sensitif, jangan di-commit
+/db/
