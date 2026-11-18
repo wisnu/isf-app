@@ -1,0 +1,12 @@
+source=mziss_laz_origin  target=mziss_laz
+extensions   only_target=0  only_source=0
+schemas      only_target=2  only_source=0
+sequences    only_target=14  only_source=0
+types        only_target=0  only_source=0
+tables       only_target=17  only_source=0
+columns      only_target=7  only_source=0  changed=1
+constraints  only_target=31  only_source=0  changed=0
+indexes      only_target=33  only_source=0  changed=0
+triggers     only_target=0  only_source=0  changed=0
+views        only_target=29  only_source=0  changed=0
+functions    only_target=0  only_source=0  changed=0

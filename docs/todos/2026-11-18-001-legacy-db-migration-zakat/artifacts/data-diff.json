@@ -1,0 +1,1031 @@
+{
+ "enterprise.listcabangdiizinkan": {
+  "pk": [
+   "id_user",
+   "kode_cabang"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [
+   "(TESTUSR01,001)"
+  ],
+  "changed_sample": []
+ },
+ "enterprise.listperanuser": {
+  "pk": [
+   "id_peran",
+   "id_user"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [
+   "(ACC,TESTUSR01)"
+  ],
+  "changed_sample": []
+ },
+ "enterprise.loginsession": {
+  "pk": [
+   "login_id"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 2,
+  "n_changed": 0,
+  "only_target_sample": [
+   "1",
+   "2"
+  ],
+  "changed_sample": []
+ },
+ "enterprise.otorentri": {
+  "pk": [
+   "id_otorisasi"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 25,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "enterprise.peran": {
+  "pk": [
+   "id_peran"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [
+   "TESTRL01"
+  ],
+  "changed_sample": []
+ },
+ "enterprise.userapp": {
+  "pk": [
+   "id_user"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 19,
+  "only_target_sample": [
+   "TESTUSR01"
+  ],
+  "changed_sample": [
+   "DESY",
+   "SALWA",
+   "AZZAM",
+   "ARIS",
+   "YANITA",
+   "DWI",
+   "ADM",
+   "NIFAH",
+   "KHOIR",
+   "DENI.CAD",
+   "ASKAR",
+   "DITA",
+   "WIDAD",
+   "JANATRI",
+   "DIKA",
+   "YASIN",
+   "ERA",
+   "REKA",
+   "RAIS"
+  ]
+ },
+ "fund.corporatedonor": {
+  "pk": [
+   "donorid"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [
+   "87377"
+  ],
+  "changed_sample": []
+ },
+ "fund.custom_idgen": {
+  "pk": [
+   "idname",
+   "idcode"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 0,
+  "n_changed": 2,
+  "only_target_sample": [
+   "(BSZ,2026)"
+  ],
+  "changed_sample": [
+   "(DONOR,C)",
+   "(DONOR,P)"
+  ]
+ },
+ "fund.id_gen": {
+  "pk": [
+   "id_code"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 3,
+  "only_target_sample": [],
+  "changed_sample": [
+   "BSZ",
+   "BSZDETAIL",
+   "BSZTRANSACTION"
+  ]
+ },
+ "personalia.careerhistory": {
+  "pk": [
+   "careerhistoryid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "personalia.custom_idgen": {
+  "pk": [
+   "idname",
+   "idcode"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 14,
+  "only_target_sample": [],
+  "changed_sample": [
+   "(DOKUMENKELUAR,7-001-2021)",
+   "(DOKUMENMASUK,MAI-001-2026)",
+   "(DOKUMENKELUAR,14-001-2026)",
+   "(DOKUMENKELUAR,8-001-2026)",
+   "(DOKUMENKELUAR,20-001-2026)",
+   "(DOKUMENKELUAR,11-001-2025)",
+   "(DOKUMENKELUAR,15-001-2026)",
+   "(DOKUMENKELUAR,1-001-2026)",
+   "(DOKUMENKELUAR,11-001-2026)",
+   "(DOKUMENKELUAR,16-001-2025)",
+   "(DOKUMENKELUAR,13-001-2026)",
+   "(DOKUMENKELUAR,9-001-2026)",
+   "(DOKUMENMASUK,1-001)",
+   "(DOKUMENKELUAR,7-001-2026)"
+  ]
+ },
+ "personalia.depreciableasset": {
+  "pk": null,
+  "n_only_target": 23,
+  "n_only_source": 31,
+  "n_changed": 0,
+  "only_target_sample": [
+   "(217,0019-KEN-AT-2025253,\"2025-03-25 00:00:00\",\"2026-02-25 00:00:00\",YASIN,F,\"KENDARAAN \",001,0,A,0.00000000)",
+   "(157,0019-KEN-AT-20142104,\"2014-04-21 00:00:00\",\"2023-01-03 00:00:00\",GALUH,F,KENDARAAN,001,0,N,0.00000000)",
+   "(219,AT-2026-200426,\"2026-04-20 00:00:00\",\"2026-04-22 00:00:00\",YASIN,F,LAPTOP,001,0,A,0.00000000)",
+   "(218,0020-KEN-AT-2025253,\"2025-03-25 00:00:00\",\"2026-02-25 00:00:00\",YASIN,F,\"KENDARAAN \",001,0,A,0.00000000)",
+   "(105,0085-ELE-AT-20201111,\"2020-11-11 00:00:00\",\"2020-12-30 00:00:00\",YASIN,F,LAPTOP,001,60,N,5500000.00000000)",
+   "(153,0009-KEN-AK-20220808,\"2022-08-08 00:00:00\",\"2022-08-30 00:00:00\",YASIN,F,MOBIL,001,41,A,189324745.93000000)",
+   "(154,0010-KEN-AK-20220808,\"2022-08-08 00:00:00\",\"2022-08-30 00:00:00\",YASIN,F,MOBIL,001,41,A,189324745.93000000)",
+   "(155,0011-KEN-AK-20220808,\"2022-08-08 00:00:00\",\"2022-08-30 00:00:00\",YASIN,F,MOBIL,001,41,A,189324745.93000000)",
+   "(156,0008-KEN-AK-20200720,\"2020-07-20 00:00:00\",\"2023-01-03 00:00:00\",GALUH,F,MOBIL,001,48,A,222500000.16000000)",
+   "(162,0126-ELE-AT-20241206,\"2024-12-06 00:00:00\",\"2024-12-06 00:00:00\",YASIN,F,\"LAPTOP ASUS\",001,13,A,1711666.71000000)",
+   "(163,0127-ELE-AT-20241206,\"2024-12-06 00:00:00\",\"2024-12-06 00:00:00\",YASIN,F,\"LAPTOP ASUS\",001,13,A,1300000.00000000)",
+   "(164,0128-ELE-AT-20241206,\"2024-12-06 00:00:00\",\"2024-12-17 00:00:00\",YASIN,F,\"LAPTOP ASUS\",001,13,A,1711666.71000000)",
+   "(166,0013-KEN-AK-20241209,\"2024-12-09 00:00:00\",\"2024-12-29 00:00:00\",YASIN,F,MOBIL,001,13,A,31145833.29000000)",
+   "(165,0129-ELE-AT-20241206,\"2024-12-06 00:00:00\",\"2024-12-17 00:00:00\",YASIN,F,\"LAPTOP ASUS\",001,13,A,1300000.00000000)",
+   "(203,0018-KEN-AK-20240312,\"2025-01-01 00:00:00\",\"2025-01-24 00:00:00\",YASIN,F,MOBIL,001,12,A,64681446.24000000)",
+   "(202,0017-KEN-AK-20240312,\"2025-01-01 00:00:00\",\"2025-01-24 00:00:00\",YASIN,F,\"MOBIL \",001,12,A,64681446.24000000)",
+   "(204,0133-ELE-AT-20250125,\"2025-01-25 00:00:00\",\"2025-02-03 00:00:00\",YASIN,F,LAPTOP,001,12,A,1962500.04000000)",
+   "(205,0134-ELE-AT-20250125,\"2025-01-25 00:00:00\",\"2025-02-03 00:00:00\",YASIN,F,\"LAPTOP \",001,12,A,1524999.96000000)",
+   "(208,AT-ELE-2025-134,\"2025-04-23 00:00:00\",\"2025-04-29 00:00:00\",YASIN,F,LAPTOP,001,9,A,1125000.00000000)",
+   "(209,AT-ELE-2025-0135,\"2025-04-23 00:00:00\",\"2025-04-29 00:00:00\",YASIN,F,LAPTOP,001,9,A,1481249.97000000)"
+  ],
+  "changed_sample": []
+ },
+ "personalia.dokumenkeluar": {
+  "pk": [
+   "dokumenid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 985,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "personalia.dokumenmasuk": {
+  "pk": [
+   "dokumenid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 676,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "personalia.employee": {
+  "pk": [
+   "employeeid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "personalia.fixedasset": {
+  "pk": [
+   "deprassetid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 8,
+  "n_changed": 29,
+  "only_target_sample": [],
+  "changed_sample": [
+   "157",
+   "217",
+   "219",
+   "220",
+   "221",
+   "218",
+   "62",
+   "222",
+   "82",
+   "66",
+   "83",
+   "153",
+   "154",
+   "155",
+   "156",
+   "159",
+   "160",
+   "166",
+   "202",
+   "203"
+  ]
+ },
+ "personalia.id_gen": {
+  "pk": [
+   "id_code"
+  ],
+  "n_only_target": 3,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [
+   "JENISDOKUMEN",
+   "DISPOSISI",
+   "DOKUMEN"
+  ],
+  "changed_sample": []
+ },
+ "personalia.individu": {
+  "pk": [
+   "individuid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "personalia.jenisdokumen": {
+  "pk": [
+   "idjenisdokumen"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 1,
+  "only_target_sample": [],
+  "changed_sample": [
+   "13"
+  ]
+ },
+ "personalia.rankhistory": {
+  "pk": [
+   "rankhistoryid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.custom_idgen": {
+  "pk": [
+   "idname",
+   "idcode"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 30,
+  "n_changed": 5,
+  "only_target_sample": [],
+  "changed_sample": [
+   "(PROPOSAL,BK/05/26)",
+   "(PROPOSAL,BSF/05/26)",
+   "(PROPOSAL,BS/05/26)",
+   "(PROPOSAL,BI/05/26)",
+   "(MUSTAHIQPRODUCT,NA)"
+  ]
+ },
+ "program.customer": {
+  "pk": [
+   "customerid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 537,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.customercorporate": {
+  "pk": [
+   "customerid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 184,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.customerpersonal": {
+  "pk": [
+   "customerid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 353,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.mustahiq": {
+  "pk": [
+   "mustahiqid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 537,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.mustahiqadditionalinfo": {
+  "pk": [
+   "mustahiqinfoid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 929,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.mustahiqcorporate": {
+  "pk": [
+   "mustahiqid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 184,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.mustahiqpersonal": {
+  "pk": [
+   "mustahiqid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 353,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.mustahiqproduct": {
+  "pk": [
+   "mustahiqproductid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 929,
+  "n_changed": 38,
+  "only_target_sample": [],
+  "changed_sample": [
+   "15849",
+   "15422",
+   "10581",
+   "16225",
+   "18529",
+   "18668",
+   "18673",
+   "18626",
+   "18869",
+   "18871",
+   "18897",
+   "18882",
+   "18930",
+   "18850",
+   "18952",
+   "18819",
+   "18781",
+   "18884",
+   "18887",
+   "18928"
+  ]
+ },
+ "program.proposal": {
+  "pk": [
+   "proposalid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 930,
+  "n_changed": 21,
+  "only_target_sample": [],
+  "changed_sample": [
+   "11841",
+   "11846",
+   "12336",
+   "12333",
+   "12334",
+   "12335",
+   "12454",
+   "12455",
+   "12538",
+   "13064",
+   "13692",
+   "13693",
+   "13694",
+   "13696",
+   "13697",
+   "13698",
+   "13699",
+   "13701",
+   "13702",
+   "13703"
+  ]
+ },
+ "program.realization": {
+  "pk": [
+   "realizationid"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 1229,
+  "n_changed": 11,
+  "only_target_sample": [
+   "10929",
+   "10933"
+  ],
+  "changed_sample": [
+   "11017",
+   "10691",
+   "10692",
+   "10795",
+   "10796",
+   "10810",
+   "10815",
+   "10909",
+   "10923",
+   "11012",
+   "10976"
+  ]
+ },
+ "program.realizationbudget": {
+  "pk": [
+   "realbudgetid"
+  ],
+  "n_only_target": 15,
+  "n_only_source": 2334,
+  "n_changed": 0,
+  "only_target_sample": [
+   "18336",
+   "18337",
+   "18701",
+   "18702",
+   "18716",
+   "18734",
+   "18735",
+   "18736",
+   "18737",
+   "18738",
+   "18739",
+   "19067",
+   "19087",
+   "19173",
+   "19209"
+  ],
+  "changed_sample": []
+ },
+ "program.realizationcost": {
+  "pk": [
+   "realizationcostid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 81,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.realizationmemo": {
+  "pk": [
+   "realmemoid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 285,
+  "n_changed": 1,
+  "only_target_sample": [],
+  "changed_sample": [
+   "6398"
+  ]
+ },
+ "program.realizationmemodetail": {
+  "pk": [
+   "realmemodetailid"
+  ],
+  "n_only_target": 1,
+  "n_only_source": 951,
+  "n_changed": 0,
+  "only_target_sample": [
+   "27921"
+  ],
+  "changed_sample": []
+ },
+ "program.realizationreturn": {
+  "pk": [
+   "returnid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 29,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.realizationreturndetail": {
+  "pk": [
+   "returndetailid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 39,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "program.transaction": {
+  "pk": [
+   "transactionid"
+  ],
+  "n_only_target": 13,
+  "n_only_source": 1276,
+  "n_changed": 0,
+  "only_target_sample": [
+   "13445",
+   "13446",
+   "13549",
+   "13550",
+   "13551",
+   "13565",
+   "13570",
+   "13666",
+   "13680",
+   "13686",
+   "13690",
+   "13769",
+   "13733"
+  ],
+  "changed_sample": []
+ },
+ "transaction.account": {
+  "pk": [
+   "account_code"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 41,
+  "n_changed": 14,
+  "only_target_sample": [
+   "530900",
+   "530901"
+  ],
+  "changed_sample": [
+   "120500",
+   "120600",
+   "120700",
+   "120501",
+   "120502",
+   "120503",
+   "120601",
+   "120602",
+   "120603",
+   "120701",
+   "120702",
+   "120703",
+   "430303",
+   "110144"
+  ]
+ },
+ "transaction.accounthierarchy": {
+  "pk": [
+   "accounthierarchy_id"
+  ],
+  "n_only_target": 7,
+  "n_only_source": 163,
+  "n_changed": 0,
+  "only_target_sample": [
+   "5468",
+   "5469",
+   "5470",
+   "5471",
+   "5472",
+   "5473",
+   "5474"
+  ],
+  "changed_sample": []
+ },
+ "transaction.accountinstance": {
+  "pk": [
+   "accountinstance_id"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 200,
+  "n_changed": 1645,
+  "only_target_sample": [],
+  "changed_sample": [
+   "1567",
+   "2887",
+   "2888",
+   "2889",
+   "2890",
+   "2891",
+   "2892",
+   "2893",
+   "2894",
+   "2895",
+   "2896",
+   "2897",
+   "2898",
+   "2899",
+   "2900",
+   "2901",
+   "2907",
+   "2908",
+   "2909",
+   "2910"
+  ]
+ },
+ "transaction.accountreceivable": {
+  "pk": [
+   "accountno"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.balancesumitem": {
+  "pk": [
+   "itemid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 2,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.balancesumitemmember": {
+  "pk": [
+   "memberid"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 56,
+  "n_changed": 0,
+  "only_target_sample": [
+   "339",
+   "424"
+  ],
+  "changed_sample": []
+ },
+ "transaction.bank": {
+  "pk": [
+   "bankcode"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.batchupload": {
+  "pk": [
+   "batchid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 225,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.budget": {
+  "pk": [
+   "budgetid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 25,
+  "only_target_sample": [],
+  "changed_sample": [
+   "1148",
+   "1150",
+   "1152",
+   "1154",
+   "1155",
+   "1162",
+   "1202",
+   "1204",
+   "1205",
+   "1206",
+   "1208",
+   "1209",
+   "1216",
+   "1225",
+   "1227",
+   "1228",
+   "1230",
+   "1231",
+   "1232",
+   "1246"
+  ]
+ },
+ "transaction.budgetowner": {
+  "pk": [
+   "ownerid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.cashaccount": {
+  "pk": [
+   "accountno"
+  ],
+  "n_only_target": 3,
+  "n_only_source": 0,
+  "n_changed": 2,
+  "only_target_sample": [
+   "BANK0061",
+   "BANK0062",
+   "BANK0063"
+  ],
+  "changed_sample": [
+   "BANK0044",
+   "BANK0054"
+  ]
+ },
+ "transaction.cashadvancereturninfo": {
+  "pk": [
+   "sourcetransactionid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 25,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.custom_idgen": {
+  "pk": [
+   "idname",
+   "idcode"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 65,
+  "n_changed": 7,
+  "only_target_sample": [],
+  "changed_sample": [
+   "(TRANSACTION,KK-2026-001-BPZIS)",
+   "(TRANSACTION,KM-2026-001-LAZ)",
+   "(TRANSACTION,KK-2026-001-LAZ)",
+   "(TRANSACTION,GT-2026-001-000)",
+   "(TRANSACTION,GT-2026-001-BPZIS)",
+   "(TRANSACTION,GT-2025-001-BPZIS)",
+   "(TRANSACTION,KM-2026-001-BPZIS)"
+  ]
+ },
+ "transaction.financialaccount": {
+  "pk": [
+   "accountno"
+  ],
+  "n_only_target": 3,
+  "n_only_source": 1,
+  "n_changed": 85,
+  "only_target_sample": [
+   "BANK0061",
+   "BANK0062",
+   "BANK0063"
+  ],
+  "changed_sample": [
+   "0104.001.IDR",
+   "02015.001.IDR",
+   "CA.001.IDR.22119030996",
+   "I2BSF002.001.IDR",
+   "Z2BS003.001.IDR",
+   "I2BI001.001.IDR",
+   "CA.001.IDR.21129141299",
+   "BANK0030",
+   "0701.001.IDR",
+   "AR.001.IDR.15059061182",
+   "BANK0032",
+   "AR.001.IDR.16089210793",
+   "BANK0039",
+   "AR.001.IDR.19079210788",
+   "AR.001.IDR.900160593",
+   "BANK0020",
+   "AR.001.IDR.5071975",
+   "AR.001.IDR.506201609",
+   "BANK0054",
+   "AR.001.IDR.087781948114"
+  ]
+ },
+ "transaction.glinterface": {
+  "pk": [
+   "interfaceid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 1,
+  "only_target_sample": [],
+  "changed_sample": [
+   "7274"
+  ]
+ },
+ "transaction.humancapitalbatch": {
+  "pk": [
+   "batchid"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 9,
+  "n_changed": 0,
+  "only_target_sample": [
+   "601",
+   "602"
+  ],
+  "changed_sample": []
+ },
+ "transaction.inboxhistory": {
+  "pk": [
+   "inboxhistoryid"
+  ],
+  "n_only_target": 2,
+  "n_only_source": 531,
+  "n_changed": 0,
+  "only_target_sample": [
+   "4753",
+   "4766"
+  ],
+  "changed_sample": []
+ },
+ "transaction.parameter": {
+  "pk": [
+   "parametercode"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 1,
+  "only_target_sample": [],
+  "changed_sample": [
+   "CorporateName"
+  ]
+ },
+ "transaction.product": {
+  "pk": [
+   "productid"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 1,
+  "only_target_sample": [],
+  "changed_sample": [
+   "569"
+  ]
+ },
+ "transaction.script_collection": {
+  "pk": [
+   "script_code"
+  ],
+  "n_only_target": 0,
+  "n_only_source": 1,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ },
+ "transaction.snapshot_accountinstance": {
+  "pk": null,
+  "n_only_target": 1615,
+  "n_only_source": 1845,
+  "n_changed": 0,
+  "only_target_sample": [
+   "(1343,,,,,,,,,,,,,,,,,,,,)",
+   "(1344,,,,,,,,,,,,,,,,,,,,)",
+   "(1345,,,,,,,,,,,,,,,,,,,,)",
+   "(1346,5000000,,,5000000,0,0,1629459100,1629459100,1624459100,1624459100,,,,,511574,,,,1629459100,1629459100)",
+   "(1347,,,,,,,,,,,,,,,,,,,,)",
+   "(1348,,,,,,,,,,,,,,,,,,,,)",
+   "(1349,,,,,,,,,,,,,,,,,,,,)",
+   "(1350,,,,,,,,,,,,,,,,,,,,)",
+   "(1351,,,,,,,,,,,,,,,,,,,,)",
+   "(1352,,,,,,,,,,,,,,,,,,,,)",
+   "(1353,,,,,,,,,,,,,,,,,,,,)",
+   "(1354,,,,,,,,,,,,,,,,,,,,)",
+   "(1355,,,,,,,,,,,,,,,,,,,,)",
+   "(1356,,,,,,,,,,,,,,,,,,,,)",
+   "(1357,,,,,,,,,,,,,,,,,,,,)",
+   "(1358,,,,,,,,,,,,,,,,,,,,)",
+   "(1359,,,,,,,,,,,,,,,,,,,,)",
+   "(1360,,,,,,,,,,,,,,,,,,,,)",
+   "(1361,,,,,,,,,,,,,,,,,,,,)",
+   "(1362,,,,,,,,,,,,,,,,,,,,)"
+  ],
+  "changed_sample": []
+ },
+ "transaction.tmp_hctransactiongroup": {
+  "pk": [
+   "donorid",
+   "fundentity",
+   "channelaccountno"
+  ],
+  "n_only_target": 870,
+  "n_only_source": 546,
+  "n_changed": 2783,
+  "only_target_sample": [
+   "(61,2,BANK0003)",
+   "(128,2,BANK0017)",
+   "(185,2,BANK0006)",
+   "(189,3,BANK0009)",
+   "(280,2,BANK0003)",
+   "(280,3,BANK0009)",
+   "(296,3,BANK0009)",
+   "(312,3,BANK0009)",
+   "(339,3,BANK0009)",
+   "(342,2,BANK0005)",
+   "(380,2,BANK0003)",
+   "(380,2,BANK0006)",
+   "(384,3,BANK0009)",
+   "(456,3,BANK0009)",
+   "(468,2,BANK0003)",
+   "(569,3,BANK0009)",
+   "(598,2,BANK0003)",
+   "(598,2,BANK0006)",
+   "(623,3,BANK0009)",
+   "(658,2,BANK0003)"
+  ],
+  "changed_sample": [
+   "(31,2,BANK0003)",
+   "(76,2,BANK0003)",
+   "(76,2,BANK0005)",
+   "(76,2,BANK0006)",
+   "(82,2,BANK0003)",
+   "(86,2,BANK0003)",
+   "(96,2,BANK0005)",
+   "(110,2,BANK0005)",
+   "(122,2,BANK0003)",
+   "(122,2,BANK0005)",
+   "(158,2,BANK0003)",
+   "(158,2,BANK0005)",
+   "(158,2,BANK0006)",
+   "(159,2,BANK0003)",
+   "(161,2,BANK0003)",
+   "(161,2,BANK0005)",
+   "(174,2,BANK0005)",
+   "(189,2,BANK0003)",
+   "(189,2,BANK0005)",
+   "(204,2,BANK0005)"
+  ]
+ },
+ "transaction.tmp_transactiongroup": {
+  "pk": null,
+  "n_only_target": 29,
+  "n_only_source": 294,
+  "n_changed": 0,
+  "only_target_sample": [
+   "(1,1,1701158,KM-2025-001-LAZ-0042772,3471285,BANK0046,0103.001.IDR,SDMULTI.2026.01.0010843,200000.00,)",
+   "(1,2,1701140,KM-2025-001-LAZ-0042754,3471249,BANK0046,C02021.001.000,SDMULTI.2026.01.0010825,10000.00,)",
+   "(1,2,1701141,KM-2025-001-LAZ-0042755,3471251,BANK0046,C02021.001.000,SDMULTI.2026.01.0010826,10000.00,)",
+   "(1,2,1701142,KM-2025-001-LAZ-0042756,3471253,BANK0046,C02021.001.000,SDMULTI.2026.01.0010827,10000.00,)",
+   "(1,2,1701143,KM-2025-001-LAZ-0042757,3471255,BANK0046,C02021.001.000,SDMULTI.2026.01.0010828,10000.00,)",
+   "(1,2,1701144,KM-2025-001-LAZ-0042758,3471257,BANK0046,C02021.001.000,SDMULTI.2026.01.0010829,10000.00,)",
+   "(1,2,1701145,KM-2025-001-LAZ-0042759,3471259,BANK0046,C02021.001.000,SDMULTI.2026.01.0010830,10000.00,)",
+   "(1,2,1701146,KM-2025-001-LAZ-0042760,3471261,BANK0046,C02021.001.000,SDMULTI.2026.01.0010831,100000.00,)",
+   "(1,2,1701147,KM-2025-001-LAZ-0042761,3471263,BANK0046,C02021.001.000,SDMULTI.2026.01.0010832,10000.00,)",
+   "(1,2,1701148,KM-2025-001-LAZ-0042762,3471265,BANK0046,C02021.001.000,SDMULTI.2026.01.0010833,100000.00,)",
+   "(1,2,1701149,KM-2025-001-LAZ-0042763,3471267,BANK0046,C02021.001.000,SDMULTI.2026.01.0010834,10000.00,)",
+   "(1,2,1701150,KM-2025-001-LAZ-0042764,3471269,BANK0046,C02021.001.000,SDMULTI.2026.01.0010835,100000.00,)",
+   "(1,2,1701152,KM-2025-001-LAZ-0042766,3471273,BANK0046,C02021.001.000,SDMULTI.2026.01.0010837,10000.00,)",
+   "(1,2,1701153,KM-2025-001-LAZ-0042767,3471275,BANK0046,C02021.001.000,SDMULTI.2026.01.0010838,100000.00,)",
+   "(1,2,1701154,KM-2025-001-LAZ-0042768,3471277,BANK0046,C02021.001.000,SDMULTI.2026.01.0010839,10000.00,)",
+   "(1,2,1701155,KM-2025-001-LAZ-0042769,3471279,BANK0046,C02021.001.000,SDMULTI.2026.01.0010840,20000.00,)",
+   "(1,2,1701156,KM-2025-001-LAZ-0042770,3471281,BANK0046,C02021.001.000,SDMULTI.2026.01.0010841,900000.00,)",
+   "(1,2,1701157,KM-2025-001-LAZ-0042771,3471283,BANK0046,C02021.001.000,SDMULTI.2026.01.0010842,1000.00,)",
+   "(1,2,1701159,KM-2025-001-LAZ-0042773,3471287,BANK0046,C02021.001.000,SDMULTI.2026.01.0010844,50000000.00,)",
+   "(1,2,1701160,KM-2025-001-LAZ-0042774,3471289,BANK0046,C02021.001.000,SDMULTI.2026.01.0010845,10000.00,)"
+  ],
+  "changed_sample": []
+ },
+ "transaction.transactiontype": {
+  "pk": null,
+  "n_only_target": 0,
+  "n_only_source": 0,
+  "n_changed": 0,
+  "only_target_sample": [],
+  "changed_sample": []
+ }
+}

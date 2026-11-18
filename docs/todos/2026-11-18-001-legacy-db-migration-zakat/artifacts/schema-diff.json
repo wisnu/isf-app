@@ -1,0 +1,548 @@
+{
+ "source": "mziss_laz_origin",
+ "target": "mziss_laz",
+ "extensions": {
+  "only_target": [],
+  "only_source": []
+ },
+ "schemas": {
+  "only_target": [
+   "dwh",
+   "otorisasi"
+  ],
+  "only_source": []
+ },
+ "sequences": {
+  "only_target": [
+   "dwh.anggaran_realisasi_id_seq",
+   "dwh.asnaf_monthly_id_seq",
+   "dwh.dim_cabang_cabang_key_seq",
+   "dwh.dim_donatur_donorkey_seq",
+   "dwh.dist_monthly_id_seq",
+   "dwh.donatur_monthly_id_seq",
+   "dwh.etl_log_id_seq",
+   "dwh.fact_penerimaan_monthly_id_seq",
+   "dwh.fund_monthly_id_seq",
+   "dwh.memo_realisasi_id_seq",
+   "dwh.otorisasi_summary_id_seq",
+   "dwh.saldo_rekening_id_seq",
+   "otorisasi.approval_log_id_seq",
+   "otorisasi.submission_id_seq"
+  ],
+  "only_source": []
+ },
+ "types": {
+  "only_target": [],
+  "only_source": []
+ },
+ "tables": {
+  "only_target": [
+   "dwh.dim_branch",
+   "dwh.dim_donor",
+   "dwh.dim_fund_type",
+   "dwh.dm_account_balance",
+   "dwh.dm_asnaf_monthly",
+   "dwh.dm_authorization_summary",
+   "dwh.dm_budget_realization",
+   "dwh.dm_dist_monthly",
+   "dwh.dm_donor_monthly",
+   "dwh.dm_fund_monthly",
+   "dwh.dm_program_memo",
+   "dwh.etl_log",
+   "dwh.etl_watermark",
+   "dwh.fact_fundraising_monthly",
+   "otorisasi.approval_log",
+   "otorisasi.entity_config",
+   "otorisasi.submission"
+  ],
+  "only_source": []
+ },
+ "columns": {
+  "only_target": [
+   {
+    "table": "fund.individualdonor",
+    "column": "donorgroup",
+    "pos": 40,
+    "type": "character varying(1)",
+    "notnull": false,
+    "default": null,
+    "identity": null
+   },
+   {
+    "table": "transaction.batchupload",
+    "column": "authstatus",
+    "pos": 13,
+    "type": "character varying(1)",
+    "notnull": false,
+    "default": "'P'::character varying",
+    "identity": null
+   },
+   {
+    "table": "transaction.budgetowner",
+    "column": "terminalubah",
+    "pos": 10,
+    "type": "character varying(30)",
+    "notnull": false,
+    "default": null,
+    "identity": null
+   },
+   {
+    "table": "transaction.budgetowner",
+    "column": "tglubah",
+    "pos": 8,
+    "type": "timestamp without time zone",
+    "notnull": false,
+    "default": "CURRENT_TIMESTAMP",
+    "identity": null
+   },
+   {
+    "table": "transaction.budgetowner",
+    "column": "userpengubah",
+    "pos": 9,
+    "type": "character varying(30)",
+    "notnull": false,
+    "default": null,
+    "identity": null
+   },
+   {
+    "table": "transaction.humancapitalbatch",
+    "column": "namafile",
+    "pos": 7,
+    "type": "character varying(200)",
+    "notnull": false,
+    "default": null,
+    "identity": null
+   },
+   {
+    "table": "transaction.transactiontype",
+    "column": "jenis_limit",
+    "pos": 4,
+    "type": "character varying(1)",
+    "notnull": false,
+    "default": "NULL::character varying",
+    "identity": null
+   }
+  ],
+  "only_source": [],
+  "changed": [
+   {
+    "table": "transaction.batchuploaditem",
+    "column": "amountzakatperusahaan",
+    "changes": {
+     "default": [
+      null,
+      "0"
+     ]
+    }
+   }
+  ]
+ },
+ "constraints": {
+  "only_target": [
+   {
+    "name": "dwh.dim_branch.dim_cabang_kode_cabang_key",
+    "table": "dwh.dim_branch",
+    "type": "u",
+    "def": "UNIQUE (branch_code)"
+   },
+   {
+    "name": "dwh.dim_branch.dim_cabang_pkey",
+    "table": "dwh.dim_branch",
+    "type": "p",
+    "def": "PRIMARY KEY (branch_key)"
+   },
+   {
+    "name": "dwh.dim_donor.dim_donatur_pkey",
+    "table": "dwh.dim_donor",
+    "type": "p",
+    "def": "PRIMARY KEY (donorkey)"
+   },
+   {
+    "name": "dwh.dim_donor.uq_dim_donatur_donorid",
+    "table": "dwh.dim_donor",
+    "type": "u",
+    "def": "UNIQUE (donorid)"
+   },
+   {
+    "name": "dwh.dim_fund_type.dim_fund_type_pkey",
+    "table": "dwh.dim_fund_type",
+    "type": "p",
+    "def": "PRIMARY KEY (fund_entity_code)"
+   },
+   {
+    "name": "dwh.dm_account_balance.saldo_rekening_pkey",
+    "table": "dwh.dm_account_balance",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_account_balance.uq_saldo_rekening_accountno",
+    "table": "dwh.dm_account_balance",
+    "type": "u",
+    "def": "UNIQUE (accountno)"
+   },
+   {
+    "name": "dwh.dm_asnaf_monthly.asnaf_monthly_pkey",
+    "table": "dwh.dm_asnaf_monthly",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_asnaf_monthly.asnaf_monthly_realization_month_check",
+    "table": "dwh.dm_asnaf_monthly",
+    "type": "c",
+    "def": "CHECK (((realization_month >= 1) AND (realization_month <= 12)))"
+   },
+   {
+    "name": "dwh.dm_authorization_summary.otorisasi_summary_pkey",
+    "table": "dwh.dm_authorization_summary",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_budget_realization.anggaran_realisasi_pkey",
+    "table": "dwh.dm_budget_realization",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_dist_monthly.dist_monthly_dist_month_check",
+    "table": "dwh.dm_dist_monthly",
+    "type": "c",
+    "def": "CHECK (((dist_month >= 1) AND (dist_month <= 12)))"
+   },
+   {
+    "name": "dwh.dm_dist_monthly.dist_monthly_pkey",
+    "table": "dwh.dm_dist_monthly",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_donor_monthly.donatur_monthly_fund_month_check",
+    "table": "dwh.dm_donor_monthly",
+    "type": "c",
+    "def": "CHECK (((fund_month >= 1) AND (fund_month <= 12)))"
+   },
+   {
+    "name": "dwh.dm_donor_monthly.donatur_monthly_pkey",
+    "table": "dwh.dm_donor_monthly",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_fund_monthly.fund_monthly_fund_month_check",
+    "table": "dwh.dm_fund_monthly",
+    "type": "c",
+    "def": "CHECK (((fund_month >= 1) AND (fund_month <= 12)))"
+   },
+   {
+    "name": "dwh.dm_fund_monthly.fund_monthly_pkey",
+    "table": "dwh.dm_fund_monthly",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_program_memo.memo_realisasi_pkey",
+    "table": "dwh.dm_program_memo",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.dm_program_memo.uq_memo_realisasi_id",
+    "table": "dwh.dm_program_memo",
+    "type": "u",
+    "def": "UNIQUE (realmemoid)"
+   },
+   {
+    "name": "dwh.etl_log.chk_etl_log_status",
+    "table": "dwh.etl_log",
+    "type": "c",
+    "def": "CHECK (((status)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILED'::character varying, 'PARTIAL'::character varying])::text[])))"
+   },
+   {
+    "name": "dwh.etl_log.etl_log_pkey",
+    "table": "dwh.etl_log",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "dwh.etl_watermark.etl_watermark_pkey",
+    "table": "dwh.etl_watermark",
+    "type": "p",
+    "def": "PRIMARY KEY (table_name)"
+   },
+   {
+    "name": "dwh.fact_fundraising_monthly.fact_penerimaan_monthly_donorkey_fkey",
+    "table": "dwh.fact_fundraising_monthly",
+    "type": "f",
+    "def": "FOREIGN KEY (donorkey) REFERENCES dwh.dim_donor(donorkey)"
+   },
+   {
+    "name": "dwh.fact_fundraising_monthly.fact_penerimaan_monthly_fund_month_check",
+    "table": "dwh.fact_fundraising_monthly",
+    "type": "c",
+    "def": "CHECK (((fund_month >= 1) AND (fund_month <= 12)))"
+   },
+   {
+    "name": "dwh.fact_fundraising_monthly.fact_penerimaan_monthly_pkey",
+    "table": "dwh.fact_fundraising_monthly",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "otorisasi.approval_log.approval_log_pkey",
+    "table": "otorisasi.approval_log",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "otorisasi.approval_log.approval_log_status_check",
+    "table": "otorisasi.approval_log",
+    "type": "c",
+    "def": "CHECK (((status)::text = ANY ((ARRAY['APPROVED'::character varying, 'REJECTED'::character varying])::text[])))"
+   },
+   {
+    "name": "otorisasi.approval_log.approval_log_submission_id_fkey",
+    "table": "otorisasi.approval_log",
+    "type": "f",
+    "def": "FOREIGN KEY (submission_id) REFERENCES otorisasi.submission(id) ON DELETE CASCADE"
+   },
+   {
+    "name": "otorisasi.entity_config.entity_config_pkey",
+    "table": "otorisasi.entity_config",
+    "type": "p",
+    "def": "PRIMARY KEY (entity_type)"
+   },
+   {
+    "name": "otorisasi.submission.submission_pkey",
+    "table": "otorisasi.submission",
+    "type": "p",
+    "def": "PRIMARY KEY (id)"
+   },
+   {
+    "name": "otorisasi.submission.submission_status_check",
+    "table": "otorisasi.submission",
+    "type": "c",
+    "def": "CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING'::character varying, 'AUTHORIZED'::character varying, 'REJECTED'::character varying, 'PROCESSING'::character varying])::text[])))"
+   }
+  ],
+  "only_source": [],
+  "changed": []
+ },
+ "indexes": {
+  "only_target": [
+   {
+    "name": "dwh.ix_anggaran_realisasi_cabang",
+    "table": "dwh.dm_budget_realization",
+    "def": "CREATE INDEX ix_anggaran_realisasi_cabang ON dwh.dm_budget_realization USING btree (branch_key, budget_year)"
+   },
+   {
+    "name": "dwh.ix_asnaf_monthly_cabang",
+    "table": "dwh.dm_asnaf_monthly",
+    "def": "CREATE INDEX ix_asnaf_monthly_cabang ON dwh.dm_asnaf_monthly USING btree (branch_key, realization_year, realization_month)"
+   },
+   {
+    "name": "dwh.ix_dist_monthly_cabang",
+    "table": "dwh.dm_dist_monthly",
+    "def": "CREATE INDEX ix_dist_monthly_cabang ON dwh.dm_dist_monthly USING btree (branch_key, dist_year, dist_month)"
+   },
+   {
+    "name": "dwh.ix_dm_dist_monthly_fund_entity",
+    "table": "dwh.dm_dist_monthly",
+    "def": "CREATE INDEX ix_dm_dist_monthly_fund_entity ON dwh.dm_dist_monthly USING btree (fund_entity, dist_year, dist_month)"
+   },
+   {
+    "name": "dwh.ix_dm_fund_monthly_fund_entity",
+    "table": "dwh.dm_fund_monthly",
+    "def": "CREATE INDEX ix_dm_fund_monthly_fund_entity ON dwh.dm_fund_monthly USING btree (fund_entity, fund_year, fund_month)"
+   },
+   {
+    "name": "dwh.ix_donatur_monthly_cabang",
+    "table": "dwh.dm_donor_monthly",
+    "def": "CREATE INDEX ix_donatur_monthly_cabang ON dwh.dm_donor_monthly USING btree (branch_key, fund_year, fund_month)"
+   },
+   {
+    "name": "dwh.ix_etl_log_run_at",
+    "table": "dwh.etl_log",
+    "def": "CREATE INDEX ix_etl_log_run_at ON dwh.etl_log USING btree (run_at DESC)"
+   },
+   {
+    "name": "dwh.ix_etl_log_table",
+    "table": "dwh.etl_log",
+    "def": "CREATE INDEX ix_etl_log_table ON dwh.etl_log USING btree (table_name, run_at DESC)"
+   },
+   {
+    "name": "dwh.ix_fact_fundraising_fund_entity",
+    "table": "dwh.fact_fundraising_monthly",
+    "def": "CREATE INDEX ix_fact_fundraising_fund_entity ON dwh.fact_fundraising_monthly USING btree (fund_entity, fund_year, fund_month)"
+   },
+   {
+    "name": "dwh.ix_fact_penerimaan_donorkey",
+    "table": "dwh.fact_fundraising_monthly",
+    "def": "CREATE INDEX ix_fact_penerimaan_donorkey ON dwh.fact_fundraising_monthly USING btree (donorkey)"
+   },
+   {
+    "name": "dwh.ix_fact_penerimaan_monthly_cabang",
+    "table": "dwh.fact_fundraising_monthly",
+    "def": "CREATE INDEX ix_fact_penerimaan_monthly_cabang ON dwh.fact_fundraising_monthly USING btree (branch_key, fund_year, fund_month)"
+   },
+   {
+    "name": "dwh.ix_fund_monthly_cabang",
+    "table": "dwh.dm_fund_monthly",
+    "def": "CREATE INDEX ix_fund_monthly_cabang ON dwh.dm_fund_monthly USING btree (branch_key, fund_year, fund_month)"
+   },
+   {
+    "name": "dwh.uix_anggaran_realisasi",
+    "table": "dwh.dm_budget_realization",
+    "def": "CREATE UNIQUE INDEX uix_anggaran_realisasi ON dwh.dm_budget_realization USING btree (budget_year, ownerid, COALESCE(branch_key, 0))"
+   },
+   {
+    "name": "dwh.uix_asnaf_monthly",
+    "table": "dwh.dm_asnaf_monthly",
+    "def": "CREATE UNIQUE INDEX uix_asnaf_monthly ON dwh.dm_asnaf_monthly USING btree (realization_year, realization_month, ashnaf_code, COALESCE(branch_key, 0))"
+   },
+   {
+    "name": "dwh.uix_dm_dist_monthly",
+    "table": "dwh.dm_dist_monthly",
+    "def": "CREATE UNIQUE INDEX uix_dm_dist_monthly ON dwh.dm_dist_monthly USING btree (dist_year, dist_month, COALESCE(accountno, ''::character varying), COALESCE(productname, ''::character varying), COALESCE((fund_entity)::integer, 0), COALESCE(branch_key, 0))"
+   },
+   {
+    "name": "dwh.uix_dm_fund_monthly",
+    "table": "dwh.dm_fund_monthly",
+    "def": "CREATE UNIQUE INDEX uix_dm_fund_monthly ON dwh.dm_fund_monthly USING btree (fund_year, fund_month, accountno, fund_entity, COALESCE(branch_key, 0))"
+   },
+   {
+    "name": "dwh.uix_donatur_monthly",
+    "table": "dwh.dm_donor_monthly",
+    "def": "CREATE UNIQUE INDEX uix_donatur_monthly ON dwh.dm_donor_monthly USING btree (fund_year, fund_month, COALESCE(branch_key, 0))"
+   },
+   {
+    "name": "dwh.uix_fact_fundraising_monthly",
+    "table": "dwh.fact_fundraising_monthly",
+    "def": "CREATE UNIQUE INDEX uix_fact_fundraising_monthly ON dwh.fact_fundraising_monthly USING btree (fund_year, fund_month, donorkey, COALESCE(channel_accountno, ''::character varying), COALESCE(productname, ''::character varying), COALESCE((fund_entity)::integer, 0))"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_approval_log_submission",
+    "table": "otorisasi.approval_log",
+    "def": "CREATE INDEX idx_otorisasi_approval_log_submission ON otorisasi.approval_log USING btree (submission_id)"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_submission_branch",
+    "table": "otorisasi.submission",
+    "def": "CREATE INDEX idx_otorisasi_submission_branch ON otorisasi.submission USING btree (branch_code)"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_submission_entity_type",
+    "table": "otorisasi.submission",
+    "def": "CREATE INDEX idx_otorisasi_submission_entity_type ON otorisasi.submission USING btree (entity_type)"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_submission_status",
+    "table": "otorisasi.submission",
+    "def": "CREATE INDEX idx_otorisasi_submission_status ON otorisasi.submission USING btree (status)"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_submission_status_entity",
+    "table": "otorisasi.submission",
+    "def": "CREATE INDEX idx_otorisasi_submission_status_entity ON otorisasi.submission USING btree (status, entity_type)"
+   },
+   {
+    "name": "otorisasi.idx_otorisasi_submission_submitted_by",
+    "table": "otorisasi.submission",
+    "def": "CREATE INDEX idx_otorisasi_submission_submitted_by ON otorisasi.submission USING btree (submitted_by)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatch_batchperioddesc",
+    "table": "transaction.humancapitalbatch",
+    "def": "CREATE INDEX idx_humancapitalbatch_batchperioddesc ON transaction.humancapitalbatch USING btree (batchperioddesc)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatch_transactiondate",
+    "table": "transaction.humancapitalbatch",
+    "def": "CREATE INDEX idx_humancapitalbatch_transactiondate ON transaction.humancapitalbatch USING btree (transactiondate)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatch_uploaduserid",
+    "table": "transaction.humancapitalbatch",
+    "def": "CREATE INDEX idx_humancapitalbatch_uploaduserid ON transaction.humancapitalbatch USING btree (uploaduserid)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatchitem_batchid",
+    "table": "transaction.humancapitalbatchitem",
+    "def": "CREATE INDEX idx_humancapitalbatchitem_batchid ON transaction.humancapitalbatchitem USING btree (batchid)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatchitem_donorid",
+    "table": "transaction.humancapitalbatchitem",
+    "def": "CREATE INDEX idx_humancapitalbatchitem_donorid ON transaction.humancapitalbatchitem USING btree (donorid)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatchitem_employeenumber",
+    "table": "transaction.humancapitalbatchitem",
+    "def": "CREATE INDEX idx_humancapitalbatchitem_employeenumber ON transaction.humancapitalbatchitem USING btree (employeenumber)"
+   },
+   {
+    "name": "transaction.idx_humancapitalbatchitem_transactionid",
+    "table": "transaction.humancapitalbatchitem",
+    "def": "CREATE INDEX idx_humancapitalbatchitem_transactionid ON transaction.humancapitalbatchitem USING btree (transactionid)"
+   },
+   {
+    "name": "transaction.idx_humancapitalpassedreport_batchid",
+    "table": "transaction.humancapitalpassedreport",
+    "def": "CREATE INDEX idx_humancapitalpassedreport_batchid ON transaction.humancapitalpassedreport USING btree (batchid)"
+   },
+   {
+    "name": "transaction.idx_humancapitalpassedreport_donorid",
+    "table": "transaction.humancapitalpassedreport",
+    "def": "CREATE INDEX idx_humancapitalpassedreport_donorid ON transaction.humancapitalpassedreport USING btree (donorid)"
+   }
+  ],
+  "only_source": [],
+  "changed": []
+ },
+ "triggers": {
+  "only_target": [],
+  "only_source": [],
+  "changed": []
+ },
+ "views": {
+  "only_target": [
+   "dwh.v_amil_cashin",
+   "dwh.v_amil_cashout",
+   "dwh.v_ar_account",
+   "dwh.v_aruskas_item_account",
+   "dwh.v_budget_summary",
+   "dwh.v_budget_transaction",
+   "dwh.v_cash_mutation",
+   "dwh.v_cash_summary_src",
+   "dwh.v_cashadvance_trx",
+   "dwh.v_collection",
+   "dwh.v_daily_balance",
+   "dwh.v_distribution",
+   "dwh.v_export_penghimpunan_hc_batch",
+   "dwh.v_export_penghimpunan_website",
+   "dwh.v_general_ledger",
+   "dwh.v_general_transaction",
+   "dwh.v_journal_daily",
+   "dwh.v_piutang_karyawan",
+   "dwh.v_piutang_non_karyawan",
+   "dwh.v_program_realization",
+   "dwh.v_proposal_masuk",
+   "dwh.v_realization_memo",
+   "dwh.v_realization_return",
+   "dwh.v_report_mustahiq_list",
+   "dwh.v_report_realization_by_mustahiq",
+   "dwh.v_report_realization_non_regular",
+   "dwh.v_report_realization_regular",
+   "dwh.v_report_realization_return",
+   "dwh.v_upz_trx"
+  ],
+  "only_source": [],
+  "changed": []
+ },
+ "functions": {
+  "only_target": [],
+  "only_source": [],
+  "changed": []
+ }
+}
